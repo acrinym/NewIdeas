@@ -16,9 +16,18 @@ namespace Cycloside
     {
         private const string TrayIconBase64 = "AAABAAEAEBACAAEAAQCwAAAAFgAAACgAAAAQAAAAIAAAAAEAAQAAAAAAQAAAAAAAAAAAAAAAAgAAAAIAAAAAAP8A////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-        public override void Initialize()
-        {
-            AvaloniaXamlLoader.Load(this);
+            var settingsMenu = new NativeMenuItem("Settings") { Menu = new NativeMenu() };
+            var pluginManagerItem = new NativeMenuItem("Plugin Manager...");
+            pluginManagerItem.Click += (_, _) =>
+                var win = new PluginSettingsWindow(manager);
+            var generatePluginItem = new NativeMenuItem("Generate New Plugin...");
+            generatePluginItem.Click += (_, _) =>
+            {
+                var win = new PluginDevWizard();
+                win.Show();
+            };
+            settingsMenu.Menu!.Items.Add(pluginManagerItem);
+            settingsMenu.Menu.Items.Add(generatePluginItem);
         }
 
         public override void OnFrameworkInitializationCompleted()
@@ -111,7 +120,7 @@ namespace Cycloside
                     {
                         ToggleType = NativeMenuItemToggleType.CheckBox,
                         IsChecked = settings.PluginEnabled.TryGetValue(p.Name, out var en) ? en : true
-                    };
+            menu.Items.Add(settingsMenu);
 
                     item.Click += (_, _) =>
                     {

@@ -20,7 +20,13 @@ It demonstrates a plugin architecture that loads `*.dll` files from the
 `Plugins` folder at runtime. The application starts minimized to the
 system tray and shows a menu with **Settings** and **Exit** options.
 Plugins dropped into the folder are loaded automatically and any
-changes are detected at runtime without restarting the application.
+under `Plugins/MyPlugin`. You can also select **Settings → Generate New
+Plugin** from the tray menu to create a plugin interactively.
+
+## GUI Plugin Manager
+Open **Settings → Plugin Manager** from the tray to toggle plugins on or off,
+reload them, or open the plugin folder. Your choices are saved in
+`settings.json`.
 
 
 ## Running

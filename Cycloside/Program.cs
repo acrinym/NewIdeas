@@ -1,4 +1,4 @@
-using Avalonia;
+    internal static void GeneratePluginTemplate(string name)
 using System;
 using System.IO;
 
