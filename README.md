@@ -4,6 +4,20 @@ Generally new ideas. Private.
 For details on building plugins for the **Cycloside** tray application, see
 `docs/plugin-dev.md`.
 
+## VIS_AVS_JS
+
+`VIS_AVS_JS` contains an experimental WebAssembly/JavaScript port of the classic
+Winamp **Advanced Visualization Studio** plugin. Building the module requires
+the [Emscripten](https://emscripten.org/) toolchain. In short you should:
+
+1. Clone the `emsdk` repository and run `./emsdk install latest` followed by
+   `./emsdk activate latest`.
+2. Source `emsdk_env.sh` to update your environment (or run the provided batch
+   file on Windows).
+
+After the toolchain is set up you can compile the project by executing
+`VIS_AVS_JS/build.sh`.
+
 ## Installing In-Browser AHK Script
 1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
 2. Open `In-Browser AHK (AutoHotkey-like Features)-0.2.6.user.js` in your browser.
