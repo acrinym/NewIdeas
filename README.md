@@ -1,6 +1,9 @@
 # NewIdeas
 Generally new ideas. Private.
 
+For details on building plugins for the **Cycloside** tray application, see
+`docs/plugin-dev.md`.
+
 ## Installing In-Browser AHK Script
 1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
 2. Open `In-Browser AHK (AutoHotkey-like Features)-0.2.6.user.js` in your browser.

@@ -20,7 +20,7 @@ class Program
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
-    private static void GeneratePluginTemplate(string name)
+    internal static void GeneratePluginTemplate(string name)
     {
         var dir = Path.Combine("Plugins", name);
         Directory.CreateDirectory(dir);

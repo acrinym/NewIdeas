@@ -12,7 +12,6 @@ namespace Cycloside.Plugins
         private readonly Dictionary<IPlugin, bool> _enabled = new();
         private FileSystemWatcher? _watcher;
         private readonly object _lock = new();
-
         private readonly Action<string>? _notify;
 
         public string PluginDirectory { get; }
