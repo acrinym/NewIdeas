@@ -1,8 +1,14 @@
-namespace Cycloside.Plugins;
+using System;
 
-public interface IPlugin
+namespace Cycloside.Plugins
 {
-    string Name { get; }
-    void Start();
-    void Stop();
+    public interface IPlugin
+    {
+        string Name { get; }
+        string Description { get; }
+        Version Version { get; }
+
+        void Start();
+        void Stop();
+    }
 }
