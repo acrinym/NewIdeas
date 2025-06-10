@@ -32,6 +32,7 @@ public partial class App : Application
             manager.AddPlugin(new DateTimeOverlayPlugin());
             manager.AddPlugin(new MP3PlayerPlugin());
             manager.AddPlugin(new MacroPlugin());
+            manager.AddPlugin(new WinampVisHostPlugin());
 
             var iconData = Convert.FromBase64String(TrayIconBase64);
             var trayIcon = new TrayIcon
