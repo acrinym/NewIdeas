@@ -3,43 +3,42 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 
 namespace Cycloside.Plugins;
 
 public class PluginManager
 {
-  private readonly List<IPlugin> _plugins = new();
-  private FileSystemWatcher? _watcher;
-  private readonly object _lock = new();
+    private readonly List<IPlugin> _plugins = new();
+    private FileSystemWatcher? _watcher;
+    private readonly object _lock = new();
 
     public string PluginDirectory { get; }
 
-  public PluginManager(string pluginDirectory)
-  {
-      PluginDirectory = pluginDirectory;
-  }
+    public PluginManager(string pluginDirectory)
+    {
+        PluginDirectory = pluginDirectory;
+    }
 
-  public void StartWatching()
-  {
-      if (_watcher != null)
-          return;
+    public void StartWatching()
+    {
+        if (_watcher != null)
+            return;
 
-      _watcher = new FileSystemWatcher(PluginDirectory, "*.dll")
-      {
-          EnableRaisingEvents = true,
-          NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
-      };
+        _watcher = new FileSystemWatcher(PluginDirectory, "*.dll")
+        {
+            EnableRaisingEvents = true,
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
+        };
 
-      _watcher.Created += (_, __) => ReloadPlugins();
-      _watcher.Changed += (_, __) => ReloadPlugins();
-      _watcher.Deleted += (_, __) => ReloadPlugins();
-  }
+        _watcher.Created += (_, _) => ReloadPlugins();
+        _watcher.Changed += (_, _) => ReloadPlugins();
+        _watcher.Deleted += (_, _) => ReloadPlugins();
+    }
 
-  public void LoadPlugins()
-  {
-      if (!Directory.Exists(PluginDirectory))
-          Directory.CreateDirectory(PluginDirectory);
+    public void LoadPlugins()
+    {
+        if (!Directory.Exists(PluginDirectory))
+            Directory.CreateDirectory(PluginDirectory);
 
         foreach (var dll in Directory.GetFiles(PluginDirectory, "*.dll"))
         {
@@ -53,18 +52,8 @@ public class PluginManager
                     {
                         _plugins.Add(plugin);
                         plugin.Start();
-      }
-  }
-
-  public void ReloadPlugins()
-  {
-      lock (_lock)
-      {
-          StopAll();
-          _plugins.Clear();
-          LoadPlugins();
-      }
-  }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -73,21 +62,31 @@ public class PluginManager
         }
     }
 
-  public void StopAll()
-  {
-      foreach (var p in _plugins)
-      {
-          try
-          {
-              p.Stop();
-          }
-          catch
-          {
-              // ignore
-          }
-      }
+    public void ReloadPlugins()
+    {
+        lock (_lock)
+        {
+            StopAll();
+            _plugins.Clear();
+            LoadPlugins();
+        }
+    }
 
-      _watcher?.Dispose();
-      _watcher = null;
-  }
+    public void StopAll()
+    {
+        foreach (var p in _plugins)
+        {
+            try
+            {
+                p.Stop();
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
+        _watcher?.Dispose();
+        _watcher = null;
+    }
 }

@@ -37,6 +37,22 @@ public partial class App : Application
                 var win = new MainWindow();
                 win.Show();
             };
+
+            var autostartItem = new NativeMenuItem("Launch at Startup")
+            {
+                ToggleType = NativeMenuItemToggleType.CheckBox,
+                IsChecked = StartupManager.IsEnabled()
+            };
+            autostartItem.Click += (_, _) =>
+            {
+                if (autostartItem.IsChecked)
+                    StartupManager.Disable();
+                else
+                    StartupManager.Enable();
+
+                autostartItem.IsChecked = StartupManager.IsEnabled();
+            };
+
             var exitItem = new NativeMenuItem("Exit");
             exitItem.Click += (_, _) =>
             {
@@ -45,6 +61,8 @@ public partial class App : Application
             };
 
             menu.Items.Add(settingsItem);
+            menu.Items.Add(new NativeMenuItemSeparator());
+            menu.Items.Add(autostartItem);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(exitItem);
 

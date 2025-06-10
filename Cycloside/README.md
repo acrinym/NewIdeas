@@ -19,3 +19,8 @@ cd Cycloside
 ## Plugins
 Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the
 `Plugins` directory and they will be loaded when the application starts.
+
+## Auto-start
+From the tray menu you can enable **Launch at Startup**. This creates a
+startup entry in the registry on Windows or a `cycloside.desktop` file in
+`~/.config/autostart` on Linux.
