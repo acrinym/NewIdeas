@@ -23,7 +23,11 @@ public class PluginDevWizard : Window
 
         var panel = new StackPanel { Margin = new Thickness(10) };
         _nameBox = new TextBox { Watermark = "Plugin Name" };
-        _typeBox = new ComboBox { Items = new[] { "Basic DLL", "Lua volatile", "C# volatile" }, SelectedIndex = 0 };
+        _typeBox = new ComboBox { SelectedIndex = 0 };
+        _typeBox.Items.Clear();
+        _typeBox.Items.Add("Basic DLL");
+        _typeBox.Items.Add("Lua volatile");
+        _typeBox.Items.Add("C# volatile");
         var create = new Button { Content = "Create", Margin = new Thickness(0,10,0,0) };
         create.Click += Create_Click;
         panel.Children.Add(_nameBox);
