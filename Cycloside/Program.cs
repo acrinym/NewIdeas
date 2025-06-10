@@ -24,8 +24,8 @@ class Program
     {
         var dir = Path.Combine("Plugins", name);
         Directory.CreateDirectory(dir);
-        var path = Path.Combine(dir, $"{name}.cs");
 
+        var path = Path.Combine(dir, $"{name}.cs");
         if (File.Exists(path))
             return;
 

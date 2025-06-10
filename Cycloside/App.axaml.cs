@@ -41,7 +41,7 @@ public partial class App : Application
 
             var menu = new NativeMenu();
 
-            // Settings submenu
+            // ⚙ Settings Menu
             var settingsMenu = new NativeMenuItem("Settings") { Menu = new NativeMenu() };
 
             var pluginManagerItem = new NativeMenuItem("Plugin Manager...");
@@ -61,7 +61,7 @@ public partial class App : Application
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
 
-            // Autostart toggle
+            // 🪄 Autostart Toggle
             var autostartItem = new NativeMenuItem("Launch at Startup")
             {
                 ToggleType = NativeMenuItemToggleType.CheckBox,
@@ -83,7 +83,7 @@ public partial class App : Application
                 autostartItem.IsChecked = settings.LaunchAtStartup;
             };
 
-            // Plugin toggle submenu
+            // 🔌 Plugins Menu
             var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
             foreach (var p in manager.Plugins)
             {
@@ -104,13 +104,14 @@ public partial class App : Application
                     SettingsManager.Save();
                 };
                 pluginsMenu.Menu!.Items.Add(item);
+
                 if (item.IsChecked && !manager.IsEnabled(p))
                     manager.EnablePlugin(p);
                 else if (!item.IsChecked && manager.IsEnabled(p))
                     manager.DisablePlugin(p);
             }
 
-            // Volatile script submenu
+            // 🧨 Volatile Scripts
             var volatileMenu = new NativeMenuItem("Volatile") { Menu = new NativeMenu() };
 
             var luaItem = new NativeMenuItem("Run Lua Script...");
@@ -119,7 +120,7 @@ public partial class App : Application
                 var dlg = new OpenFileDialog();
                 dlg.Filters.Add(new FileDialogFilter { Name = "Lua", Extensions = { "lua" } });
                 var files = await dlg.ShowAsync(new Window());
-                if (files != null && files.Length > 0 && File.Exists(files[0]))
+                if (files is { Length: > 0 } && File.Exists(files[0]))
                 {
                     var code = await File.ReadAllTextAsync(files[0]);
                     volatileManager.RunLua(code);
@@ -132,7 +133,7 @@ public partial class App : Application
                 var dlg = new OpenFileDialog();
                 dlg.Filters.Add(new FileDialogFilter { Name = "C#", Extensions = { "csx" } });
                 var files = await dlg.ShowAsync(new Window());
-                if (files != null && files.Length > 0 && File.Exists(files[0]))
+                if (files is { Length: > 0 } && File.Exists(files[0]))
                 {
                     var code = await File.ReadAllTextAsync(files[0]);
                     volatileManager.RunCSharp(code);
@@ -142,13 +143,13 @@ public partial class App : Application
             volatileMenu.Menu!.Items.Add(luaItem);
             volatileMenu.Menu.Items.Add(csItem);
 
-            // Open plugin folder
+            // 📁 Open Plugins Folder
             var openPluginFolderItem = new NativeMenuItem("Open Plugins Folder");
             openPluginFolderItem.Click += (_, _) =>
             {
-                var path = manager.PluginDirectory;
                 try
                 {
+                    var path = manager.PluginDirectory;
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = path,
@@ -158,7 +159,7 @@ public partial class App : Application
                 catch { }
             };
 
-            // Exit app
+            // ❌ Exit
             var exitItem = new NativeMenuItem("Exit");
             exitItem.Click += (_, _) =>
             {
@@ -166,7 +167,7 @@ public partial class App : Application
                 desktop.Shutdown();
             };
 
-            // Build the tray menu
+            // 📋 Final Tray Menu Assembly
             menu.Items.Add(settingsMenu);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(autostartItem);
