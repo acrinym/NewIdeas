@@ -11,6 +11,7 @@ public class VisPluginManager : IDisposable
     private readonly List<WinampVisPluginAdapter> _plugins = new();
     private WinampVisPluginAdapter? _active;
     private Timer? _renderTimer;
+    private VisHostWindow? _window;
 
     public IReadOnlyList<WinampVisPluginAdapter> Plugins => _plugins;
 
@@ -38,6 +39,11 @@ public class VisPluginManager : IDisposable
         if (plugin == null)
             return false;
 
+        _window = new VisHostWindow();
+        _window.Show();
+
+        plugin.SetParent(_window.GetHandle());
+
         if (!plugin.Initialize())
             return false;
 
@@ -51,6 +57,7 @@ public class VisPluginManager : IDisposable
     public void Dispose()
     {
         _renderTimer?.Stop();
+        _window?.Close();
         _active?.Quit();
         foreach (var p in _plugins)
             p.Quit();

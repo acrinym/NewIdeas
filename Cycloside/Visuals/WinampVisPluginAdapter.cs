@@ -19,6 +19,11 @@ public class WinampVisPluginAdapter
 
     public string Description { get; private set; } = string.Empty;
 
+    public void SetParent(IntPtr hwnd)
+    {
+        _module.hwndParent = hwnd;
+    }
+
     public WinampVisPluginAdapter(string path)
     {
         _path = path;
