@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
+using Cycloside.Plugins.BuiltIn;
 using System;
 using System.IO;
 
@@ -20,12 +21,17 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"));
+            var settings = SettingsManager.Settings;
+            TrayIcon? trayIcon = null;
+            var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
             manager.LoadPlugins();
             manager.StartWatching();
+            manager.AddPlugin(new DateTimeOverlayPlugin());
+            manager.AddPlugin(new MP3PlayerPlugin());
+            manager.AddPlugin(new MacroPlugin());
 
             var iconData = Convert.FromBase64String(TrayIconBase64);
-            var trayIcon = new TrayIcon
+            trayIcon = new TrayIcon
             {
                 Icon = new WindowIcon(new MemoryStream(iconData))
             };
@@ -41,16 +47,55 @@ public partial class App : Application
             var autostartItem = new NativeMenuItem("Launch at Startup")
             {
                 ToggleType = NativeMenuItemToggleType.CheckBox,
-                IsChecked = StartupManager.IsEnabled()
+                IsChecked = settings.LaunchAtStartup
             };
             autostartItem.Click += (_, _) =>
             {
                 if (autostartItem.IsChecked)
+                {
                     StartupManager.Disable();
+                    settings.LaunchAtStartup = false;
+                }
                 else
+                {
                     StartupManager.Enable();
+                    settings.LaunchAtStartup = true;
+                }
+                SettingsManager.Save();
+                autostartItem.IsChecked = settings.LaunchAtStartup;
+            };
 
-                autostartItem.IsChecked = StartupManager.IsEnabled();
+            var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
+            foreach (var p in manager.Plugins)
+            {
+                var item = new NativeMenuItem(p.Name)
+                {
+                    ToggleType = NativeMenuItemToggleType.CheckBox,
+                    IsChecked = settings.PluginEnabled.TryGetValue(p.Name, out var en) ? en : true
+                };
+                item.Click += (_, _) =>
+                {
+                    if (manager.IsEnabled(p))
+                        manager.DisablePlugin(p);
+                    else
+                        manager.EnablePlugin(p);
+
+                    item.IsChecked = manager.IsEnabled(p);
+                    settings.PluginEnabled[p.Name] = item.IsChecked;
+                    SettingsManager.Save();
+                };
+                pluginsMenu.Menu!.Items.Add(item);
+                if (item.IsChecked && !manager.IsEnabled(p))
+                    manager.EnablePlugin(p);
+                else if (!item.IsChecked && manager.IsEnabled(p))
+                    manager.DisablePlugin(p);
+            }
+
+            var openPluginFolderItem = new NativeMenuItem("Open Plugins Folder");
+            openPluginFolderItem.Click += (_, _) =>
+            {
+                var path = manager.PluginDirectory;
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = path, UseShellExecute = true }); } catch { }
             };
 
             var exitItem = new NativeMenuItem("Exit");
@@ -63,6 +108,9 @@ public partial class App : Application
             menu.Items.Add(settingsItem);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(autostartItem);
+            menu.Items.Add(new NativeMenuItemSeparator());
+            menu.Items.Add(pluginsMenu);
+            menu.Items.Add(openPluginFolderItem);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(exitItem);
 

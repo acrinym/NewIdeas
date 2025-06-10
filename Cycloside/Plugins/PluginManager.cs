@@ -9,14 +9,18 @@ namespace Cycloside.Plugins;
 public class PluginManager
 {
     private readonly List<IPlugin> _plugins = new();
+    private readonly Dictionary<IPlugin,bool> _enabled = new();
     private FileSystemWatcher? _watcher;
     private readonly object _lock = new();
 
-    public string PluginDirectory { get; }
+    private readonly Action<string>? _notify;
 
-    public PluginManager(string pluginDirectory)
+    public string PluginDirectory { get; }
+    public IReadOnlyList<IPlugin> Plugins => _plugins.AsReadOnly();
+    public PluginManager(string pluginDirectory, Action<string>? notify = null)
     {
         PluginDirectory = pluginDirectory;
+        _notify = notify;
     }
 
     public void StartWatching()
@@ -50,14 +54,13 @@ public class PluginManager
                 {
                     if (Activator.CreateInstance(type) is IPlugin plugin)
                     {
-                        _plugins.Add(plugin);
-                        plugin.Start();
+                        AddPlugin(plugin);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to load plugin {dll}: {ex.Message}");
+                Logger.Log($"Failed to load plugin {dll}: {ex.Message}");
             }
         }
     }
@@ -68,6 +71,7 @@ public class PluginManager
         {
             StopAll();
             _plugins.Clear();
+            _enabled.Clear();
             LoadPlugins();
         }
     }
@@ -76,17 +80,50 @@ public class PluginManager
     {
         foreach (var p in _plugins)
         {
-            try
-            {
-                p.Stop();
-            }
-            catch
-            {
-                // ignore
-            }
+            DisablePlugin(p);
         }
 
         _watcher?.Dispose();
         _watcher = null;
     }
+
+    public void AddPlugin(IPlugin plugin)
+    {
+        _plugins.Add(plugin);
+        EnablePlugin(plugin);
+    }
+
+    public void EnablePlugin(IPlugin plugin)
+    {
+        try
+        {
+            plugin.Start();
+            _enabled[plugin] = true;
+        }
+        catch (Exception ex)
+        {
+            _enabled[plugin] = false;
+            Logger.Log($"{plugin.Name} crashed: {ex.Message}");
+            _notify?.Invoke($"[{plugin.Name}] crashed and was disabled.");
+        }
+    }
+
+    public void DisablePlugin(IPlugin plugin)
+    {
+        if (!_enabled.TryGetValue(plugin, out var enabled) || !enabled)
+            return;
+
+        try
+        {
+            plugin.Stop();
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"Error stopping {plugin.Name}: {ex.Message}");
+        }
+
+        _enabled[plugin] = false;
+    }
+
+    public bool IsEnabled(IPlugin plugin) => _enabled.TryGetValue(plugin, out var e) && e;
 }
