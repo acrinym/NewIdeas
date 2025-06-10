@@ -1,3 +1,6 @@
+using System.Threading.Tasks;
+            var volatileManager = new VolatilePluginManager();
+
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -66,6 +69,35 @@ namespace Cycloside
                     {
                         StartupManager.Enable();
                         settings.LaunchAtStartup = true;
+            var volatileMenu = new NativeMenuItem("Volatile") { Menu = new NativeMenu() };
+            var luaItem = new NativeMenuItem("Run Lua Script...");
+            luaItem.Click += async (_, _) =>
+            {
+                var dlg = new OpenFileDialog();
+                dlg.Filters.Add(new FileDialogFilter { Name = "Lua", Extensions = { "lua" } });
+                var files = await dlg.ShowAsync(new Window());
+                if (files != null && files.Length > 0 && File.Exists(files[0]))
+                {
+                    var code = await File.ReadAllTextAsync(files[0]);
+                    volatileManager.RunLua(code);
+                }
+            };
+            var csItem = new NativeMenuItem("Run C# Script...");
+            csItem.Click += async (_, _) =>
+            {
+                var dlg = new OpenFileDialog();
+                dlg.Filters.Add(new FileDialogFilter { Name = "C#", Extensions = { "csx" } });
+                var files = await dlg.ShowAsync(new Window());
+                if (files != null && files.Length > 0 && File.Exists(files[0]))
+                {
+                    var code = await File.ReadAllTextAsync(files[0]);
+                    volatileManager.RunCSharp(code);
+                }
+            };
+            volatileMenu.Menu!.Items.Add(luaItem);
+            volatileMenu.Menu.Items.Add(csItem);
+
+            menu.Items.Add(volatileMenu);
                     }
                     SettingsManager.Save();
                     autostartItem.IsChecked = settings.LaunchAtStartup;

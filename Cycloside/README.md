@@ -1,6 +1,12 @@
 # Cycloside
 
 
+## Volatile Scripts
+The **Volatile** tray submenu lets you run ad hoc Lua or C# scripts directly
+from memory. Choose **Run Lua Script...** or **Run C# Script...** and select a
+`.lua` or `.csx` file. Scripts execute immediately using MoonSharp or Roslyn and
+their results are logged.
+
 Cycloside is a background tray application built with Avalonia. It supports a
 simple plugin system that loads `*.dll` files from the `Plugins` folder at
 runtime. The tray menu exposes built‑in modules and any external plugins you
