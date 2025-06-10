@@ -4,15 +4,16 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
-using System.Threading.Tasks;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Cycloside;
 
 public partial class App : Application
 {
     private const string TrayIconBase64 = "AAABAAEAEBACAAEAAQCwAAAAFgAAACgAAAAQAAAAIAAAAAEAAQAAAAAAQAAAAAAAAAAAAAAAAgAAAAIAAAAAAP8A////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -23,39 +24,44 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = SettingsManager.Settings;
-            TrayIcon? trayIcon = null;
             var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
+            var volatileManager = new VolatilePluginManager();
+
             manager.LoadPlugins();
             manager.StartWatching();
             manager.AddPlugin(new DateTimeOverlayPlugin());
             manager.AddPlugin(new MP3PlayerPlugin());
             manager.AddPlugin(new MacroPlugin());
 
-            var volatileManager = new VolatilePluginManager();
-
             var iconData = Convert.FromBase64String(TrayIconBase64);
-            trayIcon = new TrayIcon
+            var trayIcon = new TrayIcon
             {
                 Icon = new WindowIcon(new MemoryStream(iconData))
             };
 
             var menu = new NativeMenu();
+
+            // Settings submenu
             var settingsMenu = new NativeMenuItem("Settings") { Menu = new NativeMenu() };
+
             var pluginManagerItem = new NativeMenuItem("Plugin Manager...");
             pluginManagerItem.Click += (_, _) =>
             {
                 var win = new PluginSettingsWindow(manager);
                 win.Show();
             };
+
             var generatePluginItem = new NativeMenuItem("Generate New Plugin...");
             generatePluginItem.Click += (_, _) =>
             {
                 var win = new PluginDevWizard();
                 win.Show();
             };
+
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
 
+            // Autostart toggle
             var autostartItem = new NativeMenuItem("Launch at Startup")
             {
                 ToggleType = NativeMenuItemToggleType.CheckBox,
@@ -77,6 +83,7 @@ public partial class App : Application
                 autostartItem.IsChecked = settings.LaunchAtStartup;
             };
 
+            // Plugin toggle submenu
             var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
             foreach (var p in manager.Plugins)
             {
@@ -103,7 +110,9 @@ public partial class App : Application
                     manager.DisablePlugin(p);
             }
 
+            // Volatile script submenu
             var volatileMenu = new NativeMenuItem("Volatile") { Menu = new NativeMenu() };
+
             var luaItem = new NativeMenuItem("Run Lua Script...");
             luaItem.Click += async (_, _) =>
             {
@@ -116,6 +125,7 @@ public partial class App : Application
                     volatileManager.RunLua(code);
                 }
             };
+
             var csItem = new NativeMenuItem("Run C# Script...");
             csItem.Click += async (_, _) =>
             {
@@ -128,16 +138,27 @@ public partial class App : Application
                     volatileManager.RunCSharp(code);
                 }
             };
+
             volatileMenu.Menu!.Items.Add(luaItem);
             volatileMenu.Menu.Items.Add(csItem);
 
+            // Open plugin folder
             var openPluginFolderItem = new NativeMenuItem("Open Plugins Folder");
             openPluginFolderItem.Click += (_, _) =>
             {
                 var path = manager.PluginDirectory;
-                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = path, UseShellExecute = true }); } catch { }
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = path,
+                        UseShellExecute = true
+                    });
+                }
+                catch { }
             };
 
+            // Exit app
             var exitItem = new NativeMenuItem("Exit");
             exitItem.Click += (_, _) =>
             {
@@ -145,6 +166,7 @@ public partial class App : Application
                 desktop.Shutdown();
             };
 
+            // Build the tray menu
             menu.Items.Add(settingsMenu);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(autostartItem);
