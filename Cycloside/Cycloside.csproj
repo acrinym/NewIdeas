@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -16,10 +17,10 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
-    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.0">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+
 </Project>

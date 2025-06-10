@@ -7,8 +7,7 @@ namespace Cycloside;
 class Program
 {
     // Initialization code. Don't use any Avalonia, third-party APIs or any
-    // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-    // yet and stuff might break.
+    // SynchronizationContext-reliant code before AppMain is called: things aren't initialized yet and stuff might break.
     [STAThread]
     public static void Main(string[] args)
     {
@@ -25,11 +24,30 @@ class Program
     {
         var dir = Path.Combine("Plugins", name);
         Directory.CreateDirectory(dir);
+
         var path = Path.Combine(dir, $"{name}.cs");
         if (File.Exists(path))
             return;
-        var content =
-            $"using Cycloside.Plugins;\n\npublic class {name} : IPlugin\n{{\n    public string Name => \"{name}\";\n    public string Description => \"Describe your plugin\";\n    public Version Version => new(1,0,0);\n    public void Start(){{}}\n    public void Stop(){{}}\n}}\n";
+
+        var content = $@"using Cycloside.Plugins;
+
+public class {name} : IPlugin
+{{
+    public string Name => ""{name}"";
+    public string Description => ""Describe your plugin."";
+    public Version Version => new(1, 0, 0);
+
+    public void Start()
+    {{
+        // Plugin startup logic here
+    }}
+
+    public void Stop()
+    {{
+        // Plugin shutdown logic here
+    }}
+}}";
+
         File.WriteAllText(path, content);
     }
 

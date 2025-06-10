@@ -1,54 +1,48 @@
 # Cycloside
 
-Cycloside is a background tray application built with Avalonia. It supports a
-simple plugin system that loads `*.dll` files from the `Plugins` folder at
-runtime. The tray menu exposes built‑in modules and any external plugins you
-drop into that directory. Hot reload is provided via file watching so there is
-no need to restart the app when you update a plugin.
+Cycloside is a background tray application built with Avalonia. It supports a simple plugin system that loads `*.dll` files from the `Plugins` folder at runtime. The tray menu exposes built‑in modules and any external plugins you drop into that directory. Hot reload is provided via file watching so there is no need to restart the app when you update a plugin.
 
-The tray icon image is embedded as a base64 string to keep the repository free
-of binary assets.
+The tray icon image is embedded as a base64 string to keep the repository free of binary assets.
 
-## Running
+## ✅ Running
+
 ```bash
 cd Cycloside
- dotnet run
+dotnet run
 ```
 
-## Plugins
-Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the
-`Plugins` directory and they will be loaded automatically. The tray menu has a
-**Plugins** sub menu that allows you to enable or disable individual modules.
-Built in examples include:
+## 🔌 Plugins
 
-- **Date/Time Overlay** – shows a small always‑on‑top window with the current
-  time.
-- **MP3 Player** – plays an MP3 from the `Music` folder.
-- **Macro Engine** – placeholder for keyboard macro recording and playback.
+Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` directory and they will be loaded automatically. The tray menu includes a **Plugins** submenu to toggle modules on or off.
 
-## Volatile Scripts
-The **Volatile** tray submenu lets you run ad hoc Lua or C# scripts directly
-from memory. Choose **Run Lua Script...** or **Run C# Script...** and select a
-`.lua` or `.csx` file. Scripts execute immediately using MoonSharp or Roslyn and
-their results are logged.
+Built-in examples:
+- **Date/Time Overlay** – always-on-top window with current time
+- **MP3 Player** – plays an MP3 from the `Music` folder
+- **Macro Engine** – placeholder for keyboard macros
 
-## Settings and Auto-start
-Plugin enable states and the auto‑start preference are stored in
-`settings.json`. Toggle **Launch at Startup** from the tray menu to register or
-remove the application from system start‑up (registry on Windows or a
-`cycloside.desktop` file in `~/.config/autostart` on Linux).
+## 🧨 Volatile Scripts
 
-## Logging
-Logs are written to the `logs` directory with simple rotation when the file
-exceeds 1 MB. Plugin crashes are logged and a notification is displayed from the
-tray icon.
+The **Volatile** tray submenu lets you run Lua or C# scripts from memory. Choose **Run Lua Script...** or **Run C# Script...** and select a `.lua` or `.csx` file. Execution uses MoonSharp or Roslyn and logs results automatically.
 
-## Plugin Template
-Run `dotnet run -- --newplugin MyPlugin` to generate a boilerplate plugin class
-under `Plugins/MyPlugin`. You can also select **Settings → Generate New
-Plugin** from the tray menu to create a plugin interactively.
+## ⚙️ Settings and Auto-start
 
-## GUI Plugin Manager
-Open **Settings → Plugin Manager** from the tray to toggle plugins on or off,
-reload them, or open the plugin folder. Your choices are saved in
-`settings.json`.
+Stored in `settings.json`. Toggle **Launch at Startup** to register/unregister at boot:
+- Uses registry (Windows)
+- Adds `cycloside.desktop` to `~/.config/autostart` (Linux)
+
+## 🪵 Logging
+
+Logs rotate in the `logs/` folder after 1 MB. Plugin crashes are logged and trigger a tray notification.
+
+## 🧰 Plugin Template Generator
+
+Run `dotnet run -- --newplugin MyPlugin` to create a boilerplate class, or use **Settings → Generate New Plugin** from the tray menu.
+
+## 🧪 GUI Plugin Manager
+
+Use **Settings → Plugin Manager** to:
+- Toggle plugins
+- Reload them
+- Open the plugin folder
+
+All plugin states are persistently stored.
