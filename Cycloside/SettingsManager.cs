@@ -9,6 +9,9 @@ public class AppSettings
 {
     public bool LaunchAtStartup { get; set; }
     public Dictionary<string, bool> PluginEnabled { get; set; } = new();
+    public bool PluginIsolation { get; set; } = true;
+    public bool PluginCrashLogging { get; set; } = true;
+    public string ActiveSkin { get; set; } = "Default";
 }
 
 public static class SettingsManager
