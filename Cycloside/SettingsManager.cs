@@ -9,6 +9,10 @@ public class AppSettings
 {
     public bool LaunchAtStartup { get; set; }
     public Dictionary<string, bool> PluginEnabled { get; set; } = new();
+    public string Theme { get; set; } = "MintGreen";
+    public Dictionary<string, string> ComponentThemes { get; set; } = new();
+    public string Cursor { get; set; } = "Arrow";
+    public Dictionary<string, string> ComponentCursors { get; set; } = new();
 }
 
 public static class SettingsManager
