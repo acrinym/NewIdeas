@@ -25,3 +25,7 @@ After the toolchain is set up you can compile the project by executing
 4. After installation, click the Tampermonkey icon and you should see "In-Browser AHK Settings" in the menu.
 5. Use this menu to configure hotkeys or open the settings panel.
 6. You can now export or import configurations as JSON or `.bahk` files from the settings panel and reset everything to defaults if needed.
+
+## Chrome API Emulator
+
+`chrome-api-emulator.user.js` provides a lightweight emulation of several Chrome extension APIs for Tampermonkey. The script exposes `chrome.storage.sync`, `chrome.contextMenus`, and basic runtime messaging. It also includes a small drag-and-drop zone so you can drop additional JavaScript files onto any page to load them as plugins.
