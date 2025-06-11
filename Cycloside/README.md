@@ -63,10 +63,7 @@ current skin is loaded at startup based on `ActiveSkin` in `settings.json` and c
 Cycloside focuses on simplicity. Plugins are regular .NET classes, so you can tap into the entire ecosystem without learning a custom scripting language. Because it's built on Avalonia, the same setup runs on Windows and Linux alike.
 
 ## 🖼️ Widgets
-See [docs/widget-interface.md](docs/widget-interface.md) for the current design of our dockable, skinnable widget system. Any plugin can expose a widget surface simply by returning one from the `Widget` property. The built-in `Widget Host` plugin demonstrates this with sample Clock, MP3 and Weather widgets. The goal is to surface plugin features directly on your desktop with minimal fuss.
-See also [docs/plugin-lifecycle.md](docs/plugin-lifecycle.md) for lifecycle hooks and [docs/skin-api.md](docs/skin-api.md) for information on creating new skins.
-
-See [docs/widget-interface.md](docs/widget-interface.md) for the current design of our dockable, skinnable widget system. The goal is to surface plugin features like the MP3 player or a future weather module directly on your desktop with minimal fuss.
+See [docs/widget-interface.md](docs/widget-interface.md) for the current design of our dockable, skinnable widget system. Any plugin can expose a widget surface simply by returning one from the `Widget` property. The built-in `Widget Host` plugin demonstrates this with sample Clock, MP3 and Weather widgets. The goal is to surface plugin features directly on your desktop with minimal fuss. See also [docs/plugin-lifecycle.md](docs/plugin-lifecycle.md) for lifecycle hooks, [docs/skin-api.md](docs/skin-api.md) for information on creating new skins, and [docs/windowfx-design.md](docs/windowfx-design.md) for an overview of the planned compositor effects system.
 
 
 ## 🚧 Cycloside vs Rainmeter
