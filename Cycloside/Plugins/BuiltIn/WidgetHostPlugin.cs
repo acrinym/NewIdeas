@@ -33,6 +33,7 @@ public class WidgetHostPlugin : IPlugin
         _manager = new WidgetManager();
         _manager.LoadBuiltIn();
         _window = new WidgetHostWindow();
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(WidgetHostPlugin));
         var canvas = _window.Root;
         double x = 10;
         double y = 10;

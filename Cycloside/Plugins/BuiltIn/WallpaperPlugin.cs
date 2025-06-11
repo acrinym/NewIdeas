@@ -33,6 +33,7 @@ public class WallpaperPlugin : IPlugin
             Height = 80,
             Content = button
         };
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(WallpaperPlugin));
         _window.Show();
     }
 

@@ -15,6 +15,11 @@ public partial class PluginSettingsWindow : Window
     {
         _manager = manager;
         InitializeComponent();
+
+        ThemeManager.ApplyFromSettings(this, "Plugins");
+        CursorManager.ApplyFromSettings(this, "Plugins");
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(PluginSettingsWindow));
+
         BuildList();
     }
 

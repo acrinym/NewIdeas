@@ -60,6 +60,7 @@ public class TextEditorPlugin : IPlugin
             Height = 400,
             Content = panel
         };
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TextEditorPlugin));
         _window.Show();
     }
 

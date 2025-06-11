@@ -15,6 +15,7 @@ public partial class RuntimeSettingsWindow : Window
         InitializeComponent();
         this.FindControl<CheckBox>("IsolationBox").IsChecked = _manager.IsolationEnabled;
         this.FindControl<CheckBox>("CrashLogBox").IsChecked = _manager.CrashLoggingEnabled;
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(RuntimeSettingsWindow));
     }
 
     private void InitializeComponent()
