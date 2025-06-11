@@ -14,6 +14,9 @@ namespace Cycloside.Plugins
         private readonly object _lock = new();
         private readonly Action<string>? _notify;
 
+        public bool IsolationEnabled { get; set; } = true;
+        public bool CrashLoggingEnabled { get; set; } = true;
+
         public string PluginDirectory { get; }
         public IReadOnlyList<IPlugin> Plugins => _plugins.AsReadOnly();
 
@@ -21,6 +24,8 @@ namespace Cycloside.Plugins
         {
             PluginDirectory = pluginDirectory;
             _notify = notify;
+            IsolationEnabled = SettingsManager.Settings.PluginIsolation;
+            CrashLoggingEnabled = SettingsManager.Settings.PluginCrashLogging;
         }
 
         public void StartWatching()
@@ -95,16 +100,25 @@ namespace Cycloside.Plugins
 
         public void EnablePlugin(IPlugin plugin)
         {
-            try
+            if (IsolationEnabled)
+            {
+                try
+                {
+                    plugin.Start();
+                    _enabled[plugin] = true;
+                }
+                catch (Exception ex)
+                {
+                    _enabled[plugin] = false;
+                    if (CrashLoggingEnabled)
+                        Logger.Log($"{plugin.Name} crashed: {ex.Message}");
+                    _notify?.Invoke($"[{plugin.Name}] crashed and was disabled.");
+                }
+            }
+            else
             {
                 plugin.Start();
                 _enabled[plugin] = true;
-            }
-            catch (Exception ex)
-            {
-                _enabled[plugin] = false;
-                Logger.Log($"{plugin.Name} crashed: {ex.Message}");
-                _notify?.Invoke($"[{plugin.Name}] crashed and was disabled.");
             }
         }
 
@@ -119,7 +133,8 @@ namespace Cycloside.Plugins
             }
             catch (Exception ex)
             {
-                Logger.Log($"Error stopping {plugin.Name}: {ex.Message}");
+                if (CrashLoggingEnabled)
+                    Logger.Log($"Error stopping {plugin.Name}: {ex.Message}");
             }
 
             _enabled[plugin] = false;

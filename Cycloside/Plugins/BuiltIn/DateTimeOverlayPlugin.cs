@@ -14,6 +14,8 @@ public class DateTimeOverlayPlugin : IPlugin
     public string Description => "Displays the current date and time in a small overlay.";
     public Version Version => new(1,0,0);
 
+    public Widgets.IWidget? Widget => null;
+
     public void Start()
     {
         _window = new Window

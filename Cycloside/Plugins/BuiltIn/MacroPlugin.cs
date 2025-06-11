@@ -8,6 +8,8 @@ public class MacroPlugin : IPlugin
     public string Description => "Records and plays simple keyboard macros.";
     public Version Version => new(1,0,0);
 
+    public Widgets.IWidget? Widget => null;
+
     public void Start()
     {
         Console.WriteLine("Macro engine started (placeholder)");
