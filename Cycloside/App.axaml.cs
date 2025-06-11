@@ -28,7 +28,8 @@ public partial class App : Application
             var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
                 ? selectedTheme
                 : settings.Theme;
-            ThemeManager.ApplyTheme(this, theme);
+            ThemeManager.ApplyTheme(this, settings.Theme);
+
             var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
             var volatileManager = new VolatilePluginManager();
 

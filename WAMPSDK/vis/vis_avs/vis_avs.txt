@@ -31,7 +31,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Nullsoft Advanced Visualization Studio (AVS) v2.0a4 README
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-TODO: write readme here :)
+Nullsoft Advanced Visualization Studio (AVS) is Winamp's visualization
+plugin. It lets you load community presets or create your own to
+generate real-time graphics reacting to your music. AVS is distributed
+under a BSD-style license permitting modification and redistribution as
+outlined above.
 
 Thanks to Paul Holden for the FunkyFX Firewurx APE  
 

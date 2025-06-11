@@ -1,5 +1,6 @@
 # Cycloside
 
+Cycloside lets you pin tiny, useful tools and visualizations right onto your desktop without the bloat of a full-blown shell replacement. Built with Avalonia, it's cross-platform by design and aims to stay fast and friendly for plugin developers.
 Cycloside is a background tray application built with Avalonia. It supports a simple plugin system that loads `*.dll` files from the `Plugins` folder at runtime. The tray menu exposes built‑in modules and any external plugins you drop into that directory. Hot reload is provided via file watching so there is no need to restart the app when you update a plugin.
 
 The tray icon image is embedded as a base64 string to keep the repository free of binary assets.
@@ -50,3 +51,12 @@ Use **Settings → Plugin Manager** to:
 - Open the plugin folder
 
 All plugin states are persistently stored.
+
+## 🌟 Why Cycloside?
+Cycloside focuses on simplicity. Plugins are regular .NET classes, so you can tap into the entire ecosystem without learning a custom scripting language. Because it's built on Avalonia, the same setup runs on Windows and Linux alike.
+
+## 🖼️ Widgets
+See [docs/widget-interface.md](docs/widget-interface.md) for the current design of our dockable, skinnable widget system. The goal is to surface plugin features like the MP3 player or a future weather module directly on your desktop with minimal fuss.
+
+## 🚧 Cycloside vs Rainmeter
+Rainmeter is awesome for highly customized desktop skins, but it is Windows-only and relies heavily on its own scripting. Cycloside keeps things lightweight and cross-platform. If you already know C# or want to drop in compiled plugins, you'll feel right at home while still getting a friendly GUI to manage everything.
