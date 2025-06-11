@@ -1,4 +1,5 @@
 using SiloCide.SDK;
+using System;
 
 public class ExamplePlugin : IPlugin
 {

@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -71,7 +72,7 @@ public class WidgetHostPlugin : IPlugin
         ctrl.PointerPressed += (s, e) =>
         {
             last = e.GetPosition(_window);
-            ctrl.CapturePointer(e.Pointer);
+            e.Pointer.Capture(ctrl);
         };
         ctrl.PointerMoved += (s, e) =>
         {
@@ -88,7 +89,7 @@ public class WidgetHostPlugin : IPlugin
         };
         ctrl.PointerReleased += (_, e) =>
         {
-            ctrl.ReleasePointerCapture(e.Pointer);
+            e.Pointer.Capture(null);
             last = null;
         };
     }
