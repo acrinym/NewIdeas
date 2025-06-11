@@ -25,7 +25,10 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = SettingsManager.Settings;
-            ThemeManager.ApplyTheme(this, settings.Theme);
+            var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
+                ? selectedTheme
+                : settings.Theme;
+            ThemeManager.ApplyTheme(this, theme);
             var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
             var volatileManager = new VolatilePluginManager();
 
@@ -61,8 +64,16 @@ public partial class App : Application
                 win.Show();
             };
 
+            var themeSettingsItem = new NativeMenuItem("Theme Settings...");
+            themeSettingsItem.Click += (_, _) =>
+            {
+                var win = new ThemeSettingsWindow();
+                win.Show();
+            };
+
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
+            settingsMenu.Menu.Items.Add(themeSettingsItem);
 
             // 🪄 Autostart Toggle
             var autostartItem = new NativeMenuItem("Launch at Startup")
