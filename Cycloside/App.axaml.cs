@@ -6,6 +6,7 @@ using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Cycloside;
@@ -24,6 +25,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = SettingsManager.Settings;
+            ThemeManager.ApplyTheme(this, settings.Theme);
             var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
             var volatileManager = new VolatilePluginManager();
 
@@ -32,6 +34,7 @@ public partial class App : Application
             manager.AddPlugin(new DateTimeOverlayPlugin());
             manager.AddPlugin(new MP3PlayerPlugin());
             manager.AddPlugin(new MacroPlugin());
+            manager.AddPlugin(new WinampVisHostPlugin());
 
             var iconData = Convert.FromBase64String(TrayIconBase64);
             var trayIcon = new TrayIcon
@@ -82,6 +85,27 @@ public partial class App : Application
                 SettingsManager.Save();
                 autostartItem.IsChecked = settings.LaunchAtStartup;
             };
+
+            // 🎨 Theme Menu
+            var themeMenu = new NativeMenuItem("Themes") { Menu = new NativeMenu() };
+            var themeNames = new[] { "MintGreen", "Matrix", "Orange", "ConsoleGreen" };
+            foreach (var t in themeNames)
+            {
+                var themeItem = new NativeMenuItem(t)
+                {
+                    ToggleType = NativeMenuItemToggleType.Radio,
+                    IsChecked = settings.Theme == t
+                };
+                themeItem.Click += (_, _) =>
+                {
+                    ThemeManager.ApplyTheme(this, t);
+                    settings.Theme = t;
+                    SettingsManager.Save();
+                    foreach (var i in themeMenu.Menu!.Items.OfType<NativeMenuItem>())
+                        i.IsChecked = i == themeItem;
+                };
+                themeMenu.Menu!.Items.Add(themeItem);
+            }
 
             // 🔌 Plugins Menu
             var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
@@ -171,6 +195,7 @@ public partial class App : Application
             menu.Items.Add(settingsMenu);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(autostartItem);
+            menu.Items.Add(themeMenu);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(pluginsMenu);
             menu.Items.Add(volatileMenu);
