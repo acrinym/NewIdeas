@@ -5,11 +5,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 
-
-namespace Cycloside;
-
-public static class SkinManager
-{
 namespace Cycloside;
 
 public static class SkinManager
@@ -38,8 +33,5 @@ public static class SkinManager
         var uri = new Uri($"avares://Cycloside/Skins/{name}.axaml");
         var include = new StyleInclude(uri) { Source = uri };
         element.Styles.Add(include);
-    }
-}
-
     }
 }

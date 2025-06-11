@@ -13,6 +13,7 @@ public class PluginDevWizard : Window
     public PluginDevWizard()
     {
         ThemeManager.ApplyFromSettings(this, "Plugins");
+        CursorManager.ApplyFromSettings(this, "Plugins");
         BuildUI();
     }
 
@@ -29,6 +30,7 @@ public class PluginDevWizard : Window
         _typeBox.Items.Add("Basic DLL");
         _typeBox.Items.Add("Lua volatile");
         _typeBox.Items.Add("C# volatile");
+
         var create = new Button { Content = "Create", Margin = new Thickness(0,10,0,0) };
         create.Click += Create_Click;
         panel.Children.Add(_nameBox);

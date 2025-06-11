@@ -16,3 +16,12 @@ Themes are reusable. You can mix and match them for different components – for
 Call `SkinManager.ApplySkin(control, "SkinName")` to apply a skin to any `StyledElement`. Skins can define custom controls, wallpapers and other assets.
 
 Both systems work together: a component can have a theme for colors and a skin that swaps individual visuals.
+
+## Cursors
+
+Themes and skins can also define the cursor to use for any window or control.
+Store the desired cursor in `settings.json` under `ComponentCursors` and apply
+it with `CursorManager.ApplyFromSettings`. Values correspond to
+`StandardCursorType` names (e.g. `Arrow`, `Hand`, `Ibeam`). Windows and plugins
+can supply their own cursor via skins or themes as needed.
+

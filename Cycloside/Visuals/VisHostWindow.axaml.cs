@@ -10,6 +10,7 @@ public partial class VisHostWindow : Window
     {
         InitializeComponent();
         ThemeManager.ApplyFromSettings(this, "Plugins");
+        CursorManager.ApplyFromSettings(this, "Plugins");
     }
 
     private void InitializeComponent()

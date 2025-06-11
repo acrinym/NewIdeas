@@ -28,6 +28,8 @@ public class DateTimeOverlayPlugin : IPlugin
             Background = Brushes.Black,
             Opacity = 0.7,
         };
+        ThemeManager.ApplyFromSettings(_window, "Plugins");
+        CursorManager.ApplyFromSettings(_window, "Plugins");
         var text = new TextBlock { Foreground = Brushes.White, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
         _window.Content = text;
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
