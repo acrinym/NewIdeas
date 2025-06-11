@@ -1,0 +1,24 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <Color x:Key="ThemeBackgroundColor">#98FF98</Color>
+    <Color x:Key="ThemeForegroundColor">Black</Color>
+    <Color x:Key="EditorRed">Red</Color>
+    <Color x:Key="EditorBlue">Blue</Color>
+    <SolidColorBrush x:Key="ThemeBackgroundBrush" Color="{StaticResource ThemeBackgroundColor}"/>
+    <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{StaticResource ThemeForegroundColor}"/>
+    <SolidColorBrush x:Key="EditorRedBrush" Color="{StaticResource EditorRed}"/>
+    <SolidColorBrush x:Key="EditorBlueBrush" Color="{StaticResource EditorBlue}"/>
+  </Styles.Resources>
+
+  <Style Selector="Window">
+      <Setter Property="Background" Value="{StaticResource ThemeBackgroundBrush}"/>
+      <Setter Property="Foreground" Value="{StaticResource ThemeForegroundBrush}"/>
+  </Style>
+  <Style Selector="Button">
+      <Setter Property="Foreground" Value="Black"/>
+  </Style>
+  <Style Selector="TextBox">
+      <Setter Property="Background" Value="{StaticResource ThemeBackgroundBrush}"/>
+      <Setter Property="Foreground" Value="Black"/>
+  </Style>
+</Styles>
