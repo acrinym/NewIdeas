@@ -24,3 +24,4 @@ Store the desired cursor in `settings.json` under `ComponentCursors` and apply
 it with `CursorManager.ApplyFromSettings`. Values correspond to
 `StandardCursorType` names (e.g. `Arrow`, `Hand`, `Ibeam`). Windows and plugins
 can supply their own cursor via skins or themes as needed.
+

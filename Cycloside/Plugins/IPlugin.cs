@@ -8,6 +8,12 @@ namespace Cycloside.Plugins
         string Description { get; }
         Version Version { get; }
 
+        /// <summary>
+        /// Optional widget surface for this plugin. Returning null means the
+        /// plugin does not expose a widget.
+        /// </summary>
+        Widgets.IWidget? Widget { get; }
+
         void Start();
         void Stop();
     }
