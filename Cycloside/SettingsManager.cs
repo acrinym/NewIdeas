@@ -16,6 +16,7 @@ public class AppSettings
     public Dictionary<string, string> ComponentThemes { get; set; } = new();
     public string Cursor { get; set; } = "Arrow";
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
+    public Dictionary<string, List<string>> WindowEffects { get; set; } = new();
 }
 
 public static class SettingsManager
