@@ -2,6 +2,7 @@
 
 Cycloside aims to provide a lightweight and flexible widget system alongside its tray-based plugin model. This document explains the goals for the widget interface and how it differs from other solutions such as Microsoft Widgets or Rainmeter. The `WidgetHost` plugin in the main project demonstrates the current implementation.
 
+
 ## Purpose
 
 Widgets allow small, skinnable user interface components to live on the desktop. They can display information or provide quick controls without opening full windows. In Cycloside, widgets are an extension of the existing plugin system and let you surface plugin features directly on your desktop.
