@@ -59,7 +59,6 @@ The system is designed to replicate many classic desktop effects. Planned sample
 - Effects can be distributed as plugins and loaded from an `Effects` directory.
 - Multiple effects may be stacked on the same window and tuned with settings such as intensity or speed.
 
-
 ## V. Example: Wobbly Windows
 Hook into drag events and apply a spring function so the window lags slightly behind the cursor, snapping smoothly when released.
 
