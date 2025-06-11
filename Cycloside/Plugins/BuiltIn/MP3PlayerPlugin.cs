@@ -14,6 +14,8 @@ public class MP3PlayerPlugin : IPlugin
     public string Description => "Plays MP3 files located in the Music folder.";
     public Version Version => new(1,0,0);
 
+    public Widgets.IWidget? Widget => new Widgets.BuiltIn.Mp3Widget();
+
     public void Start()
     {
         var musicDir = Path.Combine(AppContext.BaseDirectory, "Music");

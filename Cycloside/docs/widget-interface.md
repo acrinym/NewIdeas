@@ -1,6 +1,7 @@
 # Cycloside Widget Interface
 
-Cycloside aims to provide a lightweight and flexible widget system alongside its tray-based plugin model. This document explains the goals for the widget interface and how it differs from other solutions such as Microsoft Widgets or Rainmeter.
+Cycloside aims to provide a lightweight and flexible widget system alongside its tray-based plugin model. This document explains the goals for the widget interface and how it differs from other solutions such as Microsoft Widgets or Rainmeter. The `WidgetHost` plugin in the main project demonstrates the current implementation.
+
 
 ## Purpose
 
@@ -27,4 +28,12 @@ The widget system is built as a plugin host:
 4. **Docking Layout:** uses Avalonia's layout panels to allow snapping widgets next to each other.
 
 This is currently a design document and serves as a guide for future development. Community contributions and feedback are welcome!
+
+## Built-in Widgets
+
+The repository includes a handful of sample widgets to show how the interface works:
+
+- **ClockWidget** – simple digital clock
+- **Mp3Widget** – play and stop the first song in the `Music` folder
+- **WeatherWidget** – fetches temperature data from Open‑Meteo
 

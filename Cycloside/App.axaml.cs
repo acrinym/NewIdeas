@@ -22,23 +22,29 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = SettingsManager.Settings;
+            SkinManager.LoadCurrent();
             var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
                 ? selectedTheme
                 : settings.Theme;
             ThemeManager.ApplyTheme(this, settings.Theme);
-
             var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
             var volatileManager = new VolatilePluginManager();
 
             manager.LoadPlugins();
             manager.StartWatching();
             manager.AddPlugin(new DateTimeOverlayPlugin());
-            manager.AddPlugin(new MP3PlayerPlugin());
+           manager.AddPlugin(new MP3PlayerPlugin());
             manager.AddPlugin(new MacroPlugin());
+            manager.AddPlugin(new TextEditorPlugin());
+            manager.AddPlugin(new WallpaperPlugin());
+            manager.AddPlugin(new WidgetHostPlugin(manager));
             manager.AddPlugin(new WinampVisHostPlugin());
+
 
             var iconData = Convert.FromBase64String(TrayIconBase64);
             var trayIcon = new TrayIcon
@@ -65,16 +71,25 @@ public partial class App : Application
                 win.Show();
             };
 
-            var themeSettingsItem = new NativeMenuItem("Theme Settings...");
-            themeSettingsItem.Click += (_, _) =>
-            {
-                var win = new ThemeSettingsWindow();
-                win.Show();
-            };
+settingsMenu.Menu!.Items.Add(pluginManagerItem);
+settingsMenu.Menu.Items.Add(generatePluginItem);
 
-            settingsMenu.Menu!.Items.Add(pluginManagerItem);
-            settingsMenu.Menu.Items.Add(generatePluginItem);
-            settingsMenu.Menu.Items.Add(themeSettingsItem);
+var themeSettingsItem = new NativeMenuItem("Theme Settings...");
+themeSettingsItem.Click += (_, _) =>
+{
+    var win = new ThemeSettingsWindow();
+    win.Show();
+};
+settingsMenu.Menu.Items.Add(themeSettingsItem);
+
+var runtimeItem = new NativeMenuItem("Runtime Settings...");
+runtimeItem.Click += (_, _) =>
+{
+    var win = new RuntimeSettingsWindow(manager);
+    win.Show();
+};
+settingsMenu.Menu.Items.Add(runtimeItem);
+
 
             // 🪄 Autostart Toggle
             var autostartItem = new NativeMenuItem("Launch at Startup")
@@ -178,6 +193,13 @@ public partial class App : Application
 
             volatileMenu.Menu!.Items.Add(luaItem);
             volatileMenu.Menu.Items.Add(csItem);
+            var inlineItem = new NativeMenuItem("Run Inline...");
+            inlineItem.Click += (_, _) =>
+            {
+                var win = new VolatileRunnerWindow(volatileManager);
+                win.Show();
+            };
+            volatileMenu.Menu.Items.Add(inlineItem);
 
             // 📁 Open Plugins Folder
             var openPluginFolderItem = new NativeMenuItem("Open Plugins Folder");
