@@ -18,6 +18,7 @@ public partial class PluginSettingsWindow : Window
         ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(PluginSettingsWindow));
+ main
         BuildList();
     }
 
