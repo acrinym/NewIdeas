@@ -21,5 +21,6 @@
     <Setter Property="Background" Value="{StaticResource ThemeBackgroundBrush}"/>
     <Setter Property="Foreground" Value="{StaticResource ThemeForegroundBrush}"/>
     <Setter Property="Cursor" Value="Ibeam"/>
+
   </Style>
 </Styles>

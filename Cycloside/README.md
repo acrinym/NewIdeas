@@ -46,7 +46,6 @@ Run `dotnet run -- --newplugin MyPlugin` to create a boilerplate class, or use *
 ## 🎨 Theming
 See [docs/theming-skinning.md](../docs/theming-skinning.md) for details on applying themes, skins and custom cursors.
 
-
 ## 🧪 GUI Plugin Manager
 
 Use **Settings → Plugin Manager** to:

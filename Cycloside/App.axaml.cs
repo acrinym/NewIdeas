@@ -70,15 +70,15 @@ public partial class App : Application
                 win.Show();
             };
 
-            settingsMenu.Menu!.Items.Add(pluginManagerItem);
-            settingsMenu.Menu.Items.Add(generatePluginItem);
-
             var themeSettingsItem = new NativeMenuItem("Theme Settings...");
             themeSettingsItem.Click += (_, _) =>
             {
                 var win = new ThemeSettingsWindow();
                 win.Show();
             };
+
+            settingsMenu.Menu!.Items.Add(pluginManagerItem);
+            settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
 
             var runtimeItem = new NativeMenuItem("Runtime Settings...");

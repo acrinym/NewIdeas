@@ -11,7 +11,7 @@ public class WinampVisHostPlugin : IPlugin
     public string Name => "Winamp Visual Host";
     public string Description => "Hosts Winamp visualization plugins";
     public Version Version => new(0,1,0);
-    public Widgets.IWidget? Widget => null; // Required by latest IPlugin interface
+    public Widgets.IWidget? Widget => null; // For UI widget host support
 
     public void Start()
     {
