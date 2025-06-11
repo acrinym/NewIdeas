@@ -30,6 +30,7 @@ public class DateTimeOverlayPlugin : IPlugin
         };
         ThemeManager.ApplyFromSettings(_window, "Plugins");
         CursorManager.ApplyFromSettings(_window, "Plugins");
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DateTimeOverlayPlugin));
         var text = new TextBlock { Foreground = Brushes.White, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
         _window.Content = text;
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
