@@ -43,6 +43,10 @@ When isolation is enabled, crashes won't take down the entire app and are simply
 
 Run `dotnet run -- --newplugin MyPlugin` to create a boilerplate class, or use **Settings → Generate New Plugin** from the tray menu.
 
+## 🎨 Theming
+
+See [docs/theming-skinning.md](../docs/theming-skinning.md) for details on applying themes or skins to different parts of Cycloside.
+
 ## 🧪 GUI Plugin Manager
 
 Use **Settings → Plugin Manager** to:
