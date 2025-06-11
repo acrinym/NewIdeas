@@ -15,6 +15,7 @@ public partial class ThemeSettingsWindow : Window
     {
         InitializeComponent();
         ThemeManager.ApplyFromSettings(this, "Plugins");
+        CursorManager.ApplyFromSettings(this, "Plugins");
         BuildList();
     }
 

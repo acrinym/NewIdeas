@@ -16,7 +16,7 @@ dotnet run
 
 Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` directory and they will be loaded automatically. The tray menu includes a **Plugins** submenu to toggle modules on or off.
 
-Built-in examples:
+See [docs/theming-skinning.md](../docs/theming-skinning.md) for details on applying themes, skins and custom cursors.
 - **Date/Time Overlay** – always-on-top window with current time
 - **MP3 Player** – plays an MP3 from the `Music` folder
 - **Macro Engine** – placeholder for keyboard macros

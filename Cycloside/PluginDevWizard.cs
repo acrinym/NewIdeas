@@ -13,6 +13,7 @@ public class PluginDevWizard : Window
     public PluginDevWizard()
     {
         ThemeManager.ApplyFromSettings(this, "Plugins");
+        CursorManager.ApplyFromSettings(this, "Plugins");
         BuildUI();
     }
 
