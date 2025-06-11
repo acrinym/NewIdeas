@@ -13,6 +13,7 @@ public partial class VolatileRunnerWindow : Window
         _manager = manager;
         InitializeComponent();
         this.FindControl<ComboBox>("LangBox").SelectedIndex = 0;
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(VolatileRunnerWindow));
     }
 
     private void InitializeComponent()
