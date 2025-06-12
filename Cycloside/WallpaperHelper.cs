@@ -40,13 +40,15 @@ public static class WallpaperHelper
                 try
                 {
                     if (lowered.Contains("kde"))
+                    var uri = new Uri(path).AbsoluteUri;
+                    if (desktop.Contains("KDE", StringComparison.OrdinalIgnoreCase))
                     {
-                        var script = "var Desktops = desktops();for (i=0;i<Desktops.length;i++){d=Desktops[i];d.wallpaperPlugin='org.kde.image';d.currentConfigGroup=['Wallpaper','org.kde.image','General'];d.writeConfig('Image','file://" + path + "');}";
+                        var script = $"var Desktops = desktops();for (i=0;i<Desktops.length;i++){{d=Desktops[i];d.wallpaperPlugin='org.kde.image';d.currentConfigGroup=['Wallpaper','org.kde.image','General'];d.writeConfig('Image','{uri}');}}";
                         Process.Start("qdbus", $"org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \"{script}\"");
                     }
                     else if (lowered.Contains("gnome") || lowered.Contains("unity") || lowered.Contains("cinnamon"))
                     {
-                        Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri file://{path}");
+                        Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri \"{uri}\"");
                     }
                     else if (lowered.Contains("xfce"))
                     {
