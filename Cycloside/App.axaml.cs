@@ -3,7 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
-using Cycloside.Plugins.BuiltIn;
+using Cycloside.Hotkeys;
+            GlobalHotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
 using Avalonia.Input;
 using System;
 using System.IO;
@@ -215,7 +216,7 @@ public partial class App : Application
             inlineItem.Click += (_, _) =>
             {
                 var win = new VolatileRunnerWindow(volatileManager);
-                win.Show();
+                GlobalHotkeyManager.UnregisterAll();
             };
             volatileMenu.Menu.Items.Add(inlineItem);
 
