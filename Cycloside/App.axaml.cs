@@ -45,6 +45,23 @@ public partial class App : Application
             manager.AddPlugin(new WidgetHostPlugin(manager));
             manager.AddPlugin(new WinampVisHostPlugin());
 
+            var remoteServer = new RemoteApiServer(manager);
+            remoteServer.Start();
+
+            WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
+
+            HotkeyManager.Register(0x0002 | 0x0004, 0x4F, () =>
+            {
+                var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
+                if (plugin != null)
+                {
+                    if (manager.IsEnabled(plugin))
+                        manager.DisablePlugin(plugin);
+                    else
+                        manager.EnablePlugin(plugin);
+                }
+            });
+
             var iconData = Convert.FromBase64String(TrayIconBase64);
             var trayIcon = new TrayIcon
             {
@@ -221,6 +238,8 @@ public partial class App : Application
             exitItem.Click += (_, _) =>
             {
                 manager.StopAll();
+                remoteServer.Stop();
+                HotkeyManager.UnregisterAll();
                 desktop.Shutdown();
             };
 
