@@ -17,12 +17,13 @@ dotnet run
 Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` directory and they will be loaded automatically. The tray menu includes a **Plugins** submenu to toggle modules on or off.
 
 Built-in examples:
-- **Date/Time Overlay** – always-on-top window with current time
-- **MP3 Player** – plays an MP3 from the `Music` folder
-- **Macro Engine** – placeholder for keyboard macros
+- **Date/Time Overlay** – always-on-top clock overlay
+- **MP3 Player** – plays music from the `Music` folder and has a widget
+- **Macro Engine** – record and replay simple keyboard macros
 - **Text Editor** – small editor for notes or Markdown
-- **Wallpaper Changer** – pick an image to use as your wallpaper on any OS
+- **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
 - **Widget Host** – surface plugins as dockable widgets
+- **Winamp Visual Host** – run classic Winamp visualizer DLLs
 
 ## 🗂️ Workspace Profiles
 
