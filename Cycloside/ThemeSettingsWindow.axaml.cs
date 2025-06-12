@@ -8,7 +8,7 @@ namespace Cycloside;
 public partial class ThemeSettingsWindow : Window
 {
     private readonly string[] _components = new[] { "Cycloside", "TextEditor", "MediaPlayer", "Plugins" };
-    private readonly string[] _themes = new[] { "MintGreen", "Matrix", "Orange", "ConsoleGreen" };
+    private readonly string[] _themes = new[] { "MintGreen", "Matrix", "Orange", "ConsoleGreen", "MonochromeOrange", "DeepBlue" };
     private readonly Dictionary<string, (CheckBox cb, ComboBox box)> _controls = new();
 
     public ThemeSettingsWindow()
@@ -16,6 +16,7 @@ public partial class ThemeSettingsWindow : Window
         InitializeComponent();
         ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
+        SkinManager.LoadForWindow(this);
         BuildList();
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(ThemeSettingsWindow));
     }

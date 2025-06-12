@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
+using Avalonia.Styling;
 
 namespace Cycloside.Effects;
 
@@ -41,7 +42,7 @@ public class RollUpEffect : IWindowEffect
                 }
             }
         };
-        anim.RunAsync(win, null);
+        anim.RunAsync(win); // or anim.RunAsync(win, null); if required by your Avalonia version
     }
 
     public void Detach(Window window)

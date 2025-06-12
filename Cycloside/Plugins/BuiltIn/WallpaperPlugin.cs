@@ -57,6 +57,35 @@ public class WallpaperPlugin : IPlugin
 
     private void SetWallpaper(string path)
     {
+        // Try platform-specific logic first
+        try
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                const int SPI_SETDESKWALLPAPER = 20;
+                const int SPIF_UPDATEINIFILE = 1;
+                const int SPIF_SENDWININICHANGE = 2;
+                SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, path, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri file://{path}");
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                Process.Start("osascript", $"-e 'tell application \"System Events\" to set picture of every desktop to \"{path}\"'");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"Wallpaper change failed: {ex.Message}");
+        }
+
+        // Always call helper as fallback or additional logic
         WallpaperHelper.SetWallpaper(path);
     }
+
+    // Import SystemParametersInfo if not already defined
+    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
 }

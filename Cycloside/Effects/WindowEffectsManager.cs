@@ -21,6 +21,8 @@ public class WindowEffectsManager
 
         RegisterEffect(new RollUpEffect());
         RegisterEffect(new WobblyWindowEffect());
+        RegisterEffect(new TransparencyEffect());
+        RegisterEffect(new ShadowEffect());
 
         var path = Path.Combine(AppContext.BaseDirectory, "Effects");
         LoadEffectPlugins(path);

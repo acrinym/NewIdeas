@@ -44,13 +44,7 @@ The system is designed to replicate many classic desktop effects. Planned sample
 - Ghost drag previews
 - Widget dock/undock animations
 - Classic transparency and opacity control
-- Roll‑up/shade
-- Wobbly windows
-- Explode/minimize/close animations
-- Live shadows and blur
-- Magic lamp style minimize
-- Transparency/opacity control
-- Shake/physics distortions
+
 
 ## IV. Technical Notes
 - Use Avalonia animation primitives for easing and keyframes.
