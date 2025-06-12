@@ -2,7 +2,8 @@
 Generally new ideas. Private.
 
 For details on building plugins for the **Cycloside** tray application, see
-`docs/plugin-dev.md`.
+`docs/plugin-dev.md`. Example themes, skins, cursors and a WindowFX plugin can
+be found under `docs/examples/`.
 
 ## VIS_AVS_JS
 
