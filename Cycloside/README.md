@@ -66,8 +66,11 @@ other tools or scripts.
 ## ⌨️ Global Hotkeys
 
 Cycloside registers system-wide shortcuts using Avalonia's hotkey framework.
-Press **Ctrl+Alt+W** at any time to summon the widget host. Profiles and other
-features can be wired up to custom hotkeys.
+On macOS a small Swift helper hooks into `NSEvent` so hotkeys fire even when
+the application is unfocused. Press **Ctrl+Alt+W** at any time to summon the
+widget host. Profiles and other features can be wired up to custom hotkeys.
+The helper source lives in `Hotkeys/HotkeyMonitor.swift` and should be built as
+`libHotkeyMonitor.dylib` placed next to the application binary.
 
 ## 🎨 Theming
 See [docs/theming-skinning.md](../docs/theming-skinning.md) for details on applying themes, skins and custom cursors. Example files live in [docs/examples](../docs/examples).
