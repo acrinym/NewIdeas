@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.Media;
 using System;
+using Cycloside;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -34,7 +35,12 @@ public class DateTimeOverlayPlugin : IPlugin
         var text = new TextBlock { Foreground = Brushes.White, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
         _window.Content = text;
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _timer.Tick += (_, _) => text.Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        _timer.Tick += (_, _) =>
+        {
+            var now = DateTime.Now;
+            text.Text = now.ToString("yyyy-MM-dd HH:mm:ss");
+            PluginBus.Publish("clock:tick", now);
+        };
         _timer.Start();
         _window.Show();
     }
