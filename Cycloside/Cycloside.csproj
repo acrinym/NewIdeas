@@ -24,4 +24,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Hotkeys\*.cs" />
+  </ItemGroup>
+
 </Project>
