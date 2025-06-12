@@ -51,7 +51,11 @@ public static class StartupManager
             File.WriteAllText(MacPlistPath, plist);
             try
             {
-                System.Diagnostics.Process.Start("launchctl", $"load -w {MacPlistPath}");
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "launchctl",
+                    Arguments = $"load -w \"{MacPlistPath}\""
+                });
             }
             catch { }
         }
@@ -74,7 +78,11 @@ public static class StartupManager
         {
             try
             {
-                System.Diagnostics.Process.Start("launchctl", $"unload -w {MacPlistPath}");
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "launchctl",
+                    Arguments = $"unload -w \"{MacPlistPath}\""
+                });
             }
             catch { }
             if (File.Exists(MacPlistPath))
