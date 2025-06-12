@@ -113,7 +113,7 @@ public partial class App : Application
 
             // 🎨 Theme Menu
             var themeMenu = new NativeMenuItem("Themes") { Menu = new NativeMenu() };
-            var themeNames = new[] { "MintGreen", "Matrix", "Orange", "ConsoleGreen" };
+            var themeNames = new[] { "MintGreen", "Matrix", "Orange", "ConsoleGreen", "MonochromeOrange", "DeepBlue" };
             foreach (var t in themeNames)
             {
                 var themeItem = new NativeMenuItem(t)

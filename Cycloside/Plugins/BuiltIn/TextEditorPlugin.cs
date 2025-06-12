@@ -21,7 +21,7 @@ public class TextEditorPlugin : IPlugin
         {
             AcceptsReturn = true,
             AcceptsTab = true,
-            FontFamily = FontFamily.DefaultMonospace,
+            FontFamily = FontFamily.Default,
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
         };

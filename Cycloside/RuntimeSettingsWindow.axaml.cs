@@ -13,6 +13,9 @@ public partial class RuntimeSettingsWindow : Window
     {
         _manager = manager;
         InitializeComponent();
+        ThemeManager.ApplyFromSettings(this, "Plugins");
+        CursorManager.ApplyFromSettings(this, "Plugins");
+        SkinManager.LoadForWindow(this);
         this.FindControl<CheckBox>("IsolationBox").IsChecked = _manager.IsolationEnabled;
         this.FindControl<CheckBox>("CrashLogBox").IsChecked = _manager.CrashLoggingEnabled;
     }

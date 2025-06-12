@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
@@ -33,5 +34,10 @@ public static class SkinManager
         var uri = new Uri($"avares://Cycloside/Skins/{name}.axaml");
         var include = new StyleInclude(uri) { Source = uri };
         element.Styles.Add(include);
+    }
+
+    public static void LoadForWindow(Window window)
+    {
+        ApplySkin(window, SettingsManager.Settings.ActiveSkin);
     }
 }

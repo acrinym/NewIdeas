@@ -57,6 +57,10 @@ public class WallpaperPlugin : IPlugin
             {
                 Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri file://{path}");
             }
+            else if (OperatingSystem.IsMacOS())
+            {
+                Process.Start("osascript", $"-e 'tell application \"System Events\" to set picture of every desktop to \"{path}\"'");
+            }
         }
         catch (Exception ex)
         {
