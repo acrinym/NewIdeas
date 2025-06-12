@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
+using Avalonia.Input;
 using System;
 using System.IO;
 using System.Linq;
@@ -50,7 +51,8 @@ public partial class App : Application
 
             WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
 
-            HotkeyManager.Register(0x0002 | 0x0004, 0x4F, () =>
+
+            HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
             {
                 var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
                 if (plugin != null)
