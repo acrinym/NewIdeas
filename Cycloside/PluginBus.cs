@@ -20,6 +20,19 @@ public static class PluginBus
         }
     }
 
+    public static void Unsubscribe(string topic, Action<object?> handler)
+    {
+        lock(_subs)
+        {
+            if(_subs.TryGetValue(topic, out var list))
+            {
+                list.RemoveAll(h => h == handler);
+                if(list.Count == 0)
+                    _subs.Remove(topic);
+            }
+        }
+    }
+
     public static void Publish(string topic, object? payload = null)
     {
         List<Action<object?>>? list = null;
