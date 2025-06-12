@@ -55,7 +55,7 @@ public partial class App : Application
             manager.AddPlugin(new WidgetHostPlugin(manager));
             manager.AddPlugin(new WinampVisHostPlugin());
 
-            var remoteServer = new RemoteApiServer(manager);
+            var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();
 
             WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
@@ -108,6 +108,14 @@ public partial class App : Application
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
+
+            var profileItem = new NativeMenuItem("Workspace Profiles...");
+            profileItem.Click += (_, _) =>
+            {
+                var win = new ProfileEditorWindow(manager);
+                win.Show();
+            };
+            settingsMenu.Menu.Items.Add(profileItem);
 
             var runtimeItem = new NativeMenuItem("Runtime Settings...");
             runtimeItem.Click += (_, _) =>

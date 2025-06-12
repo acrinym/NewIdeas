@@ -27,7 +27,7 @@ public class QBasicRetroIDEPlugin : IPlugin
 
     public string Name => "QBasic Retro IDE";
     public string Description => "Edit and run .BAS files using QB64 Phoenix";
-    public Version Version => new(0,2,0);
+    public Version Version => new(0, 2, 0); // Highest version
     public Widgets.IWidget? Widget => null;
 
     public void Start()
@@ -95,6 +95,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         _editor = null;
     }
 
+    // --- Menu and project tree
     private Menu BuildMenu()
     {
         var newItem = new MenuItem { Header = "_New" };
@@ -181,6 +182,16 @@ public class QBasicRetroIDEPlugin : IPlugin
         UpdateStatus();
     }
 
+    private async Task OpenFile()
+    {
+        if (_window == null) return;
+        var dlg = new OpenFileDialog();
+        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
+        var files = await dlg.ShowAsync(_window);
+        if (files is { Length: > 0 })
+            await LoadFile(files[0]);
+    }
+
     private async Task SaveFile()
     {
         if (_currentFile == null)
@@ -231,16 +242,6 @@ public class QBasicRetroIDEPlugin : IPlugin
         _editor.Text = string.Empty;
         _currentFile = null;
         UpdateStatus();
-    }
-
-    private async Task OpenFile()
-    {
-        if (_window == null) return;
-        var dlg = new OpenFileDialog();
-        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var files = await dlg.ShowAsync(_window);
-        if (files is { Length: > 0 })
-            await LoadFile(files[0]);
     }
 
     private async Task Find()

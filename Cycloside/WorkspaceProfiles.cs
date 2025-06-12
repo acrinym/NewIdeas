@@ -71,4 +71,10 @@ public static class WorkspaceProfiles
         _profiles[profile.Name] = profile;
         Save();
     }
+
+    public static void Remove(string name)
+    {
+        if(_profiles.Remove(name))
+            Save();
+    }
 }

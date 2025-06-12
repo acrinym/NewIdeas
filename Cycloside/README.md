@@ -17,12 +17,19 @@ dotnet run
 Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` directory and they will be loaded automatically. The tray menu includes a **Plugins** submenu to toggle modules on or off.
 
 Built-in examples:
-- **Date/Time Overlay** – always-on-top window with current time
-- **MP3 Player** – plays an MP3 from the `Music` folder
-- **Macro Engine** – placeholder for keyboard macros
+- **Date/Time Overlay** – always-on-top clock overlay
+- **MP3 Player** – plays music from the `Music` folder and has a widget
+- **Macro Engine** – record and replay simple keyboard macros
 - **Text Editor** – small editor for notes or Markdown
 - **Wallpaper Changer** – pick an image to use as your wallpaper on any OS
 - **Widget Host** – surface plugins as dockable widgets
+- **Winamp Visual Host** – run classic Winamp visualizer DLLs
+
+## 🗂️ Workspace Profiles
+
+Save wallpaper choices and plugin states into named profiles. You can
+switch between profiles from the tray menu or bind them to global
+hotkeys for quick swaps when changing tasks.
 
 ## 🗂️ Workspace Profiles
 
@@ -54,7 +61,8 @@ Run `dotnet run -- --newplugin MyPlugin` to create a boilerplate class, or use *
 
 Plugins can talk to each other through a simple publish/subscribe bus. You can
 also POST events to `http://localhost:4123/trigger` to control plugins from
-other tools or scripts.
+other tools or scripts. Include your pre‑shared token via the `X-Api-Token`
+header or `?token=` query string or the request will be rejected with a 401.
 
 ## ⌨️ Global Hotkeys
 
@@ -73,6 +81,11 @@ Use **Settings → Plugin Manager** to:
 - Open the plugin folder
 
 All plugin states are persistently stored.
+
+## 📦 Plugin Marketplace
+`PluginMarketplace` can fetch a list of available modules from a remote URL and
+install them directly into your `Plugins/` directory. Each download is verified
+with a SHA256 hash before it is placed on disk.
 
 ## 🎨 Skins
 Place Avalonia style files inside the `Skins` folder to theme the interface. The
