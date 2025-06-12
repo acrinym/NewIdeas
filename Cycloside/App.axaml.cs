@@ -51,6 +51,7 @@ public partial class App : Application
 
             WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
 
+
             HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
             {
                 var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
