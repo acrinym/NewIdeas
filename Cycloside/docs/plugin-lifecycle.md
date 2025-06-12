@@ -15,3 +15,18 @@ public interface IPluginExtended : IPlugin
 ```
 
 The plugin manager catches exceptions thrown during `Start` and `Stop` when isolation mode is enabled. Crashes are logged if crash logging is turned on. Plugins exposing a widget should return an implementation via the `Widget` property.
+
+## Plugin Bus
+
+Plugins communicate by publishing messages to the global `PluginBus` and subscribing to topics of interest:
+
+```csharp
+PluginBus.Subscribe("my:event", data => Handle(data));
+PluginBus.Publish("my:event", payload);
+```
+
+Unsubscribing removes the handler so plugins can clean up during `Stop()`.
+
+## Remote API
+
+`RemoteApiServer` exposes `http://localhost:4123/trigger`. Posting a topic name to this endpoint publishes that event on the bus. This allows scripts or other applications to control your plugins without direct references.
