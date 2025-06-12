@@ -81,6 +81,11 @@ Use **Settings → Plugin Manager** to:
 
 All plugin states are persistently stored.
 
+## 📦 Plugin Marketplace
+`PluginMarketplace` can fetch a list of available modules from a remote URL and
+install them directly into your `Plugins/` directory. Each download is verified
+with a SHA256 hash before it is placed on disk.
+
 ## 🎨 Skins
 Place Avalonia style files inside the `Skins` folder to theme the interface. The
 current skin is loaded at startup based on `ActiveSkin` in `settings.json` and can be changed from **Settings → Runtime Settings**.
