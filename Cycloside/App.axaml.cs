@@ -162,7 +162,42 @@ public partial class App : Application
 
             // 🔌 Plugins Menu
             var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
-            foreach (var p in manager.Plugins)
+
+            var newMenu = new NativeMenuItem("New/Updated") { Menu = new NativeMenu() };
+            foreach (var p in manager.Plugins.Where(p => manager.GetStatus(p) != Plugins.PluginChangeStatus.None))
+            {
+                var tag = manager.GetStatus(p) == Plugins.PluginChangeStatus.New ? " (NEW)" : " (UPDATED)";
+                var item = new NativeMenuItem(p.Name + tag)
+                {
+                    ToggleType = NativeMenuItemToggleType.CheckBox,
+                    IsChecked = settings.PluginEnabled.TryGetValue(p.Name, out var en) ? en : true
+                };
+                item.Click += (_, _) =>
+                {
+                    if (manager.IsEnabled(p))
+                        manager.DisablePlugin(p);
+                    else
+                        manager.EnablePlugin(p);
+
+                    item.IsChecked = manager.IsEnabled(p);
+                    settings.PluginEnabled[p.Name] = item.IsChecked;
+                    SettingsManager.Save();
+                };
+                newMenu.Menu!.Items.Add(item);
+
+                if (item.IsChecked && !manager.IsEnabled(p))
+                    manager.EnablePlugin(p);
+                else if (!item.IsChecked && manager.IsEnabled(p))
+                    manager.DisablePlugin(p);
+            }
+
+            if (newMenu.Menu!.Items.Count > 0)
+            {
+                pluginsMenu.Menu!.Items.Add(newMenu);
+                pluginsMenu.Menu!.Items.Add(new NativeMenuItemSeparator());
+            }
+
+            foreach (var p in manager.Plugins.Where(p => manager.GetStatus(p) == Plugins.PluginChangeStatus.None))
             {
                 var item = new NativeMenuItem(p.Name)
                 {
