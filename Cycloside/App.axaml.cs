@@ -109,6 +109,14 @@ public partial class App : Application
             settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
 
+            var profileItem = new NativeMenuItem("Workspace Profiles...");
+            profileItem.Click += (_, _) =>
+            {
+                var win = new ProfileEditorWindow(manager);
+                win.Show();
+            };
+            settingsMenu.Menu.Items.Add(profileItem);
+
             var runtimeItem = new NativeMenuItem("Runtime Settings...");
             runtimeItem.Click += (_, _) =>
             {
