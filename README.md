@@ -5,6 +5,10 @@ For details on building plugins for the **Cycloside** tray application, see
 `docs/plugin-dev.md`. Example themes, skins, cursors and a WindowFX plugin can
 be found under `docs/examples/`.
 
+Cycloside now includes a lightweight **Skin/Theme Editor** accessible from the
+tray menu. Edit your `.axaml` files with live previews and experiment with
+different cursors before applying a new look.
+
 ## VIS_AVS_JS
 
 `VIS_AVS_JS` contains an experimental WebAssembly/JavaScript port of the classic
