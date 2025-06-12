@@ -41,16 +41,21 @@ public static class WallpaperHelper
             {
                 var desktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP") ??
                                Environment.GetEnvironmentVariable("DESKTOP_SESSION") ?? string.Empty;
+
+                var lowered = desktop.ToLowerInvariant();
+                var recognized = true;
                 var safePath = path.Replace("\"", "\\\"").Replace("'", "\\'");
                 try
                 {
+                    if (lowered.Contains("kde"))
                     var uri = new Uri(path).AbsoluteUri;
                     if (desktop.Contains("KDE", StringComparison.OrdinalIgnoreCase))
                     {
-
                         var script = "var Desktops = desktops();for (i=0;i<Desktops.length;i++){d=Desktops[i];d.wallpaperPlugin='org.kde.image';d.currentConfigGroup=['Wallpaper','org.kde.image','General'];d.writeConfig('Image','file://" + safePath + "');}";
                         Process.Start("qdbus", $"org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \"{script}\"");
                     }
+
+                    else if (lowered.Contains("gnome") || lowered.Contains("unity") || lowered.Contains("cinnamon"))
                     else if (desktop.Contains("XFCE", StringComparison.OrdinalIgnoreCase))
                     {
                         Process.Start("xfconf-query", $"--channel xfce4-desktop --property /backdrop/screen0/monitor0/image-path --set \"{path}\"");
@@ -68,10 +73,27 @@ public static class WallpaperHelper
                         Process.Start("feh", $"--bg-scale \"{path}\"");
                         Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri \"{uri}\"");
                     }
+                    else if (lowered.Contains("xfce"))
+                    {
+                        Process.Start("xfconf-query", $"-c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s {path}");
+                    }
+                    else if (lowered.Contains("lxde"))
+                    {
+                        Process.Start("pcmanfm", $"--set-wallpaper={path}");
+                    }
+                    else
+                    {
+                        recognized = false;
+                        Process.Start("feh", $"--bg-scale {path}");
+                    }
                 }
                 catch (Exception ex)
                 {
                     Logger.Log($"Linux wallpaper command failed: {ex.Message}");
+                }
+                if (!recognized)
+                {
+                    Logger.Log($"Unsupported desktop '{desktop}', used feh fallback");
                 }
             }
         }
