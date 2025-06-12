@@ -18,6 +18,7 @@ public class AppSettings
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
     public Dictionary<string, List<string>> WindowEffects { get; set; } = new();
     public Dictionary<string, ThemeSnapshot> SavedThemes { get; set; } = new();
+    public string ActiveProfile { get; set; } = "default";
 }
 
 public static class SettingsManager

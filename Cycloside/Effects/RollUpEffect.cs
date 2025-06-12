@@ -42,7 +42,7 @@ public class RollUpEffect : IWindowEffect
                 }
             }
         };
-        anim.RunAsync(win);
+        anim.RunAsync(win); // or anim.RunAsync(win, null); if required by your Avalonia version
     }
 
     public void Detach(Window window)

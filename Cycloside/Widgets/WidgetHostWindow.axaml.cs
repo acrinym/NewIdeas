@@ -10,6 +10,7 @@ public partial class WidgetHostWindow : Window
     {
         InitializeComponent();
         Topmost = true;
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(WidgetHostWindow));
     }
 
     private void InitializeComponent()

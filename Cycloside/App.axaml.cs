@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
+using Avalonia.Input;
 using System;
 using System.IO;
 using System.Linq;
@@ -44,6 +45,24 @@ public partial class App : Application
             manager.AddPlugin(new WallpaperPlugin());
             manager.AddPlugin(new WidgetHostPlugin(manager));
             manager.AddPlugin(new WinampVisHostPlugin());
+
+            var remoteServer = new RemoteApiServer(manager);
+            remoteServer.Start();
+
+            WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
+
+
+            HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
+            {
+                var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
+                if (plugin != null)
+                {
+                    if (manager.IsEnabled(plugin))
+                        manager.DisablePlugin(plugin);
+                    else
+                        manager.EnablePlugin(plugin);
+                }
+            });
 
             var iconData = Convert.FromBase64String(TrayIconBase64);
             var trayIcon = new TrayIcon
@@ -221,6 +240,8 @@ public partial class App : Application
             exitItem.Click += (_, _) =>
             {
                 manager.StopAll();
+                remoteServer.Stop();
+                HotkeyManager.UnregisterAll();
                 desktop.Shutdown();
             };
 

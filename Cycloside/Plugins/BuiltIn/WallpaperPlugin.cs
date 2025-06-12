@@ -2,13 +2,14 @@ using Avalonia.Controls;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
+using Cycloside;
 
 namespace Cycloside.Plugins.BuiltIn;
 
 public class WallpaperPlugin : IPlugin
 {
     private Window? _window;
+    private Action<object?>? _wallpaperHandler;
 
     public string Name => "Wallpaper Changer";
     public string Description => "Change desktop wallpaper";
@@ -26,6 +27,12 @@ public class WallpaperPlugin : IPlugin
             if (files is { Length: > 0 })
                 SetWallpaper(files[0]);
         };
+        _wallpaperHandler = o =>
+        {
+            if (o is string path && File.Exists(path))
+                SetWallpaper(path);
+        };
+        PluginBus.Subscribe("wallpaper:set", _wallpaperHandler);
         _window = new Window
         {
             Title = "Wallpaper",
@@ -33,6 +40,7 @@ public class WallpaperPlugin : IPlugin
             Height = 80,
             Content = button
         };
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(WallpaperPlugin));
         _window.Show();
     }
 
@@ -40,10 +48,16 @@ public class WallpaperPlugin : IPlugin
     {
         _window?.Close();
         _window = null;
+        if(_wallpaperHandler != null)
+        {
+            PluginBus.Unsubscribe("wallpaper:set", _wallpaperHandler);
+            _wallpaperHandler = null;
+        }
     }
 
     private void SetWallpaper(string path)
     {
+        // Try platform-specific logic first
         try
         {
             if (OperatingSystem.IsWindows())
@@ -66,8 +80,12 @@ public class WallpaperPlugin : IPlugin
         {
             Logger.Log($"Wallpaper change failed: {ex.Message}");
         }
+
+        // Always call helper as fallback or additional logic
+        WallpaperHelper.SetWallpaper(path);
     }
 
-    [DllImport("user32.dll", SetLastError = true)]
+    // Import SystemParametersInfo if not already defined
+    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
     private static extern bool SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
 }

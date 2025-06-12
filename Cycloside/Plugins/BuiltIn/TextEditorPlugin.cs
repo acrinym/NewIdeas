@@ -21,7 +21,7 @@ public class TextEditorPlugin : IPlugin
         {
             AcceptsReturn = true,
             AcceptsTab = true,
-            FontFamily = FontFamily.Default,
+            FontFamily = new FontFamily("monospace"),
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
         };
@@ -60,6 +60,7 @@ public class TextEditorPlugin : IPlugin
             Height = 400,
             Content = panel
         };
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TextEditorPlugin));
         _window.Show();
     }
 

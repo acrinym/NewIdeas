@@ -16,6 +16,7 @@ public class PluginDevWizard : Window
         CursorManager.ApplyFromSettings(this, "Plugins");
         SkinManager.LoadForWindow(this);
         BuildUI();
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(PluginDevWizard));
     }
 
     private void BuildUI()

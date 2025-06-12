@@ -18,6 +18,7 @@ public partial class ThemeSettingsWindow : Window
         CursorManager.ApplyFromSettings(this, "Plugins");
         SkinManager.LoadForWindow(this);
         BuildList();
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(ThemeSettingsWindow));
     }
 
     private void InitializeComponent()
