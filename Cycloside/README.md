@@ -21,9 +21,15 @@ Built-in examples:
 - **MP3 Player** – plays music from the `Music` folder and has a widget
 - **Macro Engine** – record and replay simple keyboard macros
 - **Text Editor** – small editor for notes or Markdown
-- **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
+- **Wallpaper Changer** – pick an image to use as your wallpaper on any OS
 - **Widget Host** – surface plugins as dockable widgets
 - **Winamp Visual Host** – run classic Winamp visualizer DLLs
+
+## 🗂️ Workspace Profiles
+
+Save wallpaper choices and plugin states into named profiles. You can
+switch between profiles from the tray menu or bind them to global
+hotkeys for quick swaps when changing tasks.
 
 ## 🗂️ Workspace Profiles
 

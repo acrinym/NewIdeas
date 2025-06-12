@@ -43,6 +43,15 @@ public partial class App : Application
             manager.AddPlugin(new MacroPlugin());
             manager.AddPlugin(new TextEditorPlugin());
             manager.AddPlugin(new WallpaperPlugin());
+            manager.AddPlugin(new ClipboardManagerPlugin());
+            manager.AddPlugin(new FileWatcherPlugin());
+            manager.AddPlugin(new ProcessMonitorPlugin());
+            manager.AddPlugin(new TaskSchedulerPlugin());
+            manager.AddPlugin(new DiskUsagePlugin());
+            manager.AddPlugin(new LogViewerPlugin());
+            manager.AddPlugin(new EnvironmentEditorPlugin());
+            manager.AddPlugin(new JezzballPlugin());
+
             manager.AddPlugin(new WidgetHostPlugin(manager));
             manager.AddPlugin(new WinampVisHostPlugin());
 
