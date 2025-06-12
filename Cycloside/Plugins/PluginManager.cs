@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 
 namespace Cycloside.Plugins
 {
@@ -53,7 +54,17 @@ namespace Cycloside.Plugins
             {
                 try
                 {
-                    var asm = Assembly.LoadFrom(dll);
+                    Assembly asm;
+                    if (IsolationEnabled)
+                    {
+                        var ctx = new PluginLoadContext(dll);
+                        asm = ctx.LoadPlugin(dll);
+                    }
+                    else
+                    {
+                        asm = Assembly.LoadFrom(dll);
+                    }
+
                     var types = asm.GetTypes().Where(t => typeof(IPlugin).IsAssignableFrom(t) && !t.IsAbstract);
                     foreach (var type in types)
                     {

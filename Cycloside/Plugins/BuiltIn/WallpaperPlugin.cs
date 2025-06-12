@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
+using Cycloside;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -26,6 +26,11 @@ public class WallpaperPlugin : IPlugin
             if (files is { Length: > 0 })
                 SetWallpaper(files[0]);
         };
+        PluginBus.Subscribe("wallpaper:set", o =>
+        {
+            if (o is string path && File.Exists(path))
+                SetWallpaper(path);
+        });
         _window = new Window
         {
             Title = "Wallpaper",
@@ -45,26 +50,6 @@ public class WallpaperPlugin : IPlugin
 
     private void SetWallpaper(string path)
     {
-        try
-        {
-            if (OperatingSystem.IsWindows())
-            {
-                const int SPI_SETDESKWALLPAPER = 20;
-                const int SPIF_UPDATEINIFILE = 1;
-                const int SPIF_SENDWININICHANGE = 2;
-                SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, path, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri file://{path}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.Log($"Wallpaper change failed: {ex.Message}");
-        }
+        WallpaperHelper.SetWallpaper(path);
     }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
 }
