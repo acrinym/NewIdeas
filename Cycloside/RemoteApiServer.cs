@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Cycloside.Plugins;
 
@@ -10,6 +11,7 @@ public class RemoteApiServer
 {
     private readonly PluginManager _manager;
     private HttpListener? _listener;
+    private CancellationTokenSource? _cts;
 
     public RemoteApiServer(PluginManager manager)
     {
@@ -22,15 +24,36 @@ public class RemoteApiServer
         _listener = new HttpListener();
         _listener.Prefixes.Add($"http://localhost:{port}/");
         _listener.Start();
-        _ = Listen();
+        _cts = new CancellationTokenSource();
+        _ = Listen(_cts.Token);
     }
 
-    private async Task Listen()
+    private async Task Listen(CancellationToken token)
     {
-        while (_listener?.IsListening == true)
+        while (_listener?.IsListening == true && !token.IsCancellationRequested)
         {
-            var ctx = await _listener.GetContextAsync();
-            _ = Task.Run(() => Handle(ctx));
+            HttpListenerContext? ctx = null;
+            try
+            {
+                var contextTask = _listener.GetContextAsync();
+                var completed = await Task.WhenAny(contextTask, Task.Delay(Timeout.Infinite, token));
+                if (completed != contextTask)
+                    break;
+                ctx = await contextTask;
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
+
+            if (ctx != null)
+            {
+                _ = Task.Run(() => Handle(ctx), token);
+            }
         }
     }
 
@@ -64,7 +87,10 @@ public class RemoteApiServer
 
     public void Stop()
     {
-        _listener?.Stop();
+        _cts?.Cancel();
+        _listener?.Close();
         _listener = null;
+        _cts?.Dispose();
+        _cts = null;
     }
 }
