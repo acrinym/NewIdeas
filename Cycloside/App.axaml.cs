@@ -55,7 +55,7 @@ public partial class App : Application
             manager.AddPlugin(new WidgetHostPlugin(manager));
             manager.AddPlugin(new WinampVisHostPlugin());
 
-            var remoteServer = new RemoteApiServer(manager);
+            var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();
 
             WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
