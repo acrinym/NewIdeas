@@ -17,12 +17,19 @@ dotnet run
 Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` directory and they will be loaded automatically. The tray menu includes a **Plugins** submenu to toggle modules on or off.
 
 Built-in examples:
-- **Date/Time Overlay** – always-on-top window with current time
-- **MP3 Player** – plays an MP3 from the `Music` folder
-- **Macro Engine** – placeholder for keyboard macros
+- **Date/Time Overlay** – always-on-top clock overlay
+- **MP3 Player** – plays music from the `Music` folder and has a widget
+- **Macro Engine** – record and replay simple keyboard macros
 - **Text Editor** – small editor for notes or Markdown
-- **Wallpaper Changer** – pick an image to use as your wallpaper
+- **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
 - **Widget Host** – surface plugins as dockable widgets
+- **Winamp Visual Host** – run classic Winamp visualizer DLLs
+
+## 🗂️ Workspace Profiles
+
+Save wallpaper choices and plugin states into named profiles. You can
+switch between profiles from the tray menu or bind them to global
+hotkeys for quick swaps when changing tasks.
 
 ## 🧨 Volatile Scripts
 
@@ -33,6 +40,7 @@ The **Volatile** tray submenu lets you run Lua or C# scripts from memory. Choose
 Stored in `settings.json`. Toggle **Launch at Startup** to register/unregister at boot:
 - Uses registry (Windows)
 - Adds `cycloside.desktop` to `~/.config/autostart` (Linux)
+- Writes a LaunchAgents plist for `launchctl` (macOS)
 
 ## 🪵 Logging
 
@@ -42,6 +50,18 @@ When isolation is enabled, crashes won't take down the entire app and are simply
 ## 🧰 Plugin Template Generator
 
 Run `dotnet run -- --newplugin MyPlugin` to create a boilerplate class, or use **Settings → Generate New Plugin** from the tray menu.
+
+## 📣 Plugin Bus and Remote API
+
+Plugins can talk to each other through a simple publish/subscribe bus. You can
+also POST events to `http://localhost:4123/trigger` to control plugins from
+other tools or scripts.
+
+## ⌨️ Global Hotkeys
+
+Cycloside registers system-wide shortcuts using Avalonia's hotkey framework.
+Press **Ctrl+Alt+W** at any time to summon the widget host. Profiles and other
+features can be wired up to custom hotkeys.
 
 ## 🎨 Theming
 See [docs/theming-skinning.md](../docs/theming-skinning.md) for details on applying themes, skins and custom cursors. Example files live in [docs/examples](../docs/examples).
@@ -58,6 +78,14 @@ All plugin states are persistently stored.
 ## 🎨 Skins
 Place Avalonia style files inside the `Skins` folder to theme the interface. The
 current skin is loaded at startup based on `ActiveSkin` in `settings.json` and can be changed from **Settings → Runtime Settings**.
+
+## 🌀 Window Effects
+Try out wobbly windows, drop shadows and more via **Settings → Runtime Settings**.
+Effects are plugin friendly so you can write your own animations.
+
+## 🔄 Auto-update
+An optional helper lets Cycloside download and swap in updates when provided
+with a download URL and expected checksum.
 
 ## 🌟 Why Cycloside?
 Cycloside focuses on simplicity. Plugins are regular .NET classes, so you can tap into the entire ecosystem without learning a custom scripting language. Because it's built on Avalonia, the same setup runs on Windows and Linux alike.
