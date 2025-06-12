@@ -24,7 +24,13 @@ public static class WallpaperHelper
             {
                 try
                 {
-                    Process.Start("osascript", $"-e 'tell application \"System Events\" to set picture of every desktop to \"{path}\"'");
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "osascript",
+                    };
+                    psi.ArgumentList.Add("-e");
+                    psi.ArgumentList.Add($"tell application \"System Events\" to set picture of every desktop to POSIX file \"{path}\"");
+                    Process.Start(psi);
                 }
                 catch (Exception ex)
                 {
@@ -35,16 +41,29 @@ public static class WallpaperHelper
             {
                 var desktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP") ??
                                Environment.GetEnvironmentVariable("DESKTOP_SESSION") ?? string.Empty;
+                var safePath = path.Replace("\"", "\\\"").Replace("'", "\\'");
                 try
                 {
                     if (desktop.Contains("KDE", StringComparison.OrdinalIgnoreCase))
                     {
-                        var script = "var Desktops = desktops();for (i=0;i<Desktops.length;i++){d=Desktops[i];d.wallpaperPlugin='org.kde.image';d.currentConfigGroup=['Wallpaper','org.kde.image','General'];d.writeConfig('Image','file://" + path + "');}";
+                        var script = "var Desktops = desktops();for (i=0;i<Desktops.length;i++){d=Desktops[i];d.wallpaperPlugin='org.kde.image';d.currentConfigGroup=['Wallpaper','org.kde.image','General'];d.writeConfig('Image','file://" + safePath + "');}";
                         Process.Start("qdbus", $"org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \"{script}\"");
+                    }
+                    else if (desktop.Contains("XFCE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Process.Start("xfconf-query", $"--channel xfce4-desktop --property /backdrop/screen0/monitor0/image-path --set \"{path}\"");
+                    }
+                    else if (desktop.Contains("LXDE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Process.Start("pcmanfm", $"--set-wallpaper \"{path}\" --wallpaper-mode=fit");
+                    }
+                    else if (desktop.Contains("GNOME", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri \"file://{path}\"");
                     }
                     else
                     {
-                        Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri file://{path}");
+                        Process.Start("feh", $"--bg-scale \"{path}\"");
                     }
                 }
                 catch (Exception ex)
