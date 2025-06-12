@@ -10,12 +10,14 @@ namespace Cycloside;
 public class RemoteApiServer
 {
     private readonly PluginManager _manager;
+    private readonly string _token;
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
 
-    public RemoteApiServer(PluginManager manager)
+    public RemoteApiServer(PluginManager manager, string token)
     {
         _manager = manager;
+        _token = token;
     }
 
     public void Start(int port = 4123)
@@ -61,6 +63,13 @@ public class RemoteApiServer
     {
         try
         {
+            var auth = ctx.Request.Headers["X-Api-Token"] ?? ctx.Request.QueryString["token"];
+            if (auth != _token)
+            {
+                ctx.Response.StatusCode = 401;
+                return;
+            }
+
             var path = ctx.Request.Url?.AbsolutePath?.Trim('/');
             if (path == "trigger" && ctx.Request.HttpMethod == "POST")
             {

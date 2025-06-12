@@ -30,3 +30,10 @@ Unsubscribing removes the handler so plugins can clean up during `Stop()`.
 ## Remote API
 
 `RemoteApiServer` exposes `http://localhost:4123/trigger`. Posting a topic name to this endpoint publishes that event on the bus. This allows scripts or other applications to control your plugins without direct references.
+`RemoteApiServer` exposes `http://localhost:4123/trigger`. Include your pre‑shared token using the `X-Api-Token` header or a `token` query string when POSTing a topic name. Invalid or missing tokens result in `401 Unauthorized`. The token is configured in `settings.json` under `RemoteApiToken`.
+
+Example:
+
+```bash
+curl -X POST -H "X-Api-Token: <token>" http://localhost:4123/trigger -d "my:event"
+

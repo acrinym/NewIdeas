@@ -55,7 +55,8 @@ Run `dotnet run -- --newplugin MyPlugin` to create a boilerplate class, or use *
 
 Plugins can talk to each other through a simple publish/subscribe bus. You can
 also POST events to `http://localhost:4123/trigger` to control plugins from
-other tools or scripts.
+other tools or scripts. Include your pre‑shared token via the `X-Api-Token`
+header or `?token=` query string or the request will be rejected with a 401.
 
 ## ⌨️ Global Hotkeys
 
@@ -74,6 +75,11 @@ Use **Settings → Plugin Manager** to:
 - Open the plugin folder
 
 All plugin states are persistently stored.
+
+## 📦 Plugin Marketplace
+`PluginMarketplace` can fetch a list of available modules from a remote URL and
+install them directly into your `Plugins/` directory. Each download is verified
+with a SHA256 hash before it is placed on disk.
 
 ## 🎨 Skins
 Place Avalonia style files inside the `Skins` folder to theme the interface. The
