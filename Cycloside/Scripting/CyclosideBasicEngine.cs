@@ -17,6 +17,7 @@ namespace Cycloside.Scripting
         private readonly Dictionary<string, Action<string[]>> _commands;
         private readonly Dictionary<string, object> _vars = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, object> _readonlyVars = new(StringComparer.OrdinalIgnoreCase);
+
         public bool Exit { get; private set; }
 
         public CyclosideBasicEngine(InterpreterContext context)
@@ -83,6 +84,7 @@ namespace Cycloside.Scripting
                 ["MEDIA_PLAY"] = _ => Context.MediaPlay?.Invoke(),
                 ["MEDIA_PAUSE"] = _ => Context.MediaPause?.Invoke(),
                 ["MEDIA_STOP"] = _ => Context.MediaStop?.Invoke(),
+
                 // Extend more as needed!
             };
         }
@@ -142,6 +144,8 @@ namespace Cycloside.Scripting
                 return; // ignore attempts to overwrite built-in vars
             _vars[name] = val;
         }
+        public object GetVar(string name) => _vars.TryGetValue(name.Trim(), out var v) ? v : "";
+        public void SetVar(string name, object val) => _vars[name.Trim()] = val;
 
         // Utility: expands any $(var) or ${var} in a string
         private string ExpandVars(string input)
