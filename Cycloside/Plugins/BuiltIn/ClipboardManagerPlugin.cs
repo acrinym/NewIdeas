@@ -24,8 +24,11 @@ public class ClipboardManagerPlugin : IPlugin
         _list.DoubleTapped += async (_, __) =>
         {
             if (_list.SelectedItem is string text && _window != null)
-                if (TopLevel.GetTopLevel(_window)?.Clipboard is { } cb)
+            {
+                var cb = TopLevel.GetTopLevel(_window)?.Clipboard;
+                if (cb != null)
                     await cb.SetTextAsync(text);
+            }
         };
 
         _window = new Window
@@ -49,9 +52,8 @@ public class ClipboardManagerPlugin : IPlugin
                 _history.Add(text);
                 if (_history.Count > 20)
                     _history.RemoveAt(0);
-                _list!.Items.Clear();
-                foreach (var h in _history)
-                    _list.Items.Add(h);
+                _list!.ItemsSource = null;
+                _list.ItemsSource = _history.ToArray();
             }
         };
         _timer.Start();

@@ -109,15 +109,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         var exitItem = new MenuItem { Header = "E_xit" };
         exitItem.Click += (_, _) => _window?.Close();
 
-        var fileMenu = new MenuItem { Header = "_File" };
-        fileMenu.Items.Add(newItem);
-        fileMenu.Items.Add(openItem);
-        fileMenu.Items.Add(saveItem);
-        fileMenu.Items.Add(saveAsItem);
-        fileMenu.Items.Add(new Separator());
-        fileMenu.Items.Add(projectItem);
-        fileMenu.Items.Add(new Separator());
-        fileMenu.Items.Add(exitItem);
+        var fileMenu = new MenuItem { Header = "_File", ItemsSource = new object[] { newItem, openItem, saveItem, saveAsItem, new Separator(), projectItem, new Separator(), exitItem } };
 
         var undo = new MenuItem { Header = "_Undo" };
         undo.Click += (_, _) => _editor?.Undo();
@@ -130,47 +122,29 @@ public class QBasicRetroIDEPlugin : IPlugin
         var paste = new MenuItem { Header = "_Paste" };
         paste.Click += (_, _) => _editor?.Paste();
 
-        var editMenu = new MenuItem { Header = "_Edit" };
-        editMenu.Items.Add(undo);
-        editMenu.Items.Add(redo);
-        editMenu.Items.Add(new Separator());
-        editMenu.Items.Add(cut);
-        editMenu.Items.Add(copy);
-        editMenu.Items.Add(paste);
+        var editMenu = new MenuItem { Header = "_Edit", ItemsSource = new object[] { undo, redo, new Separator(), cut, copy, paste } };
 
         var find = new MenuItem { Header = "_Find" };
         find.Click += async (_, _) => await Find();
         var replace = new MenuItem { Header = "_Replace" };
         replace.Click += async (_, _) => await Replace();
 
-        var searchMenu = new MenuItem { Header = "_Search" };
-        searchMenu.Items.Add(find);
-        searchMenu.Items.Add(replace);
+        var searchMenu = new MenuItem { Header = "_Search", ItemsSource = new object[] { find, replace } };
 
         var compile = new MenuItem { Header = "_Compile && Run" };
         compile.Click += async (_, _) => await CompileRun();
         var runExe = new MenuItem { Header = "_Run Executable" };
         runExe.Click += async (_, _) => await RunExecutable();
-        var runMenu = new MenuItem { Header = "_Run" };
-        runMenu.Items.Add(compile);
-        runMenu.Items.Add(runExe);
+        var runMenu = new MenuItem { Header = "_Run", ItemsSource = new object[] { compile, runExe } };
 
         var settings = new MenuItem { Header = "_Settings" };
         settings.Click += (_, _) => OpenSettings();
 
         var helpItem = new MenuItem { Header = "_Help" };
         helpItem.Click += (_, _) => ShowHelp();
-        var helpMenu = new MenuItem { Header = "_Help" };
-        helpMenu.Items.Add(helpItem);
+        var helpMenu = new MenuItem { Header = "_Help", ItemsSource = new object[] { helpItem } };
 
-        var menu = new Menu();
-        menu.Items.Add(fileMenu);
-        menu.Items.Add(editMenu);
-        menu.Items.Add(searchMenu);
-        menu.Items.Add(runMenu);
-        menu.Items.Add(settings);
-        menu.Items.Add(helpMenu);
-        return menu;
+        return new Menu { ItemsSource = new object[] { fileMenu, editMenu, searchMenu, runMenu, settings, helpMenu } };
     }
 
     private async Task OpenProject()
@@ -191,14 +165,13 @@ public class QBasicRetroIDEPlugin : IPlugin
             return;
         if (string.IsNullOrWhiteSpace(_projectPath))
         {
-            _projectTree.Items.Clear();
+            _projectTree.ItemsSource = null;
             return;
         }
         var root = new TreeViewItem { Header = Path.GetFileName(_projectPath), IsExpanded = true };
-        foreach (var file in Directory.GetFiles(_projectPath, "*.bas"))
-            root.Items.Add(new TreeViewItem { Header = Path.GetFileName(file), Tag = file });
-        _projectTree.Items.Clear();
-        _projectTree.Items.Add(root);
+        var items = Directory.GetFiles(_projectPath, "*.bas").Select(f => new TreeViewItem { Header = Path.GetFileName(f), Tag = f }).ToList<object>();
+        root.ItemsSource = items;
+        _projectTree.ItemsSource = new[] { root };
     }
 
     private async Task LoadFile(string path)
@@ -345,8 +318,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         var line = _editor.TextArea.Caret.Line;
         var col = _editor.TextArea.Caret.Column;
         var file = string.IsNullOrWhiteSpace(_currentFile) ? "Untitled" : Path.GetFileName(_currentFile);
-        var mode = "INS";
-        _status.Text = $"Ln {line} Col {col} - {file} [{mode}]";
+        _status.Text = $"Ln {line} Col {col} - {file}";
     }
 
     private async void Window_KeyDown(object? sender, KeyEventArgs e)

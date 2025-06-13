@@ -46,8 +46,7 @@ public class DiskUsagePlugin : IPlugin
     private void LoadTree(string root)
     {
         var rootNode = BuildNode(new DirectoryInfo(root));
-        _tree!.Items.Clear();
-        _tree.Items.Add(rootNode);
+        _tree!.ItemsSource = new[] { rootNode };
     }
 
     private static TreeViewItem BuildNode(DirectoryInfo dir)
@@ -55,9 +54,9 @@ public class DiskUsagePlugin : IPlugin
         long size = dir.GetFiles().Sum(f => f.Length);
         foreach (var sub in dir.GetDirectories())
             size += GetDirSize(sub);
+
         var node = new TreeViewItem { Header = $"{dir.Name} ({size / 1024 / 1024} MB)" };
-        foreach (var d in dir.GetDirectories())
-            node.Items.Add(BuildNode(d));
+        node.ItemsSource = dir.GetDirectories().Select(BuildNode).ToList();
         return node;
     }
 
