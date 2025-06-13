@@ -102,6 +102,7 @@ public partial class App : Application
                 win.Show();
             };
 
+
             var themeSettingsItem = new NativeMenuItem("Theme Settings...");
             themeSettingsItem.Click += (_, _) =>
             {
