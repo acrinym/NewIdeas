@@ -22,9 +22,9 @@ public class FileWatcherPlugin : IPlugin
         {
             AcceptsReturn = true,
             IsReadOnly = true,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             Height = 300
         };
+        ScrollViewer.SetVerticalScrollBarVisibility(_log, ScrollBarVisibility.Auto);
         selectButton.Click += async (_, __) =>
         {
             var dlg = new OpenFolderDialog();

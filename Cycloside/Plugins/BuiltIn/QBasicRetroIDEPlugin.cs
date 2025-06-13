@@ -109,7 +109,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         var exitItem = new MenuItem { Header = "E_xit" };
         exitItem.Click += (_, _) => _window?.Close();
 
-        var fileMenu = new MenuItem { Header = "_File", Items = new[] { newItem, openItem, saveItem, saveAsItem, new Separator(), projectItem, new Separator(), exitItem } };
+        var fileMenu = new MenuItem { Header = "_File", ItemsSource = new object[] { newItem, openItem, saveItem, saveAsItem, new Separator(), projectItem, new Separator(), exitItem } };
 
         var undo = new MenuItem { Header = "_Undo" };
         undo.Click += (_, _) => _editor?.Undo();
@@ -122,29 +122,29 @@ public class QBasicRetroIDEPlugin : IPlugin
         var paste = new MenuItem { Header = "_Paste" };
         paste.Click += (_, _) => _editor?.Paste();
 
-        var editMenu = new MenuItem { Header = "_Edit", Items = new[] { undo, redo, new Separator(), cut, copy, paste } };
+        var editMenu = new MenuItem { Header = "_Edit", ItemsSource = new object[] { undo, redo, new Separator(), cut, copy, paste } };
 
         var find = new MenuItem { Header = "_Find" };
         find.Click += async (_, _) => await Find();
         var replace = new MenuItem { Header = "_Replace" };
         replace.Click += async (_, _) => await Replace();
 
-        var searchMenu = new MenuItem { Header = "_Search", Items = new[] { find, replace } };
+        var searchMenu = new MenuItem { Header = "_Search", ItemsSource = new object[] { find, replace } };
 
         var compile = new MenuItem { Header = "_Compile && Run" };
         compile.Click += async (_, _) => await CompileRun();
         var runExe = new MenuItem { Header = "_Run Executable" };
         runExe.Click += async (_, _) => await RunExecutable();
-        var runMenu = new MenuItem { Header = "_Run", Items = new[] { compile, runExe } };
+        var runMenu = new MenuItem { Header = "_Run", ItemsSource = new object[] { compile, runExe } };
 
         var settings = new MenuItem { Header = "_Settings" };
         settings.Click += (_, _) => OpenSettings();
 
         var helpItem = new MenuItem { Header = "_Help" };
         helpItem.Click += (_, _) => ShowHelp();
-        var helpMenu = new MenuItem { Header = "_Help", Items = new[] { helpItem } };
+        var helpMenu = new MenuItem { Header = "_Help", ItemsSource = new object[] { helpItem } };
 
-        return new Menu { Items = new[] { fileMenu, editMenu, searchMenu, runMenu, settings, helpMenu } };
+        return new Menu { ItemsSource = new object[] { fileMenu, editMenu, searchMenu, runMenu, settings, helpMenu } };
     }
 
     private async Task OpenProject()
@@ -165,13 +165,13 @@ public class QBasicRetroIDEPlugin : IPlugin
             return;
         if (string.IsNullOrWhiteSpace(_projectPath))
         {
-            _projectTree.Items = null;
+            _projectTree.ItemsSource = null;
             return;
         }
         var root = new TreeViewItem { Header = Path.GetFileName(_projectPath), IsExpanded = true };
         var items = Directory.GetFiles(_projectPath, "*.bas").Select(f => new TreeViewItem { Header = Path.GetFileName(f), Tag = f }).ToList<object>();
-        root.Items = items;
-        _projectTree.Items = new[] { root };
+        root.ItemsSource = items;
+        _projectTree.ItemsSource = new[] { root };
     }
 
     private async Task LoadFile(string path)
@@ -318,8 +318,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         var line = _editor.TextArea.Caret.Line;
         var col = _editor.TextArea.Caret.Column;
         var file = string.IsNullOrWhiteSpace(_currentFile) ? "Untitled" : Path.GetFileName(_currentFile);
-        var mode = _editor.TextArea.OverwriteMode ? "OVR" : "INS";
-        _status.Text = $"Ln {line} Col {col} - {file} [{mode}]";
+        _status.Text = $"Ln {line} Col {col} - {file}";
     }
 
     private async void Window_KeyDown(object? sender, KeyEventArgs e)
@@ -386,7 +385,7 @@ public class QBasicRetroIDEPlugin : IPlugin
             _fontSizeBox = new TextBox { Text = fontSize.ToString() };
             panel.Children.Add(_fontSizeBox);
             var ok = new Button { Content = "OK", IsDefault = true };
-            ok.Click += (_, _) => { DialogResult = true; Close(); };
+            ok.Click += (_, _) => Close(true);
             var cancel = new Button { Content = "Cancel", IsCancel = true };
             var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             btns.Children.Add(ok);
