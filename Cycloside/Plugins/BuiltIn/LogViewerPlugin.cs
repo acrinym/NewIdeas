@@ -26,15 +26,18 @@ public class LogViewerPlugin : IPlugin
             IsReadOnly = true,
             Height = 300
         };
+        ScrollViewer.SetVerticalScrollBarVisibility(_box, ScrollBarVisibility.Auto);
+
         var filterBox = new TextBox { Watermark = "Filter" };
         filterBox.PropertyChanged += (_, e) =>
         {
             if (e.Property == TextBox.TextProperty)
             {
-                _filter = filterBox.Text;
+                _filter = filterBox.Text; // safest, direct value
                 Reload();
             }
         };
+
         var openButton = new Button { Content = "Open Log" };
         openButton.Click += async (_, __) =>
         {
@@ -46,6 +49,7 @@ public class LogViewerPlugin : IPlugin
                 StartTailing(_file);
             }
         };
+
         var panel = new StackPanel();
         panel.Children.Add(openButton);
         panel.Children.Add(filterBox);

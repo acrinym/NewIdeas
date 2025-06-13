@@ -61,6 +61,7 @@ public partial class App : Application
             var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();
 
+
             WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
 
 
@@ -101,6 +102,7 @@ public partial class App : Application
                 win.Show();
             };
 
+
             var themeSettingsItem = new NativeMenuItem("Theme Settings...");
             themeSettingsItem.Click += (_, _) =>
             {
@@ -127,6 +129,7 @@ public partial class App : Application
                 win.Show();
             };
             settingsMenu.Menu.Items.Add(profileItem);
+
 
             var runtimeItem = new NativeMenuItem("Runtime Settings...");
             runtimeItem.Click += (_, _) =>
