@@ -16,11 +16,22 @@ namespace Cycloside.Scripting
         public InterpreterContext Context { get; }
         private readonly Dictionary<string, Action<string[]>> _commands;
         private readonly Dictionary<string, object> _vars = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, object> _readonlyVars = new(StringComparer.OrdinalIgnoreCase);
         public bool Exit { get; private set; }
 
         public CyclosideBasicEngine(InterpreterContext context)
         {
             Context = context;
+            // Built-in read-only variables expose core paths and metadata
+            _readonlyVars["APP_NAME"] = context.AppName;
+            _readonlyVars["APP_VERSION"] = context.AppVersion;
+            if (!string.IsNullOrEmpty(context.PluginDirectory))
+                _readonlyVars["PLUGIN_DIR"] = context.PluginDirectory;
+            if (!string.IsNullOrEmpty(context.SettingsPath))
+                _readonlyVars["SETTINGS_PATH"] = context.SettingsPath;
+            if (!string.IsNullOrEmpty(context.MarketplaceUrl))
+                _readonlyVars["MARKETPLACE_URL"] = context.MarketplaceUrl;
+
             _commands = new(StringComparer.OrdinalIgnoreCase)
             {
                 // Core
@@ -89,8 +100,21 @@ namespace Cycloside.Scripting
         }
 
         // Variable system
-        public object GetVar(string name) => _vars.TryGetValue(name.Trim(), out var v) ? v : "";
-        public void SetVar(string name, object val) => _vars[name.Trim()] = val;
+        public object GetVar(string name)
+        {
+            name = name.Trim();
+            return _vars.TryGetValue(name, out var v)
+                ? v
+                : _readonlyVars.TryGetValue(name, out var rv) ? rv : "";
+        }
+
+        public void SetVar(string name, object val)
+        {
+            name = name.Trim();
+            if (_readonlyVars.ContainsKey(name))
+                return; // ignore attempts to overwrite built-in vars
+            _vars[name] = val;
+        }
 
         // Utility: expands any $(var) or ${var} in a string
         private string ExpandVars(string input)
@@ -237,6 +261,12 @@ namespace Cycloside.Scripting
         public Func<string, string> GetDiskUsage { get; set; }
         public Func<string[]> ListProcesses { get; set; }
         public Action<string> AppendLog { get; set; }
+        // Built-in values that scripts can read but not modify
+        public string AppName { get; init; } = "Cycloside";
+        public string AppVersion { get; init; } = "1.0.0";
+        public string PluginDirectory { get; init; } = string.Empty;
+        public string SettingsPath { get; init; } = string.Empty;
+        public string MarketplaceUrl { get; init; } = string.Empty;
         // ...extend as needed
     }
 }
