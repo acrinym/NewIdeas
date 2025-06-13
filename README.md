@@ -8,6 +8,8 @@ be found under `docs/examples/`.
 Cycloside now includes a lightweight **Skin/Theme Editor** accessible from the
 tray menu. Edit your `.axaml` files with live previews and experiment with
 different cursors before applying a new look.
+Runtime settings allow enabling crash logging and toggling Safe Mode which
+disables built-in plugins if they cause issues.
 
 ## VIS_AVS_JS
 

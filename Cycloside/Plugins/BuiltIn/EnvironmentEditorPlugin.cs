@@ -23,9 +23,8 @@ public class EnvironmentEditorPlugin : IPlugin
 
         _grid = new DataGrid
         {
-            Items = _items,
-            AutoGenerateColumns = true,
-            CanUserAddRows = true
+            ItemsSource = _items,
+            AutoGenerateColumns = true
         };
         var saveButton = new Button { Content = "Save" };
         saveButton.Click += (_, __) =>

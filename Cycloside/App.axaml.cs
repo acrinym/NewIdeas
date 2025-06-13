@@ -37,7 +37,25 @@ public partial class App : Application
             manager.LoadPlugins();
             manager.StartWatching();
 
-            // Built-in plugins are disabled in this trimmed build
+            if (!settings.DisableBuiltInPlugins)
+            {
+                manager.AddPlugin(new DateTimeOverlayPlugin());
+                manager.AddPlugin(new MP3PlayerPlugin());
+                manager.AddPlugin(new MacroPlugin());
+                manager.AddPlugin(new TextEditorPlugin());
+                manager.AddPlugin(new WallpaperPlugin());
+                manager.AddPlugin(new ClipboardManagerPlugin());
+                manager.AddPlugin(new FileWatcherPlugin());
+                manager.AddPlugin(new ProcessMonitorPlugin());
+                manager.AddPlugin(new TaskSchedulerPlugin());
+                manager.AddPlugin(new DiskUsagePlugin());
+                manager.AddPlugin(new LogViewerPlugin());
+                manager.AddPlugin(new EnvironmentEditorPlugin());
+                manager.AddPlugin(new JezzballPlugin());
+                manager.AddPlugin(new WidgetHostPlugin(manager));
+                manager.AddPlugin(new WinampVisHostPlugin());
+                manager.AddPlugin(new QBasicRetroIDEPlugin());
+            }
 
             var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();
@@ -99,6 +117,7 @@ public partial class App : Application
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
+            settingsMenu.Menu.Items.Add(themeEditorItem);
             settingsMenu.Menu.Items.Add(themeEditorItem);
 
             var profileItem = new NativeMenuItem("Workspace Profiles...");

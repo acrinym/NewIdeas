@@ -24,11 +24,18 @@ public class LogViewerPlugin : IPlugin
         {
             AcceptsReturn = true,
             IsReadOnly = true,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             Height = 300
         };
+        ScrollViewer.SetVerticalScrollBarVisibility(_box, ScrollBarVisibility.Auto);
         var filterBox = new TextBox { Watermark = "Filter" };
-        filterBox.GetObservable(TextBox.TextProperty).Subscribe(v => { _filter = v; Reload(); });
+        filterBox.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == TextBox.TextProperty)
+            {
+                _filter = e.NewValue as string;
+                Reload();
+            }
+        };
         var openButton = new Button { Content = "Open Log" };
         openButton.Click += async (_, __) =>
         {
