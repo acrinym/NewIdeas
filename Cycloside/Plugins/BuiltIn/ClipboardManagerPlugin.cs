@@ -23,8 +23,12 @@ public class ClipboardManagerPlugin : IPlugin
         _list = new ListBox();
         _list.DoubleTapped += async (_, __) =>
         {
-            if (_list.SelectedItem is string text)
-                await _window!.Clipboard!.SetTextAsync(text);
+            if (_list.SelectedItem is string text && _window != null)
+            {
+                var cb = TopLevel.GetTopLevel(_window)?.Clipboard;
+                if (cb != null)
+                    await cb.SetTextAsync(text);
+            }
         };
 
         _window = new Window
@@ -41,7 +45,8 @@ public class ClipboardManagerPlugin : IPlugin
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += async (_, __) =>
         {
-            var text = await _window!.Clipboard!.GetTextAsync();
+            var cb = _window != null ? TopLevel.GetTopLevel(_window)?.Clipboard : null;
+            var text = cb != null ? await cb.GetTextAsync() : null;
             if (!string.IsNullOrEmpty(text) && (_history.Count == 0 || _history[^1] != text))
             {
                 _history.Add(text);

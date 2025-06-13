@@ -28,6 +28,9 @@ Here's a description of the various folders:
                       This is what powers AVS's expression evaluators, feel free
                       to include/modify the code in your own AVS APE plugins
 
+The AVS source tree above (`vis/vis_avs`) is the canonical location in this
+repository. Older copies under `vis/avs` have been removed.
+
 /vis/vis_test - Sample code for a Visualisation plugin
 
 /vis/wa5vis.txt - Describes how to embed your visualisation plugin in the 

@@ -3,11 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
+using Cycloside.Plugins.BuiltIn;
 using Avalonia.Input;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Views;
 
 namespace Cycloside;
 
@@ -25,6 +27,13 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = SettingsManager.Settings;
+            if (settings.FirstRun)
+            {
+                var wiz = new WizardWindow();
+                wiz.ShowDialog(desktop.MainWindow).GetAwaiter().GetResult();
+                settings = SettingsManager.Settings;
+            }
+
             SkinManager.LoadCurrent();
             var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
                 ? selectedTheme
@@ -59,6 +68,7 @@ public partial class App : Application
 
             var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();
+
 
             WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
 
@@ -100,6 +110,7 @@ public partial class App : Application
                 win.Show();
             };
 
+
             var themeSettingsItem = new NativeMenuItem("Theme Settings...");
             themeSettingsItem.Click += (_, _) =>
             {
@@ -118,7 +129,6 @@ public partial class App : Application
             settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
             settingsMenu.Menu.Items.Add(themeEditorItem);
-            settingsMenu.Menu.Items.Add(themeEditorItem);
 
             var profileItem = new NativeMenuItem("Workspace Profiles...");
             profileItem.Click += (_, _) =>
@@ -127,6 +137,7 @@ public partial class App : Application
                 win.Show();
             };
             settingsMenu.Menu.Items.Add(profileItem);
+
 
             var runtimeItem = new NativeMenuItem("Runtime Settings...");
             runtimeItem.Click += (_, _) =>

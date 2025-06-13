@@ -17,21 +17,26 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
-    <PackageReference Include="Avalonia.Controls.HotKeys" Version="1.0.0" />
+    <!-- Use the latest needed for AvaloniaEdit -->
     <PackageReference Include="AvaloniaEdit" Version="1.1.0" />
-    <PackageReference Include="CliWrap" Version="3.6.9" />
-    <PackageReference Include="Avalonia.Controls.Notifications" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.1" />
+    <PackageReference Include="Avalonia.Controls.HotKeys" Version="1.0.0" />
+    <PackageReference Include="CliWrap" Version="3.7.0" /> <!-- prefer latest -->
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="Avalonia.Controls.Notifications" Version="11.3.0" />
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.1">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="SharpHook" Version="5.0.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
   </ItemGroup>
 
   <!-- Exclude built-in plugins to simplify build in this environment -->
+  <!--
   <ItemGroup>
     <Compile Remove="Plugins/BuiltIn/**" />
   </ItemGroup>
-
+  -->
 
 </Project>
