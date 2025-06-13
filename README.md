@@ -36,3 +36,7 @@ After the toolchain is set up you can compile the project by executing
 ## Chrome API Emulator
 
 `chrome-api-emulator.user.js` provides a lightweight emulation of several Chrome extension APIs for Tampermonkey. The script exposes `chrome.storage.sync`, `chrome.contextMenus`, and basic runtime messaging. It also includes a small drag-and-drop zone so you can drop additional JavaScript files onto any page to load them as plugins.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit guidelines.
