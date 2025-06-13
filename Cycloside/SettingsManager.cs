@@ -22,6 +22,7 @@ public class AppSettings
     public Dictionary<string, ThemeSnapshot> SavedThemes { get; set; } = new();
     public string ActiveProfile { get; set; } = "default";
     public string RemoteApiToken { get; set; } = "secret";
+    public bool FirstRun { get; set; } = true;
 }
 
 public static class SettingsManager

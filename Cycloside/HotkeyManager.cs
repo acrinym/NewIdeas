@@ -68,13 +68,11 @@ public static class HotkeyManager
         {
             _macManager?.UnregisterAll();
         }
-        else
-        {
-            // Nothing to unregister on unsupported platforms
         else if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
         {
             _sharpManager?.UnregisterAll();
         }
+
         _callbacks.Clear();
     }
 }
