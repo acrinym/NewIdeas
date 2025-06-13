@@ -30,10 +30,10 @@
   </ItemGroup>
 
   <!-- Exclude built-in plugins to simplify build in this environment -->
- <!-- <ItemGroup> -->
-<!--    <Compile Remove="Plugins/BuiltIn/**" /> -->
-
-<!--  </ItemGroup> -->
-
+  <!--
+  <ItemGroup>
+    <Compile Remove="Plugins/BuiltIn/**" />
+  </ItemGroup>
+  -->
 
 </Project>

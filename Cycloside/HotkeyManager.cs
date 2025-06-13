@@ -11,6 +11,7 @@ namespace Cycloside;
 public static class HotkeyManager
 {
     private static readonly MacGlobalHotkeyManager? _macManager;
+    private static readonly Dictionary<KeyGesture, Action> _macCallbacks = new();
     private static readonly SharpGlobalHotkeyManager? _sharpManager;
     private static readonly Dictionary<KeyGesture, Action> _callbacks = new();
 
