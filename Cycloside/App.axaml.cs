@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
-using Cycloside.Plugins.BuiltIn;
 using Avalonia.Input;
 using System;
 using System.IO;
@@ -118,6 +117,7 @@ public partial class App : Application
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
+            settingsMenu.Menu.Items.Add(themeEditorItem);
             settingsMenu.Menu.Items.Add(themeEditorItem);
 
             var profileItem = new NativeMenuItem("Workspace Profiles...");
