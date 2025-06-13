@@ -12,6 +12,7 @@ public class AppSettings
     public Dictionary<string, string> PluginVersions { get; set; } = new();
     public bool PluginIsolation { get; set; } = true;
     public bool PluginCrashLogging { get; set; } = true;
+    public bool DisableBuiltInPlugins { get; set; } = false;
     public string ActiveSkin { get; set; } = "Default";
     public string Theme { get; set; } = "MintGreen";
     public Dictionary<string, string> ComponentThemes { get; set; } = new();

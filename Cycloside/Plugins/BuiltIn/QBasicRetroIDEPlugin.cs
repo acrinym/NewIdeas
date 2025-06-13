@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -27,7 +26,7 @@ public class QBasicRetroIDEPlugin : IPlugin
 
     public string Name => "QBasic Retro IDE";
     public string Description => "Edit and run .BAS files using QB64 Phoenix";
-    public Version Version => new(0, 2, 0); // Highest version
+    public Version Version => new(0,2,0);
     public Widgets.IWidget? Widget => null;
 
     public void Start()
@@ -95,7 +94,6 @@ public class QBasicRetroIDEPlugin : IPlugin
         _editor = null;
     }
 
-    // --- Menu and project tree
     private Menu BuildMenu()
     {
         var newItem = new MenuItem { Header = "_New" };
@@ -135,7 +133,9 @@ public class QBasicRetroIDEPlugin : IPlugin
 
         var compile = new MenuItem { Header = "_Compile && Run" };
         compile.Click += async (_, _) => await CompileRun();
-        var runMenu = new MenuItem { Header = "_Run", Items = new[] { compile } };
+        var runExe = new MenuItem { Header = "_Run Executable" };
+        runExe.Click += async (_, _) => await RunExecutable();
+        var runMenu = new MenuItem { Header = "_Run", Items = new[] { compile, runExe } };
 
         var settings = new MenuItem { Header = "_Settings" };
         settings.Click += (_, _) => OpenSettings();
@@ -182,16 +182,6 @@ public class QBasicRetroIDEPlugin : IPlugin
         UpdateStatus();
     }
 
-    private async Task OpenFile()
-    {
-        if (_window == null) return;
-        var dlg = new OpenFileDialog();
-        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var files = await dlg.ShowAsync(_window);
-        if (files is { Length: > 0 })
-            await LoadFile(files[0]);
-    }
-
     private async Task SaveFile()
     {
         if (_currentFile == null)
@@ -232,7 +222,23 @@ public class QBasicRetroIDEPlugin : IPlugin
         }
         catch (Exception ex)
         {
-            new WindowNotificationManager(_window).Show(new Notification("QB64", ex.Message, NotificationType.Error));
+            Logger.Log($"QB64 compile error: {ex.Message}");
+        }
+    }
+
+    private async Task RunExecutable()
+    {
+        if (_window == null) return;
+        var exe = _currentFile == null
+            ? null
+            : Path.ChangeExtension(_currentFile, OperatingSystem.IsWindows() ? "exe" : "");
+        if (exe != null && File.Exists(exe))
+        {
+            await Cli.Wrap(exe).ExecuteAsync();
+        }
+        else
+        {
+            await CompileRun();
         }
     }
 
@@ -242,6 +248,16 @@ public class QBasicRetroIDEPlugin : IPlugin
         _editor.Text = string.Empty;
         _currentFile = null;
         UpdateStatus();
+    }
+
+    private async Task OpenFile()
+    {
+        if (_window == null) return;
+        var dlg = new OpenFileDialog();
+        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
+        var files = await dlg.ShowAsync(_window);
+        if (files is { Length: > 0 })
+            await LoadFile(files[0]);
     }
 
     private async Task Find()
@@ -292,7 +308,7 @@ public class QBasicRetroIDEPlugin : IPlugin
     {
         if (_window != null)
         {
-            new WindowNotificationManager(_window).Show(new Notification("QB64", "QB64 Phoenix Edition - https://github.com/QB64-Phoenix-Edition/QB64pe", NotificationType.Information));
+            Logger.Log("QB64 Phoenix Edition - https://github.com/QB64-Phoenix-Edition/QB64pe");
         }
     }
 

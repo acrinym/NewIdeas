@@ -26,3 +26,10 @@ it with `CursorManager.ApplyFromSettings`. Values correspond to
 can supply their own cursor via skins or themes as needed.
 
 See the [theme example](examples/theme-example.md) and [skin example](examples/skin-example.md) for sample resource files. The [custom cursor example](examples/custom-cursor-example.md) shows how to configure cursors.
+
+## Skin/Theme Editor
+
+Use **Settings → Skin/Theme Editor** from the tray icon to edit theme and skin files.
+Select a theme or skin, edit the XAML directly and hit **Preview** to test it on
+a sample window. The editor also exposes a list of available cursors so you can
+quickly try them out while designing your look.
