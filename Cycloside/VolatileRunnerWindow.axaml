@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.VolatileRunnerWindow"
+        Width="400" Height="300"
+        Title="Run Script">
+    <DockPanel Margin="5">
+        <ComboBox DockPanel.Dock="Top" x:Name="LangBox">
+            <ComboBoxItem Content="Lua"/>
+            <ComboBoxItem Content="C#"/>
+        </ComboBox>
+        <TextBox x:Name="CodeBox" AcceptsReturn="True" FontFamily="monospace"/>
+        <Button DockPanel.Dock="Bottom" Content="Run" HorizontalAlignment="Right" Click="OnRun"/>
+    </DockPanel>
+</Window>

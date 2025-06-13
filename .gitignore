@@ -2,3 +2,4 @@
 */obj/
 *.user.js
 *.user.js.txt
+!chrome-api-emulator.user.js

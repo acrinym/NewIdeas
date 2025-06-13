@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 
 namespace Cycloside.Plugins
 {
@@ -10,9 +11,13 @@ namespace Cycloside.Plugins
     {
         private readonly List<IPlugin> _plugins = new();
         private readonly Dictionary<IPlugin, bool> _enabled = new();
+        private readonly Dictionary<IPlugin, PluginChangeStatus> _status = new();
         private FileSystemWatcher? _watcher;
         private readonly object _lock = new();
         private readonly Action<string>? _notify;
+
+        public bool IsolationEnabled { get; set; } = true;
+        public bool CrashLoggingEnabled { get; set; } = true;
 
         public string PluginDirectory { get; }
         public IReadOnlyList<IPlugin> Plugins => _plugins.AsReadOnly();
@@ -21,6 +26,8 @@ namespace Cycloside.Plugins
         {
             PluginDirectory = pluginDirectory;
             _notify = notify;
+            IsolationEnabled = SettingsManager.Settings.PluginIsolation;
+            CrashLoggingEnabled = SettingsManager.Settings.PluginCrashLogging;
         }
 
         public void StartWatching()
@@ -48,7 +55,17 @@ namespace Cycloside.Plugins
             {
                 try
                 {
-                    var asm = Assembly.LoadFrom(dll);
+                    Assembly asm;
+                    if (IsolationEnabled)
+                    {
+                        var ctx = new PluginLoadContext(dll);
+                        asm = ctx.LoadPlugin(dll);
+                    }
+                    else
+                    {
+                        asm = Assembly.LoadFrom(dll);
+                    }
+
                     var types = asm.GetTypes().Where(t => typeof(IPlugin).IsAssignableFrom(t) && !t.IsAbstract);
                     foreach (var type in types)
                     {
@@ -72,6 +89,7 @@ namespace Cycloside.Plugins
                 StopAll();
                 _plugins.Clear();
                 _enabled.Clear();
+                _status.Clear();
                 LoadPlugins();
             }
         }
@@ -90,21 +108,47 @@ namespace Cycloside.Plugins
         public void AddPlugin(IPlugin plugin)
         {
             _plugins.Add(plugin);
+
+            var versions = SettingsManager.Settings.PluginVersions;
+            if (!versions.TryGetValue(plugin.Name, out var ver))
+            {
+                _status[plugin] = PluginChangeStatus.New;
+            }
+            else if (ver != plugin.Version.ToString())
+            {
+                _status[plugin] = PluginChangeStatus.Updated;
+            }
+            else
+            {
+                _status[plugin] = PluginChangeStatus.None;
+            }
+            versions[plugin.Name] = plugin.Version.ToString();
+            SettingsManager.Save();
+
             EnablePlugin(plugin);
         }
 
         public void EnablePlugin(IPlugin plugin)
         {
-            try
+            if (IsolationEnabled)
+            {
+                try
+                {
+                    plugin.Start();
+                    _enabled[plugin] = true;
+                }
+                catch (Exception ex)
+                {
+                    _enabled[plugin] = false;
+                    if (CrashLoggingEnabled)
+                        Logger.Log($"{plugin.Name} crashed: {ex.Message}");
+                    _notify?.Invoke($"[{plugin.Name}] crashed and was disabled.");
+                }
+            }
+            else
             {
                 plugin.Start();
                 _enabled[plugin] = true;
-            }
-            catch (Exception ex)
-            {
-                _enabled[plugin] = false;
-                Logger.Log($"{plugin.Name} crashed: {ex.Message}");
-                _notify?.Invoke($"[{plugin.Name}] crashed and was disabled.");
             }
         }
 
@@ -119,12 +163,15 @@ namespace Cycloside.Plugins
             }
             catch (Exception ex)
             {
-                Logger.Log($"Error stopping {plugin.Name}: {ex.Message}");
+                if (CrashLoggingEnabled)
+                    Logger.Log($"Error stopping {plugin.Name}: {ex.Message}");
             }
 
             _enabled[plugin] = false;
         }
 
         public bool IsEnabled(IPlugin plugin) => _enabled.TryGetValue(plugin, out var e) && e;
+
+        public PluginChangeStatus GetStatus(IPlugin plugin) => _status.TryGetValue(plugin, out var s) ? s : PluginChangeStatus.None;
     }
 }

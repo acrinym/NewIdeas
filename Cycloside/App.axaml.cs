@@ -4,8 +4,10 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
+using Avalonia.Input;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Cycloside;
@@ -24,15 +26,56 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = SettingsManager.Settings;
+            SkinManager.LoadCurrent();
+            var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
+                ? selectedTheme
+                : settings.Theme;
+            ThemeManager.ApplyTheme(this, theme);
+
             var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
             var volatileManager = new VolatilePluginManager();
 
             manager.LoadPlugins();
             manager.StartWatching();
-            manager.AddPlugin(new DateTimeOverlayPlugin());
-            manager.AddPlugin(new MP3PlayerPlugin());
-            manager.AddPlugin(new MacroPlugin());
-            manager.AddPlugin(new WinampVisHostPlugin());
+
+            if (!settings.DisableBuiltInPlugins)
+            {
+                manager.AddPlugin(new DateTimeOverlayPlugin());
+                manager.AddPlugin(new MP3PlayerPlugin());
+                manager.AddPlugin(new MacroPlugin());
+                manager.AddPlugin(new TextEditorPlugin());
+                manager.AddPlugin(new WallpaperPlugin());
+                manager.AddPlugin(new ClipboardManagerPlugin());
+                manager.AddPlugin(new FileWatcherPlugin());
+                manager.AddPlugin(new ProcessMonitorPlugin());
+                manager.AddPlugin(new TaskSchedulerPlugin());
+                manager.AddPlugin(new DiskUsagePlugin());
+                manager.AddPlugin(new LogViewerPlugin());
+                manager.AddPlugin(new EnvironmentEditorPlugin());
+                manager.AddPlugin(new JezzballPlugin());
+                manager.AddPlugin(new WidgetHostPlugin(manager));
+                manager.AddPlugin(new WinampVisHostPlugin());
+                manager.AddPlugin(new QBasicRetroIDEPlugin());
+            }
+
+            var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
+            remoteServer.Start();
+
+
+            WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
+
+
+            HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
+            {
+                var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
+                if (plugin != null)
+                {
+                    if (manager.IsEnabled(plugin))
+                        manager.DisablePlugin(plugin);
+                    else
+                        manager.EnablePlugin(plugin);
+                }
+            });
 
             var iconData = Convert.FromBase64String(TrayIconBase64);
             var trayIcon = new TrayIcon
@@ -59,8 +102,41 @@ public partial class App : Application
                 win.Show();
             };
 
+            var themeSettingsItem = new NativeMenuItem("Theme Settings...");
+            themeSettingsItem.Click += (_, _) =>
+            {
+                var win = new ThemeSettingsWindow();
+                win.Show();
+            };
+
+            var themeEditorItem = new NativeMenuItem("Skin/Theme Editor...");
+            themeEditorItem.Click += (_, _) =>
+            {
+                var win = new SkinThemeEditorWindow();
+                win.Show();
+            };
+
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
+            settingsMenu.Menu.Items.Add(themeSettingsItem);
+            settingsMenu.Menu.Items.Add(themeEditorItem);
+
+            var profileItem = new NativeMenuItem("Workspace Profiles...");
+            profileItem.Click += (_, _) =>
+            {
+                var win = new ProfileEditorWindow(manager);
+                win.Show();
+            };
+            settingsMenu.Menu.Items.Add(profileItem);
+
+
+            var runtimeItem = new NativeMenuItem("Runtime Settings...");
+            runtimeItem.Click += (_, _) =>
+            {
+                var win = new RuntimeSettingsWindow(manager);
+                win.Show();
+            };
+            settingsMenu.Menu.Items.Add(runtimeItem);
 
             // 🪄 Autostart Toggle
             var autostartItem = new NativeMenuItem("Launch at Startup")
@@ -84,9 +160,65 @@ public partial class App : Application
                 autostartItem.IsChecked = settings.LaunchAtStartup;
             };
 
+            // 🎨 Theme Menu
+            var themeMenu = new NativeMenuItem("Themes") { Menu = new NativeMenu() };
+            var themeNames = new[] { "MintGreen", "Matrix", "Orange", "ConsoleGreen", "MonochromeOrange", "DeepBlue" };
+            foreach (var t in themeNames)
+            {
+                var themeItem = new NativeMenuItem(t)
+                {
+                    ToggleType = NativeMenuItemToggleType.Radio,
+                    IsChecked = settings.Theme == t
+                };
+                themeItem.Click += (_, _) =>
+                {
+                    ThemeManager.ApplyTheme(this, t);
+                    settings.Theme = t;
+                    SettingsManager.Save();
+                    foreach (var i in themeMenu.Menu!.Items.OfType<NativeMenuItem>())
+                        i.IsChecked = i == themeItem;
+                };
+                themeMenu.Menu!.Items.Add(themeItem);
+            }
+
             // 🔌 Plugins Menu
             var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
-            foreach (var p in manager.Plugins)
+
+            var newMenu = new NativeMenuItem("New/Updated") { Menu = new NativeMenu() };
+            foreach (var p in manager.Plugins.Where(p => manager.GetStatus(p) != Plugins.PluginChangeStatus.None))
+            {
+                var tag = manager.GetStatus(p) == Plugins.PluginChangeStatus.New ? " (NEW)" : " (UPDATED)";
+                var item = new NativeMenuItem(p.Name + tag)
+                {
+                    ToggleType = NativeMenuItemToggleType.CheckBox,
+                    IsChecked = settings.PluginEnabled.TryGetValue(p.Name, out var en) ? en : true
+                };
+                item.Click += (_, _) =>
+                {
+                    if (manager.IsEnabled(p))
+                        manager.DisablePlugin(p);
+                    else
+                        manager.EnablePlugin(p);
+
+                    item.IsChecked = manager.IsEnabled(p);
+                    settings.PluginEnabled[p.Name] = item.IsChecked;
+                    SettingsManager.Save();
+                };
+                newMenu.Menu!.Items.Add(item);
+
+                if (item.IsChecked && !manager.IsEnabled(p))
+                    manager.EnablePlugin(p);
+                else if (!item.IsChecked && manager.IsEnabled(p))
+                    manager.DisablePlugin(p);
+            }
+
+            if (newMenu.Menu!.Items.Count > 0)
+            {
+                pluginsMenu.Menu!.Items.Add(newMenu);
+                pluginsMenu.Menu!.Items.Add(new NativeMenuItemSeparator());
+            }
+
+            foreach (var p in manager.Plugins.Where(p => manager.GetStatus(p) == Plugins.PluginChangeStatus.None))
             {
                 var item = new NativeMenuItem(p.Name)
                 {
@@ -144,6 +276,14 @@ public partial class App : Application
             volatileMenu.Menu!.Items.Add(luaItem);
             volatileMenu.Menu.Items.Add(csItem);
 
+            var inlineItem = new NativeMenuItem("Run Inline...");
+            inlineItem.Click += (_, _) =>
+            {
+                var win = new VolatileRunnerWindow(volatileManager);
+                win.Show();
+            };
+            volatileMenu.Menu.Items.Add(inlineItem);
+
             // 📁 Open Plugins Folder
             var openPluginFolderItem = new NativeMenuItem("Open Plugins Folder");
             openPluginFolderItem.Click += (_, _) =>
@@ -165,6 +305,8 @@ public partial class App : Application
             exitItem.Click += (_, _) =>
             {
                 manager.StopAll();
+                remoteServer.Stop();
+                HotkeyManager.UnregisterAll();
                 desktop.Shutdown();
             };
 
@@ -172,6 +314,7 @@ public partial class App : Application
             menu.Items.Add(settingsMenu);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(autostartItem);
+            menu.Items.Add(themeMenu);
             menu.Items.Add(new NativeMenuItemSeparator());
             menu.Items.Add(pluginsMenu);
             menu.Items.Add(volatileMenu);
