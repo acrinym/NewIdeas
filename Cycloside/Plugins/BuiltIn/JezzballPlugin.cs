@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using System;
@@ -126,7 +127,7 @@ internal class JezzballControl : Control
         foreach (var a in _areas)
             context.DrawRectangle(null, new Pen(Brushes.White,1), a);
         foreach (var b in _balls)
-            context.FillEllipse(Brushes.Red, new Rect(b.X-BallRadius, b.Y-BallRadius, BallRadius*2, BallRadius*2));
+            context.DrawEllipse(Brushes.Red, null, new Rect(b.X-BallRadius, b.Y-BallRadius, BallRadius*2, BallRadius*2));
     }
 
     private class Ball

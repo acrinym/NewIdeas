@@ -17,6 +17,16 @@ class Program
             return;
         }
 
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            if (e.ExceptionObject is Exception ex)
+                Logger.Log($"Unhandled: {ex}");
+        };
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Logger.Log($"Unobserved: {e.Exception}");
+        };
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
