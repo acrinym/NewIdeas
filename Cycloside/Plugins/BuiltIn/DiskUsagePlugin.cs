@@ -54,6 +54,7 @@ public class DiskUsagePlugin : IPlugin
         long size = dir.GetFiles().Sum(f => f.Length);
         foreach (var sub in dir.GetDirectories())
             size += GetDirSize(sub);
+
         var node = new TreeViewItem { Header = $"{dir.Name} ({size / 1024 / 1024} MB)" };
         node.ItemsSource = dir.GetDirectories().Select(BuildNode).ToList();
         return node;

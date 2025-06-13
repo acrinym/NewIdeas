@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
+using Cycloside.Plugins.BuiltIn;
 using Avalonia.Input;
 using System;
 using System.IO;
@@ -59,6 +60,7 @@ public partial class App : Application
 
             var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();
+
 
             WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
 
@@ -118,7 +120,6 @@ public partial class App : Application
             settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
             settingsMenu.Menu.Items.Add(themeEditorItem);
-            settingsMenu.Menu.Items.Add(themeEditorItem);
 
             var profileItem = new NativeMenuItem("Workspace Profiles...");
             profileItem.Click += (_, _) =>
@@ -127,6 +128,7 @@ public partial class App : Application
                 win.Show();
             };
             settingsMenu.Menu.Items.Add(profileItem);
+
 
             var runtimeItem = new NativeMenuItem("Runtime Settings...");
             runtimeItem.Click += (_, _) =>

@@ -29,6 +29,7 @@ public static class HotkeyManager
         }
         else if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
         {
+            // Hotkeys are not currently supported on other platforms
             _sharpManager = new SharpGlobalHotkeyManager();
             _sharpManager.HotKeyPressed += gesture =>
             {
@@ -52,6 +53,7 @@ public static class HotkeyManager
         }
         else if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
         {
+            // Hotkeys not supported on this platform
             _sharpManager?.Register(gesture);
         }
     }
@@ -65,6 +67,9 @@ public static class HotkeyManager
         {
             _macManager?.UnregisterAll();
         }
+        else
+        {
+            // Nothing to unregister on unsupported platforms
         else if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
         {
             _sharpManager?.UnregisterAll();
