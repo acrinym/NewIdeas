@@ -44,7 +44,9 @@ public class ProcessMonitorPlugin : IPlugin
                     }
                     catch { return $"{p.ProcessName} - ?"; }
                 }).ToArray();
-            _list!.Items = items;
+            _list!.Items.Clear();
+            foreach (var i in items)
+                _list.Items.Add(i);
         };
         _timer.Start();
     }

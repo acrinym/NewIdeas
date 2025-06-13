@@ -38,22 +38,25 @@ public partial class App : Application
             manager.LoadPlugins();
             manager.StartWatching();
 
-            manager.AddPlugin(new DateTimeOverlayPlugin());
-            manager.AddPlugin(new MP3PlayerPlugin());
-            manager.AddPlugin(new MacroPlugin());
-            manager.AddPlugin(new TextEditorPlugin());
-            manager.AddPlugin(new WallpaperPlugin());
-            manager.AddPlugin(new ClipboardManagerPlugin());
-            manager.AddPlugin(new FileWatcherPlugin());
-            manager.AddPlugin(new ProcessMonitorPlugin());
-            manager.AddPlugin(new TaskSchedulerPlugin());
-            manager.AddPlugin(new DiskUsagePlugin());
-            manager.AddPlugin(new LogViewerPlugin());
-            manager.AddPlugin(new EnvironmentEditorPlugin());
-            manager.AddPlugin(new JezzballPlugin());
-
-            manager.AddPlugin(new WidgetHostPlugin(manager));
-            manager.AddPlugin(new WinampVisHostPlugin());
+            if (!settings.DisableBuiltInPlugins)
+            {
+                manager.AddPlugin(new DateTimeOverlayPlugin());
+                manager.AddPlugin(new MP3PlayerPlugin());
+                manager.AddPlugin(new MacroPlugin());
+                manager.AddPlugin(new TextEditorPlugin());
+                manager.AddPlugin(new WallpaperPlugin());
+                manager.AddPlugin(new ClipboardManagerPlugin());
+                manager.AddPlugin(new FileWatcherPlugin());
+                manager.AddPlugin(new ProcessMonitorPlugin());
+                manager.AddPlugin(new TaskSchedulerPlugin());
+                manager.AddPlugin(new DiskUsagePlugin());
+                manager.AddPlugin(new LogViewerPlugin());
+                manager.AddPlugin(new EnvironmentEditorPlugin());
+                manager.AddPlugin(new JezzballPlugin());
+                manager.AddPlugin(new WidgetHostPlugin(manager));
+                manager.AddPlugin(new WinampVisHostPlugin());
+                manager.AddPlugin(new QBasicRetroIDEPlugin());
+            }
 
             var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();
@@ -105,9 +108,17 @@ public partial class App : Application
                 win.Show();
             };
 
+            var themeEditorItem = new NativeMenuItem("Skin/Theme Editor...");
+            themeEditorItem.Click += (_, _) =>
+            {
+                var win = new SkinThemeEditorWindow();
+                win.Show();
+            };
+
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
+            settingsMenu.Menu.Items.Add(themeEditorItem);
 
             var profileItem = new NativeMenuItem("Workspace Profiles...");
             profileItem.Click += (_, _) =>

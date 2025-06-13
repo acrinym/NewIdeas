@@ -22,7 +22,6 @@ public class FileWatcherPlugin : IPlugin
         {
             AcceptsReturn = true,
             IsReadOnly = true,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             Height = 300
         };
         selectButton.Click += async (_, __) =>

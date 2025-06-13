@@ -33,7 +33,7 @@ public partial class ProfileEditorWindow : Window
     private void BuildProfileList()
     {
         var list = this.FindControl<ListBox>("ProfileList");
-        list.Items = WorkspaceProfiles.Profiles.Keys.ToList();
+        list.ItemsSource = WorkspaceProfiles.Profiles.Keys.ToList();
         list.SelectionChanged += (_, _) => LoadSelectedProfile();
         if (list.Items.Count > 0)
             list.SelectedIndex = 0;

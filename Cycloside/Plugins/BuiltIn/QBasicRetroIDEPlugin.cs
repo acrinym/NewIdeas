@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -27,7 +26,7 @@ public class QBasicRetroIDEPlugin : IPlugin
 
     public string Name => "QBasic Retro IDE";
     public string Description => "Edit and run .BAS files using QB64 Phoenix";
-    public Version Version => new(0, 2, 0); // Highest version
+    public Version Version => new(0,2,0);
     public Widgets.IWidget? Widget => null;
 
     public void Start()
@@ -95,7 +94,6 @@ public class QBasicRetroIDEPlugin : IPlugin
         _editor = null;
     }
 
-    // --- Menu and project tree
     private Menu BuildMenu()
     {
         var newItem = new MenuItem { Header = "_New" };
@@ -111,7 +109,15 @@ public class QBasicRetroIDEPlugin : IPlugin
         var exitItem = new MenuItem { Header = "E_xit" };
         exitItem.Click += (_, _) => _window?.Close();
 
-        var fileMenu = new MenuItem { Header = "_File", Items = new[] { newItem, openItem, saveItem, saveAsItem, new Separator(), projectItem, new Separator(), exitItem } };
+        var fileMenu = new MenuItem { Header = "_File" };
+        fileMenu.Items.Add(newItem);
+        fileMenu.Items.Add(openItem);
+        fileMenu.Items.Add(saveItem);
+        fileMenu.Items.Add(saveAsItem);
+        fileMenu.Items.Add(new Separator());
+        fileMenu.Items.Add(projectItem);
+        fileMenu.Items.Add(new Separator());
+        fileMenu.Items.Add(exitItem);
 
         var undo = new MenuItem { Header = "_Undo" };
         undo.Click += (_, _) => _editor?.Undo();
@@ -124,27 +130,47 @@ public class QBasicRetroIDEPlugin : IPlugin
         var paste = new MenuItem { Header = "_Paste" };
         paste.Click += (_, _) => _editor?.Paste();
 
-        var editMenu = new MenuItem { Header = "_Edit", Items = new[] { undo, redo, new Separator(), cut, copy, paste } };
+        var editMenu = new MenuItem { Header = "_Edit" };
+        editMenu.Items.Add(undo);
+        editMenu.Items.Add(redo);
+        editMenu.Items.Add(new Separator());
+        editMenu.Items.Add(cut);
+        editMenu.Items.Add(copy);
+        editMenu.Items.Add(paste);
 
         var find = new MenuItem { Header = "_Find" };
         find.Click += async (_, _) => await Find();
         var replace = new MenuItem { Header = "_Replace" };
         replace.Click += async (_, _) => await Replace();
 
-        var searchMenu = new MenuItem { Header = "_Search", Items = new[] { find, replace } };
+        var searchMenu = new MenuItem { Header = "_Search" };
+        searchMenu.Items.Add(find);
+        searchMenu.Items.Add(replace);
 
         var compile = new MenuItem { Header = "_Compile && Run" };
         compile.Click += async (_, _) => await CompileRun();
-        var runMenu = new MenuItem { Header = "_Run", Items = new[] { compile } };
+        var runExe = new MenuItem { Header = "_Run Executable" };
+        runExe.Click += async (_, _) => await RunExecutable();
+        var runMenu = new MenuItem { Header = "_Run" };
+        runMenu.Items.Add(compile);
+        runMenu.Items.Add(runExe);
 
         var settings = new MenuItem { Header = "_Settings" };
         settings.Click += (_, _) => OpenSettings();
 
         var helpItem = new MenuItem { Header = "_Help" };
         helpItem.Click += (_, _) => ShowHelp();
-        var helpMenu = new MenuItem { Header = "_Help", Items = new[] { helpItem } };
+        var helpMenu = new MenuItem { Header = "_Help" };
+        helpMenu.Items.Add(helpItem);
 
-        return new Menu { Items = new[] { fileMenu, editMenu, searchMenu, runMenu, settings, helpMenu } };
+        var menu = new Menu();
+        menu.Items.Add(fileMenu);
+        menu.Items.Add(editMenu);
+        menu.Items.Add(searchMenu);
+        menu.Items.Add(runMenu);
+        menu.Items.Add(settings);
+        menu.Items.Add(helpMenu);
+        return menu;
     }
 
     private async Task OpenProject()
@@ -165,13 +191,14 @@ public class QBasicRetroIDEPlugin : IPlugin
             return;
         if (string.IsNullOrWhiteSpace(_projectPath))
         {
-            _projectTree.Items = null;
+            _projectTree.Items.Clear();
             return;
         }
         var root = new TreeViewItem { Header = Path.GetFileName(_projectPath), IsExpanded = true };
-        var items = Directory.GetFiles(_projectPath, "*.bas").Select(f => new TreeViewItem { Header = Path.GetFileName(f), Tag = f }).ToList<object>();
-        root.Items = items;
-        _projectTree.Items = new[] { root };
+        foreach (var file in Directory.GetFiles(_projectPath, "*.bas"))
+            root.Items.Add(new TreeViewItem { Header = Path.GetFileName(file), Tag = file });
+        _projectTree.Items.Clear();
+        _projectTree.Items.Add(root);
     }
 
     private async Task LoadFile(string path)
@@ -180,16 +207,6 @@ public class QBasicRetroIDEPlugin : IPlugin
         _currentFile = path;
         _editor.Text = await File.ReadAllTextAsync(path);
         UpdateStatus();
-    }
-
-    private async Task OpenFile()
-    {
-        if (_window == null) return;
-        var dlg = new OpenFileDialog();
-        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var files = await dlg.ShowAsync(_window);
-        if (files is { Length: > 0 })
-            await LoadFile(files[0]);
     }
 
     private async Task SaveFile()
@@ -232,7 +249,23 @@ public class QBasicRetroIDEPlugin : IPlugin
         }
         catch (Exception ex)
         {
-            new WindowNotificationManager(_window).Show(new Notification("QB64", ex.Message, NotificationType.Error));
+            Logger.Log($"QB64 compile error: {ex.Message}");
+        }
+    }
+
+    private async Task RunExecutable()
+    {
+        if (_window == null) return;
+        var exe = _currentFile == null
+            ? null
+            : Path.ChangeExtension(_currentFile, OperatingSystem.IsWindows() ? "exe" : "");
+        if (exe != null && File.Exists(exe))
+        {
+            await Cli.Wrap(exe).ExecuteAsync();
+        }
+        else
+        {
+            await CompileRun();
         }
     }
 
@@ -242,6 +275,16 @@ public class QBasicRetroIDEPlugin : IPlugin
         _editor.Text = string.Empty;
         _currentFile = null;
         UpdateStatus();
+    }
+
+    private async Task OpenFile()
+    {
+        if (_window == null) return;
+        var dlg = new OpenFileDialog();
+        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
+        var files = await dlg.ShowAsync(_window);
+        if (files is { Length: > 0 })
+            await LoadFile(files[0]);
     }
 
     private async Task Find()
@@ -292,7 +335,7 @@ public class QBasicRetroIDEPlugin : IPlugin
     {
         if (_window != null)
         {
-            new WindowNotificationManager(_window).Show(new Notification("QB64", "QB64 Phoenix Edition - https://github.com/QB64-Phoenix-Edition/QB64pe", NotificationType.Information));
+            Logger.Log("QB64 Phoenix Edition - https://github.com/QB64-Phoenix-Edition/QB64pe");
         }
     }
 
@@ -302,7 +345,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         var line = _editor.TextArea.Caret.Line;
         var col = _editor.TextArea.Caret.Column;
         var file = string.IsNullOrWhiteSpace(_currentFile) ? "Untitled" : Path.GetFileName(_currentFile);
-        var mode = _editor.TextArea.OverwriteMode ? "OVR" : "INS";
+        var mode = "INS";
         _status.Text = $"Ln {line} Col {col} - {file} [{mode}]";
     }
 
@@ -370,7 +413,7 @@ public class QBasicRetroIDEPlugin : IPlugin
             _fontSizeBox = new TextBox { Text = fontSize.ToString() };
             panel.Children.Add(_fontSizeBox);
             var ok = new Button { Content = "OK", IsDefault = true };
-            ok.Click += (_, _) => { DialogResult = true; Close(); };
+            ok.Click += (_, _) => Close(true);
             var cancel = new Button { Content = "Cancel", IsCancel = true };
             var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             btns.Children.Add(ok);
