@@ -318,7 +318,8 @@ public class QBasicRetroIDEPlugin : IPlugin
         var line = _editor.TextArea.Caret.Line;
         var col = _editor.TextArea.Caret.Column;
         var file = string.IsNullOrWhiteSpace(_currentFile) ? "Untitled" : Path.GetFileName(_currentFile);
-        _status.Text = $"Ln {line} Col {col} - {file}";
+        var mode = "INS";
+        _status.Text = $"Ln {line} Col {col} - {file} [{mode}]";
     }
 
     private async void Window_KeyDown(object? sender, KeyEventArgs e)
