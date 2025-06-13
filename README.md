@@ -38,5 +38,8 @@ After the toolchain is set up you can compile the project by executing
 `chrome-api-emulator.user.js` provides a lightweight emulation of several Chrome extension APIs for Tampermonkey. The script exposes `chrome.storage.sync`, `chrome.contextMenus`, and basic runtime messaging. It also includes a small drag-and-drop zone so you can drop additional JavaScript files onto any page to load them as plugins.
 
 ## Global Hotkeys
-
 `HotkeyManager` now supports registering global hotkeys on Windows, Linux and macOS. macOS uses a small Swift helper while the other platforms rely on the cross-platform **SharpHook** library (libuiohook). Hotkey registration may fail under Wayland or restricted environments on Linux. In those cases no key events will be received.
+
+## Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit guidelines.
+
