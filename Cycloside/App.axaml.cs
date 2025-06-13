@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
+using Cycloside.Plugins.BuiltIn;
 using Avalonia.Input;
 using System;
 using System.IO;
@@ -37,7 +38,25 @@ public partial class App : Application
             manager.LoadPlugins();
             manager.StartWatching();
 
-            // Built-in plugins are disabled in this trimmed build
+            if (!settings.DisableBuiltInPlugins)
+            {
+                manager.AddPlugin(new DateTimeOverlayPlugin());
+                manager.AddPlugin(new MP3PlayerPlugin());
+                manager.AddPlugin(new MacroPlugin());
+                manager.AddPlugin(new TextEditorPlugin());
+                manager.AddPlugin(new WallpaperPlugin());
+                manager.AddPlugin(new ClipboardManagerPlugin());
+                manager.AddPlugin(new FileWatcherPlugin());
+                manager.AddPlugin(new ProcessMonitorPlugin());
+                manager.AddPlugin(new TaskSchedulerPlugin());
+                manager.AddPlugin(new DiskUsagePlugin());
+                manager.AddPlugin(new LogViewerPlugin());
+                manager.AddPlugin(new EnvironmentEditorPlugin());
+                manager.AddPlugin(new JezzballPlugin());
+                manager.AddPlugin(new WidgetHostPlugin(manager));
+                manager.AddPlugin(new WinampVisHostPlugin());
+                manager.AddPlugin(new QBasicRetroIDEPlugin());
+            }
 
             var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();

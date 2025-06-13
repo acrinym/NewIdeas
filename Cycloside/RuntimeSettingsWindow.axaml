@@ -6,6 +6,7 @@
     <StackPanel Margin="10" Spacing="8">
         <CheckBox x:Name="IsolationBox" Content="Plugin Isolation"/>
         <CheckBox x:Name="CrashLogBox" Content="Crash Logging"/>
+        <CheckBox x:Name="BuiltInBox" Content="Disable Built-in Plugins (Safe Mode)"/>
         <Button Content="Save" HorizontalAlignment="Right" Click="OnSave"/>
     </StackPanel>
 </Window>
