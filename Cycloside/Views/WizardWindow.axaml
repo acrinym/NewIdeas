@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Cycloside.ViewModels"
+        mc:Ignorable="d"
+        x:Class="Cycloside.Views.WizardWindow"
+        x:DataType="vm:WizardViewModel"
+        Width="450" Height="350"
+        Title="Setup Wizard">
+    <StackPanel Margin="10" Spacing="8">
+        <TabControl SelectedIndex="{Binding CurrentStep}">
+            <TabItem Header="Welcome">
+                <TextBlock TextWrapping="Wrap" Text="Welcome to Cycloside! This wizard will help you configure the basics."/>
+            </TabItem>
+            <TabItem Header="Plugins">
+                <StackPanel>
+                    <TextBlock Text="Enable built-in plugins:" Margin="0,0,0,4"/>
+                    <ItemsControl ItemsSource="{Binding Plugins}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PluginItem">
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Theme">
+                <StackPanel>
+                    <TextBlock Text="Select a theme:" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailableThemes}" SelectedItem="{Binding SelectedTheme}"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Profile">
+                <StackPanel>
+                    <TextBlock Text="Profile name:" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding ProfileName}" Width="200"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Finish">
+                <TextBlock TextWrapping="Wrap" Text="Setup is complete. Click Next to start using Cycloside."/>
+            </TabItem>
+        </TabControl>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+            <Button Content="Back" Click="Back_Click"/>
+            <Button Content="Next" Click="Next_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

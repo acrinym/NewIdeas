@@ -46,7 +46,7 @@ internal sealed class SharpGlobalHotkeyManager : IDisposable
     private void OnKeyPressed(object? sender, KeyboardHookEventArgs e)
     {
         var key = KeyFromCode(e.Data.KeyCode);
-        var mods = ModifiersFromMask(e.Data.Modifiers);
+        var mods = ModifiersFromMask(e.RawEvent.Mask);
         foreach (var g in _gestures)
         {
             if (g.Key == key && g.KeyModifiers == mods)
