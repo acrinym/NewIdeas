@@ -1,11 +1,11 @@
 # Plugin Lifecycle
 
-Plugins implement `IPlugin` from the `SiloCide.SDK` namespace. Cycloside loads all DLLs from the `Plugins` folder at startup and calls `Start()` on those that are enabled. `Stop()` is invoked when a plugin is disabled or when Cycloside exits.
+Plugins implement `IPlugin` from the `Cycloside.Plugins` namespace. Cycloside loads all DLLs from the `Plugins` folder at startup and calls `Start()` on those that are enabled. `Stop()` is invoked when a plugin is disabled or when Cycloside exits.
 
 Additional optional hooks can be implemented by inheriting `IPluginExtended`:
 
 ```csharp
-namespace SiloCide.SDK;
+namespace Cycloside.Plugins;
 
 public interface IPluginExtended : IPlugin
 {
