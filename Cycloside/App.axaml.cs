@@ -9,6 +9,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Views;
 
 namespace Cycloside;
 
@@ -26,6 +27,13 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = SettingsManager.Settings;
+            if (settings.FirstRun)
+            {
+                var wiz = new WizardWindow();
+                wiz.ShowDialog(desktop.MainWindow).GetAwaiter().GetResult();
+                settings = SettingsManager.Settings;
+            }
+
             SkinManager.LoadCurrent();
             var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
                 ? selectedTheme
