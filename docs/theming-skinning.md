@@ -30,6 +30,8 @@ See the [theme example](examples/theme-example.md) and [skin example](examples/s
 ## Skin/Theme Editor
 
 Use **Settings → Skin/Theme Editor** from the tray icon to edit theme and skin files.
-Select a theme or skin, edit the XAML directly and hit **Preview** to test it on
-a sample window. The editor also exposes a list of available cursors so you can
-quickly try them out while designing your look.
+Select a theme or skin, edit the XAML directly and hit **Preview** to test it.
+The preview window now loads your markup at runtime so the layout matches the
+XAML exactly. If parsing fails, the error message is displayed inside the
+preview. The editor also exposes a list of available cursors so you can quickly
+try them out while designing your look.

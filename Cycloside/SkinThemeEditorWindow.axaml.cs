@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.XamlIl;
+using Avalonia.Media;
 using Avalonia.Styling;
 using System;
 using System.IO;
@@ -100,11 +101,23 @@ public class PreviewWindow : Window
         Width = 300;
         Height = 200;
         Title = "Preview";
-        var panel = new StackPanel { Margin = new Thickness(10), Spacing = 4 };
-        panel.Children.Add(new Button { Content = "Button" });
-        panel.Children.Add(new TextBox { Text = "Sample" });
-        Content = panel;
-        // Live preview disabled when runtime loader unavailable
+        try
+        {
+            Content = AvaloniaRuntimeXamlLoader.Parse<Grid>(xaml);
+        }
+        catch (Exception ex)
+        {
+            Content = new ScrollViewer
+            {
+                Margin = new Thickness(10),
+                Content = new TextBlock
+                {
+                    Text = ex.Message,
+                    Foreground = Brushes.Red,
+                    TextWrapping = TextWrapping.Wrap
+                }
+            };
+        }
         // WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(PreviewWindow));
     }
 }
