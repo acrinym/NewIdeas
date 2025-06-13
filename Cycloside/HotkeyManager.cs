@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Avalonia.Input;
-using Avalonia.Controls.HotKeys;
 using Cycloside.Hotkeys;
 
 namespace Cycloside;
@@ -11,10 +10,7 @@ namespace Cycloside;
 /// </summary>
 public static class HotkeyManager
 {
-    private static readonly GlobalHotKeyManager? _defaultManager;
     private static readonly MacGlobalHotkeyManager? _macManager;
-
-    private static readonly Dictionary<GlobalHotKey, Action> _callbacks = new();
     private static readonly Dictionary<KeyGesture, Action> _macCallbacks = new();
 
     static HotkeyManager()
@@ -32,14 +28,7 @@ public static class HotkeyManager
         }
         else
         {
-            _defaultManager = new GlobalHotKeyManager();
-            _defaultManager.HotKeyPressed += (_, e) =>
-            {
-                if (_callbacks.TryGetValue(e.HotKey, out var cb))
-                {
-                    try { cb(); } catch (Exception ex) { Logger.Log($"Hotkey error: {ex.Message}"); }
-                }
-            };
+            // Hotkeys are not currently supported on other platforms
         }
     }
 
@@ -55,9 +44,7 @@ public static class HotkeyManager
         }
         else
         {
-            var hotkey = new GlobalHotKey(gesture);
-            _callbacks[hotkey] = callback;
-            _defaultManager?.Register(hotkey);
+            // Hotkeys not supported on this platform
         }
     }
 
@@ -71,11 +58,9 @@ public static class HotkeyManager
             _macManager?.UnregisterAll();
             _macCallbacks.Clear();
         }
-        else if (_defaultManager != null)
+        else
         {
-            foreach (var hk in _callbacks.Keys)
-                _defaultManager.Unregister(hk);
-            _callbacks.Clear();
+            // Nothing to unregister on unsupported platforms
         }
     }
 }
