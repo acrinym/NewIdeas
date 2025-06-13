@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using System;
 using System.IO;
 using System.Linq;
@@ -21,8 +22,9 @@ public class DiskUsagePlugin : IPlugin
         var button = new Button { Content = "Select Folder" };
         button.Click += async (_, __) =>
         {
-            var dlg = new OpenFolderDialog();
-            var path = await dlg.ShowAsync(_window);
+            if (_window == null) return;
+            var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
+            var path = folders.FirstOrDefault()?.TryGetLocalPath();
             if (!string.IsNullOrWhiteSpace(path))
                 LoadTree(path);
         };
@@ -46,7 +48,7 @@ public class DiskUsagePlugin : IPlugin
     private void LoadTree(string root)
     {
         var rootNode = BuildNode(new DirectoryInfo(root));
-        _tree!.Items = new[] { rootNode };
+        _tree!.ItemsSource = new[] { rootNode };
     }
 
     private static TreeViewItem BuildNode(DirectoryInfo dir)
@@ -55,7 +57,7 @@ public class DiskUsagePlugin : IPlugin
         foreach (var sub in dir.GetDirectories())
             size += GetDirSize(sub);
         var node = new TreeViewItem { Header = $"{dir.Name} ({size / 1024 / 1024} MB)" };
-        node.Items = dir.GetDirectories().Select(BuildNode).ToList();
+        node.ItemsSource = dir.GetDirectories().Select(BuildNode).ToList();
         return node;
     }
 

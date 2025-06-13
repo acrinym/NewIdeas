@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
 using System;
+using Avalonia.Platform.Storage;
 using System.Linq;
 
 namespace Cycloside;
@@ -33,7 +34,7 @@ public partial class ProfileEditorWindow : Window
     private void BuildProfileList()
     {
         var list = this.FindControl<ListBox>("ProfileList");
-        list.Items = WorkspaceProfiles.Profiles.Keys.ToList();
+        list.ItemsSource = WorkspaceProfiles.Profiles.Keys.ToList();
         list.SelectionChanged += (_, _) => LoadSelectedProfile();
         if (list.Items.Count > 0)
             list.SelectedIndex = 0;
@@ -97,11 +98,17 @@ public partial class ProfileEditorWindow : Window
 
     private async void BrowseWallpaper(object? sender, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog();
-        dlg.Filters.Add(new FileDialogFilter { Name = "Images", Extensions = { "png", "jpg", "jpeg", "bmp" } });
-        var files = await dlg.ShowAsync(this);
-        if (files is { Length: > 0 })
-            this.FindControl<TextBox>("WallpaperBox").Text = files[0];
+        if (this.StorageProvider is { } provider)
+        {
+            var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                AllowMultiple = false,
+                FileTypeFilter = new[] { new FilePickerFileType("Images") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.bmp" } } }
+            });
+            var file = files.FirstOrDefault()?.TryGetLocalPath();
+            if (!string.IsNullOrWhiteSpace(file))
+                this.FindControl<TextBox>("WallpaperBox").Text = file;
+        }
     }
 
     private void SaveProfile(object? sender, RoutedEventArgs e)

@@ -1,6 +1,7 @@
 using Avalonia;
 using System;
 using System.IO;
+using Cycloside.Plugins.BuiltIn;
 
 namespace Cycloside;
 
@@ -11,11 +12,26 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (args.Length >= 2 && args[0] == "--qbasic")
+        {
+            QBasicRetroIDEPlugin.RunCli(args[1]).GetAwaiter().GetResult();
+            return;
+        }
         if (args.Length == 2 && args[0] == "--newplugin")
         {
             GeneratePluginTemplate(args[1]);
             return;
         }
+
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            if (e.ExceptionObject is Exception ex)
+                Logger.Log($"Unhandled: {ex}");
+        };
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Logger.Log($"Unobserved: {e.Exception}");
+        };
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

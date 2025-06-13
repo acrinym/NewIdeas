@@ -1,8 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Cycloside.Widgets;
 using System;
+using System.Linq;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -29,18 +31,20 @@ public class TextEditorPlugin : IPlugin
         var openButton = new Button { Content = "Open" };
         openButton.Click += async (_, _) =>
         {
-            var dlg = new OpenFileDialog();
-            var files = await dlg.ShowAsync(_window);
-            if (files is { Length: > 0 })
+            if (_window == null) return;
+            var files = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions());
+            var file = files.FirstOrDefault()?.TryGetLocalPath();
+            if (!string.IsNullOrWhiteSpace(file))
             {
-                box.Text = await System.IO.File.ReadAllTextAsync(files[0]);
+                box.Text = await System.IO.File.ReadAllTextAsync(file);
             }
         };
         var saveButton = new Button { Content = "Save" };
         saveButton.Click += async (_, _) =>
         {
-            var dlg = new SaveFileDialog();
-            var path = await dlg.ShowAsync(_window);
+            if (_window == null) return;
+            var result = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions());
+            var path = result?.TryGetLocalPath();
             if (!string.IsNullOrWhiteSpace(path))
             {
                 await System.IO.File.WriteAllTextAsync(path, box.Text ?? string.Empty);

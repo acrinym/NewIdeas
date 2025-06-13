@@ -9,6 +9,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
 
 namespace Cycloside;
 
@@ -38,22 +39,25 @@ public partial class App : Application
             manager.LoadPlugins();
             manager.StartWatching();
 
-            manager.AddPlugin(new DateTimeOverlayPlugin());
-            manager.AddPlugin(new MP3PlayerPlugin());
-            manager.AddPlugin(new MacroPlugin());
-            manager.AddPlugin(new TextEditorPlugin());
-            manager.AddPlugin(new WallpaperPlugin());
-            manager.AddPlugin(new ClipboardManagerPlugin());
-            manager.AddPlugin(new FileWatcherPlugin());
-            manager.AddPlugin(new ProcessMonitorPlugin());
-            manager.AddPlugin(new TaskSchedulerPlugin());
-            manager.AddPlugin(new DiskUsagePlugin());
-            manager.AddPlugin(new LogViewerPlugin());
-            manager.AddPlugin(new EnvironmentEditorPlugin());
-            manager.AddPlugin(new JezzballPlugin());
-
-            manager.AddPlugin(new WidgetHostPlugin(manager));
-            manager.AddPlugin(new WinampVisHostPlugin());
+            if (!settings.DisableBuiltInPlugins)
+            {
+                manager.AddPlugin(new DateTimeOverlayPlugin());
+                manager.AddPlugin(new MP3PlayerPlugin());
+                manager.AddPlugin(new MacroPlugin());
+                manager.AddPlugin(new TextEditorPlugin());
+                manager.AddPlugin(new WallpaperPlugin());
+                manager.AddPlugin(new ClipboardManagerPlugin());
+                manager.AddPlugin(new FileWatcherPlugin());
+                manager.AddPlugin(new ProcessMonitorPlugin());
+                manager.AddPlugin(new TaskSchedulerPlugin());
+                manager.AddPlugin(new DiskUsagePlugin());
+                manager.AddPlugin(new LogViewerPlugin());
+                manager.AddPlugin(new EnvironmentEditorPlugin());
+                manager.AddPlugin(new JezzballPlugin());
+                manager.AddPlugin(new WidgetHostPlugin(manager));
+                manager.AddPlugin(new WinampVisHostPlugin());
+                manager.AddPlugin(new QBasicRetroIDEPlugin());
+            }
 
             var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
             remoteServer.Start();
@@ -105,9 +109,17 @@ public partial class App : Application
                 win.Show();
             };
 
+            var themeEditorItem = new NativeMenuItem("Skin/Theme Editor...");
+            themeEditorItem.Click += (_, _) =>
+            {
+                var win = new SkinThemeEditorWindow();
+                win.Show();
+            };
+
             settingsMenu.Menu!.Items.Add(pluginManagerItem);
             settingsMenu.Menu.Items.Add(generatePluginItem);
             settingsMenu.Menu.Items.Add(themeSettingsItem);
+            settingsMenu.Menu.Items.Add(themeEditorItem);
 
             var profileItem = new NativeMenuItem("Workspace Profiles...");
             profileItem.Click += (_, _) =>
@@ -237,12 +249,16 @@ public partial class App : Application
             var luaItem = new NativeMenuItem("Run Lua Script...");
             luaItem.Click += async (_, _) =>
             {
-                var dlg = new OpenFileDialog();
-                dlg.Filters.Add(new FileDialogFilter { Name = "Lua", Extensions = { "lua" } });
-                var files = await dlg.ShowAsync(new Window());
-                if (files is { Length: > 0 } && File.Exists(files[0]))
+                var win = new Window();
+                var files = await win.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                 {
-                    var code = await File.ReadAllTextAsync(files[0]);
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { new FilePickerFileType("Lua") { Patterns = new[] { "*.lua" } } }
+                });
+                var file = files.FirstOrDefault()?.TryGetLocalPath();
+                if (file != null && File.Exists(file))
+                {
+                    var code = await File.ReadAllTextAsync(file);
                     volatileManager.RunLua(code);
                 }
             };
@@ -250,12 +266,16 @@ public partial class App : Application
             var csItem = new NativeMenuItem("Run C# Script...");
             csItem.Click += async (_, _) =>
             {
-                var dlg = new OpenFileDialog();
-                dlg.Filters.Add(new FileDialogFilter { Name = "C#", Extensions = { "csx" } });
-                var files = await dlg.ShowAsync(new Window());
-                if (files is { Length: > 0 } && File.Exists(files[0]))
+                var win = new Window();
+                var files = await win.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                 {
-                    var code = await File.ReadAllTextAsync(files[0]);
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { new FilePickerFileType("C#") { Patterns = new[] { "*.csx" } } }
+                });
+                var file = files.FirstOrDefault()?.TryGetLocalPath();
+                if (file != null && File.Exists(file))
+                {
+                    var code = await File.ReadAllTextAsync(file);
                     volatileManager.RunCSharp(code);
                 }
             };

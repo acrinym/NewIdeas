@@ -1,11 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using AvaloniaEdit;
 using AvaloniaEdit.Highlighting;
+using Avalonia.Platform.Storage;
 using CliWrap;
 using System;
 using System.Collections.Generic;
@@ -25,9 +25,25 @@ public class QBasicRetroIDEPlugin : IPlugin
     private string? _currentFile;
     private string? _projectPath;
 
+    public static async Task RunCli(string file, string qb64Path = "qb64")
+    {
+        try
+        {
+            await Cli.Wrap(qb64Path).WithArguments($"\"{file}\"")
+                .WithValidation(CommandResultValidation.None).ExecuteAsync();
+            var exe = Path.ChangeExtension(file, OperatingSystem.IsWindows() ? "exe" : string.Empty);
+            if (!string.IsNullOrWhiteSpace(exe) && File.Exists(exe))
+                await Cli.Wrap(exe).ExecuteAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"QB64 CLI error: {ex.Message}");
+        }
+    }
+
     public string Name => "QBasic Retro IDE";
     public string Description => "Edit and run .BAS files using QB64 Phoenix";
-    public Version Version => new(0, 2, 0); // Highest version
+    public Version Version => new(0,2,0);
     public Widgets.IWidget? Widget => null;
 
     public void Start()
@@ -95,7 +111,6 @@ public class QBasicRetroIDEPlugin : IPlugin
         _editor = null;
     }
 
-    // --- Menu and project tree
     private Menu BuildMenu()
     {
         var newItem = new MenuItem { Header = "_New" };
@@ -111,7 +126,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         var exitItem = new MenuItem { Header = "E_xit" };
         exitItem.Click += (_, _) => _window?.Close();
 
-        var fileMenu = new MenuItem { Header = "_File", Items = new[] { newItem, openItem, saveItem, saveAsItem, new Separator(), projectItem, new Separator(), exitItem } };
+        var fileMenu = new MenuItem { Header = "_File", ItemsSource = new object[] { newItem, openItem, saveItem, saveAsItem, new Separator(), projectItem, new Separator(), exitItem } };
 
         var undo = new MenuItem { Header = "_Undo" };
         undo.Click += (_, _) => _editor?.Undo();
@@ -124,37 +139,39 @@ public class QBasicRetroIDEPlugin : IPlugin
         var paste = new MenuItem { Header = "_Paste" };
         paste.Click += (_, _) => _editor?.Paste();
 
-        var editMenu = new MenuItem { Header = "_Edit", Items = new[] { undo, redo, new Separator(), cut, copy, paste } };
+        var editMenu = new MenuItem { Header = "_Edit", ItemsSource = new object[] { undo, redo, new Separator(), cut, copy, paste } };
 
         var find = new MenuItem { Header = "_Find" };
         find.Click += async (_, _) => await Find();
         var replace = new MenuItem { Header = "_Replace" };
         replace.Click += async (_, _) => await Replace();
 
-        var searchMenu = new MenuItem { Header = "_Search", Items = new[] { find, replace } };
+        var searchMenu = new MenuItem { Header = "_Search", ItemsSource = new object[] { find, replace } };
 
         var compile = new MenuItem { Header = "_Compile && Run" };
         compile.Click += async (_, _) => await CompileRun();
-        var runMenu = new MenuItem { Header = "_Run", Items = new[] { compile } };
+        var runExe = new MenuItem { Header = "_Run Executable" };
+        runExe.Click += async (_, _) => await RunExecutable();
+        var runMenu = new MenuItem { Header = "_Run", ItemsSource = new object[] { compile, runExe } };
 
         var settings = new MenuItem { Header = "_Settings" };
         settings.Click += (_, _) => OpenSettings();
 
         var helpItem = new MenuItem { Header = "_Help" };
         helpItem.Click += (_, _) => ShowHelp();
-        var helpMenu = new MenuItem { Header = "_Help", Items = new[] { helpItem } };
+        var helpMenu = new MenuItem { Header = "_Help", ItemsSource = new object[] { helpItem } };
 
-        return new Menu { Items = new[] { fileMenu, editMenu, searchMenu, runMenu, settings, helpMenu } };
+        return new Menu { ItemsSource = new object[] { fileMenu, editMenu, searchMenu, runMenu, settings, helpMenu } };
     }
 
     private async Task OpenProject()
     {
         if (_window == null) return;
-        var dlg = new OpenFolderDialog();
-        var path = await dlg.ShowAsync(_window);
-        if (!string.IsNullOrWhiteSpace(path))
+        var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
+        var folder = folders.FirstOrDefault()?.TryGetLocalPath();
+        if (!string.IsNullOrWhiteSpace(folder))
         {
-            _projectPath = path;
+            _projectPath = folder;
             UpdateProjectTree();
         }
     }
@@ -165,13 +182,13 @@ public class QBasicRetroIDEPlugin : IPlugin
             return;
         if (string.IsNullOrWhiteSpace(_projectPath))
         {
-            _projectTree.Items = null;
+            _projectTree.ItemsSource = null;
             return;
         }
         var root = new TreeViewItem { Header = Path.GetFileName(_projectPath), IsExpanded = true };
         var items = Directory.GetFiles(_projectPath, "*.bas").Select(f => new TreeViewItem { Header = Path.GetFileName(f), Tag = f }).ToList<object>();
-        root.Items = items;
-        _projectTree.Items = new[] { root };
+        root.ItemsSource = items;
+        _projectTree.ItemsSource = new[] { root };
     }
 
     private async Task LoadFile(string path)
@@ -180,16 +197,6 @@ public class QBasicRetroIDEPlugin : IPlugin
         _currentFile = path;
         _editor.Text = await File.ReadAllTextAsync(path);
         UpdateStatus();
-    }
-
-    private async Task OpenFile()
-    {
-        if (_window == null) return;
-        var dlg = new OpenFileDialog();
-        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var files = await dlg.ShowAsync(_window);
-        if (files is { Length: > 0 })
-            await LoadFile(files[0]);
     }
 
     private async Task SaveFile()
@@ -206,9 +213,12 @@ public class QBasicRetroIDEPlugin : IPlugin
     private async Task SaveFileAs()
     {
         if (_window == null) return;
-        var dlg = new SaveFileDialog();
-        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var path = await dlg.ShowAsync(_window);
+        var result = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            SuggestedFileName = Path.GetFileName(_currentFile) ?? "program.bas",
+            FileTypeChoices = new[] { new FilePickerFileType("BAS") { Patterns = new[] { "*.bas" } } }
+        });
+        var path = result?.TryGetLocalPath();
         if (!string.IsNullOrWhiteSpace(path) && _editor != null)
         {
             _currentFile = path;
@@ -232,7 +242,23 @@ public class QBasicRetroIDEPlugin : IPlugin
         }
         catch (Exception ex)
         {
-            new WindowNotificationManager(_window).Show(new Notification("QB64", ex.Message, NotificationType.Error));
+            Logger.Log($"QB64 compile error: {ex.Message}");
+        }
+    }
+
+    private async Task RunExecutable()
+    {
+        if (_window == null) return;
+        var exe = _currentFile == null
+            ? null
+            : Path.ChangeExtension(_currentFile, OperatingSystem.IsWindows() ? "exe" : "");
+        if (exe != null && File.Exists(exe))
+        {
+            await Cli.Wrap(exe).ExecuteAsync();
+        }
+        else
+        {
+            await CompileRun();
         }
     }
 
@@ -242,6 +268,19 @@ public class QBasicRetroIDEPlugin : IPlugin
         _editor.Text = string.Empty;
         _currentFile = null;
         UpdateStatus();
+    }
+
+    private async Task OpenFile()
+    {
+        if (_window == null) return;
+        var files = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            AllowMultiple = false,
+            FileTypeFilter = new[] { new FilePickerFileType("BAS") { Patterns = new[] { "*.bas" } } }
+        });
+        var file = files.FirstOrDefault()?.TryGetLocalPath();
+        if (!string.IsNullOrWhiteSpace(file))
+            await LoadFile(file);
     }
 
     private async Task Find()
@@ -292,7 +331,7 @@ public class QBasicRetroIDEPlugin : IPlugin
     {
         if (_window != null)
         {
-            new WindowNotificationManager(_window).Show(new Notification("QB64", "QB64 Phoenix Edition - https://github.com/QB64-Phoenix-Edition/QB64pe", NotificationType.Information));
+            Logger.Log("QB64 Phoenix Edition - https://github.com/QB64-Phoenix-Edition/QB64pe");
         }
     }
 
@@ -302,8 +341,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         var line = _editor.TextArea.Caret.Line;
         var col = _editor.TextArea.Caret.Column;
         var file = string.IsNullOrWhiteSpace(_currentFile) ? "Untitled" : Path.GetFileName(_currentFile);
-        var mode = _editor.TextArea.OverwriteMode ? "OVR" : "INS";
-        _status.Text = $"Ln {line} Col {col} - {file} [{mode}]";
+        _status.Text = $"Ln {line} Col {col} - {file}";
     }
 
     private async void Window_KeyDown(object? sender, KeyEventArgs e)
@@ -370,7 +408,7 @@ public class QBasicRetroIDEPlugin : IPlugin
             _fontSizeBox = new TextBox { Text = fontSize.ToString() };
             panel.Children.Add(_fontSizeBox);
             var ok = new Button { Content = "OK", IsDefault = true };
-            ok.Click += (_, _) => { DialogResult = true; Close(); };
+            ok.Click += (_, _) => Close(true);
             var cancel = new Button { Content = "Cancel", IsCancel = true };
             var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             btns.Children.Add(ok);

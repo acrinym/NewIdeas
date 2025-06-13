@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using System;
 using System.IO;
 using System.Linq;
@@ -24,19 +25,27 @@ public class LogViewerPlugin : IPlugin
         {
             AcceptsReturn = true,
             IsReadOnly = true,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             Height = 300
         };
+        ScrollViewer.SetVerticalScrollBarVisibility(_box, ScrollBarVisibility.Auto);
         var filterBox = new TextBox { Watermark = "Filter" };
-        filterBox.GetObservable(TextBox.TextProperty).Subscribe(v => { _filter = v; Reload(); });
+        filterBox.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == TextBox.TextProperty)
+            {
+                _filter = e.NewValue as string;
+                Reload();
+            }
+        };
         var openButton = new Button { Content = "Open Log" };
         openButton.Click += async (_, __) =>
         {
-            var dlg = new OpenFileDialog();
-            var files = await dlg.ShowAsync(_window);
-            if (files is { Length: > 0 } && File.Exists(files[0]))
+            if (_window == null) return;
+            var files = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions());
+            var file = files.FirstOrDefault()?.TryGetLocalPath();
+            if (file != null && File.Exists(file))
             {
-                _file = files[0];
+                _file = file;
                 StartTailing(_file);
             }
         };

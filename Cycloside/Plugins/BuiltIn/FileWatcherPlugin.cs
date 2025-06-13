@@ -1,6 +1,8 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -22,13 +24,14 @@ public class FileWatcherPlugin : IPlugin
         {
             AcceptsReturn = true,
             IsReadOnly = true,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             Height = 300
         };
+        ScrollViewer.SetVerticalScrollBarVisibility(_log, ScrollBarVisibility.Auto);
         selectButton.Click += async (_, __) =>
         {
-            var dlg = new OpenFolderDialog();
-            var path = await dlg.ShowAsync(_window);
+            if (_window == null) return;
+            var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
+            var path = folders.FirstOrDefault()?.TryGetLocalPath();
             if (!string.IsNullOrWhiteSpace(path))
                 StartWatching(path);
         };

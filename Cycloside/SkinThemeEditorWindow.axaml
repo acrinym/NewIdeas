@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.SkinThemeEditorWindow"
+        Width="600" Height="450"
+        Title="Skin/Theme Editor">
+    <DockPanel Margin="10" LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4">
+            <ComboBox x:Name="TypeBox" Width="80">
+                <ComboBoxItem Content="Theme"/>
+                <ComboBoxItem Content="Skin"/>
+            </ComboBox>
+            <ComboBox x:Name="FileBox" Width="200"/>
+            <Button Content="Load" Click="LoadFile"/>
+            <Button Content="Save" Click="SaveFile"/>
+            <Button Content="Preview" Click="Preview"/>
+        </StackPanel>
+        <TabControl Margin="0,8,0,0">
+            <TabItem Header="Editor">
+                <TextBox x:Name="Editor" AcceptsReturn="True" AcceptsTab="True" FontFamily="monospace"/>
+            </TabItem>
+            <TabItem Header="Cursors">
+                <StackPanel Spacing="4">
+                    <ComboBox x:Name="CursorBox" Width="150"/>
+                    <Border x:Name="CursorPreview" BorderBrush="Gray" BorderThickness="1" Width="100" Height="100" Background="White">
+                        <TextBlock Text="Hover here" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>
