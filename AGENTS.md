@@ -14,8 +14,10 @@ When making changes, please follow these rules:
 ## Programmatic Checks
 - After modifying C# code, run `dotnet build Cycloside/Cycloside.csproj` to ensure the project compiles.
 - If the build fails, include the failure output in your PR notes.
+- Builds require the .NET SDK 8. Use `dotnet --version` to verify your setup.
 
 ## Other Notes
 - Avoid editing large binary archives or zipped sources.
 - Documentation lives in the `docs/` folder. Keep Markdown simple and readable.
+- The full Avalonia source is included in `Avalonia-master/` for reference.
 
