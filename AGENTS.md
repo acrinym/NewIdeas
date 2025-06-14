@@ -17,7 +17,9 @@ When making changes, please follow these rules:
 - Builds require the .NET SDK 8. Use `dotnet --version` to verify your setup.
 
 ## Other Notes
-- Avoid editing large binary archives or zipped sources.
+- Avoid editing large binary archives or zipped sources. 
+- If a binary is created during code building, either convert it to base64 or 1. Make it a format that can be added to a PullRequest, and 2. Add to the notes and summary when code is complete
 - Documentation lives in the `docs/` folder. Keep Markdown simple and readable.
 - The full Avalonia source is included in `Avalonia-master/` for reference.
+
 
