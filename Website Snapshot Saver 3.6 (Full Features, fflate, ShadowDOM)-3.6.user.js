@@ -348,6 +348,7 @@
             <label><input type="checkbox" id="stayOnDomain"> Allow all of this domain</label>
             <label><input type="checkbox" id="allowExternalDomains"> Traverse other domains</label>
             <label><input type="checkbox" id="skipBig" checked> Skip files >5MB</label>
+            <label>Max crawl depth: <input type="number" id="maxDepth" min="0" style="width:60px;" placeholder="∞"></label>
         </div>
         <button id="sniffBtn" style="margin-bottom:6px;">Sniff Downloadable Resources</button>
         <button id="classicBtn" style="margin-bottom:6px;">Full Website Snapshot (Classic)</button>
@@ -408,6 +409,7 @@
     const stayOnDomain = popup.querySelector('#stayOnDomain');
     const allowExternalDomains = popup.querySelector('#allowExternalDomains');
     const skipBig = popup.querySelector('#skipBig');
+    const maxDepthInput = popup.querySelector('#maxDepth');
 
     // Domain toggle logic (mutual exclusion)
     function updateDomainToggles() {
@@ -576,7 +578,8 @@
             stayOnSubdomain: stayOnSubdomain.checked,
             stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
             allowExternalDomains: allowExternalDomains.checked,
-            skipBig: skipBig.checked
+            skipBig: skipBig.checked,
+            maxDepth: maxDepthInput.value ? parseInt(maxDepthInput.value, 10) : null
         });
     });
 
@@ -603,6 +606,7 @@
     // ========== CLASSIC FULL SNAPSHOT (Deep Website Crawl) ==========
 
     async function runFullSnapshot(domainOpts) {
+        const maxDepth = (domainOpts && typeof domainOpts.maxDepth === 'number' && !isNaN(domainOpts.maxDepth)) ? domainOpts.maxDepth : Infinity;
         // UI overlay
         let overlay = document.getElementById('snapshot-full-overlay');
         if (!overlay) {
@@ -649,6 +653,7 @@
 
     // Crawl logic
     async function collectResources(options, updateBar) {
+        const maxDepth = typeof options.maxDepth === 'number' ? options.maxDepth : Infinity;
         const toVisit = [{url: window.location.href, path: 'index.html', depth: 0}];
         const files = {};
         const visited = new Set();
@@ -671,6 +676,7 @@
             if (typeof updateBar === 'function') markDone();
             if (snapshotCancelled) break;
             const next = toVisit.shift();
+            if (next.depth > maxDepth) continue;
             if (visited.has(next.url)) continue;
             visited.add(next.url);
             try {
@@ -751,8 +757,10 @@
                         else if (options.stayOnSubdomain && sameSubdomain(r.url)) allowed = true;
                         if (!allowed) continue;
                         if (r.type === 'iframe' || r.type === 'html') {
-                            const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
-                            toVisit.push({url: r.url, path: iframePath, depth: next.depth + 1});
+                            if (next.depth + 1 <= maxDepth) {
+                                const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
+                                toVisit.push({url: r.url, path: iframePath, depth: next.depth + 1});
+                            }
                         } else {
                             // Download resource
                             try {
@@ -803,7 +811,7 @@
 
     // Start full crawl!
     statusDiv.textContent = 'Collecting site data and resources...';
-    let options = Object.assign({}, domainOpts);
+    let options = Object.assign({}, domainOpts, { maxDepth });
     let {files: crawlFiles, failed: crawlFailed} = await collectResources(options, (msg, pct) => {
         statusDiv.textContent = msg;
         if (pct !== undefined) barDiv.style.width = `${pct}%`;
