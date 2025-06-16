@@ -26,6 +26,44 @@
         });
     }
 
+    // Zip helper using fflate streams with progress callback
+    function zipWithProgress(files, opts, progressCb) {
+        return new Promise((resolve, reject) => {
+            const chunks = [];
+            const zip = new fflate.Zip((err, dat, final) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                chunks.push(dat);
+                if (final) {
+                    const total = chunks.reduce((n, c) => n + c.length, 0);
+                    const out = new Uint8Array(total);
+                    let off = 0;
+                    for (const c of chunks) { out.set(c, off); off += c.length; }
+                    resolve(out);
+                }
+            });
+            const names = Object.keys(files);
+            let done = 0;
+            names.forEach(name => {
+                const data = files[name];
+                const stream = new fflate.AsyncZipDeflate(name, opts);
+                zip.add(stream);
+                const orig = stream.ondata;
+                stream.ondata = function(err, dat, final) {
+                    orig.call(this, err, dat, final);
+                    if (final) {
+                        done++;
+                        if (progressCb) progressCb(done / names.length);
+                    }
+                };
+                stream.push(data, true);
+            });
+            zip.end();
+        });
+    }
+
     // ---- DOMAIN UTILS (from 3.0)
 
     function getDomainRoot(url) {
@@ -495,25 +533,23 @@
         files['sniffed-summary.json'] = new TextEncoder().encode(JSON.stringify(summary,null,2));
         progressBar.style.width = '90%';
         progressDiv.textContent = 'Generating zip...';
-        fflate.zipAsync(
-            files,
-            { level: 0 },
-            (err, data) => {
-                if (err) {
-                    progressDiv.textContent = "ZIP failed: " + err;
-                    alert("ZIP failed: " + err);
-                    return;
-                }
-                let zipBlob = new Blob([data], { type: "application/zip" });
-                let url = URL.createObjectURL(zipBlob);
-                let a = document.createElement('a');
-                a.href = url;
-                a.download = `website-sniffed-resources-${new Date().toISOString().replace(/:/g, '-')}.zip`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                setTimeout(()=>URL.revokeObjectURL(url),3500);
-                progressDiv.textContent = 'ZIP saved!'; progressBar.style.width = '100%';
-            }
-        );
+        const zipData = await zipWithProgress(files, { level: 0 }, pct => {
+            progressBar.style.width = `${90 + pct * 10}%`;
+            progressDiv.textContent = `Zipping: ${Math.round(pct * 100)}%`;
+        }).catch(err => {
+            progressDiv.textContent = 'ZIP failed: ' + err;
+            alert('ZIP failed: ' + err);
+            return null;
+        });
+        if (!zipData) return;
+        let zipBlob = new Blob([zipData], { type: 'application/zip' });
+        let url = URL.createObjectURL(zipBlob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `website-sniffed-resources-${new Date().toISOString().replace(/:/g, '-')}.zip`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),3500);
+        progressDiv.textContent = 'ZIP saved!'; progressBar.style.width = '100%';
     });
 
     // ===== CLASSIC BUTTON: Run full website snapshot (deep crawl) =====
@@ -745,27 +781,25 @@
         time: (new Date()).toISOString()
     }, null, 2));
 
-    fflate.zipAsync(
-        crawlFiles,
-        { level: 0 },
-        (err, data) => {
-            if (err) {
-                statusDiv.textContent = "ZIP failed: " + err;
-                alert("ZIP failed: " + err);
-                return;
-            }
-            let zipBlob = new Blob([data], { type: "application/zip" });
-            let url = URL.createObjectURL(zipBlob);
-            let a = document.createElement('a');
-            a.href = url;
-            a.download = `website_snapshot_${new Date().toISOString().replace(/:/g, '-')}.zip`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(()=>URL.revokeObjectURL(url),3500);
-            statusDiv.textContent = 'ZIP file ready. Download should start.';
-            barDiv.style.width = '100%';
-            setTimeout(()=>{ if(overlay) overlay.remove(); }, 3000);
-        }
-    );
+    const zipOut = await zipWithProgress(crawlFiles, { level: 0 }, pct => {
+        barDiv.style.width = `${97 + pct * 3}%`;
+        statusDiv.textContent = `Zipping... ${Math.round(pct * 100)}%`;
+    }).catch(err => {
+        statusDiv.textContent = 'ZIP failed: ' + err;
+        alert('ZIP failed: ' + err);
+        return null;
+    });
+    if (!zipOut) return;
+    let zipBlob = new Blob([zipOut], { type: 'application/zip' });
+    let url = URL.createObjectURL(zipBlob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = `website_snapshot_${new Date().toISOString().replace(/:/g, '-')}.zip`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),3500);
+    statusDiv.textContent = 'ZIP file ready. Download should start.';
+    barDiv.style.width = '100%';
+    setTimeout(()=>{ if(overlay) overlay.remove(); }, 3000);
 }
 
     // ====== INIT: Start overlay & self-heal ======
