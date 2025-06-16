@@ -6,6 +6,8 @@
 // @author       You (Justin & AI)
 // @match        *://*/*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @require      https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js
 // ==/UserScript==
 
@@ -14,6 +16,44 @@
 
 (function() {
     'use strict';
+
+    const PREF_KEY = 'websiteSnapshotSaver_prefs_v1';
+    let userPrefs = {};
+
+    async function loadPrefs() {
+        try {
+            const data = await GM_getValue(PREF_KEY);
+            userPrefs = data ? JSON.parse(data) : {};
+        } catch (e) {
+            console.error('Snapshot Saver: Failed to load prefs', e);
+            userPrefs = {};
+        }
+    }
+
+    async function savePrefs() {
+        try {
+            await GM_setValue(PREF_KEY, JSON.stringify(userPrefs));
+        } catch (e) {
+            console.error('Snapshot Saver: Failed to save prefs', e);
+        }
+    }
+
+    function initPopupControls(popup) {
+        const inputs = popup.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (userPrefs.hasOwnProperty(input.id)) {
+                if (input.type === 'checkbox') {
+                    input.checked = userPrefs[input.id];
+                } else {
+                    input.value = userPrefs[input.id];
+                }
+            }
+            input.addEventListener('change', () => {
+                userPrefs[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+                savePrefs();
+            });
+        });
+    }
 
     // Ensure JSZip is loaded with fallback
     function ensureJSZip() {
@@ -183,6 +223,7 @@
             <div class="progress-bar"><div class="progress-bar-fill" id="progressBar"></div></div>
         `;
         shadow.appendChild(popup);
+        initPopupControls(popup);
 
         // Draggable icon logic
         let isDragging = false;
@@ -1044,6 +1085,7 @@
 
     // Initialize script
     ensureJSZip()
+        .then(loadPrefs)
         .then(() => {
             console.log('Starting Website Snapshot Saver (v2.6 Modified for drag)');
             // Delay setupEyeIcon slightly to ensure page is more likely to be ready
