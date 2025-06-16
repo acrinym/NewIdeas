@@ -334,329 +334,295 @@
             margin: 7px 0;
         }
     `;
-    shadow.appendChild(style);
+        shadow.appendChild(style);
 
-    // Floating eye
-    const iconContainer = document.createElement('div');
-    iconContainer.className = 'icon-container';
-    iconContainer.title = 'Show Website Snapshot Saver options';
-    iconContainer.innerHTML = `
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="#000"/></svg>
-    `;
-    shadow.appendChild(iconContainer);
+        // Floating eye
+        const iconContainer = document.createElement('div');
+        iconContainer.className = 'icon-container';
+        iconContainer.title = 'Show Website Snapshot Saver options';
+        iconContainer.innerHTML = `
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="#000"/></svg>
+        `;
+        shadow.appendChild(iconContainer);
 
-    // Popup panel
-    const popup = document.createElement('div');
-    popup.className = 'popup';
-    popup.innerHTML = `
-        <div class="domain-btns">
-            <label><input type="checkbox" id="stayOnSubdomain" checked> Stay on this subdomain only</label>
-            <label><input type="checkbox" id="stayOnDomain"> Allow all of this domain</label>
-            <label><input type="checkbox" id="allowExternalDomains"> Traverse other domains</label>
-<<<<<<< codex/modify-popup-html-and-update-event-handlers
-            <label><input type="checkbox" id="iconsManifests" checked> Icons & manifests</label>
-            <label><input type="checkbox" id="videoPosters" checked> Video posters</label>
-            <label><input type="checkbox" id="cssExtras" checked> CSS imports/background images</label>
-            <label>Skip files larger than <input type="number" id="skipSize" value="5" style="width:60px;"> MB</label>
-            <label>Maximum crawl depth <input type="number" id="maxDepth" min="0" style="width:50px;" placeholder="∞"></label>
-=======
-            <label><input type="checkbox" id="skipBig" checked> Skip files >
-                <input type="number" id="sizeLimit" value="5" style="width:60px"> MB
-            </label>
-            <label>Max depth:
-                <input type="number" id="maxDepth" value="3" min="1" style="width:50px">
-            </label>
-            <label>User Agent:
-                <input type="text" id="userAgent" placeholder="default" style="width:160px">
-            </label>
->>>>>>> main
-        </div>
-        <button id="sniffBtn" style="margin-bottom:6px;">Sniff Downloadable Resources</button>
-        <button id="classicBtn" style="margin-bottom:6px;">Full Website Snapshot (Classic)</button>
-        <div class="sniff-summary" id="sniffSummary">No resources sniffed yet.</div>
-        <button id="saveButton" disabled>Save Selected as ZIP</button>
-        <button id="cancelButton">Cancel</button>
-        <div class="progress" id="progress">Ready</div>
-        <div class="progress-bar"><div class="progress-bar-fill" id="progressBar"></div></div>
-    `;
-    shadow.appendChild(popup);
+        // Popup panel
+        const popup = document.createElement('div');
+        popup.className = 'popup';
+        popup.innerHTML = `
+            <div class="domain-btns">
+                <label><input type="checkbox" id="stayOnSubdomain" checked> Stay on this subdomain only</label>
+                <label><input type="checkbox" id="stayOnDomain"> Allow all of this domain</label>
+                <label><input type="checkbox" id="allowExternalDomains"> Traverse other domains</label>
+                <hr style="border:0; border-top:1px solid #eee; margin: 8px 0;">
+                <label><input type="checkbox" id="iconsManifests" checked> Icons & manifests</label>
+                <label><input type="checkbox" id="videoPosters" checked> Video posters</label>
+                <label><input type="checkbox" id="cssExtras" checked> CSS imports/background images</label>
+                <hr style="border:0; border-top:1px solid #eee; margin: 8px 0;">
+                <label>Skip files larger than <input type="number" id="skipSize" value="5" style="width:60px;"> MB</label>
+                <label>Maximum crawl depth: <input type="number" id="maxDepth" min="0" style="width:50px;" placeholder="∞"></label>
+                <label>User Agent: <input type="text" id="userAgent" placeholder="default" style="width:160px"></label>
+            </div>
+            <button id="sniffBtn" style="margin-bottom:6px;">Sniff Downloadable Resources</button>
+            <button id="classicBtn" style="margin-bottom:6px;">Full Website Snapshot (Classic)</button>
+            <div class="sniff-summary" id="sniffSummary">No resources sniffed yet.</div>
+            <button id="saveButton" disabled>Save Selected as ZIP</button>
+            <button id="cancelButton">Cancel</button>
+            <div class="progress" id="progress">Ready</div>
+            <div class="progress-bar"><div class="progress-bar-fill" id="progressBar"></div></div>
+        `;
+        shadow.appendChild(popup);
 
-    // ===== Drag Logic =====
-    let isDragging = false, offsetX, offsetY, justDragged = false;
-    iconContainer.addEventListener('mousedown', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        offsetX = e.clientX - host.offsetLeft;
-        offsetY = e.clientY - host.offsetTop;
-        isDragging = true; justDragged = false;
-        document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            justDragged = true;
-            let newX = e.clientX - offsetX, newY = e.clientY - offsetY;
-            const iconRect = host.getBoundingClientRect();
-            const maxX = window.innerWidth - iconRect.width, maxY = window.innerHeight - iconRect.height;
-            newX = Math.max(0, Math.min(newX, maxX)); newY = Math.max(0, Math.min(newY, maxY));
-            host.style.left = `${newX}px`;
-            host.style.top = `${newY}px`;
+        // ===== Drag Logic =====
+        let isDragging = false, offsetX, offsetY, justDragged = false;
+        iconContainer.addEventListener('mousedown', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            offsetX = e.clientX - host.offsetLeft;
+            offsetY = e.clientY - host.offsetTop;
+            isDragging = true; justDragged = false;
+            document.body.style.userSelect = 'none';
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                justDragged = true;
+                let newX = e.clientX - offsetX, newY = e.clientY - offsetY;
+                const iconRect = host.getBoundingClientRect();
+                const maxX = window.innerWidth - iconRect.width, maxY = window.innerHeight - iconRect.height;
+                newX = Math.max(0, Math.min(newX, maxX)); newY = Math.max(0, Math.min(newY, maxY));
+                host.style.left = `${newX}px`;
+                host.style.top = `${newY}px`;
+            }
+        });
+        document.addEventListener('mouseup', (e) => {
+            if (isDragging) {
+                isDragging = false;
+                document.body.style.userSelect = 'auto';
+                setTimeout(() => { justDragged = false; }, 0);
+            }
+        });
+
+        // ===== Popup toggle =====
+        let isPopupOpen = false;
+        iconContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (justDragged) return;
+            isPopupOpen = !isPopupOpen;
+            popup.classList.toggle('show', isPopupOpen);
+        });
+
+        // ===== BUTTONS & STATE =====
+        const sniffBtn = popup.querySelector('#sniffBtn');
+        const classicBtn = popup.querySelector('#classicBtn');
+        const saveButton = popup.querySelector('#saveButton');
+        const cancelButton = popup.querySelector('#cancelButton');
+        const sniffSummary = popup.querySelector('#sniffSummary');
+        const progressDiv = popup.querySelector('#progress');
+        const progressBar = popup.querySelector('#progressBar');
+        const stayOnSubdomain = popup.querySelector('#stayOnSubdomain');
+        const stayOnDomain = popup.querySelector('#stayOnDomain');
+        const allowExternalDomains = popup.querySelector('#allowExternalDomains');
+        const iconsManifests = popup.querySelector('#iconsManifests');
+        const videoPosters = popup.querySelector('#videoPosters');
+        const cssExtras = popup.querySelector('#cssExtras');
+        const skipSizeInput = popup.querySelector('#skipSize');
+        const maxDepthInput = popup.querySelector('#maxDepth');
+        const userAgent = popup.querySelector('#userAgent');
+
+        // Domain toggle logic (mutual exclusion)
+        function updateDomainToggles() {
+            if (allowExternalDomains.checked) {
+                stayOnDomain.checked = false;
+                stayOnSubdomain.checked = false;
+                stayOnDomain.disabled = true;
+                stayOnSubdomain.disabled = true;
+            } else if (stayOnDomain.checked) {
+                stayOnSubdomain.checked = false;
+                stayOnSubdomain.disabled = true;
+                stayOnDomain.disabled = false;
+            } else {
+                stayOnSubdomain.checked = true;
+                stayOnSubdomain.disabled = false;
+                stayOnDomain.disabled = false;
+            }
         }
-    });
-    document.addEventListener('mouseup', (e) => {
-        if (isDragging) {
-            isDragging = false;
-            document.body.style.userSelect = 'auto';
-            setTimeout(() => { justDragged = false; }, 0);
-        }
-    });
+        allowExternalDomains.addEventListener('change', updateDomainToggles);
+        stayOnDomain.addEventListener('change', updateDomainToggles);
+        stayOnSubdomain.addEventListener('change', updateDomainToggles);
 
-    // ===== Popup toggle =====
-    let isPopupOpen = false;
-    iconContainer.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (justDragged) return;
-        isPopupOpen = !isPopupOpen;
-        popup.classList.toggle('show', isPopupOpen);
-    });
+        // State for smart sniffer
+        let sniffedResources = [];
+        let lastSnifferOpts = null;
 
-    // ===== BUTTONS & STATE =====
-    const sniffBtn = popup.querySelector('#sniffBtn');
-    const classicBtn = popup.querySelector('#classicBtn');
-    const saveButton = popup.querySelector('#saveButton');
-    const cancelButton = popup.querySelector('#cancelButton');
-    const sniffSummary = popup.querySelector('#sniffSummary');
-    const progressDiv = popup.querySelector('#progress');
-    const progressBar = popup.querySelector('#progressBar');
-    const stayOnSubdomain = popup.querySelector('#stayOnSubdomain');
-    const stayOnDomain = popup.querySelector('#stayOnDomain');
-    const allowExternalDomains = popup.querySelector('#allowExternalDomains');
-<<<<<<< codex/modify-popup-html-and-update-event-handlers
-    const iconsManifests = popup.querySelector('#iconsManifests');
-    const videoPosters = popup.querySelector('#videoPosters');
-    const cssExtras = popup.querySelector('#cssExtras');
-    const skipSizeInput = popup.querySelector('#skipSize');
-    const maxDepthInput = popup.querySelector('#maxDepth');
-=======
-    const skipBig = popup.querySelector('#skipBig');
-    const sizeLimit = popup.querySelector('#sizeLimit');
-    const maxDepth = popup.querySelector('#maxDepth');
-    const userAgent = popup.querySelector('#userAgent');
->>>>>>> main
-
-    // Domain toggle logic (mutual exclusion)
-    function updateDomainToggles() {
-        if (allowExternalDomains.checked) {
-            stayOnDomain.checked = false;
-            stayOnSubdomain.checked = false;
-            stayOnDomain.disabled = true;
-            stayOnSubdomain.disabled = true;
-        } else if (stayOnDomain.checked) {
-            stayOnSubdomain.checked = false;
-            stayOnSubdomain.disabled = true;
-            stayOnDomain.disabled = false;
-        } else {
-            stayOnSubdomain.checked = true;
-            stayOnSubdomain.disabled = false;
-            stayOnDomain.disabled = false;
-        }
-    }
-    allowExternalDomains.addEventListener('change', updateDomainToggles);
-    stayOnDomain.addEventListener('change', updateDomainToggles);
-    stayOnSubdomain.addEventListener('change', updateDomainToggles);
-
-    // State for smart sniffer
-    let sniffedResources = [];
-    let lastSnifferOpts = null;
-
-    // ===== SNIFF BUTTON: Pre-scan resources and list =====
-    sniffBtn.addEventListener('click', async () => {
-        saveButton.disabled = true;
-        sniffSummary.textContent = 'Scanning...';
-        progressDiv.textContent = 'Sniffing page resources...';
-        progressBar.style.width = '10%';
-        await new Promise(r => setTimeout(r, 200));
-        const opts = {
-            stayOnSubdomain: stayOnSubdomain.checked,
-            stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
-            allowExternalDomains: allowExternalDomains.checked,
-<<<<<<< codex/modify-popup-html-and-update-event-handlers
-            includeIcons: iconsManifests.checked,
-            includePosters: videoPosters.checked,
-            includeCssExtras: cssExtras.checked
-=======
-            sizeLimit: parseFloat(sizeLimit.value) || 5,
-            userAgent: userAgent.value.trim()
->>>>>>> main
-        };
-        lastSnifferOpts = opts;
-        sniffedResources = await smartResourceSniffer(opts);
-        progressBar.style.width = '40%';
-        // Try to get HEAD info for size/type
-        for (let i=0; i<sniffedResources.length; ++i) {
-            const r = sniffedResources[i];
-            await new Promise(res => {
-                const headers = {};
-                if (opts.userAgent) headers['User-Agent'] = opts.userAgent;
-                GM_xmlhttpRequest({
-                    method: 'HEAD',
-                    url: r.url,
-                    timeout: 5000,
-                    headers,
-                    onload: function(resp) {
-                        r.size = resp.responseHeaders.match(/Content-Length: ?(\d+)/i) ? parseInt(RegExp.$1,10) : null;
-                        r.mime = resp.responseHeaders.match(/Content-Type: ?([\w\/\-\.\+]+)(;|$)/i) ? RegExp.$1 : null;
-                        res();
-                    },
-                    onerror: res,
-                    ontimeout: res
+        // ===== SNIFF BUTTON: Pre-scan resources and list =====
+        sniffBtn.addEventListener('click', async () => {
+            saveButton.disabled = true;
+            sniffSummary.textContent = 'Scanning...';
+            progressDiv.textContent = 'Sniffing page resources...';
+            progressBar.style.width = '10%';
+            await new Promise(r => setTimeout(r, 200));
+            const opts = {
+                stayOnSubdomain: stayOnSubdomain.checked,
+                stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
+                allowExternalDomains: allowExternalDomains.checked,
+                includeIcons: iconsManifests.checked,
+                includePosters: videoPosters.checked,
+                includeCssExtras: cssExtras.checked,
+                userAgent: userAgent.value.trim()
+            };
+            lastSnifferOpts = opts;
+            sniffedResources = await smartResourceSniffer(opts);
+            progressBar.style.width = '40%';
+            // Try to get HEAD info for size/type
+            for (let i=0; i<sniffedResources.length; ++i) {
+                const r = sniffedResources[i];
+                await new Promise(res => {
+                    const headers = {};
+                    if (opts.userAgent) headers['User-Agent'] = opts.userAgent;
+                    GM_xmlhttpRequest({
+                        method: 'HEAD',
+                        url: r.url,
+                        timeout: 5000,
+                        headers,
+                        onload: function(resp) {
+                            r.size = resp.responseHeaders.match(/Content-Length: ?(\d+)/i) ? parseInt(RegExp.$1,10) : null;
+                            r.mime = resp.responseHeaders.match(/Content-Type: ?([\w\/\-\.\+]+)(;|$)/i) ? RegExp.$1 : null;
+                            res();
+                        },
+                        onerror: res,
+                        ontimeout: res
+                    });
                 });
-            });
-            progressBar.style.width = `${40 + (i/sniffedResources.length)*30}%`;
-        }
-        progressBar.style.width = '70%';
-        // List
-        if (sniffedResources.length === 0) {
-            sniffSummary.innerHTML = '<em>No downloadable resources detected.</em>';
-        } else {
-            sniffSummary.innerHTML = `<strong>${sniffedResources.length} resources found:</strong><ul>` +
-                sniffedResources.map(r =>
-                                     `<li>
+                progressBar.style.width = `${40 + (i/sniffedResources.length)*30}%`;
+            }
+            progressBar.style.width = '70%';
+            // List
+            if (sniffedResources.length === 0) {
+                sniffSummary.innerHTML = '<em>No downloadable resources detected.</em>';
+            } else {
+                sniffSummary.innerHTML = `<strong>${sniffedResources.length} resources found:</strong><ul>` +
+                    sniffedResources.map(r =>
+                                         `<li>
 <input type="checkbox" class="reschk" checked data-url="${r.url}">
 <b>${r.suggestedName}</b>
 <span style="color:#888">[${r.type || "?"}]</span>
 <small>${r.mime || ""} ${r.size ? `(${(r.size/1024).toFixed(1)}KB)` : ""}</small>
 </li>`
-                                    ).join('') + '</ul>';
+                                        ).join('') + '</ul>';
 
-        }
-        progressDiv.textContent = 'Ready. Review and select resources to save.';
-        progressBar.style.width = '100%';
-        saveButton.disabled = sniffedResources.length === 0;
-    });
-
-    // ===== SAVE BUTTON: Download and zip all checked resources =====
-    saveButton.addEventListener('click', async () => {
-        const checkedBoxes = Array.from(shadow.querySelectorAll('.reschk')).filter(cb => cb.checked);
-        const resourcesToSave = sniffedResources.filter(r => checkedBoxes.find(cb => cb.getAttribute('data-url') === r.url));
-        progressDiv.textContent = 'Downloading selected resources...';
-        progressBar.style.width = '0%';
-        const files = {};
-        const summary = [];
-        const skipLimit = parseFloat(skipSizeInput.value) || 0;
-        for (let i=0; i<resourcesToSave.length; ++i) {
-            const r = resourcesToSave[i];
-            // Skip big files
-<<<<<<< codex/modify-popup-html-and-update-event-handlers
-            if (skipLimit > 0 && r.size && r.size > skipLimit * 1024 * 1024) {
-=======
-            const maxBytes = (parseFloat(sizeLimit.value) || 5) * 1024 * 1024;
-            if (skipBig.checked && r.size && r.size > maxBytes) {
->>>>>>> main
-                summary.push({
-                    url: r.url,
-                    name: r.suggestedName,
-                    type: r.type,
-                    size: r.size,
-                    mime: r.mime,
-<<<<<<< codex/modify-popup-html-and-update-event-handlers
-                    skipped: `File >${skipLimit}MB`
-=======
-                    skipped: `File >${sizeLimit.value}MB`
->>>>>>> main
-                });
-                continue;
             }
-            progressDiv.textContent = `Downloading: ${r.suggestedName} (${i+1}/${resourcesToSave.length})`;
-            progressBar.style.width = `${(i/resourcesToSave.length)*80}%`;
-            await new Promise(res => {
-                const headers = {};
-                if (userAgent.value.trim()) headers['User-Agent'] = userAgent.value.trim();
-                GM_xmlhttpRequest({
-                    method: 'GET',
-                    url: r.url,
-                    responseType: 'blob',
-                    timeout: 20000,
-                    headers,
-                    onload: async function(resp) {
-                        let uint8 = await blobToUint8Array(resp.response);
-                        files[r.suggestedName] = uint8;
-                        summary.push({
-                            url: r.url,
-                            name: r.suggestedName,
-                            type: r.type,
-                            size: r.size || (resp.response ? resp.response.size : null),
-                            mime: r.mime || resp.response.type
-                        });
-                        res();
-                    },
-                    onerror: function() {
-                        summary.push({
-                            url: r.url, name: r.suggestedName, type: r.type, error: 'Failed to download'
-                        });
-                        res();
-                    },
-                    ontimeout: function() {
-                        summary.push({
-                            url: r.url, name: r.suggestedName, type: r.type, error: 'Timeout'
-                        });
-                        res();
-                    }
+            progressDiv.textContent = 'Ready. Review and select resources to save.';
+            progressBar.style.width = '100%';
+            saveButton.disabled = sniffedResources.length === 0;
+        });
+
+        // ===== SAVE BUTTON: Download and zip all checked resources =====
+        saveButton.addEventListener('click', async () => {
+            const checkedBoxes = Array.from(shadow.querySelectorAll('.reschk')).filter(cb => cb.checked);
+            const resourcesToSave = sniffedResources.filter(r => checkedBoxes.find(cb => cb.getAttribute('data-url') === r.url));
+            progressDiv.textContent = 'Downloading selected resources...';
+            progressBar.style.width = '0%';
+            const files = {};
+            const summary = [];
+            const skipLimit = parseFloat(skipSizeInput.value) || 0;
+            for (let i=0; i<resourcesToSave.length; ++i) {
+                const r = resourcesToSave[i];
+                // Skip big files
+                if (skipLimit > 0 && r.size && r.size > skipLimit * 1024 * 1024) {
+                    summary.push({
+                        url: r.url,
+                        name: r.suggestedName,
+                        type: r.type,
+                        size: r.size,
+                        mime: r.mime,
+                        skipped: `File >${skipLimit}MB`
+                    });
+                    continue;
+                }
+                progressDiv.textContent = `Downloading: ${r.suggestedName} (${i+1}/${resourcesToSave.length})`;
+                progressBar.style.width = `${(i/resourcesToSave.length)*80}%`;
+                await new Promise(res => {
+                    const headers = {};
+                    if (userAgent.value.trim()) headers['User-Agent'] = userAgent.value.trim();
+                    GM_xmlhttpRequest({
+                        method: 'GET',
+                        url: r.url,
+                        responseType: 'blob',
+                        timeout: 20000,
+                        headers,
+                        onload: async function(resp) {
+                            let uint8 = await blobToUint8Array(resp.response);
+                            files[r.suggestedName] = uint8;
+                            summary.push({
+                                url: r.url,
+                                name: r.suggestedName,
+                                type: r.type,
+                                size: r.size || (resp.response ? resp.response.size : null),
+                                mime: r.mime || resp.response.type
+                            });
+                            res();
+                        },
+                        onerror: function() {
+                            summary.push({
+                                url: r.url, name: r.suggestedName, type: r.type, error: 'Failed to download'
+                            });
+                            res();
+                        },
+                        ontimeout: function() {
+                            summary.push({
+                                url: r.url, name: r.suggestedName, type: r.type, error: 'Timeout'
+                            });
+                            res();
+                        }
+                    });
                 });
+            }
+            files['sniffed-summary.json'] = new TextEncoder().encode(JSON.stringify(summary,null,2));
+            progressBar.style.width = '90%';
+            progressDiv.textContent = 'Generating zip...';
+            const zipData = await zipWithProgress(files, { level: 0 }, pct => {
+                progressBar.style.width = `${90 + pct * 10}%`;
+                progressDiv.textContent = `Zipping: ${Math.round(pct * 100)}%`;
+            }).catch(err => {
+                progressDiv.textContent = 'ZIP failed: ' + err;
+                alert('ZIP failed: ' + err);
+                return null;
             });
-        }
-        files['sniffed-summary.json'] = new TextEncoder().encode(JSON.stringify(summary,null,2));
-        progressBar.style.width = '90%';
-        progressDiv.textContent = 'Generating zip...';
-        const zipData = await zipWithProgress(files, { level: 0 }, pct => {
-            progressBar.style.width = `${90 + pct * 10}%`;
-            progressDiv.textContent = `Zipping: ${Math.round(pct * 100)}%`;
-        }).catch(err => {
-            progressDiv.textContent = 'ZIP failed: ' + err;
-            alert('ZIP failed: ' + err);
-            return null;
+            if (!zipData) return;
+            let zipBlob = new Blob([zipData], { type: 'application/zip' });
+            let url = URL.createObjectURL(zipBlob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = `website-sniffed-resources-${new Date().toISOString().replace(/:/g, '-')}.zip`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(()=>URL.revokeObjectURL(url),3500);
+            progressDiv.textContent = 'ZIP saved!'; progressBar.style.width = '100%';
         });
-        if (!zipData) return;
-        let zipBlob = new Blob([zipData], { type: 'application/zip' });
-        let url = URL.createObjectURL(zipBlob);
-        let a = document.createElement('a');
-        a.href = url;
-        a.download = `website-sniffed-resources-${new Date().toISOString().replace(/:/g, '-')}.zip`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(()=>URL.revokeObjectURL(url),3500);
-        progressDiv.textContent = 'ZIP saved!'; progressBar.style.width = '100%';
-    });
 
-    // ===== CLASSIC BUTTON: Run full website snapshot (deep crawl) =====
-    classicBtn.addEventListener('click', async () => {
-        popup.classList.remove('show');
-        isPopupOpen = false;
-        await runFullSnapshot({
-            stayOnSubdomain: stayOnSubdomain.checked,
-            stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
-            allowExternalDomains: allowExternalDomains.checked,
-<<<<<<< codex/modify-popup-html-and-update-event-handlers
-            includeIcons: iconsManifests.checked,
-            includePosters: videoPosters.checked,
-            includeCssExtras: cssExtras.checked,
-            skipLargerThan: parseFloat(skipSizeInput.value) || 0,
-            maxDepth: maxDepthInput.value ? parseInt(maxDepthInput.value, 10) : null
-=======
-            skipBig: skipBig.checked,
-            sizeLimit: parseFloat(sizeLimit.value) || 5,
-            maxDepth: parseInt(maxDepth.value) || 3,
-            userAgent: userAgent.value.trim()
->>>>>>> main
+        // ===== CLASSIC BUTTON: Run full website snapshot (deep crawl) =====
+        classicBtn.addEventListener('click', async () => {
+            popup.classList.remove('show');
+            isPopupOpen = false;
+            await runFullSnapshot({
+                stayOnSubdomain: stayOnSubdomain.checked,
+                stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
+                allowExternalDomains: allowExternalDomains.checked,
+                includeIcons: iconsManifests.checked,
+                includePosters: videoPosters.checked,
+                includeCssExtras: cssExtras.checked,
+                skipLargerThan: parseFloat(skipSizeInput.value) || 0,
+                maxDepth: maxDepthInput.value ? parseInt(maxDepthInput.value, 10) : null,
+                userAgent: userAgent.value.trim()
+            });
         });
-    });
 
-    // ===== CANCEL: Hide popup =====
-    cancelButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        popup.classList.remove('show');
-        isPopupOpen = false;
-        progressDiv.textContent = 'Ready';
-        progressBar.style.width = '0%';
-    });
-}
+        // ===== CANCEL: Hide popup =====
+        cancelButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            popup.classList.remove('show');
+            isPopupOpen = false;
+            progressDiv.textContent = 'Ready';
+            progressBar.style.width = '0%';
+        });
+    }
 
     // --- Self-heal overlay
     function monitorSnapshotOverlay() {
@@ -670,7 +636,7 @@
 
     // ========== CLASSIC FULL SNAPSHOT (Deep Website Crawl) ==========
 
-    async function runFullSnapshot(domainOpts) {
+    async function runFullSnapshot(options) {
         // UI overlay
         let overlay = document.getElementById('snapshot-full-overlay');
         if (!overlay) {
@@ -692,32 +658,74 @@
             <div id="snapshot-bar" style="height:100%;background:#29a96e;width:0%;transition:width 0.22s;"></div>
             </div>
             <button id="snapshot-cancel" style="margin-top:25px;padding:6px 18px;font-size:14px;">Cancel</button>`;
-        document.body.appendChild(overlay);
-        document.getElementById('snapshot-cancel').onclick = () => {
-            overlay.remove();
-            snapshotCancelled = true;
-        };
-    }
-    let statusDiv = document.getElementById('snapshot-status');
-    let barDiv = document.getElementById('snapshot-bar');
+            document.body.appendChild(overlay);
+            document.getElementById('snapshot-cancel').onclick = () => {
+                overlay.remove();
+                snapshotCancelled = true;
+            };
+        }
+        let statusDiv = document.getElementById('snapshot-status');
+        let barDiv = document.getElementById('snapshot-bar');
 
-    // State
-    let snapshotCancelled = false;
-    let files = {};
-    let failed = [];
-    let visited = new Set();
-    let totalOps = 1, doneOps = 0;
+        // State
+        let snapshotCancelled = false;
 
-    function markDone() {
-        doneOps++;
-        let pct = Math.min(10 + (doneOps / totalOps) * 80, 89);
-        statusDiv.textContent = `Crawling site (${doneOps}/${totalOps})...`;
-        barDiv.style.width = `${pct}%`;
+        // Start full crawl!
+        statusDiv.textContent = 'Collecting site data and resources...';
+        let {files: crawlFiles, failed: crawlFailed} = await collectResources(options, (msg, pct) => {
+            statusDiv.textContent = msg;
+            if (pct !== undefined) barDiv.style.width = `${pct}%`;
+            if (snapshotCancelled) throw new Error('Snapshot cancelled.');
+        });
+
+        if (snapshotCancelled) {
+            statusDiv.textContent = 'Snapshot cancelled by user.';
+            setTimeout(()=>{ if(overlay) overlay.remove(); }, 2000);
+            return;
+        }
+
+        statusDiv.textContent = 'Generating ZIP archive...';
+        barDiv.style.width = '97%';
+
+        crawlFiles['snapshot-summary.json'] = new TextEncoder().encode(JSON.stringify({
+            files: Object.keys(crawlFiles),
+            failed: crawlFailed,
+            time: (new Date()).toISOString()
+        }, null, 2));
+
+        const zipOut = await zipWithProgress(crawlFiles, { level: 0 }, pct => {
+            barDiv.style.width = `${97 + pct * 3}%`;
+            statusDiv.textContent = `Zipping... ${Math.round(pct * 100)}%`;
+        }).catch(err => {
+            statusDiv.textContent = 'ZIP failed: ' + err;
+            alert('ZIP failed: ' + err);
+            return null;
+        });
+        if (!zipOut) return;
+        let zipBlob = new Blob([zipOut], { type: 'application/zip' });
+        let url = URL.createObjectURL(zipBlob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `website_snapshot_${new Date().toISOString().replace(/:/g, '-')}.zip`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),3500);
+        statusDiv.textContent = 'ZIP file ready. Download should start.';
+        barDiv.style.width = '100%';
+        setTimeout(()=>{ if(overlay) overlay.remove(); }, 3000);
     }
+
 
     // Crawl logic
     async function collectResources(options, updateBar) {
-        options = Object.assign({ includeIcons: true, includePosters: true, includeCssExtras: true, skipLargerThan: 0, maxDepth: null }, options);
+        options = Object.assign({
+            includeIcons: true,
+            includePosters: true,
+            includeCssExtras: true,
+            skipLargerThan: 0,
+            maxDepth: null
+        }, options);
+
+        const maxDepth = (options.maxDepth === null || isNaN(options.maxDepth)) ? Infinity : options.maxDepth;
         const toVisit = [{url: window.location.href, path: 'index.html', depth: 0}];
         const files = {};
         const visited = new Set();
@@ -737,9 +745,10 @@
 
         // Main crawl loop
         while (toVisit.length > 0) {
-            if (typeof updateBar === 'function') markDone();
-            if (snapshotCancelled) break;
+            markDone();
+            if (typeof updateBar === 'function' && snapshotCancelled) break;
             const next = toVisit.shift();
+            if (next.depth > maxDepth) continue;
             if (visited.has(next.url)) continue;
             visited.add(next.url);
             try {
@@ -833,13 +842,8 @@
                         else if (options.stayOnSubdomain && sameSubdomain(r.url)) allowed = true;
                         if (!allowed) continue;
                         if (r.type === 'iframe' || r.type === 'html') {
-<<<<<<< codex/modify-popup-html-and-update-event-handlers
-                            const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
-                            if (options.maxDepth == null || next.depth < options.maxDepth) {
-=======
-                            if (next.depth + 1 <= (options.maxDepth || 3)) {
+                            if (next.depth + 1 <= maxDepth) {
                                 const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
->>>>>>> main
                                 toVisit.push({url: r.url, path: iframePath, depth: next.depth + 1});
                             }
                         } else {
@@ -863,12 +867,7 @@
                                         ontimeout: () => res(null)
                                     });
                                 });
-<<<<<<< codex/modify-popup-html-and-update-event-handlers
                                 if (skipLimit && head && head > skipLimit * 1024 * 1024) {
-=======
-                                const maxBytes = (options.sizeLimit || 5) * 1024 * 1024;
-                                if (skipBig && head && head > maxBytes) {
->>>>>>> main
                                     failed.push({url: r.url, reason: "Skipped (big file)"});
                                     continue;
                                 }
@@ -901,44 +900,6 @@
         return {files, failed};
     }
 
-    // Start full crawl!
-    statusDiv.textContent = 'Collecting site data and resources...';
-    let options = Object.assign({}, domainOpts);
-    let {files: crawlFiles, failed: crawlFailed} = await collectResources(options, (msg, pct) => {
-        statusDiv.textContent = msg;
-        if (pct !== undefined) barDiv.style.width = `${pct}%`;
-        if (snapshotCancelled) throw new Error('Snapshot cancelled.');
-    });
-
-    statusDiv.textContent = 'Generating ZIP archive...';
-    barDiv.style.width = '97%';
-
-    crawlFiles['snapshot-summary.json'] = new TextEncoder().encode(JSON.stringify({
-        files: Object.keys(crawlFiles),
-        failed: crawlFailed,
-        time: (new Date()).toISOString()
-    }, null, 2));
-
-    const zipOut = await zipWithProgress(crawlFiles, { level: 0 }, pct => {
-        barDiv.style.width = `${97 + pct * 3}%`;
-        statusDiv.textContent = `Zipping... ${Math.round(pct * 100)}%`;
-    }).catch(err => {
-        statusDiv.textContent = 'ZIP failed: ' + err;
-        alert('ZIP failed: ' + err);
-        return null;
-    });
-    if (!zipOut) return;
-    let zipBlob = new Blob([zipOut], { type: 'application/zip' });
-    let url = URL.createObjectURL(zipBlob);
-    let a = document.createElement('a');
-    a.href = url;
-    a.download = `website_snapshot_${new Date().toISOString().replace(/:/g, '-')}.zip`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),3500);
-    statusDiv.textContent = 'ZIP file ready. Download should start.';
-    barDiv.style.width = '100%';
-    setTimeout(()=>{ if(overlay) overlay.remove(); }, 3000);
-}
 
     // ====== INIT: Start overlay & self-heal ======
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
