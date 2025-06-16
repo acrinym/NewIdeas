@@ -13,6 +13,9 @@
 (function() {
     'use strict';
     const fflate = window.fflate;
+    const SIZE_KEY = 'snapshotSkipSizeMB';
+    let savedSize = parseFloat(localStorage.getItem(SIZE_KEY));
+    if (!Number.isFinite(savedSize) || savedSize <= 0) savedSize = 5;
     // ---- UTILS
 
     function blobToUint8Array(blob) {
@@ -347,7 +350,7 @@
             <label><input type="checkbox" id="stayOnSubdomain" checked> Stay on this subdomain only</label>
             <label><input type="checkbox" id="stayOnDomain"> Allow all of this domain</label>
             <label><input type="checkbox" id="allowExternalDomains"> Traverse other domains</label>
-            <label><input type="checkbox" id="skipBig" checked> Skip files >5MB</label>
+            <label><input type="checkbox" id="skipBig" checked> Skip files larger than <input type="number" id="skipSize" value="${savedSize}" min="1" style="width:4em;"> MB</label>
         </div>
         <button id="sniffBtn" style="margin-bottom:6px;">Sniff Downloadable Resources</button>
         <button id="classicBtn" style="margin-bottom:6px;">Full Website Snapshot (Classic)</button>
@@ -408,6 +411,10 @@
     const stayOnDomain = popup.querySelector('#stayOnDomain');
     const allowExternalDomains = popup.querySelector('#allowExternalDomains');
     const skipBig = popup.querySelector('#skipBig');
+    const skipSizeInput = popup.querySelector('#skipSize');
+    skipSizeInput.addEventListener('change', () => {
+        localStorage.setItem(SIZE_KEY, skipSizeInput.value);
+    });
 
     // Domain toggle logic (mutual exclusion)
     function updateDomainToggles() {
@@ -500,14 +507,15 @@
         for (let i=0; i<resourcesToSave.length; ++i) {
             const r = resourcesToSave[i];
             // Skip big files
-            if (skipBig.checked && r.size && r.size > 5 * 1024 * 1024) {
+            const maxSize = parseFloat(skipSizeInput.value);
+            if (skipBig.checked && maxSize && r.size && r.size > maxSize * 1024 * 1024) {
                 summary.push({
                     url: r.url,
                     name: r.suggestedName,
                     type: r.type,
                     size: r.size,
                     mime: r.mime,
-                    skipped: "File >5MB"
+                    skipped: `File >${maxSize}MB`
                 });
                 continue;
             }
@@ -576,7 +584,8 @@
             stayOnSubdomain: stayOnSubdomain.checked,
             stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
             allowExternalDomains: allowExternalDomains.checked,
-            skipBig: skipBig.checked
+            skipBig: skipBig.checked,
+            maxSizeMB: parseFloat(skipSizeInput.value)
         });
     });
 
@@ -757,6 +766,7 @@
                             // Download resource
                             try {
                                 let skipBig = options.skipBig;
+                                let maxSize = options.maxSizeMB;
                                 let head = await new Promise(res => {
                                     GM_xmlhttpRequest({
                                         method: 'HEAD',
@@ -771,7 +781,7 @@
                                         ontimeout: () => res(null)
                                     });
                                 });
-                                if (skipBig && head && head > 5 * 1024 * 1024) {
+                                if (skipBig && maxSize && head && head > maxSize * 1024 * 1024) {
                                     failed.push({url: r.url, reason: "Skipped (big file)"});
                                     continue;
                                 }
