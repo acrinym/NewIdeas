@@ -16,11 +16,43 @@ namespace Cycloside.Scripting
         public InterpreterContext Context { get; }
         private readonly Dictionary<string, Action<string[]>> _commands;
         private readonly Dictionary<string, object> _vars = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, object> _readonlyVars = new(StringComparer.OrdinalIgnoreCase);
+
         public bool Exit { get; private set; }
 
         public CyclosideBasicEngine(InterpreterContext context)
         {
             Context = context;
+            // Built-in read-only variables expose core paths and metadata
+            _readonlyVars["APP_NAME"] = context.AppName;
+            _readonlyVars["APP_VERSION"] = context.AppVersion;
+            if (!string.IsNullOrEmpty(context.PluginDirectory))
+                _readonlyVars["PLUGIN_DIR"] = context.PluginDirectory;
+            if (!string.IsNullOrEmpty(context.SettingsPath))
+                _readonlyVars["SETTINGS_PATH"] = context.SettingsPath;
+            if (!string.IsNullOrEmpty(context.MarketplaceUrl))
+                _readonlyVars["MARKETPLACE_URL"] = context.MarketplaceUrl;
+            if (!string.IsNullOrEmpty(context.AppDirectory))
+                _readonlyVars["APP_DIR"] = context.AppDirectory;
+            if (!string.IsNullOrEmpty(context.LogsDirectory))
+                _readonlyVars["LOG_DIR"] = context.LogsDirectory;
+            if (!string.IsNullOrEmpty(context.MusicDirectory))
+                _readonlyVars["MUSIC_DIR"] = context.MusicDirectory;
+            if (!string.IsNullOrEmpty(context.SkinsDirectory))
+                _readonlyVars["SKIN_DIR"] = context.SkinsDirectory;
+            if (!string.IsNullOrEmpty(context.ThemesDirectory))
+                _readonlyVars["THEME_DIR"] = context.ThemesDirectory;
+            if (!string.IsNullOrEmpty(context.StatePath))
+                _readonlyVars["STATE_PATH"] = context.StatePath;
+            if (!string.IsNullOrEmpty(context.ProfilePath))
+                _readonlyVars["PROFILE_PATH"] = context.ProfilePath;
+            if (!string.IsNullOrEmpty(context.UserHome))
+                _readonlyVars["HOME_DIR"] = context.UserHome;
+            if (!string.IsNullOrEmpty(context.DesktopPath))
+                _readonlyVars["DESKTOP_PATH"] = context.DesktopPath;
+            if (!string.IsNullOrEmpty(context.OS))
+                _readonlyVars["OS"] = context.OS;
+
             _commands = new(StringComparer.OrdinalIgnoreCase)
             {
                 // Core
@@ -45,6 +77,14 @@ namespace Cycloside.Scripting
                 ["GET_DISKUSAGE"] = args => SetVar(args[1], Context.GetDiskUsage != null ? Context.GetDiskUsage(args[0]) : "0"),
                 ["SHOW_PROCESSLIST"] = args => Context.Print(Context.ListProcesses != null ? string.Join("\n", Context.ListProcesses()) : "[No processes]"),
                 ["LOG"] = args => Context.AppendLog?.Invoke(ExpandVars(string.Join(" ", args))),
+                ["SET_VOLUME"] = args => Context.SetSystemVolume?.Invoke(ParseInt(args[0])),
+                ["GET_VOLUME"] = args => SetVar(args[0], Context.GetSystemVolume != null ? Context.GetSystemVolume() : 0),
+                ["MUTE"] = args => Context.SetMuted?.Invoke(true),
+                ["UNMUTE"] = args => Context.SetMuted?.Invoke(false),
+                ["MEDIA_PLAY"] = _ => Context.MediaPlay?.Invoke(),
+                ["MEDIA_PAUSE"] = _ => Context.MediaPause?.Invoke(),
+                ["MEDIA_STOP"] = _ => Context.MediaStop?.Invoke(),
+
                 // Extend more as needed!
             };
         }
@@ -89,6 +129,21 @@ namespace Cycloside.Scripting
         }
 
         // Variable system
+        public object GetVar(string name)
+        {
+            name = name.Trim();
+            return _vars.TryGetValue(name, out var v)
+                ? v
+                : _readonlyVars.TryGetValue(name, out var rv) ? rv : "";
+        }
+
+        public void SetVar(string name, object val)
+        {
+            name = name.Trim();
+            if (_readonlyVars.ContainsKey(name))
+                return; // ignore attempts to overwrite built-in vars
+            _vars[name] = val;
+        }
         public object GetVar(string name) => _vars.TryGetValue(name.Trim(), out var v) ? v : "";
         public void SetVar(string name, object val) => _vars[name.Trim()] = val;
 
@@ -237,6 +292,28 @@ namespace Cycloside.Scripting
         public Func<string, string> GetDiskUsage { get; set; }
         public Func<string[]> ListProcesses { get; set; }
         public Action<string> AppendLog { get; set; }
+        public Action<int> SetSystemVolume { get; set; }
+        public Func<int> GetSystemVolume { get; set; }
+        public Action<bool> SetMuted { get; set; }
+        public Action MediaPlay { get; set; }
+        public Action MediaPause { get; set; }
+        public Action MediaStop { get; set; }
+        // Built-in values that scripts can read but not modify
+        public string AppName { get; init; } = "Cycloside";
+        public string AppVersion { get; init; } = "1.0.0";
+        public string PluginDirectory { get; init; } = string.Empty;
+        public string SettingsPath { get; init; } = string.Empty;
+        public string MarketplaceUrl { get; init; } = string.Empty;
+        public string AppDirectory { get; init; } = string.Empty;
+        public string LogsDirectory { get; init; } = string.Empty;
+        public string MusicDirectory { get; init; } = string.Empty;
+        public string SkinsDirectory { get; init; } = string.Empty;
+        public string ThemesDirectory { get; init; } = string.Empty;
+        public string StatePath { get; init; } = string.Empty;
+        public string ProfilePath { get; init; } = string.Empty;
+        public string UserHome { get; init; } = string.Empty;
+        public string DesktopPath { get; init; } = string.Empty;
+        public string OS { get; init; } = string.Empty;
         // ...extend as needed
     }
 }
