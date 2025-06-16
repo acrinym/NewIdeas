@@ -95,6 +95,7 @@
     // ---- SMART RESOURCE SNIFFER (from 3.0, improved)
 
     async function smartResourceSniffer(options) {
+        options = Object.assign({ includeIcons: true, includePosters: true, includeCssExtras: true }, options);
         const resList = [];
         const seen = new Set();
 
@@ -140,6 +141,9 @@
                             const isStream = /^rtsp:|^rtmp:|^mms:|^ftp:/i.test(raw);
                             if (!isFile && !isStream) return;
                         }
+                        if ((type==='icon' || type==='manifest') && !options.includeIcons) return;
+                        if (type==='poster' && !options.includePosters) return;
+                        if ((type==='css-import' || type==='bgimg' || type==='css-embed') && !options.includeCssExtras) return;
                         addRes(raw, type, sel, attr, undefined);
                     }
                 }
@@ -153,7 +157,7 @@
             if (!rules) continue;
             for (const rule of rules) {
                 if (!rule) continue;
-                if (rule.cssText && /@import/i.test(rule.cssText)) {
+                if (options.includeCssExtras && rule.cssText && /@import/i.test(rule.cssText)) {
                     let imp = /@import\s+url\(['"]?([^'")]+)['"]?\)/i.exec(rule.cssText);
                     if (imp) addRes(imp[1],'css-import','@import','css-url',undefined);
                 }
@@ -161,24 +165,26 @@
                     let m = /url\(['"]?([^'")]+)['"]?\)/i.exec(rule.cssText);
                     if (m) addRes(m[1],'font','@font-face','css-url',undefined);
                 }
-                if (rule.style && rule.style.backgroundImage) {
+                if (options.includeCssExtras && rule.style && rule.style.backgroundImage) {
                     let matches = [...rule.style.backgroundImage.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)];
                     matches.forEach(match => addRes(match[1],'bgimg','css-bg','css-url',undefined));
                 }
             }
         }
-        document.querySelectorAll('[style]').forEach(el => {
-            let bg = el.style.backgroundImage;
-            if (bg) {
-                let matches = [...bg.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)];
-                matches.forEach(match => addRes(match[1],'bgimg','[style]','css-url',undefined));
-            }
-        });
-        document.querySelectorAll('style').forEach(el => {
-            let text = el.textContent || '';
-            let matches = [...text.matchAll(/@import\s+url\(['"]?([^'")]+)['"]?\)/ig)];
-            matches.forEach(m => addRes(m[1],'css-import','<style>','css-url',undefined));
-        });
+        if (options.includeCssExtras) {
+            document.querySelectorAll('[style]').forEach(el => {
+                let bg = el.style.backgroundImage;
+                if (bg) {
+                    let matches = [...bg.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)];
+                    matches.forEach(match => addRes(match[1],'bgimg','[style]','css-url',undefined));
+                }
+            });
+            document.querySelectorAll('style').forEach(el => {
+                let text = el.textContent || '';
+                let matches = [...text.matchAll(/@import\s+url\(['"]?([^'")]+)['"]?\)/ig)];
+                matches.forEach(m => addRes(m[1],'css-import','<style>','css-url',undefined));
+            });
+        }
 
         // Shadow DOM
         function sniffShadow(node) {
@@ -347,6 +353,13 @@
             <label><input type="checkbox" id="stayOnSubdomain" checked> Stay on this subdomain only</label>
             <label><input type="checkbox" id="stayOnDomain"> Allow all of this domain</label>
             <label><input type="checkbox" id="allowExternalDomains"> Traverse other domains</label>
+<<<<<<< codex/modify-popup-html-and-update-event-handlers
+            <label><input type="checkbox" id="iconsManifests" checked> Icons & manifests</label>
+            <label><input type="checkbox" id="videoPosters" checked> Video posters</label>
+            <label><input type="checkbox" id="cssExtras" checked> CSS imports/background images</label>
+            <label>Skip files larger than <input type="number" id="skipSize" value="5" style="width:60px;"> MB</label>
+            <label>Maximum crawl depth <input type="number" id="maxDepth" min="0" style="width:50px;" placeholder="∞"></label>
+=======
             <label><input type="checkbox" id="skipBig" checked> Skip files >
                 <input type="number" id="sizeLimit" value="5" style="width:60px"> MB
             </label>
@@ -356,6 +369,7 @@
             <label>User Agent:
                 <input type="text" id="userAgent" placeholder="default" style="width:160px">
             </label>
+>>>>>>> main
         </div>
         <button id="sniffBtn" style="margin-bottom:6px;">Sniff Downloadable Resources</button>
         <button id="classicBtn" style="margin-bottom:6px;">Full Website Snapshot (Classic)</button>
@@ -415,10 +429,18 @@
     const stayOnSubdomain = popup.querySelector('#stayOnSubdomain');
     const stayOnDomain = popup.querySelector('#stayOnDomain');
     const allowExternalDomains = popup.querySelector('#allowExternalDomains');
+<<<<<<< codex/modify-popup-html-and-update-event-handlers
+    const iconsManifests = popup.querySelector('#iconsManifests');
+    const videoPosters = popup.querySelector('#videoPosters');
+    const cssExtras = popup.querySelector('#cssExtras');
+    const skipSizeInput = popup.querySelector('#skipSize');
+    const maxDepthInput = popup.querySelector('#maxDepth');
+=======
     const skipBig = popup.querySelector('#skipBig');
     const sizeLimit = popup.querySelector('#sizeLimit');
     const maxDepth = popup.querySelector('#maxDepth');
     const userAgent = popup.querySelector('#userAgent');
+>>>>>>> main
 
     // Domain toggle logic (mutual exclusion)
     function updateDomainToggles() {
@@ -456,8 +478,14 @@
             stayOnSubdomain: stayOnSubdomain.checked,
             stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
             allowExternalDomains: allowExternalDomains.checked,
+<<<<<<< codex/modify-popup-html-and-update-event-handlers
+            includeIcons: iconsManifests.checked,
+            includePosters: videoPosters.checked,
+            includeCssExtras: cssExtras.checked
+=======
             sizeLimit: parseFloat(sizeLimit.value) || 5,
             userAgent: userAgent.value.trim()
+>>>>>>> main
         };
         lastSnifferOpts = opts;
         sniffedResources = await smartResourceSniffer(opts);
@@ -513,18 +541,27 @@
         progressBar.style.width = '0%';
         const files = {};
         const summary = [];
+        const skipLimit = parseFloat(skipSizeInput.value) || 0;
         for (let i=0; i<resourcesToSave.length; ++i) {
             const r = resourcesToSave[i];
             // Skip big files
+<<<<<<< codex/modify-popup-html-and-update-event-handlers
+            if (skipLimit > 0 && r.size && r.size > skipLimit * 1024 * 1024) {
+=======
             const maxBytes = (parseFloat(sizeLimit.value) || 5) * 1024 * 1024;
             if (skipBig.checked && r.size && r.size > maxBytes) {
+>>>>>>> main
                 summary.push({
                     url: r.url,
                     name: r.suggestedName,
                     type: r.type,
                     size: r.size,
                     mime: r.mime,
+<<<<<<< codex/modify-popup-html-and-update-event-handlers
+                    skipped: `File >${skipLimit}MB`
+=======
                     skipped: `File >${sizeLimit.value}MB`
+>>>>>>> main
                 });
                 continue;
             }
@@ -596,10 +633,18 @@
             stayOnSubdomain: stayOnSubdomain.checked,
             stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
             allowExternalDomains: allowExternalDomains.checked,
+<<<<<<< codex/modify-popup-html-and-update-event-handlers
+            includeIcons: iconsManifests.checked,
+            includePosters: videoPosters.checked,
+            includeCssExtras: cssExtras.checked,
+            skipLargerThan: parseFloat(skipSizeInput.value) || 0,
+            maxDepth: maxDepthInput.value ? parseInt(maxDepthInput.value, 10) : null
+=======
             skipBig: skipBig.checked,
             sizeLimit: parseFloat(sizeLimit.value) || 5,
             maxDepth: parseInt(maxDepth.value) || 3,
             userAgent: userAgent.value.trim()
+>>>>>>> main
         });
     });
 
@@ -672,6 +717,7 @@
 
     // Crawl logic
     async function collectResources(options, updateBar) {
+        options = Object.assign({ includeIcons: true, includePosters: true, includeCssExtras: true, skipLargerThan: 0, maxDepth: null }, options);
         const toVisit = [{url: window.location.href, path: 'index.html', depth: 0}];
         const files = {};
         const visited = new Set();
@@ -732,11 +778,15 @@
                     return '';
                 });
                 html.replace(/<video[^>]+poster=['"]([^'"]+)['"]/ig, (_, poster) => {
-                    resList.push({type:'poster', url: absUrl(poster, next.url)});
+                    if (options.includePosters) {
+                        resList.push({type:'poster', url: absUrl(poster, next.url)});
+                    }
                     return '';
                 });
                 html.replace(/url\(['"]?([^'")]+)['"]?\)/ig, (_, url) => {
-                    resList.push({type: 'bgimg', url: absUrl(url, next.url)});
+                    if (options.includeCssExtras) {
+                        resList.push({type: 'bgimg', url: absUrl(url, next.url)});
+                    }
                     return '';
                 });
                 html.replace(/<iframe[^>]+src=['"]([^'"]+)['"]/ig, (_, src) => {
@@ -745,11 +795,15 @@
                 });
                 html.replace(/<link[^>]+rel=['"](?:[^'"]*icon[^'"]*)['"][^>]*href=['"]([^'"]+)['"]/ig,
                     (_, href) => {
-                        resList.push({type: 'icon', url: absUrl(href, next.url)});
+                        if (options.includeIcons) {
+                            resList.push({type: 'icon', url: absUrl(href, next.url)});
+                        }
                         return '';
                     });
                 html.replace(/<link[^>]+rel=['"]manifest['"][^>]*href=['"]([^'"]+)['"]/ig, (_, href) => {
-                    resList.push({type:'manifest', url: absUrl(href, next.url)});
+                    if (options.includeIcons) {
+                        resList.push({type:'manifest', url: absUrl(href, next.url)});
+                    }
                     return '';
                 });
                 html.replace(/<a[^>]+href=['"]([^'"]+)['"]/ig, (_, href) => {
@@ -759,12 +813,14 @@
                     return '';
                 });
                 html.replace(/<style[^>]*>([\s\S]*?)<\/style>/ig, (_, css) => {
+                    if (options.includeCssExtras) {
                     [...css.matchAll(/@import\s+url\(['"]?([^'"]+)['"]?\)/ig)].forEach(m => {
                         resList.push({type:'css-import', url: absUrl(m[1], next.url)});
                     });
                     [...css.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)].forEach(m => {
                         resList.push({type:'css-embed', url: absUrl(m[1], next.url)});
                     });
+                    }
                     return '';
                 });
 
@@ -777,14 +833,19 @@
                         else if (options.stayOnSubdomain && sameSubdomain(r.url)) allowed = true;
                         if (!allowed) continue;
                         if (r.type === 'iframe' || r.type === 'html') {
+<<<<<<< codex/modify-popup-html-and-update-event-handlers
+                            const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
+                            if (options.maxDepth == null || next.depth < options.maxDepth) {
+=======
                             if (next.depth + 1 <= (options.maxDepth || 3)) {
                                 const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
+>>>>>>> main
                                 toVisit.push({url: r.url, path: iframePath, depth: next.depth + 1});
                             }
                         } else {
                             // Download resource
                             try {
-                                let skipBig = options.skipBig;
+                                let skipLimit = options.skipLargerThan;
                                 let head = await new Promise(res => {
                                     const headers = {};
                                     if (options.userAgent) headers['User-Agent'] = options.userAgent;
@@ -802,8 +863,12 @@
                                         ontimeout: () => res(null)
                                     });
                                 });
+<<<<<<< codex/modify-popup-html-and-update-event-handlers
+                                if (skipLimit && head && head > skipLimit * 1024 * 1024) {
+=======
                                 const maxBytes = (options.sizeLimit || 5) * 1024 * 1024;
                                 if (skipBig && head && head > maxBytes) {
+>>>>>>> main
                                     failed.push({url: r.url, reason: "Skipped (big file)"});
                                     continue;
                                 }
