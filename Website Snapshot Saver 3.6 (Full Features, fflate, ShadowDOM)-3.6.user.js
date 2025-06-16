@@ -117,6 +117,7 @@
             {sel:'link[href]',type:'css',attr:'href'},
             {sel:'img[src]',type:'img',attr:'src'},
             {sel:'img[srcset]',type:'imgset',attr:'srcset'},
+            {sel:'video[poster]',type:'poster',attr:'poster'},
             {sel:'source[src]',type:'media',attr:'src'},
             {sel:'source[srcset]',type:'mediaset',attr:'srcset'},
             {sel:'audio[src]',type:'audio',attr:'src'},
@@ -124,6 +125,8 @@
             {sel:'embed[src]',type:'embed',attr:'src'},
             {sel:'object[data]',type:'object',attr:'data'},
             {sel:'iframe[src]',type:'iframe',attr:'src'},
+            {sel:'link[rel~="icon"][href]',type:'icon',attr:'href'},
+            {sel:'link[rel="manifest"][href]',type:'manifest',attr:'href'},
             {sel:'a[href]',type:'link',attr:'href'}
         ].forEach(({sel,type,attr}) => {
             document.querySelectorAll(sel).forEach(el => {
@@ -132,7 +135,11 @@
                     if (attr === 'srcset') {
                         raw.split(',').map(e => e.trim().split(' ')[0]).forEach(r => addRes(r,type,sel,attr,undefined));
                     } else {
-                        if (sel==='a[href]' && !/\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(raw)) return;
+                        if (sel==='a[href]') {
+                            const isFile = /\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(raw);
+                            const isStream = /^rtsp:|^rtmp:|^mms:|^ftp:/i.test(raw);
+                            if (!isFile && !isStream) return;
+                        }
                         addRes(raw, type, sel, attr, undefined);
                     }
                 }
@@ -146,6 +153,10 @@
             if (!rules) continue;
             for (const rule of rules) {
                 if (!rule) continue;
+                if (rule.cssText && /@import/i.test(rule.cssText)) {
+                    let imp = /@import\s+url\(['"]?([^'")]+)['"]?\)/i.exec(rule.cssText);
+                    if (imp) addRes(imp[1],'css-import','@import','css-url',undefined);
+                }
                 if (rule.cssText && /@font-face/i.test(rule.cssText)) {
                     let m = /url\(['"]?([^'")]+)['"]?\)/i.exec(rule.cssText);
                     if (m) addRes(m[1],'font','@font-face','css-url',undefined);
@@ -162,6 +173,11 @@
                 let matches = [...bg.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)];
                 matches.forEach(match => addRes(match[1],'bgimg','[style]','css-url',undefined));
             }
+        });
+        document.querySelectorAll('style').forEach(el => {
+            let text = el.textContent || '';
+            let matches = [...text.matchAll(/@import\s+url\(['"]?([^'")]+)['"]?\)/ig)];
+            matches.forEach(m => addRes(m[1],'css-import','<style>','css-url',undefined));
         });
 
         // Shadow DOM
@@ -689,6 +705,10 @@
                     resList.push({type: tag, url: absUrl(src, next.url)});
                     return '';
                 });
+                html.replace(/<video[^>]+poster=['"]([^'"]+)['"]/ig, (_, poster) => {
+                    resList.push({type:'poster', url: absUrl(poster, next.url)});
+                    return '';
+                });
                 html.replace(/url\(['"]?([^'")]+)['"]?\)/ig, (_, url) => {
                     resList.push({type: 'bgimg', url: absUrl(url, next.url)});
                     return '';
@@ -697,10 +717,28 @@
                     resList.push({type: 'iframe', url: absUrl(src, next.url)});
                     return '';
                 });
+                html.replace(/<link[^>]+rel=['"](?:[^'"]*icon[^'"]*)['"][^>]*href=['"]([^'"]+)['"]/ig,
+                    (_, href) => {
+                        resList.push({type: 'icon', url: absUrl(href, next.url)});
+                        return '';
+                    });
+                html.replace(/<link[^>]+rel=['"]manifest['"][^>]*href=['"]([^'"]+)['"]/ig, (_, href) => {
+                    resList.push({type:'manifest', url: absUrl(href, next.url)});
+                    return '';
+                });
                 html.replace(/<a[^>]+href=['"]([^'"]+)['"]/ig, (_, href) => {
-                    if (/\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(href)) {
+                    if (/^rtsp:|^rtmp:|^mms:|^ftp:/i.test(href) || /\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(href)) {
                         resList.push({type: 'file', url: absUrl(href, next.url)});
                     }
+                    return '';
+                });
+                html.replace(/<style[^>]*>([\s\S]*?)<\/style>/ig, (_, css) => {
+                    [...css.matchAll(/@import\s+url\(['"]?([^'"]+)['"]?\)/ig)].forEach(m => {
+                        resList.push({type:'css-import', url: absUrl(m[1], next.url)});
+                    });
+                    [...css.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)].forEach(m => {
+                        resList.push({type:'css-embed', url: absUrl(m[1], next.url)});
+                    });
                     return '';
                 });
 
