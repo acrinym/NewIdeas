@@ -347,7 +347,15 @@
             <label><input type="checkbox" id="stayOnSubdomain" checked> Stay on this subdomain only</label>
             <label><input type="checkbox" id="stayOnDomain"> Allow all of this domain</label>
             <label><input type="checkbox" id="allowExternalDomains"> Traverse other domains</label>
-            <label><input type="checkbox" id="skipBig" checked> Skip files >5MB</label>
+            <label><input type="checkbox" id="skipBig" checked> Skip files >
+                <input type="number" id="sizeLimit" value="5" style="width:60px"> MB
+            </label>
+            <label>Max depth:
+                <input type="number" id="maxDepth" value="3" min="1" style="width:50px">
+            </label>
+            <label>User Agent:
+                <input type="text" id="userAgent" placeholder="default" style="width:160px">
+            </label>
         </div>
         <button id="sniffBtn" style="margin-bottom:6px;">Sniff Downloadable Resources</button>
         <button id="classicBtn" style="margin-bottom:6px;">Full Website Snapshot (Classic)</button>
@@ -408,6 +416,9 @@
     const stayOnDomain = popup.querySelector('#stayOnDomain');
     const allowExternalDomains = popup.querySelector('#allowExternalDomains');
     const skipBig = popup.querySelector('#skipBig');
+    const sizeLimit = popup.querySelector('#sizeLimit');
+    const maxDepth = popup.querySelector('#maxDepth');
+    const userAgent = popup.querySelector('#userAgent');
 
     // Domain toggle logic (mutual exclusion)
     function updateDomainToggles() {
@@ -444,7 +455,9 @@
         const opts = {
             stayOnSubdomain: stayOnSubdomain.checked,
             stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
-            allowExternalDomains: allowExternalDomains.checked
+            allowExternalDomains: allowExternalDomains.checked,
+            sizeLimit: parseFloat(sizeLimit.value) || 5,
+            userAgent: userAgent.value.trim()
         };
         lastSnifferOpts = opts;
         sniffedResources = await smartResourceSniffer(opts);
@@ -453,10 +466,13 @@
         for (let i=0; i<sniffedResources.length; ++i) {
             const r = sniffedResources[i];
             await new Promise(res => {
+                const headers = {};
+                if (opts.userAgent) headers['User-Agent'] = opts.userAgent;
                 GM_xmlhttpRequest({
                     method: 'HEAD',
                     url: r.url,
                     timeout: 5000,
+                    headers,
                     onload: function(resp) {
                         r.size = resp.responseHeaders.match(/Content-Length: ?(\d+)/i) ? parseInt(RegExp.$1,10) : null;
                         r.mime = resp.responseHeaders.match(/Content-Type: ?([\w\/\-\.\+]+)(;|$)/i) ? RegExp.$1 : null;
@@ -500,25 +516,29 @@
         for (let i=0; i<resourcesToSave.length; ++i) {
             const r = resourcesToSave[i];
             // Skip big files
-            if (skipBig.checked && r.size && r.size > 5 * 1024 * 1024) {
+            const maxBytes = (parseFloat(sizeLimit.value) || 5) * 1024 * 1024;
+            if (skipBig.checked && r.size && r.size > maxBytes) {
                 summary.push({
                     url: r.url,
                     name: r.suggestedName,
                     type: r.type,
                     size: r.size,
                     mime: r.mime,
-                    skipped: "File >5MB"
+                    skipped: `File >${sizeLimit.value}MB`
                 });
                 continue;
             }
             progressDiv.textContent = `Downloading: ${r.suggestedName} (${i+1}/${resourcesToSave.length})`;
             progressBar.style.width = `${(i/resourcesToSave.length)*80}%`;
             await new Promise(res => {
+                const headers = {};
+                if (userAgent.value.trim()) headers['User-Agent'] = userAgent.value.trim();
                 GM_xmlhttpRequest({
                     method: 'GET',
                     url: r.url,
                     responseType: 'blob',
                     timeout: 20000,
+                    headers,
                     onload: async function(resp) {
                         let uint8 = await blobToUint8Array(resp.response);
                         files[r.suggestedName] = uint8;
@@ -576,7 +596,10 @@
             stayOnSubdomain: stayOnSubdomain.checked,
             stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
             allowExternalDomains: allowExternalDomains.checked,
-            skipBig: skipBig.checked
+            skipBig: skipBig.checked,
+            sizeLimit: parseFloat(sizeLimit.value) || 5,
+            maxDepth: parseInt(maxDepth.value) || 3,
+            userAgent: userAgent.value.trim()
         });
     });
 
@@ -675,11 +698,14 @@
             visited.add(next.url);
             try {
                 const html = await new Promise((resolve, reject) => {
+                    const headers = {};
+                    if (options.userAgent) headers['User-Agent'] = options.userAgent;
                     GM_xmlhttpRequest({
                         method: 'GET',
                         url: next.url,
                         responseType: 'text',
                         timeout: 15000,
+                        headers,
                         onload: r => resolve(r.response),
                         onerror: () => reject(new Error('Network error')),
                         ontimeout: () => reject(new Error('Timeout'))
@@ -751,17 +777,22 @@
                         else if (options.stayOnSubdomain && sameSubdomain(r.url)) allowed = true;
                         if (!allowed) continue;
                         if (r.type === 'iframe' || r.type === 'html') {
-                            const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
-                            toVisit.push({url: r.url, path: iframePath, depth: next.depth + 1});
+                            if (next.depth + 1 <= (options.maxDepth || 3)) {
+                                const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
+                                toVisit.push({url: r.url, path: iframePath, depth: next.depth + 1});
+                            }
                         } else {
                             // Download resource
                             try {
                                 let skipBig = options.skipBig;
                                 let head = await new Promise(res => {
+                                    const headers = {};
+                                    if (options.userAgent) headers['User-Agent'] = options.userAgent;
                                     GM_xmlhttpRequest({
                                         method: 'HEAD',
                                         url: r.url,
                                         timeout: 8000,
+                                        headers,
                                         onload: function(resp) {
                                             let s = resp.responseHeaders.match(/Content-Length: ?(\d+)/i);
                                             let size = s ? +s[1] : null;
@@ -771,16 +802,20 @@
                                         ontimeout: () => res(null)
                                     });
                                 });
-                                if (skipBig && head && head > 5 * 1024 * 1024) {
+                                const maxBytes = (options.sizeLimit || 5) * 1024 * 1024;
+                                if (skipBig && head && head > maxBytes) {
                                     failed.push({url: r.url, reason: "Skipped (big file)"});
                                     continue;
                                 }
                                 const blob = await new Promise((resolve, reject) => {
+                                    const headers = {};
+                                    if (options.userAgent) headers['User-Agent'] = options.userAgent;
                                     GM_xmlhttpRequest({
                                         method: 'GET',
                                         url: r.url,
                                         responseType: 'blob',
                                         timeout: 20000,
+                                        headers,
                                         onload: r => resolve(r.response),
                                         onerror: () => reject(new Error('Network error')),
                                         ontimeout: () => reject(new Error('Timeout'))
