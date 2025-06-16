@@ -26,6 +26,44 @@
         });
     }
 
+    // Zip helper using fflate streams with progress callback
+    function zipWithProgress(files, opts, progressCb) {
+        return new Promise((resolve, reject) => {
+            const chunks = [];
+            const zip = new fflate.Zip((err, dat, final) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                chunks.push(dat);
+                if (final) {
+                    const total = chunks.reduce((n, c) => n + c.length, 0);
+                    const out = new Uint8Array(total);
+                    let off = 0;
+                    for (const c of chunks) { out.set(c, off); off += c.length; }
+                    resolve(out);
+                }
+            });
+            const names = Object.keys(files);
+            let done = 0;
+            names.forEach(name => {
+                const data = files[name];
+                const stream = new fflate.AsyncZipDeflate(name, opts);
+                zip.add(stream);
+                const orig = stream.ondata;
+                stream.ondata = function(err, dat, final) {
+                    orig.call(this, err, dat, final);
+                    if (final) {
+                        done++;
+                        if (progressCb) progressCb(done / names.length);
+                    }
+                };
+                stream.push(data, true);
+            });
+            zip.end();
+        });
+    }
+
     // ---- DOMAIN UTILS (from 3.0)
 
     function getDomainRoot(url) {
@@ -79,6 +117,7 @@
             {sel:'link[href]',type:'css',attr:'href'},
             {sel:'img[src]',type:'img',attr:'src'},
             {sel:'img[srcset]',type:'imgset',attr:'srcset'},
+            {sel:'video[poster]',type:'poster',attr:'poster'},
             {sel:'source[src]',type:'media',attr:'src'},
             {sel:'source[srcset]',type:'mediaset',attr:'srcset'},
             {sel:'audio[src]',type:'audio',attr:'src'},
@@ -86,6 +125,8 @@
             {sel:'embed[src]',type:'embed',attr:'src'},
             {sel:'object[data]',type:'object',attr:'data'},
             {sel:'iframe[src]',type:'iframe',attr:'src'},
+            {sel:'link[rel~="icon"][href]',type:'icon',attr:'href'},
+            {sel:'link[rel="manifest"][href]',type:'manifest',attr:'href'},
             {sel:'a[href]',type:'link',attr:'href'}
         ].forEach(({sel,type,attr}) => {
             document.querySelectorAll(sel).forEach(el => {
@@ -94,7 +135,11 @@
                     if (attr === 'srcset') {
                         raw.split(',').map(e => e.trim().split(' ')[0]).forEach(r => addRes(r,type,sel,attr,undefined));
                     } else {
-                        if (sel==='a[href]' && !/\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(raw)) return;
+                        if (sel==='a[href]') {
+                            const isFile = /\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(raw);
+                            const isStream = /^rtsp:|^rtmp:|^mms:|^ftp:/i.test(raw);
+                            if (!isFile && !isStream) return;
+                        }
                         addRes(raw, type, sel, attr, undefined);
                     }
                 }
@@ -108,6 +153,10 @@
             if (!rules) continue;
             for (const rule of rules) {
                 if (!rule) continue;
+                if (rule.cssText && /@import/i.test(rule.cssText)) {
+                    let imp = /@import\s+url\(['"]?([^'")]+)['"]?\)/i.exec(rule.cssText);
+                    if (imp) addRes(imp[1],'css-import','@import','css-url',undefined);
+                }
                 if (rule.cssText && /@font-face/i.test(rule.cssText)) {
                     let m = /url\(['"]?([^'")]+)['"]?\)/i.exec(rule.cssText);
                     if (m) addRes(m[1],'font','@font-face','css-url',undefined);
@@ -124,6 +173,11 @@
                 let matches = [...bg.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)];
                 matches.forEach(match => addRes(match[1],'bgimg','[style]','css-url',undefined));
             }
+        });
+        document.querySelectorAll('style').forEach(el => {
+            let text = el.textContent || '';
+            let matches = [...text.matchAll(/@import\s+url\(['"]?([^'")]+)['"]?\)/ig)];
+            matches.forEach(m => addRes(m[1],'css-import','<style>','css-url',undefined));
         });
 
         // Shadow DOM
@@ -293,7 +347,15 @@
             <label><input type="checkbox" id="stayOnSubdomain" checked> Stay on this subdomain only</label>
             <label><input type="checkbox" id="stayOnDomain"> Allow all of this domain</label>
             <label><input type="checkbox" id="allowExternalDomains"> Traverse other domains</label>
-            <label><input type="checkbox" id="skipBig" checked> Skip files >5MB</label>
+            <label><input type="checkbox" id="skipBig" checked> Skip files >
+                <input type="number" id="sizeLimit" value="5" style="width:60px"> MB
+            </label>
+            <label>Max depth:
+                <input type="number" id="maxDepth" value="3" min="1" style="width:50px">
+            </label>
+            <label>User Agent:
+                <input type="text" id="userAgent" placeholder="default" style="width:160px">
+            </label>
         </div>
         <button id="sniffBtn" style="margin-bottom:6px;">Sniff Downloadable Resources</button>
         <button id="classicBtn" style="margin-bottom:6px;">Full Website Snapshot (Classic)</button>
@@ -354,6 +416,9 @@
     const stayOnDomain = popup.querySelector('#stayOnDomain');
     const allowExternalDomains = popup.querySelector('#allowExternalDomains');
     const skipBig = popup.querySelector('#skipBig');
+    const sizeLimit = popup.querySelector('#sizeLimit');
+    const maxDepth = popup.querySelector('#maxDepth');
+    const userAgent = popup.querySelector('#userAgent');
 
     // Domain toggle logic (mutual exclusion)
     function updateDomainToggles() {
@@ -390,7 +455,9 @@
         const opts = {
             stayOnSubdomain: stayOnSubdomain.checked,
             stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
-            allowExternalDomains: allowExternalDomains.checked
+            allowExternalDomains: allowExternalDomains.checked,
+            sizeLimit: parseFloat(sizeLimit.value) || 5,
+            userAgent: userAgent.value.trim()
         };
         lastSnifferOpts = opts;
         sniffedResources = await smartResourceSniffer(opts);
@@ -399,10 +466,13 @@
         for (let i=0; i<sniffedResources.length; ++i) {
             const r = sniffedResources[i];
             await new Promise(res => {
+                const headers = {};
+                if (opts.userAgent) headers['User-Agent'] = opts.userAgent;
                 GM_xmlhttpRequest({
                     method: 'HEAD',
                     url: r.url,
                     timeout: 5000,
+                    headers,
                     onload: function(resp) {
                         r.size = resp.responseHeaders.match(/Content-Length: ?(\d+)/i) ? parseInt(RegExp.$1,10) : null;
                         r.mime = resp.responseHeaders.match(/Content-Type: ?([\w\/\-\.\+]+)(;|$)/i) ? RegExp.$1 : null;
@@ -446,25 +516,29 @@
         for (let i=0; i<resourcesToSave.length; ++i) {
             const r = resourcesToSave[i];
             // Skip big files
-            if (skipBig.checked && r.size && r.size > 5 * 1024 * 1024) {
+            const maxBytes = (parseFloat(sizeLimit.value) || 5) * 1024 * 1024;
+            if (skipBig.checked && r.size && r.size > maxBytes) {
                 summary.push({
                     url: r.url,
                     name: r.suggestedName,
                     type: r.type,
                     size: r.size,
                     mime: r.mime,
-                    skipped: "File >5MB"
+                    skipped: `File >${sizeLimit.value}MB`
                 });
                 continue;
             }
             progressDiv.textContent = `Downloading: ${r.suggestedName} (${i+1}/${resourcesToSave.length})`;
             progressBar.style.width = `${(i/resourcesToSave.length)*80}%`;
             await new Promise(res => {
+                const headers = {};
+                if (userAgent.value.trim()) headers['User-Agent'] = userAgent.value.trim();
                 GM_xmlhttpRequest({
                     method: 'GET',
                     url: r.url,
                     responseType: 'blob',
                     timeout: 20000,
+                    headers,
                     onload: async function(resp) {
                         let uint8 = await blobToUint8Array(resp.response);
                         files[r.suggestedName] = uint8;
@@ -495,25 +569,23 @@
         files['sniffed-summary.json'] = new TextEncoder().encode(JSON.stringify(summary,null,2));
         progressBar.style.width = '90%';
         progressDiv.textContent = 'Generating zip...';
-        fflate.zipAsync(
-            files,
-            { level: 0 },
-            (err, data) => {
-                if (err) {
-                    progressDiv.textContent = "ZIP failed: " + err;
-                    alert("ZIP failed: " + err);
-                    return;
-                }
-                let zipBlob = new Blob([data], { type: "application/zip" });
-                let url = URL.createObjectURL(zipBlob);
-                let a = document.createElement('a');
-                a.href = url;
-                a.download = `website-sniffed-resources-${new Date().toISOString().replace(/:/g, '-')}.zip`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                setTimeout(()=>URL.revokeObjectURL(url),3500);
-                progressDiv.textContent = 'ZIP saved!'; progressBar.style.width = '100%';
-            }
-        );
+        const zipData = await zipWithProgress(files, { level: 0 }, pct => {
+            progressBar.style.width = `${90 + pct * 10}%`;
+            progressDiv.textContent = `Zipping: ${Math.round(pct * 100)}%`;
+        }).catch(err => {
+            progressDiv.textContent = 'ZIP failed: ' + err;
+            alert('ZIP failed: ' + err);
+            return null;
+        });
+        if (!zipData) return;
+        let zipBlob = new Blob([zipData], { type: 'application/zip' });
+        let url = URL.createObjectURL(zipBlob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `website-sniffed-resources-${new Date().toISOString().replace(/:/g, '-')}.zip`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),3500);
+        progressDiv.textContent = 'ZIP saved!'; progressBar.style.width = '100%';
     });
 
     // ===== CLASSIC BUTTON: Run full website snapshot (deep crawl) =====
@@ -524,7 +596,10 @@
             stayOnSubdomain: stayOnSubdomain.checked,
             stayOnDomain: stayOnDomain.checked && !stayOnSubdomain.checked,
             allowExternalDomains: allowExternalDomains.checked,
-            skipBig: skipBig.checked
+            skipBig: skipBig.checked,
+            sizeLimit: parseFloat(sizeLimit.value) || 5,
+            maxDepth: parseInt(maxDepth.value) || 3,
+            userAgent: userAgent.value.trim()
         });
     });
 
@@ -623,11 +698,14 @@
             visited.add(next.url);
             try {
                 const html = await new Promise((resolve, reject) => {
+                    const headers = {};
+                    if (options.userAgent) headers['User-Agent'] = options.userAgent;
                     GM_xmlhttpRequest({
                         method: 'GET',
                         url: next.url,
                         responseType: 'text',
                         timeout: 15000,
+                        headers,
                         onload: r => resolve(r.response),
                         onerror: () => reject(new Error('Network error')),
                         ontimeout: () => reject(new Error('Timeout'))
@@ -653,6 +731,10 @@
                     resList.push({type: tag, url: absUrl(src, next.url)});
                     return '';
                 });
+                html.replace(/<video[^>]+poster=['"]([^'"]+)['"]/ig, (_, poster) => {
+                    resList.push({type:'poster', url: absUrl(poster, next.url)});
+                    return '';
+                });
                 html.replace(/url\(['"]?([^'")]+)['"]?\)/ig, (_, url) => {
                     resList.push({type: 'bgimg', url: absUrl(url, next.url)});
                     return '';
@@ -661,10 +743,28 @@
                     resList.push({type: 'iframe', url: absUrl(src, next.url)});
                     return '';
                 });
+                html.replace(/<link[^>]+rel=['"](?:[^'"]*icon[^'"]*)['"][^>]*href=['"]([^'"]+)['"]/ig,
+                    (_, href) => {
+                        resList.push({type: 'icon', url: absUrl(href, next.url)});
+                        return '';
+                    });
+                html.replace(/<link[^>]+rel=['"]manifest['"][^>]*href=['"]([^'"]+)['"]/ig, (_, href) => {
+                    resList.push({type:'manifest', url: absUrl(href, next.url)});
+                    return '';
+                });
                 html.replace(/<a[^>]+href=['"]([^'"]+)['"]/ig, (_, href) => {
-                    if (/\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(href)) {
+                    if (/^rtsp:|^rtmp:|^mms:|^ftp:/i.test(href) || /\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(href)) {
                         resList.push({type: 'file', url: absUrl(href, next.url)});
                     }
+                    return '';
+                });
+                html.replace(/<style[^>]*>([\s\S]*?)<\/style>/ig, (_, css) => {
+                    [...css.matchAll(/@import\s+url\(['"]?([^'"]+)['"]?\)/ig)].forEach(m => {
+                        resList.push({type:'css-import', url: absUrl(m[1], next.url)});
+                    });
+                    [...css.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)].forEach(m => {
+                        resList.push({type:'css-embed', url: absUrl(m[1], next.url)});
+                    });
                     return '';
                 });
 
@@ -677,17 +777,22 @@
                         else if (options.stayOnSubdomain && sameSubdomain(r.url)) allowed = true;
                         if (!allowed) continue;
                         if (r.type === 'iframe' || r.type === 'html') {
-                            const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
-                            toVisit.push({url: r.url, path: iframePath, depth: next.depth + 1});
+                            if (next.depth + 1 <= (options.maxDepth || 3)) {
+                                const iframePath = (r.url.split('//')[1] || r.url).replace(/[\\/:*?"<>|]+/g, '_') + '.html';
+                                toVisit.push({url: r.url, path: iframePath, depth: next.depth + 1});
+                            }
                         } else {
                             // Download resource
                             try {
                                 let skipBig = options.skipBig;
                                 let head = await new Promise(res => {
+                                    const headers = {};
+                                    if (options.userAgent) headers['User-Agent'] = options.userAgent;
                                     GM_xmlhttpRequest({
                                         method: 'HEAD',
                                         url: r.url,
                                         timeout: 8000,
+                                        headers,
                                         onload: function(resp) {
                                             let s = resp.responseHeaders.match(/Content-Length: ?(\d+)/i);
                                             let size = s ? +s[1] : null;
@@ -697,16 +802,20 @@
                                         ontimeout: () => res(null)
                                     });
                                 });
-                                if (skipBig && head && head > 5 * 1024 * 1024) {
+                                const maxBytes = (options.sizeLimit || 5) * 1024 * 1024;
+                                if (skipBig && head && head > maxBytes) {
                                     failed.push({url: r.url, reason: "Skipped (big file)"});
                                     continue;
                                 }
                                 const blob = await new Promise((resolve, reject) => {
+                                    const headers = {};
+                                    if (options.userAgent) headers['User-Agent'] = options.userAgent;
                                     GM_xmlhttpRequest({
                                         method: 'GET',
                                         url: r.url,
                                         responseType: 'blob',
                                         timeout: 20000,
+                                        headers,
                                         onload: r => resolve(r.response),
                                         onerror: () => reject(new Error('Network error')),
                                         ontimeout: () => reject(new Error('Timeout'))
@@ -745,27 +854,25 @@
         time: (new Date()).toISOString()
     }, null, 2));
 
-    fflate.zipAsync(
-        crawlFiles,
-        { level: 0 },
-        (err, data) => {
-            if (err) {
-                statusDiv.textContent = "ZIP failed: " + err;
-                alert("ZIP failed: " + err);
-                return;
-            }
-            let zipBlob = new Blob([data], { type: "application/zip" });
-            let url = URL.createObjectURL(zipBlob);
-            let a = document.createElement('a');
-            a.href = url;
-            a.download = `website_snapshot_${new Date().toISOString().replace(/:/g, '-')}.zip`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(()=>URL.revokeObjectURL(url),3500);
-            statusDiv.textContent = 'ZIP file ready. Download should start.';
-            barDiv.style.width = '100%';
-            setTimeout(()=>{ if(overlay) overlay.remove(); }, 3000);
-        }
-    );
+    const zipOut = await zipWithProgress(crawlFiles, { level: 0 }, pct => {
+        barDiv.style.width = `${97 + pct * 3}%`;
+        statusDiv.textContent = `Zipping... ${Math.round(pct * 100)}%`;
+    }).catch(err => {
+        statusDiv.textContent = 'ZIP failed: ' + err;
+        alert('ZIP failed: ' + err);
+        return null;
+    });
+    if (!zipOut) return;
+    let zipBlob = new Blob([zipOut], { type: 'application/zip' });
+    let url = URL.createObjectURL(zipBlob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = `website_snapshot_${new Date().toISOString().replace(/:/g, '-')}.zip`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),3500);
+    statusDiv.textContent = 'ZIP file ready. Download should start.';
+    barDiv.style.width = '100%';
+    setTimeout(()=>{ if(overlay) overlay.remove(); }, 3000);
 }
 
     // ====== INIT: Start overlay & self-heal ======
