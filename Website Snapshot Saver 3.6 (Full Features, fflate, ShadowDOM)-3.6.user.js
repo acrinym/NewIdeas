@@ -26,6 +26,44 @@
         });
     }
 
+    // Zip helper using fflate streams with progress callback
+    function zipWithProgress(files, opts, progressCb) {
+        return new Promise((resolve, reject) => {
+            const chunks = [];
+            const zip = new fflate.Zip((err, dat, final) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                chunks.push(dat);
+                if (final) {
+                    const total = chunks.reduce((n, c) => n + c.length, 0);
+                    const out = new Uint8Array(total);
+                    let off = 0;
+                    for (const c of chunks) { out.set(c, off); off += c.length; }
+                    resolve(out);
+                }
+            });
+            const names = Object.keys(files);
+            let done = 0;
+            names.forEach(name => {
+                const data = files[name];
+                const stream = new fflate.AsyncZipDeflate(name, opts);
+                zip.add(stream);
+                const orig = stream.ondata;
+                stream.ondata = function(err, dat, final) {
+                    orig.call(this, err, dat, final);
+                    if (final) {
+                        done++;
+                        if (progressCb) progressCb(done / names.length);
+                    }
+                };
+                stream.push(data, true);
+            });
+            zip.end();
+        });
+    }
+
     // ---- DOMAIN UTILS (from 3.0)
 
     function getDomainRoot(url) {
@@ -79,6 +117,7 @@
             {sel:'link[href]',type:'css',attr:'href'},
             {sel:'img[src]',type:'img',attr:'src'},
             {sel:'img[srcset]',type:'imgset',attr:'srcset'},
+            {sel:'video[poster]',type:'poster',attr:'poster'},
             {sel:'source[src]',type:'media',attr:'src'},
             {sel:'source[srcset]',type:'mediaset',attr:'srcset'},
             {sel:'audio[src]',type:'audio',attr:'src'},
@@ -86,6 +125,8 @@
             {sel:'embed[src]',type:'embed',attr:'src'},
             {sel:'object[data]',type:'object',attr:'data'},
             {sel:'iframe[src]',type:'iframe',attr:'src'},
+            {sel:'link[rel~="icon"][href]',type:'icon',attr:'href'},
+            {sel:'link[rel="manifest"][href]',type:'manifest',attr:'href'},
             {sel:'a[href]',type:'link',attr:'href'}
         ].forEach(({sel,type,attr}) => {
             document.querySelectorAll(sel).forEach(el => {
@@ -94,7 +135,11 @@
                     if (attr === 'srcset') {
                         raw.split(',').map(e => e.trim().split(' ')[0]).forEach(r => addRes(r,type,sel,attr,undefined));
                     } else {
-                        if (sel==='a[href]' && !/\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(raw)) return;
+                        if (sel==='a[href]') {
+                            const isFile = /\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(raw);
+                            const isStream = /^rtsp:|^rtmp:|^mms:|^ftp:/i.test(raw);
+                            if (!isFile && !isStream) return;
+                        }
                         addRes(raw, type, sel, attr, undefined);
                     }
                 }
@@ -108,6 +153,10 @@
             if (!rules) continue;
             for (const rule of rules) {
                 if (!rule) continue;
+                if (rule.cssText && /@import/i.test(rule.cssText)) {
+                    let imp = /@import\s+url\(['"]?([^'")]+)['"]?\)/i.exec(rule.cssText);
+                    if (imp) addRes(imp[1],'css-import','@import','css-url',undefined);
+                }
                 if (rule.cssText && /@font-face/i.test(rule.cssText)) {
                     let m = /url\(['"]?([^'")]+)['"]?\)/i.exec(rule.cssText);
                     if (m) addRes(m[1],'font','@font-face','css-url',undefined);
@@ -124,6 +173,11 @@
                 let matches = [...bg.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)];
                 matches.forEach(match => addRes(match[1],'bgimg','[style]','css-url',undefined));
             }
+        });
+        document.querySelectorAll('style').forEach(el => {
+            let text = el.textContent || '';
+            let matches = [...text.matchAll(/@import\s+url\(['"]?([^'")]+)['"]?\)/ig)];
+            matches.forEach(m => addRes(m[1],'css-import','<style>','css-url',undefined));
         });
 
         // Shadow DOM
@@ -495,25 +549,23 @@
         files['sniffed-summary.json'] = new TextEncoder().encode(JSON.stringify(summary,null,2));
         progressBar.style.width = '90%';
         progressDiv.textContent = 'Generating zip...';
-        fflate.zipAsync(
-            files,
-            { level: 0 },
-            (err, data) => {
-                if (err) {
-                    progressDiv.textContent = "ZIP failed: " + err;
-                    alert("ZIP failed: " + err);
-                    return;
-                }
-                let zipBlob = new Blob([data], { type: "application/zip" });
-                let url = URL.createObjectURL(zipBlob);
-                let a = document.createElement('a');
-                a.href = url;
-                a.download = `website-sniffed-resources-${new Date().toISOString().replace(/:/g, '-')}.zip`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                setTimeout(()=>URL.revokeObjectURL(url),3500);
-                progressDiv.textContent = 'ZIP saved!'; progressBar.style.width = '100%';
-            }
-        );
+        const zipData = await zipWithProgress(files, { level: 0 }, pct => {
+            progressBar.style.width = `${90 + pct * 10}%`;
+            progressDiv.textContent = `Zipping: ${Math.round(pct * 100)}%`;
+        }).catch(err => {
+            progressDiv.textContent = 'ZIP failed: ' + err;
+            alert('ZIP failed: ' + err);
+            return null;
+        });
+        if (!zipData) return;
+        let zipBlob = new Blob([zipData], { type: 'application/zip' });
+        let url = URL.createObjectURL(zipBlob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `website-sniffed-resources-${new Date().toISOString().replace(/:/g, '-')}.zip`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),3500);
+        progressDiv.textContent = 'ZIP saved!'; progressBar.style.width = '100%';
     });
 
     // ===== CLASSIC BUTTON: Run full website snapshot (deep crawl) =====
@@ -653,6 +705,10 @@
                     resList.push({type: tag, url: absUrl(src, next.url)});
                     return '';
                 });
+                html.replace(/<video[^>]+poster=['"]([^'"]+)['"]/ig, (_, poster) => {
+                    resList.push({type:'poster', url: absUrl(poster, next.url)});
+                    return '';
+                });
                 html.replace(/url\(['"]?([^'")]+)['"]?\)/ig, (_, url) => {
                     resList.push({type: 'bgimg', url: absUrl(url, next.url)});
                     return '';
@@ -661,10 +717,28 @@
                     resList.push({type: 'iframe', url: absUrl(src, next.url)});
                     return '';
                 });
+                html.replace(/<link[^>]+rel=['"](?:[^'"]*icon[^'"]*)['"][^>]*href=['"]([^'"]+)['"]/ig,
+                    (_, href) => {
+                        resList.push({type: 'icon', url: absUrl(href, next.url)});
+                        return '';
+                    });
+                html.replace(/<link[^>]+rel=['"]manifest['"][^>]*href=['"]([^'"]+)['"]/ig, (_, href) => {
+                    resList.push({type:'manifest', url: absUrl(href, next.url)});
+                    return '';
+                });
                 html.replace(/<a[^>]+href=['"]([^'"]+)['"]/ig, (_, href) => {
-                    if (/\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(href)) {
+                    if (/^rtsp:|^rtmp:|^mms:|^ftp:/i.test(href) || /\.(zip|rar|7z|exe|mp3|mp4|wav|avi|mov|pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|csv|json|xml|txt|tar|gz)$/i.test(href)) {
                         resList.push({type: 'file', url: absUrl(href, next.url)});
                     }
+                    return '';
+                });
+                html.replace(/<style[^>]*>([\s\S]*?)<\/style>/ig, (_, css) => {
+                    [...css.matchAll(/@import\s+url\(['"]?([^'"]+)['"]?\)/ig)].forEach(m => {
+                        resList.push({type:'css-import', url: absUrl(m[1], next.url)});
+                    });
+                    [...css.matchAll(/url\(['"]?([^'")]+)['"]?\)/ig)].forEach(m => {
+                        resList.push({type:'css-embed', url: absUrl(m[1], next.url)});
+                    });
                     return '';
                 });
 
@@ -745,27 +819,25 @@
         time: (new Date()).toISOString()
     }, null, 2));
 
-    fflate.zipAsync(
-        crawlFiles,
-        { level: 0 },
-        (err, data) => {
-            if (err) {
-                statusDiv.textContent = "ZIP failed: " + err;
-                alert("ZIP failed: " + err);
-                return;
-            }
-            let zipBlob = new Blob([data], { type: "application/zip" });
-            let url = URL.createObjectURL(zipBlob);
-            let a = document.createElement('a');
-            a.href = url;
-            a.download = `website_snapshot_${new Date().toISOString().replace(/:/g, '-')}.zip`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(()=>URL.revokeObjectURL(url),3500);
-            statusDiv.textContent = 'ZIP file ready. Download should start.';
-            barDiv.style.width = '100%';
-            setTimeout(()=>{ if(overlay) overlay.remove(); }, 3000);
-        }
-    );
+    const zipOut = await zipWithProgress(crawlFiles, { level: 0 }, pct => {
+        barDiv.style.width = `${97 + pct * 3}%`;
+        statusDiv.textContent = `Zipping... ${Math.round(pct * 100)}%`;
+    }).catch(err => {
+        statusDiv.textContent = 'ZIP failed: ' + err;
+        alert('ZIP failed: ' + err);
+        return null;
+    });
+    if (!zipOut) return;
+    let zipBlob = new Blob([zipOut], { type: 'application/zip' });
+    let url = URL.createObjectURL(zipBlob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = `website_snapshot_${new Date().toISOString().replace(/:/g, '-')}.zip`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),3500);
+    statusDiv.textContent = 'ZIP file ready. Download should start.';
+    barDiv.style.width = '100%';
+    setTimeout(()=>{ if(overlay) overlay.remove(); }, 3000);
 }
 
     // ====== INIT: Start overlay & self-heal ======
