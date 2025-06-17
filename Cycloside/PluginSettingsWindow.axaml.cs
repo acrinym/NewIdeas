@@ -14,6 +14,12 @@ public partial class PluginSettingsWindow : Window
 {
     private readonly PluginManager _manager;
 
+    public PluginSettingsWindow()
+    {
+        InitializeComponent();
+        _manager = null!;
+    }
+
     public PluginSettingsWindow(PluginManager manager)
     {
         _manager = manager;
