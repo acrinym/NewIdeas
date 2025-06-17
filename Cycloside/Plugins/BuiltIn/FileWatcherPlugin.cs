@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using System;
 using System.IO;
 
@@ -15,7 +16,7 @@ public class FileWatcherPlugin : IPlugin
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
 
-    public async void Start()
+    public void Start()
     {
         var selectButton = new Button { Content = "Select Folder" };
         _log = new TextBox
@@ -27,8 +28,9 @@ public class FileWatcherPlugin : IPlugin
         ScrollViewer.SetVerticalScrollBarVisibility(_log, ScrollBarVisibility.Auto);
         selectButton.Click += async (_, __) =>
         {
-            var dlg = new OpenFolderDialog();
-            var path = await dlg.ShowAsync(_window);
+            if (_window == null) return;
+            var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
+            var path = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
             if (!string.IsNullOrWhiteSpace(path))
                 StartWatching(path);
         };

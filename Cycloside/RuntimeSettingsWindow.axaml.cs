@@ -18,9 +18,9 @@ public partial class RuntimeSettingsWindow : Window
         ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
         SkinManager.LoadForWindow(this);
-        this.FindControl<CheckBox>("IsolationBox").IsChecked = _manager.IsolationEnabled;
-        this.FindControl<CheckBox>("CrashLogBox").IsChecked = _manager.CrashLoggingEnabled;
-        this.FindControl<CheckBox>("BuiltInBox").IsChecked = SettingsManager.Settings.DisableBuiltInPlugins;
+        this.FindControl<CheckBox>("IsolationBox")!.IsChecked = _manager.IsolationEnabled;
+        this.FindControl<CheckBox>("CrashLogBox")!.IsChecked = _manager.CrashLoggingEnabled;
+        this.FindControl<CheckBox>("BuiltInBox")!.IsChecked = SettingsManager.Settings.DisableBuiltInPlugins;
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(RuntimeSettingsWindow));
     }
 
@@ -36,9 +36,9 @@ public partial class RuntimeSettingsWindow : Window
 
     private void OnSave(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var iso = this.FindControl<CheckBox>("IsolationBox").IsChecked ?? true;
-        var log = this.FindControl<CheckBox>("CrashLogBox").IsChecked ?? true;
-        var builtIn = this.FindControl<CheckBox>("BuiltInBox").IsChecked ?? false;
+        var iso = this.FindControl<CheckBox>("IsolationBox")?.IsChecked ?? true;
+        var log = this.FindControl<CheckBox>("CrashLogBox")?.IsChecked ?? true;
+        var builtIn = this.FindControl<CheckBox>("BuiltInBox")?.IsChecked ?? false;
         _manager.IsolationEnabled = iso;
         _manager.CrashLoggingEnabled = log;
         SettingsManager.Settings.PluginIsolation = iso;

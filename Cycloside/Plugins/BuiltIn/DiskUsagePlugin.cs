@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using System;
 using System.IO;
 using System.Linq;
@@ -15,14 +16,15 @@ public class DiskUsagePlugin : IPlugin
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
 
-    public async void Start()
+    public void Start()
     {
         _tree = new TreeView();
         var button = new Button { Content = "Select Folder" };
         button.Click += async (_, __) =>
         {
-            var dlg = new OpenFolderDialog();
-            var path = await dlg.ShowAsync(_window);
+            if (_window == null) return;
+            var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
+            var path = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
             if (!string.IsNullOrWhiteSpace(path))
                 LoadTree(path);
         };

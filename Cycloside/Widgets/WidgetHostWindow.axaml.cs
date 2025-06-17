@@ -18,7 +18,7 @@ public partial class WidgetHostWindow : Window
         AvaloniaXamlLoader.Load(this);
     }
 
-    public Canvas Root => this.FindControl<Canvas>("RootCanvas");
+    public Canvas Root => this.FindControl<Canvas>("RootCanvas")!;
 
     public IntPtr GetHandle() => this.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
 }
