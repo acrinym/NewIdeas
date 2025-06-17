@@ -395,10 +395,14 @@
         iconContainer.addEventListener('mousedown', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            const rect = host.getBoundingClientRect();
+            host.style.left = `${rect.left}px`;
+            host.style.top = `${rect.top}px`;
+            host.style.right = 'auto';
             isDragging = true;
             justDragged = false;
-            offsetX = e.clientX - host.offsetLeft;
-            offsetY = e.clientY - host.offsetTop;
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
             document.body.style.userSelect = 'none';
         });
         document.addEventListener('mousemove', (e) => {
@@ -406,11 +410,11 @@
                 justDragged = true;
                 let newX = e.clientX - offsetX;
                 let newY = e.clientY - offsetY;
-                const maxX = window.innerWidth - host.offsetWidth;
-                const maxY = window.innerHeight - host.offsetHeight;
+                const rect = host.getBoundingClientRect();
+                const maxX = window.innerWidth - rect.width;
+                const maxY = window.innerHeight - rect.height;
                 host.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
                 host.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
-                host.style.right = 'auto'; // Override initial style
             }
         });
         document.addEventListener('mouseup', () => {
