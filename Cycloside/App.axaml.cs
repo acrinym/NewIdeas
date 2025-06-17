@@ -336,6 +336,15 @@ public partial class App : Application
             menu.Items.Add(exitItem);
 
             trayIcon.Menu = menu;
+
+            // Register the tray icon with the application
+            var icons = TrayIcon.GetIcons(this);
+            if (icons == null)
+            {
+                icons = new TrayIcons();
+                TrayIcon.SetIcons(this, icons);
+            }
+            icons.Add(trayIcon);
             trayIcon.IsVisible = true;
         }
 

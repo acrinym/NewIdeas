@@ -12,6 +12,15 @@
 
 (function() {
     'use strict';
+    if (typeof window.fflate === 'undefined') {
+        console.warn('fflate library is missing. Attempting to load it...');
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/fflate@0.8.1/umd/index.js';
+        script.onload = () => console.log('fflate loaded. Please reload the page to continue.');
+        script.onerror = () => console.error('Failed to load fflate. Aborting initialization.');
+        document.head.appendChild(script);
+        return;
+    }
     const fflate = window.fflate;
     const SIZE_KEY = 'snapshotSkipSizeMB';
     let savedSize = parseFloat(localStorage.getItem(SIZE_KEY));
