@@ -7,6 +7,7 @@ using Cycloside.Plugins.BuiltIn;
 using Avalonia.Input;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System;
 using System.IO;
 using System.Linq;
@@ -333,6 +334,15 @@ public partial class App : Application
             menu.Items.Add(exitItem);
 
             trayIcon.Menu = menu;
+
+            // Register the tray icon with the application
+            var icons = TrayIcon.GetIcons(this);
+            if (icons == null)
+            {
+                icons = new TrayIcons();
+                TrayIcon.SetIcons(this, icons);
+            }
+            icons.Add(trayIcon);
             trayIcon.IsVisible = true;
         }
 
@@ -363,6 +373,7 @@ public partial class App : Application
         return new WindowIcon(new MemoryStream(bytes));
     }
 
+    [SupportedOSPlatform("windows")]
     private static Icon? ExtractIconFromDll(string path, int index)
     {
         IntPtr hIcon = ExtractIcon(IntPtr.Zero, path, index);
