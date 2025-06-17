@@ -144,8 +144,7 @@ namespace Cycloside.Scripting
                 return; // ignore attempts to overwrite built-in vars
             _vars[name] = val;
         }
-        public object GetVar(string name) => _vars.TryGetValue(name.Trim(), out var v) ? v : "";
-        public void SetVar(string name, object val) => _vars[name.Trim()] = val;
+        // Short helpers are redundant with the full implementations above
 
         // Utility: expands any $(var) or ${var} in a string
         private string ExpandVars(string input)
