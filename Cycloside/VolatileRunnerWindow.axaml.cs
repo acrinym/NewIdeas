@@ -32,7 +32,7 @@ public partial class VolatileRunnerWindow : Window
     private void OnRun(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         var langBox = this.FindControl<ComboBox>("LangBox");
-        var code = this.FindControl<TextBox>("CodeBox").Text ?? string.Empty;
+        var code = this.FindControl<TextBox>("CodeBox")?.Text ?? string.Empty;
         if (langBox?.SelectedIndex == 0)
             _manager.RunLua(code);
         else

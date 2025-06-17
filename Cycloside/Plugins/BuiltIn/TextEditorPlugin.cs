@@ -30,7 +30,7 @@ public class TextEditorPlugin : IPlugin
         openButton.Click += async (_, _) =>
         {
             var dlg = new OpenFileDialog();
-            var files = await dlg.ShowAsync(_window);
+            var files = await dlg.ShowAsync(_window!);
             if (files is { Length: > 0 })
             {
                 box.Text = await System.IO.File.ReadAllTextAsync(files[0]);
@@ -40,7 +40,7 @@ public class TextEditorPlugin : IPlugin
         saveButton.Click += async (_, _) =>
         {
             var dlg = new SaveFileDialog();
-            var path = await dlg.ShowAsync(_window);
+            var path = await dlg.ShowAsync(_window!);
             if (!string.IsNullOrWhiteSpace(path))
             {
                 await System.IO.File.WriteAllTextAsync(path, box.Text ?? string.Empty);
