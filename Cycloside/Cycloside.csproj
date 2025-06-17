@@ -29,6 +29,7 @@
     </PackageReference>
     <PackageReference Include="SharpHook" Version="5.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
 
   <!-- Exclude built-in plugins to simplify build in this environment -->
