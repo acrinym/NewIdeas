@@ -640,6 +640,7 @@
             popup.classList.remove('show');
             isPopupOpen = false;
         });
+        console.log('Website Snapshot Saver initialized');
     }
 
     // --- Self-healing logic for the overlay ---
