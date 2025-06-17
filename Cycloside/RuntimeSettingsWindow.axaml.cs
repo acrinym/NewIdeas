@@ -2,18 +2,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
+using System;
+using System.IO;
 
 namespace Cycloside;
 
 public partial class RuntimeSettingsWindow : Window
 {
     private readonly PluginManager _manager;
-
-    public RuntimeSettingsWindow()
-    {
-        InitializeComponent();
-        _manager = null!;
-    }
 
     public RuntimeSettingsWindow(PluginManager manager)
     {
@@ -26,6 +22,11 @@ public partial class RuntimeSettingsWindow : Window
         this.FindControl<CheckBox>("CrashLogBox").IsChecked = _manager.CrashLoggingEnabled;
         this.FindControl<CheckBox>("BuiltInBox").IsChecked = SettingsManager.Settings.DisableBuiltInPlugins;
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(RuntimeSettingsWindow));
+    }
+
+    // Parameterless constructor for designer support
+    public RuntimeSettingsWindow() : this(new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), _ => Logger.Log("Designer")))
+    {
     }
 
     private void InitializeComponent()

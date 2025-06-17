@@ -17,6 +17,7 @@ namespace Cycloside;
 
 public partial class App : Application
 {
+    private const string TrayIconBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGElEQVR4nGNkaGAgCTCRpnxUw6iGoaQBALsfAKDg6Y6zAAAAAElFTkSuQmCC";
 
     public override void Initialize()
     {
@@ -86,26 +87,9 @@ public partial class App : Application
                 }
             });
 
-            Icon? sysIcon = null;
-            if (OperatingSystem.IsWindows())
-            {
-                try
-                {
-                    var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
-                    sysIcon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 3) ??
-                               ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 3);
-                }
-                catch { }
-            }
-
-            sysIcon ??= SystemIcons.Application;
-            using var iconStream = new MemoryStream();
-            sysIcon.Save(iconStream);
-            iconStream.Position = 0;
-
             var trayIcon = new TrayIcon
             {
-                Icon = new WindowIcon(iconStream)
+                Icon = CreateTrayIcon()
             };
 
             var menu = new NativeMenu();
@@ -353,6 +337,30 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static WindowIcon CreateTrayIcon()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            try
+            {
+                var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 3) ??
+                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 3);
+                if (icon != null)
+                {
+                    using var stream = new MemoryStream();
+                    icon.Save(stream);
+                    stream.Position = 0;
+                    return new WindowIcon(stream);
+                }
+            }
+            catch { }
+        }
+
+        var bytes = Convert.FromBase64String(TrayIconBase64);
+        return new WindowIcon(new MemoryStream(bytes));
     }
 
     private static Icon? ExtractIconFromDll(string path, int index)
