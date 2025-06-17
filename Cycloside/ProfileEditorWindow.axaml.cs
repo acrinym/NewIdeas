@@ -39,6 +39,8 @@ public partial class ProfileEditorWindow : Window
     private void BuildProfileList()
     {
         var list = this.FindControl<ListBox>("ProfileList");
+        if (list is null)
+            return;
         list.ItemsSource = WorkspaceProfiles.Profiles.Keys.ToList();
         list.SelectionChanged += (_, _) => LoadSelectedProfile();
         if (list.Items.Count > 0)
@@ -48,6 +50,8 @@ public partial class ProfileEditorWindow : Window
     private void BuildPluginList()
     {
         var panel = this.FindControl<StackPanel>("PluginPanel");
+        if (panel is null)
+            return;
         panel.Children.Clear();
         foreach (var plugin in _manager.Plugins)
         {
@@ -63,18 +67,26 @@ public partial class ProfileEditorWindow : Window
     private void LoadSelectedProfile()
     {
         var list = this.FindControl<ListBox>("ProfileList");
-        if (list.SelectedItem is not string name ||
+        if (list == null ||
+            list.SelectedItem is not string name ||
             !WorkspaceProfiles.Profiles.TryGetValue(name, out var profile))
             return;
 
         _originalName = name;
-        this.FindControl<TextBox>("NameBox").Text = profile.Name;
-        this.FindControl<TextBox>("WallpaperBox").Text = profile.Wallpaper;
+        var nameBox = this.FindControl<TextBox>("NameBox");
+        if (nameBox != null)
+            nameBox.Text = profile.Name;
+        var wallBox = this.FindControl<TextBox>("WallpaperBox");
+        if (wallBox != null)
+            wallBox.Text = profile.Wallpaper;
         var panel = this.FindControl<StackPanel>("PluginPanel");
-        foreach (var child in panel.Children.OfType<CheckBox>())
+        if (panel != null)
         {
-            if (child.Tag is IPlugin p)
-                child.IsChecked = profile.Plugins.TryGetValue(p.Name, out var en) && en;
+            foreach (var child in panel.Children.OfType<CheckBox>())
+            {
+                if (child.Tag is IPlugin p)
+                    child.IsChecked = profile.Plugins.TryGetValue(p.Name, out var en) && en;
+            }
         }
     }
 
@@ -88,13 +100,14 @@ public partial class ProfileEditorWindow : Window
         WorkspaceProfiles.AddOrUpdate(new WorkspaceProfile { Name = name });
         BuildProfileList();
         var list = this.FindControl<ListBox>("ProfileList");
-        list.SelectedItem = name;
+        if (list != null)
+            list.SelectedItem = name;
     }
 
     private void RemoveProfile(object? sender, RoutedEventArgs e)
     {
         var list = this.FindControl<ListBox>("ProfileList");
-        if (list.SelectedItem is string name)
+        if (list?.SelectedItem is string name)
         {
             WorkspaceProfiles.Remove(name);
             BuildProfileList();
@@ -107,21 +120,28 @@ public partial class ProfileEditorWindow : Window
         dlg.Filters.Add(new FileDialogFilter { Name = "Images", Extensions = { "png", "jpg", "jpeg", "bmp" } });
         var files = await dlg.ShowAsync(this);
         if (files is { Length: > 0 })
-            this.FindControl<TextBox>("WallpaperBox").Text = files[0];
+        {
+            var box = this.FindControl<TextBox>("WallpaperBox");
+            if (box != null)
+                box.Text = files[0];
+        }
     }
 
     private void SaveProfile(object? sender, RoutedEventArgs e)
     {
-        var name = this.FindControl<TextBox>("NameBox").Text?.Trim() ?? string.Empty;
+        var name = this.FindControl<TextBox>("NameBox")?.Text?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(name))
             return;
-        var wallpaper = this.FindControl<TextBox>("WallpaperBox").Text ?? string.Empty;
+        var wallpaper = this.FindControl<TextBox>("WallpaperBox")?.Text ?? string.Empty;
         var map = new System.Collections.Generic.Dictionary<string, bool>();
         var panel = this.FindControl<StackPanel>("PluginPanel");
-        foreach (var child in panel.Children.OfType<CheckBox>())
+        if (panel != null)
         {
-            if (child.Tag is IPlugin p)
-                map[p.Name] = child.IsChecked == true;
+            foreach (var child in panel.Children.OfType<CheckBox>())
+            {
+                if (child.Tag is IPlugin p)
+                    map[p.Name] = child.IsChecked == true;
+            }
         }
         var profile = new WorkspaceProfile
         {
@@ -134,6 +154,7 @@ public partial class ProfileEditorWindow : Window
         WorkspaceProfiles.AddOrUpdate(profile);
         BuildProfileList();
         var list = this.FindControl<ListBox>("ProfileList");
-        list.SelectedItem = name;
+        if (list != null)
+            list.SelectedItem = name;
     }
 }

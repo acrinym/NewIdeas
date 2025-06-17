@@ -41,6 +41,8 @@ public partial class PluginSettingsWindow : Window
     private void BuildList()
     {
         var panel = this.FindControl<StackPanel>("PluginsPanel");
+        if (panel is null)
+            return;
         panel.Children.Clear();
 
         void AddPluginItem(IPlugin plugin)
@@ -58,8 +60,7 @@ public partial class PluginSettingsWindow : Window
                 IsChecked = _manager.IsEnabled(plugin),
                 Tag = plugin
             };
-            cb.Checked += Toggle;
-            cb.Unchecked += Toggle;
+            cb.IsCheckedChanged += Toggle;
             panel.Children.Add(cb);
         }
 
@@ -78,7 +79,7 @@ public partial class PluginSettingsWindow : Window
         }
     }
 
-    // This version will work for both routed event types
+    // Handles checkbox toggle
     private void Toggle(object? sender, RoutedEventArgs e)
     {
         if (sender is not CheckBox cb || cb.Tag is not IPlugin plugin)

@@ -27,7 +27,7 @@ public class WallpaperPlugin : IPlugin
         {
             var dlg = new OpenFileDialog();
             dlg.Filters.Add(new FileDialogFilter { Name = "Images", Extensions = { "jpg", "png", "bmp" } });
-            var files = await dlg.ShowAsync(_window);
+            var files = await dlg.ShowAsync(_window!);
             if (files is { Length: > 0 })
                 SetWallpaper(files[0]);
         };
