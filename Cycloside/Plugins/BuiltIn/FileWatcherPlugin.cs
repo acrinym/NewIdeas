@@ -1,81 +1,161 @@
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using System;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace Cycloside.Plugins.BuiltIn;
-
-public class FileWatcherPlugin : IPlugin
+namespace Cycloside.Plugins.BuiltIn
 {
-    private Window? _window;
-    private TextBox? _log;
-    private FileSystemWatcher? _watcher;
-
-    public string Name => "File Watcher";
-    public string Description => "Watch a folder for changes";
-    public Version Version => new(0,1,0);
-    public Widgets.IWidget? Widget => null;
-
-    public void Start()
+    public class FileWatcherPlugin : IPlugin
     {
-        var selectButton = new Button { Content = "Select Folder" };
-        _log = new TextBox
+        private Window? _window;
+        private TextBox? _log;
+        private Button? _selectFolderButton;
+        private FileSystemWatcher? _watcher;
+
+        public string Name => "File Watcher";
+        public string Description => "Watch a folder for changes";
+        public Version Version => new Version(0, 2, 0); // Incremented version for improvements
+        public Widgets.IWidget? Widget => null;
+
+        public void Start()
         {
-            AcceptsReturn = true,
-            IsReadOnly = true,
-            Height = 300
-        };
-        ScrollViewer.SetVerticalScrollBarVisibility(_log, ScrollBarVisibility.Auto);
-        selectButton.Click += async (_, __) =>
+            // --- Create UI Controls ---
+            _selectFolderButton = new Button 
+            { 
+                Content = "Select Folder to Watch",
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(5)
+            };
+            _selectFolderButton.Click += async (s, e) => await SelectAndWatchDirectoryAsync();
+
+            var clearLogButton = new Button
+            {
+                Content = "Clear Log",
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(5,0,5,5)
+            };
+            clearLogButton.Click += (s, e) => { if(_log != null) _log.Text = string.Empty; };
+            
+            var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center };
+            buttonPanel.Children.Add(_selectFolderButton);
+            buttonPanel.Children.Add(clearLogButton);
+
+            _log = new TextBox
+            {
+                AcceptsReturn = true,
+                IsReadOnly = true,
+                TextWrapping = Avalonia.Media.TextWrapping.NoWrap, // Better for file paths
+                Margin = new Avalonia.Thickness(5)
+            };
+            ScrollViewer.SetHorizontalScrollBarVisibility(_log, ScrollBarVisibility.Auto);
+            ScrollViewer.SetVerticalScrollBarVisibility(_log, ScrollBarVisibility.Auto);
+
+            // --- Assemble UI Layout ---
+            var mainPanel = new DockPanel();
+            DockPanel.SetDock(buttonPanel, Dock.Top);
+            mainPanel.Children.Add(buttonPanel);
+            mainPanel.Children.Add(_log); // The TextBox will fill the remaining space
+
+            // --- Create and Show Window ---
+            _window = new Window
+            {
+                Title = "File Watcher",
+                Width = 550,
+                Height = 450,
+                Content = mainPanel
+            };
+
+            // Apply theming and effects (assuming these are valid managers in your project)
+            ThemeManager.ApplyFromSettings(_window, "Plugins");
+            WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(FileWatcherPlugin));
+            _window.Show();
+        }
+
+        /// <summary>
+        /// Handles the folder selection and initiates the watcher.
+        /// </summary>
+        private async Task SelectAndWatchDirectoryAsync()
         {
             if (_window == null) return;
-            var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
-            var path = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
+
+            // Use the modern, recommended StorageProvider API to open a folder picker.
+            var result = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select a folder to watch",
+                AllowMultiple = false
+            });
+
+            var selectedFolder = result.FirstOrDefault();
+            var path = selectedFolder?.TryGetLocalPath();
+
             if (!string.IsNullOrWhiteSpace(path))
+            {
                 StartWatching(path);
-        };
-        var panel = new StackPanel();
-        panel.Children.Add(selectButton);
-        panel.Children.Add(_log);
+            }
+        }
 
-        _window = new Window
+        /// <summary>
+        /// Sets up the FileSystemWatcher for the specified path.
+        /// </summary>
+        private void StartWatching(string path)
         {
-            Title = "File Watcher",
-            Width = 400,
-            Height = 350,
-            Content = panel
-        };
-        ThemeManager.ApplyFromSettings(_window, "Plugins");
-        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(FileWatcherPlugin));
-        _window.Show();
-    }
+            // Dispose of any existing watcher before creating a new one.
+            _watcher?.Dispose();
 
-    private void StartWatching(string path)
-    {
-        _watcher?.Dispose();
-        _watcher = new FileSystemWatcher(path)
+            try
+            {
+                _watcher = new FileSystemWatcher(path)
+                {
+                    IncludeSubdirectories = true,
+                    // NotifyFilters can be adjusted to watch for specific changes
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
+                    EnableRaisingEvents = true
+                };
+
+                // Hook into the events
+                _watcher.Created += (s, e) => Log($"[CREATED] {e.Name}");
+                _watcher.Deleted += (s, e) => Log($"[DELETED] {e.Name}");
+                _watcher.Changed += (s, e) => Log($"[CHANGED] {e.Name}");
+                _watcher.Renamed += (s, e) => Log($"[RENAMED] {e.OldName} -> {e.Name}");
+                _watcher.Error += (s, e) => Log($"[ERROR] Watcher error: {e.GetException().Message}");
+
+                Log($"Now watching: {path}");
+                if(_selectFolderButton != null) _selectFolderButton.Content = "Change Watched Folder";
+            }
+            catch (Exception ex)
+            {
+                Log($"[ERROR] Could not start watcher on '{path}'. Reason: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// **CRITICAL FIX:** Logs a message to the TextBox in a thread-safe way.
+        /// FileSystemWatcher events fire on background threads, so UI updates must be dispatched
+        /// back to the UI thread to prevent the application from crashing.
+        /// </summary>
+        private void Log(string msg)
         {
-            IncludeSubdirectories = true,
-            EnableRaisingEvents = true
-        };
-        _watcher.Created += (_, e) => Log($"Created: {e.FullPath}");
-        _watcher.Deleted += (_, e) => Log($"Deleted: {e.FullPath}");
-        _watcher.Changed += (_, e) => Log($"Changed: {e.FullPath}");
-        _watcher.Renamed += (_, e) => Log($"Renamed: {e.OldFullPath} -> {e.FullPath}");
-        Log($"Watching {path}");
-    }
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (_log == null) return;
+                
+                var timestamp = DateTime.Now.ToString("HH:mm:ss");
+                _log.Text += $"[{timestamp}] {msg}{Environment.NewLine}";
+                _log.CaretIndex = _log.Text.Length; // Auto-scroll to the end
+            });
+        }
 
-    private void Log(string msg)
-    {
-        _log!.Text += msg + Environment.NewLine;
-    }
-
-    public void Stop()
-    {
-        _watcher?.Dispose();
-        _watcher = null;
-        _window?.Close();
-        _window = null;
-        _log = null;
+        public void Stop()
+        {
+            _watcher?.Dispose();
+            _watcher = null;
+            _window?.Close();
+            _window = null;
+            _log = null;
+            _selectFolderButton = null;
+        }
     }
 }
