@@ -5,6 +5,8 @@ using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 using Avalonia.Input;
+using System.Drawing;
+using System.Runtime.InteropServices;
 using System;
 using System.IO;
 using System.Linq;
@@ -15,7 +17,6 @@ namespace Cycloside;
 
 public partial class App : Application
 {
-    private const string TrayIconBase64 = "AAABAAEAEBACAAEAAQCwAAAAFgAAACgAAAAQAAAAIAAAAAEAAQAAAAAAQAAAAAAAAAAAAAAAAgAAAAIAAAAAAP8A////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     public override void Initialize()
     {
@@ -85,10 +86,26 @@ public partial class App : Application
                 }
             });
 
-            var iconData = Convert.FromBase64String(TrayIconBase64);
+            Icon? sysIcon = null;
+            if (OperatingSystem.IsWindows())
+            {
+                try
+                {
+                    var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                    sysIcon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 3) ??
+                               ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 3);
+                }
+                catch { }
+            }
+
+            sysIcon ??= SystemIcons.Application;
+            using var iconStream = new MemoryStream();
+            sysIcon.Save(iconStream);
+            iconStream.Position = 0;
+
             var trayIcon = new TrayIcon
             {
-                Icon = new WindowIcon(new MemoryStream(iconData))
+                Icon = new WindowIcon(iconStream)
             };
 
             var menu = new NativeMenu();
@@ -337,4 +354,29 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
     }
+
+    private static Icon? ExtractIconFromDll(string path, int index)
+    {
+        IntPtr hIcon = ExtractIcon(IntPtr.Zero, path, index);
+        if (hIcon != IntPtr.Zero)
+        {
+            try
+            {
+                var icon = (Icon)Icon.FromHandle(hIcon).Clone();
+                DestroyIcon(hIcon);
+                return icon;
+            }
+            catch
+            {
+                DestroyIcon(hIcon);
+            }
+        }
+        return null;
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+    private static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, int nIconIndex);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool DestroyIcon(IntPtr handle);
 }
