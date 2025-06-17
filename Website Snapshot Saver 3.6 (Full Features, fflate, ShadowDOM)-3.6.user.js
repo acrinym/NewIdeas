@@ -395,10 +395,16 @@
         iconContainer.addEventListener('mousedown', (e) => {
             e.preventDefault();
             e.stopPropagation();
+
+            const rect = host.getBoundingClientRect();
+            host.style.left = rect.left + 'px';
+            host.style.top = rect.top + 'px';
+            host.style.right = 'auto';
+
             isDragging = true;
             justDragged = false;
-            offsetX = e.clientX - host.offsetLeft;
-            offsetY = e.clientY - host.offsetTop;
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
             document.body.style.userSelect = 'none';
         });
         document.addEventListener('mousemove', (e) => {
