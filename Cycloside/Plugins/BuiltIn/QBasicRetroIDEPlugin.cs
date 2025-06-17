@@ -396,6 +396,6 @@ public class QBasicRetroIDEPlugin : IPlugin
         }
 
         public string QB64Path => _pathBox.Text;
-        public double FontSize => double.TryParse(_fontSizeBox.Text, out var f) ? f : 14;
+        public new double FontSize => double.TryParse(_fontSizeBox.Text, out var f) ? f : 14;
     }
 }
