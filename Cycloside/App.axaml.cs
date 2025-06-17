@@ -33,7 +33,9 @@ public partial class App : Application
             if (settings.FirstRun)
             {
                 var wiz = new WizardWindow();
-                wiz.ShowDialog(desktop.MainWindow).GetAwaiter().GetResult();
+                // Show the wizard even when no main window exists yet
+                var owner = desktop.MainWindow ?? new Window();
+                wiz.ShowDialog(owner).GetAwaiter().GetResult();
                 settings = SettingsManager.Settings;
             }
 
