@@ -280,8 +280,7 @@
         const host = document.createElement('div');
         host.id = 'snapshot-shadow-host';
         document.body.appendChild(host);
-        console.log('Website Snapshot Saver initialized');
-
+        
         const shadow = host.attachShadow({
             mode: 'open'
         });
@@ -541,11 +540,11 @@
                 sniffSummary.innerHTML = `<strong>${sniffedResources.length} resources found:</strong><ul>` +
                     sniffedResources.map(r =>
                         `<li>
-                           <input type="checkbox" class="reschk" checked data-url="${r.url}">
-                           <strong>${r.suggestedName}</strong>
-                           <span style="color:#888;">[${r.type}]</span>
-                           <small>${r.mime || ''} ${r.size ? `(${(r.size / 1024).toFixed(1)}KB)` : ''}</small>
-                         </li>`
+                            <input type="checkbox" class="reschk" checked data-url="<span class="math-inline">\{r\.url\}"\>
+<strong\></span>{r.suggestedName}</strong>
+                            <span style="color:#888;">[<span class="math-inline">\{r\.type\}\]</span\>
+<small\></span>{r.mime || ''} ${r.size ? `(${(r.size / 1024).toFixed(1)}KB)` : ''}</small>
+                          </li>`
                     ).join('') + '</ul>';
             }
             progressDiv.textContent = 'Ready. Review resources to save.';
@@ -577,7 +576,7 @@
                     continue;
                 }
                 
-                progressDiv.textContent = `Downloading: ${r.suggestedName} (${i + 1}/${resourcesToSave.length})`;
+                progressDiv.textContent = `Downloading: <span class="math-inline">\{r\.suggestedName\} \(</span>{i + 1}/${resourcesToSave.length})`;
                 progressBar.style.width = `${(i / resourcesToSave.length) * 80}%`;
 
                 await new Promise(resolve => {
@@ -770,7 +769,7 @@
         const updateProgress = () => {
             doneOps++;
             const pct = Math.min(10 + (doneOps / totalOps) * 85, 95);
-            updateBar(`Crawling site (${doneOps}/${totalOps} items)...`, pct);
+            updateBar(`Crawling site (<span class="math-inline">\{doneOps\}/</span>{totalOps} items)...`, pct);
         };
 
         const regexes = {
@@ -833,8 +832,8 @@
                     if (visited.has(res.url) || !res.url.startsWith('http')) continue;
                     
                     let allowed = options.allowExternalDomains || 
-                                 (options.stayOnDomain && sameDomain(res.url)) ||
-                                 (options.stayOnSubdomain && sameSubdomain(res.url));
+                                (options.stayOnDomain && sameDomain(res.url)) ||
+                                (options.stayOnSubdomain && sameSubdomain(res.url));
                     if (!allowed) continue;
 
                     totalOps++;
@@ -873,7 +872,7 @@
                         headers: options.userAgent ? { 'User-Agent': options.userAgent } : {},
                         onload: async r => {
                             if (options.skipLargerThan > 0 && r.response.size > options.skipLargerThan * 1024 * 1024) {
-                                return reject(new Error('Skipped (big file)'));
+                                 return reject(new Error('Skipped (big file)'));
                             }
                             resolve(await blobToUint8Array(r.response));
                         },
