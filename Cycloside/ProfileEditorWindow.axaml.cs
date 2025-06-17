@@ -13,6 +13,12 @@ public partial class ProfileEditorWindow : Window
     private readonly PluginManager _manager;
     private string _originalName = string.Empty;
 
+    public ProfileEditorWindow()
+    {
+        InitializeComponent();
+        _manager = null!;
+    }
+
     public ProfileEditorWindow(PluginManager manager)
     {
         _manager = manager;

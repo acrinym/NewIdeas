@@ -8,6 +8,12 @@ public partial class VolatileRunnerWindow : Window
 {
     private readonly VolatilePluginManager _manager;
 
+    public VolatileRunnerWindow()
+    {
+        InitializeComponent();
+        _manager = null!;
+    }
+
     public VolatileRunnerWindow(VolatilePluginManager manager)
     {
         _manager = manager;

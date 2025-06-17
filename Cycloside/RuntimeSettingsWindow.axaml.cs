@@ -9,6 +9,12 @@ public partial class RuntimeSettingsWindow : Window
 {
     private readonly PluginManager _manager;
 
+    public RuntimeSettingsWindow()
+    {
+        InitializeComponent();
+        _manager = null!;
+    }
+
     public RuntimeSettingsWindow(PluginManager manager)
     {
         _manager = manager;
