@@ -12,6 +12,15 @@
 
 (function() {
     'use strict';
+    if (typeof window.fflate === 'undefined') {
+        console.warn('fflate library is missing. Attempting to load it...');
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/fflate@0.8.1/umd/index.js';
+        script.onload = () => console.log('fflate loaded. Please reload the page to continue.');
+        script.onerror = () => console.error('Failed to load fflate. Aborting initialization.');
+        document.head.appendChild(script);
+        return;
+    }
     const fflate = window.fflate;
     const SIZE_KEY = 'snapshotSkipSizeMB';
     let savedSize = parseFloat(localStorage.getItem(SIZE_KEY));
@@ -271,7 +280,7 @@
         const host = document.createElement('div');
         host.id = 'snapshot-shadow-host';
         document.body.appendChild(host);
-
+        
         const shadow = host.attachShadow({
             mode: 'open'
         });
@@ -395,12 +404,10 @@
         iconContainer.addEventListener('mousedown', (e) => {
             e.preventDefault();
             e.stopPropagation();
-
             const rect = host.getBoundingClientRect();
-            host.style.left = rect.left + 'px';
-            host.style.top = rect.top + 'px';
+            host.style.left = `${rect.left}px`;
+            host.style.top = `${rect.top}px`;
             host.style.right = 'auto';
-
             isDragging = true;
             justDragged = false;
             offsetX = e.clientX - rect.left;
@@ -412,11 +419,11 @@
                 justDragged = true;
                 let newX = e.clientX - offsetX;
                 let newY = e.clientY - offsetY;
-                const maxX = window.innerWidth - host.offsetWidth;
-                const maxY = window.innerHeight - host.offsetHeight;
+                const rect = host.getBoundingClientRect();
+                const maxX = window.innerWidth - rect.width;
+                const maxY = window.innerHeight - rect.height;
                 host.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
                 host.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
-                host.style.right = 'auto'; // Override initial style
             }
         });
         document.addEventListener('mouseup', () => {
@@ -533,11 +540,11 @@
                 sniffSummary.innerHTML = `<strong>${sniffedResources.length} resources found:</strong><ul>` +
                     sniffedResources.map(r =>
                         `<li>
-                           <input type="checkbox" class="reschk" checked data-url="${r.url}">
-                           <strong>${r.suggestedName}</strong>
-                           <span style="color:#888;">[${r.type}]</span>
-                           <small>${r.mime || ''} ${r.size ? `(${(r.size / 1024).toFixed(1)}KB)` : ''}</small>
-                         </li>`
+                            <input type="checkbox" class="reschk" checked data-url="<span class="math-inline">\{r\.url\}"\>
+<strong\></span>{r.suggestedName}</strong>
+                            <span style="color:#888;">[<span class="math-inline">\{r\.type\}\]</span\>
+<small\></span>{r.mime || ''} ${r.size ? `(${(r.size / 1024).toFixed(1)}KB)` : ''}</small>
+                          </li>`
                     ).join('') + '</ul>';
             }
             progressDiv.textContent = 'Ready. Review resources to save.';
@@ -569,7 +576,7 @@
                     continue;
                 }
                 
-                progressDiv.textContent = `Downloading: ${r.suggestedName} (${i + 1}/${resourcesToSave.length})`;
+                progressDiv.textContent = `Downloading: <span class="math-inline">\{r\.suggestedName\} \(</span>{i + 1}/${resourcesToSave.length})`;
                 progressBar.style.width = `${(i / resourcesToSave.length) * 80}%`;
 
                 await new Promise(resolve => {
@@ -646,6 +653,7 @@
             popup.classList.remove('show');
             isPopupOpen = false;
         });
+        console.log('Website Snapshot Saver initialized');
     }
 
     // --- Self-healing logic for the overlay ---
@@ -761,7 +769,7 @@
         const updateProgress = () => {
             doneOps++;
             const pct = Math.min(10 + (doneOps / totalOps) * 85, 95);
-            updateBar(`Crawling site (${doneOps}/${totalOps} items)...`, pct);
+            updateBar(`Crawling site (<span class="math-inline">\{doneOps\}/</span>{totalOps} items)...`, pct);
         };
 
         const regexes = {
@@ -824,8 +832,8 @@
                     if (visited.has(res.url) || !res.url.startsWith('http')) continue;
                     
                     let allowed = options.allowExternalDomains || 
-                                 (options.stayOnDomain && sameDomain(res.url)) ||
-                                 (options.stayOnSubdomain && sameSubdomain(res.url));
+                                (options.stayOnDomain && sameDomain(res.url)) ||
+                                (options.stayOnSubdomain && sameSubdomain(res.url));
                     if (!allowed) continue;
 
                     totalOps++;
@@ -864,7 +872,7 @@
                         headers: options.userAgent ? { 'User-Agent': options.userAgent } : {},
                         onload: async r => {
                             if (options.skipLargerThan > 0 && r.response.size > options.skipLargerThan * 1024 * 1024) {
-                                return reject(new Error('Skipped (big file)'));
+                                 return reject(new Error('Skipped (big file)'));
                             }
                             resolve(await blobToUint8Array(r.response));
                         },
@@ -889,6 +897,7 @@
     } else {
         window.addEventListener('DOMContentLoaded', () => {
             createSnapshotShadowHost();
+            console.log('Website Snapshot Saver DOMContentLoaded');
             monitorSnapshotOverlay();
         }, {
             once: true
