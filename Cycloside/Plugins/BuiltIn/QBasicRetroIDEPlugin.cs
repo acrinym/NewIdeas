@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -150,8 +151,8 @@ public class QBasicRetroIDEPlugin : IPlugin
     private async Task OpenProject()
     {
         if (_window == null) return;
-        var dlg = new OpenFolderDialog();
-        var path = await dlg.ShowAsync(_window);
+        var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions());
+        var path = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
         if (!string.IsNullOrWhiteSpace(path))
         {
             _projectPath = path;
@@ -196,9 +197,11 @@ public class QBasicRetroIDEPlugin : IPlugin
     private async Task SaveFileAs()
     {
         if (_window == null) return;
-        var dlg = new SaveFileDialog();
-        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var path = await dlg.ShowAsync(_window);
+        var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            FileTypeChoices = new[] { new FilePickerFileType("BAS") { Patterns = new[] { "*.bas" } } }
+        });
+        var path = file?.TryGetLocalPath();
         if (!string.IsNullOrWhiteSpace(path) && _editor != null)
         {
             _currentFile = path;
@@ -253,11 +256,12 @@ public class QBasicRetroIDEPlugin : IPlugin
     private async Task OpenFile()
     {
         if (_window == null) return;
-        var dlg = new OpenFileDialog();
-        dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var files = await dlg.ShowAsync(_window);
-        if (files is { Length: > 0 })
-            await LoadFile(files[0]);
+        var files = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            FileTypeFilter = new[] { new FilePickerFileType("BAS") { Patterns = new[] { "*.bas" } } }
+        });
+        if (files.Count > 0 && files[0].TryGetLocalPath() is { } path)
+            await LoadFile(path);
     }
 
     private async Task Find()
@@ -395,7 +399,7 @@ public class QBasicRetroIDEPlugin : IPlugin
             Content = panel;
         }
 
-        public string QB64Path => _pathBox.Text;
+        public string QB64Path => _pathBox.Text ?? string.Empty;
         public new double FontSize => double.TryParse(_fontSizeBox.Text, out var f) ? f : 14;
     }
 }

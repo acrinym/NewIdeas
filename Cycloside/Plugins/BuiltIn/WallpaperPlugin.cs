@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using System;
 using System.IO;
 using Cycloside;
@@ -25,11 +26,14 @@ public class WallpaperPlugin : IPlugin
         var button = new Button { Content = "Select Wallpaper" };
         button.Click += async (_, _) =>
         {
-            var dlg = new OpenFileDialog();
-            dlg.Filters.Add(new FileDialogFilter { Name = "Images", Extensions = { "jpg", "png", "bmp" } });
-            var files = await dlg.ShowAsync(_window);
-            if (files is { Length: > 0 })
-                SetWallpaper(files[0]);
+            if (_window == null) return;
+            var files = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                FileTypeFilter = new[] { new FilePickerFileType("Images") { Patterns = new[] { "*.jpg", "*.png", "*.bmp" } } }
+            });
+            var path = files.Count > 0 ? files[0].TryGetLocalPath() : null;
+            if (!string.IsNullOrEmpty(path))
+                SetWallpaper(path);
         };
         _wallpaperHandler = o =>
         {

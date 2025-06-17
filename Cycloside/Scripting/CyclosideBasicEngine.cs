@@ -277,26 +277,26 @@ namespace Cycloside.Scripting
     {
         public Action<string> Print { get; set; } = s => Console.WriteLine(s);
         public Func<string, string> GetInput { get; set; } = prompt => Console.ReadLine() ?? "";
-        public Action<string> ShowMsg { get; set; }
-        public Action<string, string> Notify { get; set; }
-        public Action<string> SetClipboard { get; set; }
-        public Func<string> GetClipboard { get; set; }
-        public Action<string> ThemeManager { get; set; }
-        public Action<string> SkinManager { get; set; }
-        public Action<string> SetWallpaper { get; set; }
-        public Func<string[]> ListPlugins { get; set; }
-        public Action<string> RunPlugin { get; set; }
-        public Action<string> EnablePlugin { get; set; }
-        public Action<string> DisablePlugin { get; set; }
-        public Func<string, string> GetDiskUsage { get; set; }
-        public Func<string[]> ListProcesses { get; set; }
-        public Action<string> AppendLog { get; set; }
-        public Action<int> SetSystemVolume { get; set; }
-        public Func<int> GetSystemVolume { get; set; }
-        public Action<bool> SetMuted { get; set; }
-        public Action MediaPlay { get; set; }
-        public Action MediaPause { get; set; }
-        public Action MediaStop { get; set; }
+        public Action<string> ShowMsg { get; set; } = _ => { };
+        public Action<string, string> Notify { get; set; } = (_, _) => { };
+        public Action<string> SetClipboard { get; set; } = _ => { };
+        public Func<string> GetClipboard { get; set; } = () => string.Empty;
+        public Action<string> ThemeManager { get; set; } = _ => { };
+        public Action<string> SkinManager { get; set; } = _ => { };
+        public Action<string> SetWallpaper { get; set; } = _ => { };
+        public Func<string[]> ListPlugins { get; set; } = Array.Empty<string>;
+        public Action<string> RunPlugin { get; set; } = _ => { };
+        public Action<string> EnablePlugin { get; set; } = _ => { };
+        public Action<string> DisablePlugin { get; set; } = _ => { };
+        public Func<string, string> GetDiskUsage { get; set; } = _ => string.Empty;
+        public Func<string[]> ListProcesses { get; set; } = Array.Empty<string>;
+        public Action<string> AppendLog { get; set; } = _ => { };
+        public Action<int> SetSystemVolume { get; set; } = _ => { };
+        public Func<int> GetSystemVolume { get; set; } = () => 0;
+        public Action<bool> SetMuted { get; set; } = _ => { };
+        public Action MediaPlay { get; set; } = () => { };
+        public Action MediaPause { get; set; } = () => { };
+        public Action MediaStop { get; set; } = () => { };
         // Built-in values that scripts can read but not modify
         public string AppName { get; init; } = "Cycloside";
         public string AppVersion { get; init; } = "1.0.0";

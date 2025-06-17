@@ -5,11 +5,14 @@ using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Cycloside.Views;
 
@@ -32,7 +35,13 @@ public partial class App : Application
             if (settings.FirstRun)
             {
                 var wiz = new WizardWindow();
-                wiz.ShowDialog(desktop.MainWindow).GetAwaiter().GetResult();
+                using (var wizardClosedEvent = new ManualResetEvent(false))
+                {
+                    wiz.Closed += (_, _) => wizardClosedEvent.Set();
+                    wiz.Show();
+                    wizardClosedEvent.WaitOne();
+                }
+
                 settings = SettingsManager.Settings;
             }
 
@@ -260,12 +269,15 @@ public partial class App : Application
             var luaItem = new NativeMenuItem("Run Lua Script...");
             luaItem.Click += async (_, _) =>
             {
-                var dlg = new OpenFileDialog();
-                dlg.Filters.Add(new FileDialogFilter { Name = "Lua", Extensions = { "lua" } });
-                var files = await dlg.ShowAsync(new Window());
-                if (files is { Length: > 0 } && File.Exists(files[0]))
+                var files = await new Window().StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                 {
-                    var code = await File.ReadAllTextAsync(files[0]);
+                    FileTypeFilter = new[] { new FilePickerFileType("Lua") { Patterns = new[] { "*.lua" } } }
+                });
+                if (files.Count > 0)
+                {
+                    await using var stream = await files[0].OpenReadAsync();
+                    using var reader = new StreamReader(stream);
+                    var code = await reader.ReadToEndAsync();
                     volatileManager.RunLua(code);
                 }
             };
@@ -273,12 +285,15 @@ public partial class App : Application
             var csItem = new NativeMenuItem("Run C# Script...");
             csItem.Click += async (_, _) =>
             {
-                var dlg = new OpenFileDialog();
-                dlg.Filters.Add(new FileDialogFilter { Name = "C#", Extensions = { "csx" } });
-                var files = await dlg.ShowAsync(new Window());
-                if (files is { Length: > 0 } && File.Exists(files[0]))
+                var files = await new Window().StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                 {
-                    var code = await File.ReadAllTextAsync(files[0]);
+                    FileTypeFilter = new[] { new FilePickerFileType("C#") { Patterns = new[] { "*.csx" } } }
+                });
+                if (files.Count > 0)
+                {
+                    await using var stream = await files[0].OpenReadAsync();
+                    using var reader = new StreamReader(stream);
+                    var code = await reader.ReadToEndAsync();
                     volatileManager.RunCSharp(code);
                 }
             };
@@ -346,23 +361,29 @@ public partial class App : Application
             try
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
-                var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 3) ??
-                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 3);
+                var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
+                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
                     using var stream = new MemoryStream();
+#pragma warning disable CA1416 // supported only on Windows
                     icon.Save(stream);
+#pragma warning restore CA1416
                     stream.Position = 0;
                     return new WindowIcon(stream);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to extract system icon: {ex.Message}");
+            }
         }
 
         var bytes = Convert.FromBase64String(TrayIconBase64);
         return new WindowIcon(new MemoryStream(bytes));
     }
 
+    [SupportedOSPlatform("windows")]
     private static Icon? ExtractIconFromDll(string path, int index)
     {
         IntPtr hIcon = ExtractIcon(IntPtr.Zero, path, index);

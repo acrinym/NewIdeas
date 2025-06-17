@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using System;
 using System.IO;
 using System.Linq;
@@ -18,7 +19,7 @@ public class LogViewerPlugin : IPlugin
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
 
-    public async void Start()
+    public void Start()
     {
         _box = new TextBox
         {
@@ -41,11 +42,12 @@ public class LogViewerPlugin : IPlugin
         var openButton = new Button { Content = "Open Log" };
         openButton.Click += async (_, __) =>
         {
-            var dlg = new OpenFileDialog();
-            var files = await dlg.ShowAsync(_window);
-            if (files is { Length: > 0 } && File.Exists(files[0]))
+            if (_window == null) return;
+            var files = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions());
+            var path = files.Count > 0 ? files[0].TryGetLocalPath() : null;
+            if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
             {
-                _file = files[0];
+                _file = path;
                 StartTailing(_file);
             }
         };
