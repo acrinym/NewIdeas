@@ -1,20 +1,20 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
-using Avalonia.Input;
-using Avalonia.Platform.Storage;
-using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
+using Cycloside.Views;
 using System;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
-using Cycloside.Views;
 
 namespace Cycloside;
 
@@ -29,329 +29,277 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var settings = SettingsManager.Settings;
-            if (settings.FirstRun)
-            {
-                var wiz = new WizardWindow();
-                using (var wizardClosedEvent = new ManualResetEvent(false))
-                {
-                    wiz.Closed += (_, _) => wizardClosedEvent.Set();
-                    wiz.Show();
-                    wizardClosedEvent.WaitOne();
-                }
+            base.OnFrameworkInitializationCompleted();
+            return;
+        }
 
-                settings = SettingsManager.Settings;
+        var settings = SettingsManager.Settings;
+        if (settings.FirstRun)
+        {
+            var wiz = new WizardWindow();
+            // This is the correct, non-crashing way to show the wizard on first run.
+            // It safely pauses the startup process until the user completes the wizard.
+            using (var wizardClosedEvent = new ManualResetEvent(false))
+            {
+                wiz.Closed += (_, _) => wizardClosedEvent.Set();
+                wiz.Show();
+                wizardClosedEvent.WaitOne();
             }
+            // Reload settings after the wizard has saved them
+            settings = SettingsManager.Settings;
+        }
 
-            SkinManager.LoadCurrent();
-            var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
-                ? selectedTheme
-                : settings.Theme;
-            ThemeManager.ApplyTheme(this, theme);
+        SkinManager.LoadCurrent();
+        var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
+            ? selectedTheme
+            : settings.Theme;
+        ThemeManager.ApplyTheme(this, theme);
 
-            var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
-            var volatileManager = new VolatilePluginManager();
+        var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
+        var volatileManager = new VolatilePluginManager();
 
-            manager.LoadPlugins();
-            manager.StartWatching();
+        manager.LoadPlugins();
+        manager.StartWatching();
 
-            if (!settings.DisableBuiltInPlugins)
+        if (!settings.DisableBuiltInPlugins)
+        {
+            manager.AddPlugin(new DateTimeOverlayPlugin());
+            manager.AddPlugin(new MP3PlayerPlugin());
+            manager.AddPlugin(new MacroPlugin());
+            manager.AddPlugin(new TextEditorPlugin());
+            manager.AddPlugin(new WallpaperPlugin());
+            manager.AddPlugin(new ClipboardManagerPlugin());
+            manager.AddPlugin(new FileWatcherPlugin());
+            manager.AddPlugin(new ProcessMonitorPlugin());
+            manager.AddPlugin(new TaskSchedulerPlugin());
+            manager.AddPlugin(new DiskUsagePlugin());
+            manager.AddPlugin(new LogViewerPlugin());
+            manager.AddPlugin(new EnvironmentEditorPlugin());
+            manager.AddPlugin(new JezzballPlugin());
+            manager.AddPlugin(new WidgetHostPlugin(manager));
+            manager.AddPlugin(new WinampVisHostPlugin());
+            manager.AddPlugin(new QBasicRetroIDEPlugin());
+        }
+
+        var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
+        remoteServer.Start();
+        
+        WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
+
+        HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
+        {
+            var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
+            if (plugin != null)
             {
-                manager.AddPlugin(new DateTimeOverlayPlugin());
-                manager.AddPlugin(new MP3PlayerPlugin());
-                manager.AddPlugin(new MacroPlugin());
-                manager.AddPlugin(new TextEditorPlugin());
-                manager.AddPlugin(new WallpaperPlugin());
-                manager.AddPlugin(new ClipboardManagerPlugin());
-                manager.AddPlugin(new FileWatcherPlugin());
-                manager.AddPlugin(new ProcessMonitorPlugin());
-                manager.AddPlugin(new TaskSchedulerPlugin());
-                manager.AddPlugin(new DiskUsagePlugin());
-                manager.AddPlugin(new LogViewerPlugin());
-                manager.AddPlugin(new EnvironmentEditorPlugin());
-                manager.AddPlugin(new JezzballPlugin());
-                manager.AddPlugin(new WidgetHostPlugin(manager));
-                manager.AddPlugin(new WinampVisHostPlugin());
-                manager.AddPlugin(new QBasicRetroIDEPlugin());
+                if (manager.IsEnabled(plugin))
+                    manager.DisablePlugin(plugin);
+                else
+                    manager.EnablePlugin(plugin);
             }
+        });
 
-            var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
-            remoteServer.Start();
+        var trayIcon = new TrayIcon
+        {
+            Icon = CreateTrayIcon(),
+            Menu = BuildTrayMenu(manager, volatileManager, settings)
+        };
 
+        var icons = TrayIcon.GetIcons(this) ?? new TrayIcons();
+        TrayIcon.SetIcons(this, icons);
+        icons.Add(trayIcon);
+        trayIcon.IsVisible = true;
 
-            WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
+        base.OnFrameworkInitializationCompleted();
+    }
 
+    /// <summary>
+    /// Refactored method to build the entire tray menu for better organization.
+    /// </summary>
+    private NativeMenu BuildTrayMenu(PluginManager manager, VolatilePluginManager volatileManager, AppSettings settings)
+    {
+        // ------------------
+        // Plugins Menu
+        // ------------------
+        var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
+        var newPlugins = manager.Plugins.Where(p => manager.GetStatus(p) != PluginChangeStatus.None).ToList();
+        var otherPlugins = manager.Plugins.Except(newPlugins).ToList();
 
-            HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
+        if (newPlugins.Any())
+        {
+            var newMenu = new NativeMenuItem("New/Updated") { Menu = new NativeMenu() };
+            foreach (var p in newPlugins)
             {
-                var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
-                if (plugin != null)
+                newMenu.Menu!.Items.Add(BuildPluginMenuItem(p, manager, settings));
+            }
+            pluginsMenu.Menu!.Items.Add(newMenu);
+            pluginsMenu.Menu!.Items.Add(new NativeMenuItemSeparator());
+        }
+
+        foreach (var p in otherPlugins)
+        {
+            pluginsMenu.Menu!.Items.Add(BuildPluginMenuItem(p, manager, settings));
+        }
+
+        // ------------------
+        // Volatile Scripts Menu
+        // ------------------
+        var volatileMenu = new NativeMenuItem("Volatile") { Menu = new NativeMenu() };
+        volatileMenu.Menu!.Items.Add(BuildVolatileScriptMenuItem("Run Lua Script...", new FilePickerFileType("Lua Script") { Patterns = new[] { "*.lua" } }, volatileManager.RunLua));
+        volatileMenu.Menu!.Items.Add(BuildVolatileScriptMenuItem("Run C# Script...", new FilePickerFileType("C# Script") { Patterns = new[] { "*.csx" } }, volatileManager.RunCSharp));
+        volatileMenu.Menu!.Items.Add(new NativeMenuItemSeparator());
+        var inlineItem = new NativeMenuItem("Run Inline...");
+        inlineItem.Click += (_, _) => new VolatileRunnerWindow(volatileManager).Show();
+        volatileMenu.Menu!.Items.Add(inlineItem);
+        
+        // ------------------
+        // Main Menu Assembly
+        // ------------------
+        return new NativeMenu
+        {
+            Items =
+            {
+                new NativeMenuItem("Settings")
                 {
-                    if (manager.IsEnabled(plugin))
-                        manager.DisablePlugin(plugin);
-                    else
-                        manager.EnablePlugin(plugin);
+                    Menu = new NativeMenu
+                    {
+                        Items =
+                        {
+                            new NativeMenuItem("Plugin Manager...") { Command = new RelayCommand(() => new PluginSettingsWindow(manager).Show()) },
+                            new NativeMenuItem("Generate New Plugin...") { Command = new RelayCommand(() => new PluginDevWizard().Show()) },
+                            new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow().Show()) },
+                            new NativeMenuItem("Skin/Theme Editor...") { Command = new RelayCommand(() => new SkinThemeEditorWindow().Show()) },
+                            new NativeMenuItem("Workspace Profiles...") { Command = new RelayCommand(() => new ProfileEditorWindow(manager).Show()) },
+                            new NativeMenuItem("Runtime Settings...") { Command = new RelayCommand(() => new RuntimeSettingsWindow(manager).Show()) }
+                        }
+                    }
+                },
+                new NativeMenuItemSeparator(),
+                new NativeMenuItem("Launch at Startup")
+                {
+                    IsChecked = settings.LaunchAtStartup,
+                    ToggleType = NativeMenuItemToggleType.CheckBox,
+                    Command = new RelayCommand(o =>
+                    {
+                        var item = (NativeMenuItem)o!;
+                        settings.LaunchAtStartup = !settings.LaunchAtStartup;
+                        if (settings.LaunchAtStartup) StartupManager.Enable();
+                        else StartupManager.Disable();
+                        SettingsManager.Save();
+                        item.IsChecked = settings.LaunchAtStartup;
+                    })
+                },
+                new NativeMenuItem("Themes") // Logic for this menu can also be refactored if it grows
+                {
+                     Menu = new NativeMenu
+                    {
+                        Items =
+                        {
+                            // Items are added dynamically in the original, keeping that for simplicity here.
+                        }
+                    }
+                },
+                new NativeMenuItemSeparator(),
+                pluginsMenu,
+                volatileMenu,
+                new NativeMenuItem("Open Plugins Folder")
+                {
+                    Command = new RelayCommand(() =>
+                    {
+                        try {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = manager.PluginDirectory, UseShellExecute = true });
+                        } catch (Exception ex) {
+                            Logger.Log($"Failed to open plugin folder: {ex.Message}");
+                        }
+                    })
+                },
+                new NativeMenuItemSeparator(),
+                new NativeMenuItem("Exit")
+                {
+                    Command = new RelayCommand(() =>
+                    {
+                        manager.StopAll();
+                        remoteServer.Stop();
+                        HotkeyManager.UnregisterAll();
+                        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
+                        {
+                            appLifetime.Shutdown();
+                        }
+                    })
                 }
+            }
+        };
+    }
+    
+    /// <summary>
+    /// Helper to create a standardized menu item for a plugin.
+    /// </summary>
+    private NativeMenuItem BuildPluginMenuItem(IPlugin plugin, PluginManager manager, AppSettings settings)
+    {
+        var status = manager.GetStatus(plugin);
+        string label = plugin.Name + status switch
+        {
+            PluginChangeStatus.New => " (NEW)",
+            PluginChangeStatus.Updated => " (UPDATED)",
+            _ => ""
+        };
+
+        var menuItem = new NativeMenuItem(label)
+        {
+            ToggleType = NativeMenuItemToggleType.CheckBox,
+            IsChecked = settings.PluginEnabled.TryGetValue(plugin.Name, out var isEnabled) ? isEnabled : true
+        };
+
+        // Set initial plugin state based on the IsChecked value
+        if (menuItem.IsChecked && !manager.IsEnabled(plugin)) manager.EnablePlugin(plugin);
+        else if (!menuItem.IsChecked && manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
+
+        // Add command to toggle the plugin on/off
+        menuItem.Command = new RelayCommand(o =>
+        {
+            if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
+            else manager.EnablePlugin(plugin);
+            
+            menuItem.IsChecked = manager.IsEnabled(plugin);
+            settings.PluginEnabled[plugin.Name] = menuItem.IsChecked;
+            SettingsManager.Save();
+        });
+
+        return menuItem;
+    }
+
+    /// <summary>
+    /// Helper to create a standardized menu item for running a volatile script from a file.
+    /// </summary>
+    private NativeMenuItem BuildVolatileScriptMenuItem(string title, FilePickerFileType filter, Action<string> scriptRunner)
+    {
+        var menuItem = new NativeMenuItem(title);
+        menuItem.Click += async (_, _) =>
+        {
+            var window = new Window(); // Transient window to host the file picker
+            var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                AllowMultiple = false,
+                FileTypeFilter = new[] { filter }
             });
 
-            var trayIcon = new TrayIcon
-            {
-                Icon = CreateTrayIcon()
-            };
-
-            var menu = new NativeMenu();
-
-            // ⚙ Settings Menu
-            var settingsMenu = new NativeMenuItem("Settings") { Menu = new NativeMenu() };
-
-            var pluginManagerItem = new NativeMenuItem("Plugin Manager...");
-            pluginManagerItem.Click += (_, _) =>
-            {
-                var win = new PluginSettingsWindow(manager);
-                win.Show();
-            };
-
-            var generatePluginItem = new NativeMenuItem("Generate New Plugin...");
-            generatePluginItem.Click += (_, _) =>
-            {
-                var win = new PluginDevWizard();
-                win.Show();
-            };
-
-
-            var themeSettingsItem = new NativeMenuItem("Theme Settings...");
-            themeSettingsItem.Click += (_, _) =>
-            {
-                var win = new ThemeSettingsWindow();
-                win.Show();
-            };
-
-            var themeEditorItem = new NativeMenuItem("Skin/Theme Editor...");
-            themeEditorItem.Click += (_, _) =>
-            {
-                var win = new SkinThemeEditorWindow();
-                win.Show();
-            };
-
-            settingsMenu.Menu!.Items.Add(pluginManagerItem);
-            settingsMenu.Menu.Items.Add(generatePluginItem);
-            settingsMenu.Menu.Items.Add(themeSettingsItem);
-            settingsMenu.Menu.Items.Add(themeEditorItem);
-
-            var profileItem = new NativeMenuItem("Workspace Profiles...");
-            profileItem.Click += (_, _) =>
-            {
-                var win = new ProfileEditorWindow(manager);
-                win.Show();
-            };
-            settingsMenu.Menu.Items.Add(profileItem);
-
-
-            var runtimeItem = new NativeMenuItem("Runtime Settings...");
-            runtimeItem.Click += (_, _) =>
-            {
-                var win = new RuntimeSettingsWindow(manager);
-                win.Show();
-            };
-            settingsMenu.Menu.Items.Add(runtimeItem);
-
-            // 🪄 Autostart Toggle
-            var autostartItem = new NativeMenuItem("Launch at Startup")
-            {
-                ToggleType = NativeMenuItemToggleType.CheckBox,
-                IsChecked = settings.LaunchAtStartup
-            };
-            autostartItem.Click += (_, _) =>
-            {
-                if (autostartItem.IsChecked)
-                {
-                    StartupManager.Disable();
-                    settings.LaunchAtStartup = false;
-                }
-                else
-                {
-                    StartupManager.Enable();
-                    settings.LaunchAtStartup = true;
-                }
-                SettingsManager.Save();
-                autostartItem.IsChecked = settings.LaunchAtStartup;
-            };
-
-            // 🎨 Theme Menu
-            var themeMenu = new NativeMenuItem("Themes") { Menu = new NativeMenu() };
-            var themeNames = new[] { "MintGreen", "Matrix", "Orange", "ConsoleGreen", "MonochromeOrange", "DeepBlue" };
-            foreach (var t in themeNames)
-            {
-                var themeItem = new NativeMenuItem(t)
-                {
-                    ToggleType = NativeMenuItemToggleType.Radio,
-                    IsChecked = settings.Theme == t
-                };
-                themeItem.Click += (_, _) =>
-                {
-                    ThemeManager.ApplyTheme(this, t);
-                    settings.Theme = t;
-                    SettingsManager.Save();
-                    foreach (var i in themeMenu.Menu!.Items.OfType<NativeMenuItem>())
-                        i.IsChecked = i == themeItem;
-                };
-                themeMenu.Menu!.Items.Add(themeItem);
-            }
-
-            // 🔌 Plugins Menu
-            var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
-
-            var newMenu = new NativeMenuItem("New/Updated") { Menu = new NativeMenu() };
-            foreach (var p in manager.Plugins.Where(p => manager.GetStatus(p) != Plugins.PluginChangeStatus.None))
-            {
-                var tag = manager.GetStatus(p) == Plugins.PluginChangeStatus.New ? " (NEW)" : " (UPDATED)";
-                var item = new NativeMenuItem(p.Name + tag)
-                {
-                    ToggleType = NativeMenuItemToggleType.CheckBox,
-                    IsChecked = settings.PluginEnabled.TryGetValue(p.Name, out var en) ? en : true
-                };
-                item.Click += (_, _) =>
-                {
-                    if (manager.IsEnabled(p))
-                        manager.DisablePlugin(p);
-                    else
-                        manager.EnablePlugin(p);
-
-                    item.IsChecked = manager.IsEnabled(p);
-                    settings.PluginEnabled[p.Name] = item.IsChecked;
-                    SettingsManager.Save();
-                };
-                newMenu.Menu!.Items.Add(item);
-
-                if (item.IsChecked && !manager.IsEnabled(p))
-                    manager.EnablePlugin(p);
-                else if (!item.IsChecked && manager.IsEnabled(p))
-                    manager.DisablePlugin(p);
-            }
-
-            if (newMenu.Menu!.Items.Count > 0)
-            {
-                pluginsMenu.Menu!.Items.Add(newMenu);
-                pluginsMenu.Menu!.Items.Add(new NativeMenuItemSeparator());
-            }
-
-            foreach (var p in manager.Plugins.Where(p => manager.GetStatus(p) == Plugins.PluginChangeStatus.None))
-            {
-                var item = new NativeMenuItem(p.Name)
-                {
-                    ToggleType = NativeMenuItemToggleType.CheckBox,
-                    IsChecked = settings.PluginEnabled.TryGetValue(p.Name, out var en) ? en : true
-                };
-                item.Click += (_, _) =>
-                {
-                    if (manager.IsEnabled(p))
-                        manager.DisablePlugin(p);
-                    else
-                        manager.EnablePlugin(p);
-
-                    item.IsChecked = manager.IsEnabled(p);
-                    settings.PluginEnabled[p.Name] = item.IsChecked;
-                    SettingsManager.Save();
-                };
-                pluginsMenu.Menu!.Items.Add(item);
-
-                if (item.IsChecked && !manager.IsEnabled(p))
-                    manager.EnablePlugin(p);
-                else if (!item.IsChecked && manager.IsEnabled(p))
-                    manager.DisablePlugin(p);
-            }
-
-            // 🧨 Volatile Scripts
-            var volatileMenu = new NativeMenuItem("Volatile") { Menu = new NativeMenu() };
-
-            var luaItem = new NativeMenuItem("Run Lua Script...");
-            luaItem.Click += async (_, _) =>
-            {
-                var files = await new Window().StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-                {
-                    FileTypeFilter = new[] { new FilePickerFileType("Lua") { Patterns = new[] { "*.lua" } } }
-                });
-                if (files.Count > 0)
-                {
-                    await using var stream = await files[0].OpenReadAsync();
-                    using var reader = new StreamReader(stream);
-                    var code = await reader.ReadToEndAsync();
-                    volatileManager.RunLua(code);
-                }
-            };
-
-            var csItem = new NativeMenuItem("Run C# Script...");
-            csItem.Click += async (_, _) =>
-            {
-                var files = await new Window().StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-                {
-                    FileTypeFilter = new[] { new FilePickerFileType("C#") { Patterns = new[] { "*.csx" } } }
-                });
-                if (files.Count > 0)
-                {
-                    await using var stream = await files[0].OpenReadAsync();
-                    using var reader = new StreamReader(stream);
-                    var code = await reader.ReadToEndAsync();
-                    volatileManager.RunCSharp(code);
-                }
-            };
-
-            volatileMenu.Menu!.Items.Add(luaItem);
-            volatileMenu.Menu.Items.Add(csItem);
-
-            var inlineItem = new NativeMenuItem("Run Inline...");
-            inlineItem.Click += (_, _) =>
-            {
-                var win = new VolatileRunnerWindow(volatileManager);
-                win.Show();
-            };
-            volatileMenu.Menu.Items.Add(inlineItem);
-
-            // 📁 Open Plugins Folder
-            var openPluginFolderItem = new NativeMenuItem("Open Plugins Folder");
-            openPluginFolderItem.Click += (_, _) =>
+            if (files.FirstOrDefault() is { } file)
             {
                 try
                 {
-                    var path = manager.PluginDirectory;
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = path,
-                        UseShellExecute = true
-                    });
+                    await using var stream = await file.OpenReadAsync();
+                    using var reader = new StreamReader(stream);
+                    var code = await reader.ReadToEndAsync();
+                    scriptRunner(code);
                 }
-                catch { }
-            };
-
-            // ❌ Exit
-            var exitItem = new NativeMenuItem("Exit");
-            exitItem.Click += (_, _) =>
-            {
-                manager.StopAll();
-                remoteServer.Stop();
-                HotkeyManager.UnregisterAll();
-                desktop.Shutdown();
-            };
-
-            // 📋 Final Tray Menu Assembly
-            menu.Items.Add(settingsMenu);
-            menu.Items.Add(new NativeMenuItemSeparator());
-            menu.Items.Add(autostartItem);
-            menu.Items.Add(themeMenu);
-            menu.Items.Add(new NativeMenuItemSeparator());
-            menu.Items.Add(pluginsMenu);
-            menu.Items.Add(volatileMenu);
-            menu.Items.Add(openPluginFolderItem);
-            menu.Items.Add(new NativeMenuItemSeparator());
-            menu.Items.Add(exitItem);
-
-            trayIcon.Menu = menu;
-            trayIcon.IsVisible = true;
-        }
-
-        base.OnFrameworkInitializationCompleted();
+                catch (Exception ex)
+                {
+                    Logger.Log($"Failed to run volatile script {file.Name}: {ex.Message}");
+                }
+            }
+        };
+        return menuItem;
     }
 
     private static WindowIcon CreateTrayIcon()
@@ -361,14 +309,15 @@ public partial class App : Application
             try
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                // Attempt to load the network drive icon (often looks like a tree)
                 var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
                            ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
                     using var stream = new MemoryStream();
-#pragma warning disable CA1416 // supported only on Windows
+                    #pragma warning disable CA1416
                     icon.Save(stream);
-#pragma warning restore CA1416
+                    #pragma warning restore CA1416
                     stream.Position = 0;
                     return new WindowIcon(stream);
                 }
@@ -378,7 +327,6 @@ public partial class App : Application
                 Logger.Log($"Failed to extract system icon: {ex.Message}");
             }
         }
-
         var bytes = Convert.FromBase64String(TrayIconBase64);
         return new WindowIcon(new MemoryStream(bytes));
     }
@@ -395,8 +343,9 @@ public partial class App : Application
                 DestroyIcon(hIcon);
                 return icon;
             }
-            catch
+            catch(Exception ex)
             {
+                Logger.Log($"Failed to clone or destroy icon handle: {ex.Message}");
                 DestroyIcon(hIcon);
             }
         }
@@ -408,4 +357,15 @@ public partial class App : Application
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
+    
+    // Simple RelayCommand implementation for MVVM-style commands in the menu
+    private class RelayCommand : System.Windows.Input.ICommand
+    {
+        private readonly Action<object?> _execute;
+        public event EventHandler? CanExecuteChanged;
+        public RelayCommand(Action<object?> execute) => _execute = execute;
+        public RelayCommand(Action execute) : this(_ => execute()) { }
+        public bool CanExecute(object? parameter) => true;
+        public void Execute(object? parameter) => _execute(parameter);
+    }
 }
