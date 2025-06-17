@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -25,16 +26,16 @@ namespace Cycloside.Plugins.BuiltIn
         {
             // --- Create UI Controls ---
             _tree = new TreeView();
-            _statusText = new TextBlock { Margin = new Avalonia.Thickness(5) };
+            _statusText = new TextBlock { Margin = new Thickness(5) };
 
-            _selectFolderButton = new Button 
-            { 
+            _selectFolderButton = new Button
+            {
                 Content = "Select Folder to Analyze",
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Margin = new Avalonia.Thickness(5)
+                Margin = new Thickness(5)
             };
             _selectFolderButton.Click += async (s, e) => await SelectAndLoadDirectoryAsync();
-            
+
             // --- Assemble UI Layout ---
             var mainPanel = new DockPanel();
             DockPanel.SetDock(_selectFolderButton, Dock.Top);
@@ -52,11 +53,11 @@ namespace Cycloside.Plugins.BuiltIn
                 Height = 500,
                 Content = mainPanel
             };
-            
+
             // Apply theming and effects (assuming these are valid managers in your project)
             ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DiskUsagePlugin));
-            
+
             _window.Show();
         }
 
@@ -99,7 +100,7 @@ namespace Cycloside.Plugins.BuiltIn
                 catch (Exception ex)
                 {
                     // Handle any unexpected errors during the process.
-                    await Dispatcher.UIThread.InvokeAsync(() => 
+                    await Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         _statusText.Text = $"Error: {ex.Message}";
                     });
@@ -107,7 +108,7 @@ namespace Cycloside.Plugins.BuiltIn
                 finally
                 {
                     // Always re-enable the button, even if an error occurred.
-                    await Dispatcher.UIThread.InvokeAsync(() => 
+                    await Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         _selectFolderButton.IsEnabled = true;
                     });
@@ -136,7 +137,7 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     var subNode = BuildNodeRecursive(subDir);
                     // Add the size of the subdirectory to the parent's total.
-                    totalSize += (long)(subNode.Tag ?? 0L); 
+                    totalSize += (long)(subNode.Tag ?? 0L);
                     subNodes.Add(subNode);
                 }
             }
@@ -166,15 +167,20 @@ namespace Cycloside.Plugins.BuiltIn
         /// </summary>
         private static string FormatSize(long bytes)
         {
-            if (bytes < 1024) return $"{bytes} B";
-            double kb = bytes / 1024.0;
-            if (kb < 1024) return $"{kb:F2} KB";
-            double mb = kb / 1024.0;
-            if (mb < 1024) return $"{mb:F2} MB";
-            double gb = mb / 1024.0;
-            return $"{gb:F2} GB";
+            const int scale = 1024;
+            string[] orders = { "GB", "MB", "KB", "B" };
+            long max = (long)Math.Pow(scale, orders.Length - 1);
+
+            foreach (string order in orders)
+            {
+                if (bytes > max)
+                    return string.Format("{0:##.##} {1}", decimal.Divide(bytes, max), order);
+
+                max /= scale;
+            }
+            return "0 B";
         }
-        
+
         public void Stop()
         {
             _window?.Close();

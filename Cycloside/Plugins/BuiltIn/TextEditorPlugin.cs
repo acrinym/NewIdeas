@@ -27,17 +27,17 @@ namespace Cycloside.Plugins.BuiltIn
             // --- Create UI Controls ---
             var newButton = new Button { Content = "New" };
             newButton.Click += (s, e) => NewFile();
-            
+
             var openButton = new Button { Content = "Open..." };
             openButton.Click += async (s, e) => await OpenFileAsync();
 
             var saveButton = new Button { Content = "Save" };
             saveButton.Click += async (s, e) => await SaveFileAsync();
-            
+
             var saveAsButton = new Button { Content = "Save As..." };
             saveAsButton.Click += async (s, e) => await SaveFileAsAsync();
 
-            var buttonPanel = new StackPanel 
+            var buttonPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 5,
@@ -65,7 +65,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Margin = new Thickness(5),
                 VerticalAlignment = VerticalAlignment.Center
             };
-            
+
             var statusBar = new Border
             {
                 Background = Brushes.CornflowerBlue,
@@ -88,11 +88,11 @@ namespace Cycloside.Plugins.BuiltIn
                 Height = 550,
                 Content = mainPanel
             };
-            
+
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TextEditorPlugin));
             _window.Show();
         }
-        
+
         private void NewFile()
         {
             if (_editorBox == null) return;
@@ -120,7 +120,7 @@ namespace Cycloside.Plugins.BuiltIn
                 SetStatus($"Opening {selectedFile.Name}...");
                 // Perform file reading on a background thread to prevent UI freezing
                 string content = await Task.Run(() => File.ReadAllTextAsync(path));
-                
+
                 if (_editorBox != null)
                 {
                     _editorBox.Text = content;
@@ -183,7 +183,7 @@ namespace Cycloside.Plugins.BuiltIn
                 SetStatus($"Error saving file: {ex.Message}");
             }
         }
-        
+
         private void SetStatus(string message)
         {
             if (_statusBlock == null) return;
@@ -194,9 +194,9 @@ namespace Cycloside.Plugins.BuiltIn
         private void UpdateWindowTitle(string? fileName = null)
         {
             if (_window == null) return;
-            
-            _window.Title = string.IsNullOrEmpty(fileName) 
-                ? "Cycloside Editor - Untitled" 
+
+            _window.Title = string.IsNullOrEmpty(fileName)
+                ? "Cycloside Editor - Untitled"
                 : $"Cycloside Editor - {fileName}";
         }
 

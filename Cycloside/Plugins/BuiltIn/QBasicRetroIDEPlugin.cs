@@ -29,7 +29,7 @@ namespace Cycloside.Plugins.BuiltIn
 
         public string Name => "QBasic Retro IDE";
         public string Description => "Edit and run .BAS files using QB64 Phoenix";
-        public Version Version => new Version(0, 3, 0); // Incremented for significant improvements
+        public Version Version => new Version(0, 3, 0);
         public Widgets.IWidget? Widget => null;
 
         public void Start()
@@ -43,12 +43,12 @@ namespace Cycloside.Plugins.BuiltIn
                 ShowLineNumbers = true,
                 SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("VBNET") ?? HighlightingManager.Instance.GetDefinition("C#"),
                 Background = new SolidColorBrush(Color.FromRgb(0, 0, 128)),
-                Foreground = Brushes.White, // Changed to white for better contrast
+                Foreground = Brushes.White,
                 FontFamily = new FontFamily("Consolas"),
                 FontSize = 14
             };
             _editor.TextArea.Caret.PositionChanged += (_, _) => UpdateStatus();
-            _editor.TextChanged += (_, _) => UpdateStatus(true); // Mark as modified
+            _editor.TextChanged += (_, _) => UpdateStatus(true);
 
             _projectTree = new TreeView { Width = 200, Margin = new Thickness(2) };
             _projectTree.DoubleTapped += async (_, __) =>
@@ -89,7 +89,7 @@ namespace Cycloside.Plugins.BuiltIn
                 WindowState = WindowState.Maximized,
                 Content = dock
             };
-            
+
             ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
@@ -149,10 +149,10 @@ namespace Cycloside.Plugins.BuiltIn
             };
             runItems[0].Click += async (s, e) => await CompileAndRun();
             runItems[1].Click += async (s, e) => await RunExecutable();
-            
+
             var settingsItem = new MenuItem { Header = "_Settings..." };
             settingsItem.Click += (s, e) => OpenSettings();
-            
+
             var helpItem = new MenuItem { Header = "_About" };
             helpItem.Click += (s, e) => ShowHelp();
 
@@ -207,7 +207,7 @@ namespace Cycloside.Plugins.BuiltIn
                 await LoadFile(path);
             }
         }
-        
+
         private async Task LoadFile(string path)
         {
             if (_editor == null) return;
@@ -216,7 +216,7 @@ namespace Cycloside.Plugins.BuiltIn
                 SetStatus($"Loading {Path.GetFileName(path)}...");
                 _currentFile = path;
                 _editor.Text = await File.ReadAllTextAsync(path);
-                if(_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
+                if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
                 UpdateStatus();
             }
             catch (Exception ex)
@@ -233,7 +233,7 @@ namespace Cycloside.Plugins.BuiltIn
                 return;
             }
             if (_editor == null) return;
-            
+
             try
             {
                 SetStatus($"Saving {_currentFile}...");
@@ -241,7 +241,7 @@ namespace Cycloside.Plugins.BuiltIn
                 UpdateStatus(false); // No longer modified
                 SetStatus($"Saved successfully.");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 SetStatus($"Error saving file: {ex.Message}");
             }
@@ -260,16 +260,16 @@ namespace Cycloside.Plugins.BuiltIn
             if (result?.TryGetLocalPath() is { } path)
             {
                 _currentFile = path;
-                if(_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
-                await SaveFile(); 
+                if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
+                await SaveFile();
                 UpdateProjectTree();
             }
         }
-        
+
         private void UpdateProjectTree()
         {
             if (_projectTree == null || string.IsNullOrWhiteSpace(_projectPath)) return;
-            
+
             var rootNode = new TreeViewItem { Header = Path.GetFileName(_projectPath), IsExpanded = true };
             try
             {
@@ -290,7 +290,7 @@ namespace Cycloside.Plugins.BuiltIn
         private async Task CompileAndRun()
         {
             if (_isCompiling) return;
-            
+
             _isCompiling = true;
             SetStatus("Compiling...");
 
@@ -313,7 +313,7 @@ namespace Cycloside.Plugins.BuiltIn
                     .WithArguments($"\"{_currentFile}\"")
                     .WithValidation(CommandResultValidation.None)
                     .ExecuteAsync();
-                
+
                 SetStatus("Compilation finished. Running...");
 
                 var exePath = Path.ChangeExtension(_currentFile, OperatingSystem.IsWindows() ? "exe" : null);
@@ -324,7 +324,7 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 else
                 {
-                     SetStatus("Compilation failed: Executable not found.");
+                    SetStatus("Compilation failed: Executable not found.");
                 }
             }
             catch (Exception ex)
@@ -346,7 +346,7 @@ namespace Cycloside.Plugins.BuiltIn
                 SetStatus("No file is open to run its executable.");
                 return;
             }
-            
+
             var exePath = Path.ChangeExtension(_currentFile, OperatingSystem.IsWindows() ? "exe" : null);
             if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
             {
@@ -372,7 +372,7 @@ namespace Cycloside.Plugins.BuiltIn
         private void UpdateStatus(bool modified = false)
         {
             if (_status == null || _editor == null || _isCompiling) return;
-            
+
             var line = _editor.TextArea.Caret.Line;
             var col = _editor.TextArea.Caret.Column;
             var file = string.IsNullOrWhiteSpace(_currentFile) ? "Untitled" : Path.GetFileName(_currentFile);
@@ -380,7 +380,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             _status.Text = $"Ln {line}, Col {col}  |  {file}{modIndicator}";
         }
-        
+
         private void SetStatus(string message)
         {
             if (_status == null) return;
@@ -400,12 +400,12 @@ namespace Cycloside.Plugins.BuiltIn
                     e.Handled = true;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 SetStatus($"Critical Error: {ex.Message}");
             }
         }
-        
+
         private async Task Find()
         {
             if (_window == null || _editor == null) return;
@@ -430,31 +430,31 @@ namespace Cycloside.Plugins.BuiltIn
 
         private async Task Replace()
         {
-             if (_window == null || _editor == null) return;
-             var findText = await ShowInputDialog("Replace", "Text to find:");
-             if (string.IsNullOrEmpty(findText)) return;
-             
-             var replaceText = await ShowInputDialog("Replace With", "Replace with:");
-             if (replaceText == null) return; // User cancelled
-             
-             _editor.Text = _editor.Text.Replace(findText, replaceText, StringComparison.OrdinalIgnoreCase);
+            if (_window == null || _editor == null) return;
+            var findText = await ShowInputDialog("Replace", "Text to find:");
+            if (string.IsNullOrEmpty(findText)) return;
+
+            var replaceText = await ShowInputDialog("Replace With", "Replace with:");
+            if (replaceText == null) return; // User cancelled
+
+            _editor.Text = _editor.Text.Replace(findText, replaceText, StringComparison.OrdinalIgnoreCase);
         }
 
         private void OpenSettings()
         {
             if (_window == null || _editor == null) return;
             var settingsWindow = new IdeSettingsWindow(_qb64Path, _editor.FontSize);
-            settingsWindow.ShowDialog(_window); // Simplified to not need async/await for this pattern
-            
+            settingsWindow.ShowDialog(_window);
+
             if (settingsWindow.Result)
             {
-                 _qb64Path = settingsWindow.QB64Path;
-                 _editor.FontSize = settingsWindow.FontSize;
-                 SettingsManager.Settings.ComponentThemes["QB64Path"] = _qb64Path;
-                 SettingsManager.Save();
+                _qb64Path = settingsWindow.QB64Path;
+                _editor.FontSize = settingsWindow.FontSize;
+                SettingsManager.Settings.ComponentThemes["QB64Path"] = _qb64Path;
+                SettingsManager.Save();
             }
         }
-        
+
         private void ShowHelp()
         {
             if (_window == null) return;
@@ -462,12 +462,13 @@ namespace Cycloside.Plugins.BuiltIn
             var aboutWindow = new Window
             {
                 Title = "About QBasic Retro IDE",
-                Width = 400, Height = 200,
-                Content = new TextBlock 
-                { 
+                Width = 400,
+                Height = 200,
+                Content = new TextBlock
+                {
                     Text = "QBasic Retro IDE Plugin\n\nPowered by QB64 Phoenix Edition\nhttps://github.com/QB64-Phoenix-Edition/QB64pe",
                     TextAlignment = TextAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center 
+                    VerticalAlignment = VerticalAlignment.Center
                 }
             };
             aboutWindow.ShowDialog(_window);
@@ -494,12 +495,12 @@ namespace Cycloside.Plugins.BuiltIn
                 var panel = new StackPanel { Margin = new Thickness(10), Spacing = 8 };
                 panel.Children.Add(new TextBlock { Text = prompt });
                 panel.Children.Add(_box);
-                
+
                 var ok = new Button { Content = "OK", IsDefault = true };
                 ok.Click += (_, _) => Close(_box.Text);
                 var cancel = new Button { Content = "Cancel", IsCancel = true };
                 cancel.Click += (_, _) => Close(null);
-                
+
                 var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 5 };
                 buttonPanel.Children.Add(ok);
                 buttonPanel.Children.Add(cancel);
@@ -530,7 +531,7 @@ namespace Cycloside.Plugins.BuiltIn
                 panel.Children.Add(new TextBlock { Text = "Font Size:" });
                 _fontSizeBox = new TextBox { Text = fontSize.ToString() };
                 panel.Children.Add(_fontSizeBox);
-                
+
                 var ok = new Button { Content = "Save", IsDefault = true };
                 ok.Click += (_, _) => { Result = true; Close(); };
                 var cancel = new Button { Content = "Cancel", IsCancel = true };

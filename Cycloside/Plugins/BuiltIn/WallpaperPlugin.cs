@@ -28,8 +28,8 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             // --- Create UI Controls ---
-            var selectButton = new Button 
-            { 
+            var selectButton = new Button
+            {
                 Content = "Select Wallpaper Image",
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
@@ -67,7 +67,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Height = 120,
                 Content = mainPanel
             };
-            
+
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(WallpaperPlugin));
             _window.Show();
         }
@@ -84,12 +84,12 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 Title = "Select Wallpaper Image",
                 AllowMultiple = false,
-                FileTypeFilter = new[] 
-                { 
-                    new FilePickerFileType("Image Files") 
-                    { 
-                        Patterns = new[] { "*.jpg", "*.jpeg", "*.png", "*.bmp" } 
-                    } 
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Image Files")
+                    {
+                        Patterns = new[] { "*.jpg", "*.jpeg", "*.png", "*.bmp" }
+                    }
                 }
             });
 
@@ -99,7 +99,7 @@ namespace Cycloside.Plugins.BuiltIn
                 SetWallpaper(path);
             }
         }
-        
+
         /// <summary>
         /// Changes the desktop wallpaper by delegating to <see cref="WallpaperHelper"/>
         /// and provides user feedback.
@@ -126,7 +126,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Logger.Log($"WallpaperPlugin failed: {ex}");
             }
         }
-        
+
         /// <summary>
         /// Updates the status message in a thread-safe way.
         /// </summary>
@@ -136,6 +136,7 @@ namespace Cycloside.Plugins.BuiltIn
             // Ensure UI updates are always on the UI thread.
             Dispatcher.UIThread.InvokeAsync(() => _statusBlock.Text = message);
         }
+
 
         public void Stop()
         {

@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using System; // Added for string.Empty, though often available
+using System;
 
 namespace Cycloside;
 

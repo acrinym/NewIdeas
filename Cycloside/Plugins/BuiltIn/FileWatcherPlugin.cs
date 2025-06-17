@@ -17,14 +17,14 @@ namespace Cycloside.Plugins.BuiltIn
 
         public string Name => "File Watcher";
         public string Description => "Watch a folder for changes";
-        public Version Version => new Version(0, 2, 0); // Incremented version for improvements
+        public Version Version => new Version(0, 2, 0);
         public Widgets.IWidget? Widget => null;
 
         public void Start()
         {
             // --- Create UI Controls ---
-            _selectFolderButton = new Button 
-            { 
+            _selectFolderButton = new Button
+            {
                 Content = "Select Folder to Watch",
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
                 Margin = new Avalonia.Thickness(5)
@@ -35,10 +35,10 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 Content = "Clear Log",
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Margin = new Avalonia.Thickness(5,0,5,5)
+                Margin = new Avalonia.Thickness(5, 0, 5, 5)
             };
-            clearLogButton.Click += (s, e) => { if(_log != null) _log.Text = string.Empty; };
-            
+            clearLogButton.Click += (s, e) => { if (_log != null) _log.Text = string.Empty; };
+
             var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center };
             buttonPanel.Children.Add(_selectFolderButton);
             buttonPanel.Children.Add(clearLogButton);
@@ -68,7 +68,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = mainPanel
             };
 
-            // Apply theming and effects (assuming these are valid managers in your project)
+            // Apply theming and effects
             ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(FileWatcherPlugin));
             _window.Show();
@@ -82,7 +82,7 @@ namespace Cycloside.Plugins.BuiltIn
             if (_window == null) return;
 
             // Use the modern, recommended StorageProvider API to open a folder picker.
-            var result = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            var result = await _window.StorageProvider.OpenFolderPickerAsync(new FilePickerOpenOptions
             {
                 Title = "Select a folder to watch",
                 AllowMultiple = false
@@ -123,7 +123,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _watcher.Error += (s, e) => Log($"[ERROR] Watcher error: {e.GetException().Message}");
 
                 Log($"Now watching: {path}");
-                if(_selectFolderButton != null) _selectFolderButton.Content = "Change Watched Folder";
+                if (_selectFolderButton != null) _selectFolderButton.Content = "Change Watched Folder";
             }
             catch (Exception ex)
             {
@@ -132,7 +132,7 @@ namespace Cycloside.Plugins.BuiltIn
         }
 
         /// <summary>
-        /// **CRITICAL FIX:** Logs a message to the TextBox in a thread-safe way.
+        /// Logs a message to the TextBox in a thread-safe way.
         /// FileSystemWatcher events fire on background threads, so UI updates must be dispatched
         /// back to the UI thread to prevent the application from crashing.
         /// </summary>
@@ -141,7 +141,7 @@ namespace Cycloside.Plugins.BuiltIn
             Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (_log == null) return;
-                
+
                 var timestamp = DateTime.Now.ToString("HH:mm:ss");
                 _log.Text += $"[{timestamp}] {msg}{Environment.NewLine}";
                 _log.CaretIndex = _log.Text.Length; // Auto-scroll to the end
