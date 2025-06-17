@@ -1,9 +1,3 @@
-Haha, fair point! Here’s your **full Cycloside README.md**, merged and cleaned up for clarity, formatting, and style.
-**No fragments, no stutters—everything is unified, easy to read, and ready for public viewing.**
-*(If you want any section to pop with emojis, tables, or extra formatting, just let me know and I’ll style it up!)*
-
----
-
 # Cycloside
 
 Cycloside is a small cross‑platform tray application built for tinkerers. It hosts plugins, custom window effects, and live theming so you can shape the desktop to your liking.
@@ -97,14 +91,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for commit guidelines.
 ---
 
 ### ✨ Cycloside is an evolving project—contributions and plugin ideas are always welcome!
-
----
-
-**Let me know if you want:**
-
-* A **table of core plugins** or features
-* Badges for CI, platforms, etc.
-* “Getting Started” quick-steps
-* More personality/emoji or more “enterprise clean”
-
-Just say the word and I’ll remix it for whatever audience you want!
