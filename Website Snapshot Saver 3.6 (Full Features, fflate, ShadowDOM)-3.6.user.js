@@ -280,6 +280,7 @@
         const host = document.createElement('div');
         host.id = 'snapshot-shadow-host';
         document.body.appendChild(host);
+        console.log('Website Snapshot Saver initialized');
 
         const shadow = host.attachShadow({
             mode: 'open'
@@ -897,6 +898,7 @@
     } else {
         window.addEventListener('DOMContentLoaded', () => {
             createSnapshotShadowHost();
+            console.log('Website Snapshot Saver DOMContentLoaded');
             monitorSnapshotOverlay();
         }, {
             once: true
