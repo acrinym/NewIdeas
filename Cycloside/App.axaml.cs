@@ -7,6 +7,7 @@ using Cycloside.Plugins.BuiltIn;
 using Avalonia.Input;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System;
 using System.IO;
 using System.Linq;
@@ -363,6 +364,7 @@ public partial class App : Application
         return new WindowIcon(new MemoryStream(bytes));
     }
 
+    [SupportedOSPlatform("windows")]
     private static Icon? ExtractIconFromDll(string path, int index)
     {
         IntPtr hIcon = ExtractIcon(IntPtr.Zero, path, index);
