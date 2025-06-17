@@ -29,6 +29,8 @@ public partial class ThemeSettingsWindow : Window
     private void BuildList()
     {
         var panel = this.FindControl<StackPanel>("ThemePanel");
+        if (panel is null)
+            return;
         panel.Children.Clear();
         foreach (var comp in _components)
         {

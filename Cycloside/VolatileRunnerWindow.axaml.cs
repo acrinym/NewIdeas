@@ -18,7 +18,9 @@ public partial class VolatileRunnerWindow : Window
     {
         _manager = manager;
         InitializeComponent();
-        this.FindControl<ComboBox>("LangBox").SelectedIndex = 0;
+        var box = this.FindControl<ComboBox>("LangBox");
+        if (box != null)
+            box.SelectedIndex = 0;
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(VolatileRunnerWindow));
     }
 
@@ -31,7 +33,7 @@ public partial class VolatileRunnerWindow : Window
     {
         var langBox = this.FindControl<ComboBox>("LangBox");
         var code = this.FindControl<TextBox>("CodeBox").Text ?? string.Empty;
-        if (langBox.SelectedIndex == 0)
+        if (langBox?.SelectedIndex == 0)
             _manager.RunLua(code);
         else
             _manager.RunCSharp(code);

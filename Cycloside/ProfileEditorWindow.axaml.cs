@@ -39,6 +39,8 @@ public partial class ProfileEditorWindow : Window
     private void BuildProfileList()
     {
         var list = this.FindControl<ListBox>("ProfileList");
+        if (list is null)
+            return;
         list.ItemsSource = WorkspaceProfiles.Profiles.Keys.ToList();
         list.SelectionChanged += (_, _) => LoadSelectedProfile();
         if (list.Items.Count > 0)
@@ -48,6 +50,8 @@ public partial class ProfileEditorWindow : Window
     private void BuildPluginList()
     {
         var panel = this.FindControl<StackPanel>("PluginPanel");
+        if (panel is null)
+            return;
         panel.Children.Clear();
         foreach (var plugin in _manager.Plugins)
         {
@@ -88,13 +92,14 @@ public partial class ProfileEditorWindow : Window
         WorkspaceProfiles.AddOrUpdate(new WorkspaceProfile { Name = name });
         BuildProfileList();
         var list = this.FindControl<ListBox>("ProfileList");
-        list.SelectedItem = name;
+        if (list != null)
+            list.SelectedItem = name;
     }
 
     private void RemoveProfile(object? sender, RoutedEventArgs e)
     {
         var list = this.FindControl<ListBox>("ProfileList");
-        if (list.SelectedItem is string name)
+        if (list?.SelectedItem is string name)
         {
             WorkspaceProfiles.Remove(name);
             BuildProfileList();
@@ -118,10 +123,13 @@ public partial class ProfileEditorWindow : Window
         var wallpaper = this.FindControl<TextBox>("WallpaperBox").Text ?? string.Empty;
         var map = new System.Collections.Generic.Dictionary<string, bool>();
         var panel = this.FindControl<StackPanel>("PluginPanel");
-        foreach (var child in panel.Children.OfType<CheckBox>())
+        if (panel != null)
         {
-            if (child.Tag is IPlugin p)
-                map[p.Name] = child.IsChecked == true;
+            foreach (var child in panel.Children.OfType<CheckBox>())
+            {
+                if (child.Tag is IPlugin p)
+                    map[p.Name] = child.IsChecked == true;
+            }
         }
         var profile = new WorkspaceProfile
         {
@@ -134,6 +142,7 @@ public partial class ProfileEditorWindow : Window
         WorkspaceProfiles.AddOrUpdate(profile);
         BuildProfileList();
         var list = this.FindControl<ListBox>("ProfileList");
-        list.SelectedItem = name;
+        if (list != null)
+            list.SelectedItem = name;
     }
 }
