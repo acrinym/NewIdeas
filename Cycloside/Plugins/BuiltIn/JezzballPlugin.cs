@@ -70,7 +70,7 @@ internal class JezzballControl : Control
         AddHandler(PointerPressedEvent, PointerPressed, RoutingStrategies.Tunnel);
     }
 
-    private void PointerPressed(object? sender, PointerPressedEventArgs e)
+    private new void PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         var p = e.GetPosition(this);
         var area = _areas.FirstOrDefault(r => r.Contains(p));
