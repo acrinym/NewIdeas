@@ -31,6 +31,24 @@ Cycloside is a small cross‑platform tray application built for tinkerers. It h
 For plugin development details see [`docs/plugin-dev.md`](docs/plugin-dev.md).
 Examples live under [`docs/examples/`](docs/examples/).
 
+## Features
+
+* Built-in plugin system with hot reload. Sample modules include a clock overlay,
+  MP3 player, macro recorder, text editor, wallpaper changer, widget host and
+  Winamp visualizer host.
+* Workspace profiles remember your wallpaper and plugin states for quick swaps.
+* Run Lua or C# snippets as volatile scripts straight from the tray menu.
+* Cross-platform auto-start and settings stored in `settings.json`.
+* Rolling log files capture errors and plugin crashes with tray notifications.
+* Generate new plugins via `dotnet run -- --newplugin` or from **Settings → Generate New Plugin**.
+* Plugins communicate through a publish/subscribe bus and an optional HTTP API.
+* Global hotkeys work on Windows, Linux and macOS.
+* Built-in skin/theme engine with a live editor and custom cursors.
+* GUI plugin manager to toggle and reload plugins or open the plugin folder.
+* Plugin marketplace downloads and verifies modules from remote feeds.
+* Skinnable widgets surface plugin features directly on the desktop.
+* Window effects like wobbly windows or drop shadows are plugin friendly.
+* Optional auto-update helper swaps in new versions using a checksum.
 ---
 
 ## FUTURE TODO

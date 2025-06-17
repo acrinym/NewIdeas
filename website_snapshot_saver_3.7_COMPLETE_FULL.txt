@@ -308,19 +308,27 @@
     // ===== Drag Logic =====
     let isDragging = false, offsetX, offsetY, justDragged = false;
     iconContainer.addEventListener('mousedown', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        offsetX = e.clientX - host.offsetLeft;
-        offsetY = e.clientY - host.offsetTop;
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = host.getBoundingClientRect();
+        host.style.left = `${rect.left}px`;
+        host.style.top = `${rect.top}px`;
+        host.style.right = 'auto';
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
         isDragging = true; justDragged = false;
         document.body.style.userSelect = 'none';
     });
     document.addEventListener('mousemove', (e) => {
         if (isDragging) {
             justDragged = true;
-            let newX = e.clientX - offsetX, newY = e.clientY - offsetY;
-            const iconRect = host.getBoundingClientRect();
-            const maxX = window.innerWidth - iconRect.width, maxY = window.innerHeight - iconRect.height;
-            newX = Math.max(0, Math.min(newX, maxX)); newY = Math.max(0, Math.min(newY, maxY));
+            let newX = e.clientX - offsetX,
+                newY = e.clientY - offsetY;
+            const rect = host.getBoundingClientRect();
+            const maxX = window.innerWidth - rect.width,
+                maxY = window.innerHeight - rect.height;
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
             host.style.left = `${newX}px`;
             host.style.top = `${newY}px`;
         }

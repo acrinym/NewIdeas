@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using System;
 
 namespace Cycloside;
 
@@ -8,17 +9,21 @@ public partial class VolatileRunnerWindow : Window
 {
     private readonly VolatilePluginManager _manager;
 
-    public VolatileRunnerWindow()
-    {
-        InitializeComponent();
-        _manager = null!;
-    }
+    // The default constructor was removed as it created an invalid object 
+    // without a VolatilePluginManager, which would cause a crash later.
 
     public VolatileRunnerWindow(VolatilePluginManager manager)
     {
-        _manager = manager;
+        // Manager is now guaranteed to be valid by the constructor.
+        _manager = manager ?? throw new ArgumentNullException(nameof(manager));
+
         InitializeComponent();
-        this.FindControl<ComboBox>("LangBox").SelectedIndex = 0;
+
+        var langBox = this.FindControl<ComboBox>("LangBox");
+        if (langBox != null)
+            langBox.SelectedIndex = 0;
+
+        // Assuming WindowEffectsManager is a valid part of your project
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(VolatileRunnerWindow));
     }
 
@@ -29,11 +34,30 @@ public partial class VolatileRunnerWindow : Window
 
     private void OnRun(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        // --- Optimized Logic ---
+        // 1. Find controls first to ensure they exist.
         var langBox = this.FindControl<ComboBox>("LangBox");
-        var code = this.FindControl<TextBox>("CodeBox").Text ?? string.Empty;
+        var codeBox = this.FindControl<TextBox>("CodeBox");
+
+        // 2. Guard Clause: If either essential control is missing, do nothing.
+        //    This prevents the app from crashing.
+        if (langBox == null || codeBox == null)
+        {
+            Console.WriteLine("Error: UI controls 'LangBox' or 'CodeBox' could not be found.");
+            return;
+        }
+
+        // 3. Safely get the text, defaulting to an empty string if it's null.
+        var code = codeBox.Text ?? string.Empty;
+
+        // 4. Execute the appropriate code based on the selected language.
         if (langBox.SelectedIndex == 0)
+        {
             _manager.RunLua(code);
+        }
         else
+        {
             _manager.RunCSharp(code);
+        }
     }
 }
