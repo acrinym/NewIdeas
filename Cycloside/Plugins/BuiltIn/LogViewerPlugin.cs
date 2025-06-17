@@ -18,7 +18,7 @@ public class LogViewerPlugin : IPlugin
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
 
-    public async void Start()
+    public void Start()
     {
         _box = new TextBox
         {
@@ -42,7 +42,7 @@ public class LogViewerPlugin : IPlugin
         openButton.Click += async (_, __) =>
         {
             var dlg = new OpenFileDialog();
-            var files = await dlg.ShowAsync(_window);
+            var files = await dlg.ShowAsync(_window!);
             if (files is { Length: > 0 } && File.Exists(files[0]))
             {
                 _file = files[0];

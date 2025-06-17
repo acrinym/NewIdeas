@@ -15,14 +15,14 @@ public class DiskUsagePlugin : IPlugin
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
 
-    public async void Start()
+    public void Start()
     {
         _tree = new TreeView();
         var button = new Button { Content = "Select Folder" };
         button.Click += async (_, __) =>
         {
             var dlg = new OpenFolderDialog();
-            var path = await dlg.ShowAsync(_window);
+            var path = await dlg.ShowAsync(_window!);
             if (!string.IsNullOrWhiteSpace(path))
                 LoadTree(path);
         };

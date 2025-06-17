@@ -363,7 +363,9 @@ public partial class App : Application
                 if (icon != null)
                 {
                     using var stream = new MemoryStream();
+#pragma warning disable CA1416 // supported only on Windows
                     icon.Save(stream);
+#pragma warning restore CA1416
                     stream.Position = 0;
                     return new WindowIcon(stream);
                 }

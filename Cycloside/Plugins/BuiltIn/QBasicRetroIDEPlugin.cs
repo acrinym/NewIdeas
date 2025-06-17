@@ -151,7 +151,7 @@ public class QBasicRetroIDEPlugin : IPlugin
     {
         if (_window == null) return;
         var dlg = new OpenFolderDialog();
-        var path = await dlg.ShowAsync(_window);
+        var path = await dlg.ShowAsync(_window!);
         if (!string.IsNullOrWhiteSpace(path))
         {
             _projectPath = path;
@@ -198,7 +198,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         if (_window == null) return;
         var dlg = new SaveFileDialog();
         dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var path = await dlg.ShowAsync(_window);
+        var path = await dlg.ShowAsync(_window!);
         if (!string.IsNullOrWhiteSpace(path) && _editor != null)
         {
             _currentFile = path;
@@ -255,7 +255,7 @@ public class QBasicRetroIDEPlugin : IPlugin
         if (_window == null) return;
         var dlg = new OpenFileDialog();
         dlg.Filters.Add(new FileDialogFilter { Name = "BAS", Extensions = { "bas" } });
-        var files = await dlg.ShowAsync(_window);
+        var files = await dlg.ShowAsync(_window!);
         if (files is { Length: > 0 })
             await LoadFile(files[0]);
     }
@@ -395,7 +395,7 @@ public class QBasicRetroIDEPlugin : IPlugin
             Content = panel;
         }
 
-        public string QB64Path => _pathBox.Text;
+        public string QB64Path => _pathBox.Text ?? string.Empty;
         public new double FontSize => double.TryParse(_fontSizeBox.Text, out var f) ? f : 14;
     }
 }
