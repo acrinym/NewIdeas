@@ -404,10 +404,12 @@
         iconContainer.addEventListener('mousedown', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const rect = host.getBoundingClientRect();
-            host.style.left = `${rect.left}px`;
-            host.style.top = `${rect.top}px`;
-            host.style.right = 'auto';
+          if (host.style.right) {
+    const rect = host.getBoundingClientRect();
+    host.style.left = rect.left + 'px';
+    host.style.top = rect.top + 'px';
+    host.style.right = 'auto';
+}
             isDragging = true;
             justDragged = false;
             offsetX = e.clientX - rect.left;
