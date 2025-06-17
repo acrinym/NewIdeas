@@ -41,6 +41,8 @@ public partial class PluginSettingsWindow : Window
     private void BuildList()
     {
         var panel = this.FindControl<StackPanel>("PluginsPanel");
+        if (panel is null)
+            return;
         panel.Children.Clear();
 
         void AddPluginItem(IPlugin plugin)
