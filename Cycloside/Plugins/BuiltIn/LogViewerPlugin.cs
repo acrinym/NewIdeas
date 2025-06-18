@@ -16,20 +16,19 @@ namespace Cycloside.Plugins.BuiltIn
     {
         private Window? _window;
         private TextBox? _logBox;
+        private CheckBox? _autoScrollCheck;
         private FileSystemWatcher? _watcher;
         private string? _currentFilePath;
         private long _lastReadPosition = 0;
 
-        // In-memory cache for all log lines
         private readonly List<string> _allLines = new List<string>();
         private string _currentFilter = string.Empty;
 
-        // Semaphore to prevent race conditions during file read operations
         private readonly SemaphoreSlim _fileReadLock = new SemaphoreSlim(1, 1);
 
         public string Name => "Log Viewer";
         public string Description => "Tail and filter log files in real-time";
-        public Version Version => new Version(0, 3, 0); // Incremented version for fixes
+        public Version Version => new Version(0, 4, 1); // Incremented version for hotfix
         public Widgets.IWidget? Widget => null;
 
         public void Start()
@@ -46,10 +45,9 @@ namespace Cycloside.Plugins.BuiltIn
             };
 
             var optionsPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(5) };
-            var autoScrollCheck = new CheckBox { Content = "Auto-Scroll", IsChecked = true, Margin = new Avalonia.Thickness(5, 0) };
+            _autoScrollCheck = new CheckBox { Content = "Auto-Scroll", IsChecked = true, Margin = new Avalonia.Thickness(5, 0) };
             var wrapLinesCheck = new CheckBox { Content = "Wrap Lines", IsChecked = false, Margin = new Avalonia.Thickness(5, 0) };
             
-            // MERGE FIX: Used the modern IsCheckedChanged event for conciseness and correctness.
             wrapLinesCheck.IsCheckedChanged += (_, _) =>
             {
                 if (_logBox != null)
@@ -59,7 +57,7 @@ namespace Cycloside.Plugins.BuiltIn
                         : Avalonia.Media.TextWrapping.NoWrap;
                 }
             };
-            optionsPanel.Children.Add(autoScrollCheck);
+            optionsPanel.Children.Add(_autoScrollCheck);
             optionsPanel.Children.Add(wrapLinesCheck);
 
             _logBox = new TextBox
@@ -71,6 +69,7 @@ namespace Cycloside.Plugins.BuiltIn
             };
             ScrollViewer.SetHorizontalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
             ScrollViewer.SetVerticalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
+            _logBox.TextChanged += OnLogBoxTextChanged;
 
             // --- Assemble UI Layout ---
             var topPanel = new DockPanel { Margin = new Avalonia.Thickness(5) };
@@ -89,24 +88,26 @@ namespace Cycloside.Plugins.BuiltIn
             _window = new Window
             {
                 Title = "Log Viewer",
-                Width = 700,
-                Height = 500,
+                Width = 800,
+                Height = 600,
                 Content = mainPanel
             };
 
-            _logBox.TextChanged += (s, e) =>
+            _window.Show();
+        }
+        
+        // THIS IS THE CORRECTED METHOD
+        private void OnLogBoxTextChanged(object? sender, TextChangedEventArgs e)
+        {
+            // Correct auto-scroll logic for Avalonia
+            if (_autoScrollCheck?.IsChecked == true)
             {
-                if (autoScrollCheck.IsChecked == true && _logBox.IsFocused == false)
+                // Setting the CaretIndex to the end of the text scrolls it into view.
+                if (_logBox != null)
                 {
                     _logBox.CaretIndex = _logBox.Text?.Length ?? 0;
-                    _logBox.ScrollToLine(_logBox.GetLineCount() - 1);
-                    _logBox.ScrollToEnd();
                 }
-            };
-
-            // ThemeManager.ApplyFromSettings(_window, "Plugins"); // Assuming these are custom manager classes
-            // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(LogViewerPlugin));
-            _window.Show();
+            }
         }
 
         private async Task SelectAndLoadFileAsync()
@@ -123,7 +124,6 @@ namespace Cycloside.Plugins.BuiltIn
             var file = result.FirstOrDefault();
             if (file != null)
             {
-                // Disposing the old watcher before starting a new one
                 _watcher?.Dispose();
                 _currentFilePath = file.TryGetLocalPath();
                 if (!string.IsNullOrWhiteSpace(_currentFilePath) && File.Exists(_currentFilePath))
@@ -138,10 +138,10 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (string.IsNullOrEmpty(_currentFilePath) || _logBox == null) return;
 
-            await _fileReadLock.WaitAsync(); // Ensure no other read operation is happening
+            await _fileReadLock.WaitAsync();
             try
             {
-                _logBox.Text = $"Loading '{Path.GetFileName(_currentFilePath)}'...";
+                await Dispatcher.UIThread.InvokeAsync(() => _logBox.Text = $"Loading '{Path.GetFileName(_currentFilePath)}'...");
                 _allLines.Clear();
                 _lastReadPosition = 0;
 
@@ -151,7 +151,6 @@ namespace Cycloside.Plugins.BuiltIn
                     {
                         using var fs = new FileStream(_currentFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                         using var sr = new StreamReader(fs, Encoding.UTF8);
-
                         string? line;
                         while ((line = sr.ReadLine()) != null)
                         {
@@ -161,11 +160,9 @@ namespace Cycloside.Plugins.BuiltIn
                     }
                     catch (Exception ex)
                     {
-                        // Dispatch error message back to the UI thread.
                         LogOnUIThread($"[ERROR] Error loading file: {ex.Message}");
                     }
                 });
-
                 UpdateDisplayedLog();
             }
             finally
@@ -181,7 +178,6 @@ namespace Cycloside.Plugins.BuiltIn
 
             var directory = Path.GetDirectoryName(_currentFilePath);
             var fileName = Path.GetFileName(_currentFilePath);
-
             if (directory == null || fileName == null) return;
 
             try
@@ -201,11 +197,11 @@ namespace Cycloside.Plugins.BuiltIn
 
         private async Task OnFileChangedAsync()
         {
-            if (string.IsNullOrEmpty(_currentFilePath) || _fileReadLock.CurrentCount == 0) return;
+            if (string.IsNullOrEmpty(_currentFilePath) || !_fileReadLock.Wait(0)) return;
 
-            await _fileReadLock.WaitAsync(); // Ensure no other read operation is happening
             try
             {
+                List<string> newLines = new List<string>();
                 await Task.Run(() =>
                 {
                     try
@@ -219,22 +215,25 @@ namespace Cycloside.Plugins.BuiltIn
 
                         fs.Seek(_lastReadPosition, SeekOrigin.Begin);
                         using var sr = new StreamReader(fs, Encoding.UTF8);
-
                         string? line;
                         while ((line = sr.ReadLine()) != null)
                         {
-                            _allLines.Add(line);
+                            newLines.Add(line);
                         }
                         _lastReadPosition = fs.Position;
                     }
-                    catch (IOException) { /* Ignore read errors if file is in use, will retry on next change */ }
+                    catch (IOException) { /* Ignore read errors */ }
                     catch (Exception ex)
                     {
-                        LogOnUIThread($"[ERROR] reading file change: {ex.Message}");
+                        newLines.Add($"[ERROR] reading file change: {ex.Message}");
                     }
                 });
 
-                UpdateDisplayedLog();
+                if (newLines.Any())
+                {
+                    _allLines.AddRange(newLines);
+                    UpdateDisplayedLog();
+                }
             }
             finally
             {
@@ -244,12 +243,20 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void UpdateDisplayedLog()
         {
-            var filteredLines = string.IsNullOrWhiteSpace(_currentFilter)
-                ? _allLines
-                : _allLines.Where(l => l.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase));
+            var sb = new StringBuilder();
+            IEnumerable<string> filteredLines = _allLines;
 
-            var textToShow = string.Join(Environment.NewLine, filteredLines);
-            
+            if (!string.IsNullOrWhiteSpace(_currentFilter))
+            {
+                filteredLines = _allLines.Where(l => l.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            foreach (var line in filteredLines)
+            {
+                sb.AppendLine(line);
+            }
+
+            var textToShow = sb.ToString();
             Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (_logBox != null)
@@ -261,18 +268,9 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void LogOnUIThread(string message)
         {
-            Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                if (_logBox != null)
-                {
-                    var fullMessage = $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}";
-                    _logBox.Text += fullMessage;
-                }
-            });
-            // BUG FIX: Added the error message to the main line cache so it persists after filtering.
             var fullMessage = $"[{DateTime.Now:HH:mm:ss}] {message}";
             _allLines.Add(fullMessage);
-            UpdateDisplayedLog(); // Re-apply filters to show the new message
+            UpdateDisplayedLog();
         }
 
         public void Stop()
@@ -283,11 +281,11 @@ namespace Cycloside.Plugins.BuiltIn
         public void Dispose()
         {
             _watcher?.Dispose();
-            _watcher = null;
+            _fileReadLock.Dispose();
             _window?.Close();
             _window = null;
+            _watcher = null;
             _logBox = null;
-            _fileReadLock.Dispose();
             GC.SuppressFinalize(this);
         }
     }
