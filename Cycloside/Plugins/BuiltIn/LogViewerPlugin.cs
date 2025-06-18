@@ -99,6 +99,7 @@ namespace Cycloside.Plugins.BuiltIn
                 if (autoScrollCheck.IsChecked == true && _logBox.IsFocused == false)
                 {
                     _logBox.CaretIndex = _logBox.Text?.Length ?? 0;
+                    _logBox.ScrollToLine(_logBox.GetLineCount() - 1);
                     _logBox.ScrollToEnd();
                 }
             };
