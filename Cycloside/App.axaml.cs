@@ -13,7 +13,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cycloside;
@@ -40,17 +39,23 @@ public partial class App : Application
         if (settings.FirstRun)
         {
             var wiz = new WizardWindow();
-            // This is the correct, non-crashing way to show the wizard on first run.
-            // It safely pauses the startup process until the user completes the wizard.
-            using (var wizardClosedEvent = new ManualResetEvent(false))
+            wiz.Closed += (_, _) =>
             {
-                wiz.Closed += (_, _) => wizardClosedEvent.Set();
-                wiz.Show();
-                wizardClosedEvent.WaitOne();
-            }
-            // Reload settings after the wizard has saved them
-            settings = SettingsManager.Settings;
+                var updated = SettingsManager.Settings;
+                CompleteStartup(updated);
+            };
+            wiz.Show();
         }
+        else
+        {
+            CompleteStartup(settings);
+        }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    private void CompleteStartup(AppSettings settings)
+    {
 
         SkinManager.LoadCurrent();
         var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
@@ -111,8 +116,6 @@ public partial class App : Application
         TrayIcon.SetIcons(this, icons);
         icons.Add(trayIcon);
         trayIcon.IsVisible = true;
-
-        base.OnFrameworkInitializationCompleted();
     }
 
     /// <summary>

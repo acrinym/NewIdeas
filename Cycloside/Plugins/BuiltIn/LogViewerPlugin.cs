@@ -47,7 +47,6 @@ namespace Cycloside.Plugins.BuiltIn
             var optionsPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(5) };
             _autoScrollCheck = new CheckBox { Content = "Auto-Scroll", IsChecked = true, Margin = new Avalonia.Thickness(5, 0) };
             var wrapLinesCheck = new CheckBox { Content = "Wrap Lines", IsChecked = false, Margin = new Avalonia.Thickness(5, 0) };
-            
             wrapLinesCheck.IsCheckedChanged += (_, _) =>
             {
                 if (_logBox != null)
@@ -106,6 +105,7 @@ namespace Cycloside.Plugins.BuiltIn
                 if (_logBox != null)
                 {
                     _logBox.CaretIndex = _logBox.Text?.Length ?? 0;
+                    _logBox.ScrollToLine(_logBox.GetLineCount() - 1);
                 }
             }
         }
@@ -268,6 +268,14 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void LogOnUIThread(string message)
         {
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (_logBox != null)
+                {
+                    var fullMessage = $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}";
+                    _logBox.Text += fullMessage;
+                }
+            });
             var fullMessage = $"[{DateTime.Now:HH:mm:ss}] {message}";
             _allLines.Add(fullMessage);
             UpdateDisplayedLog();
