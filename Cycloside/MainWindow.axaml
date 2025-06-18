@@ -2,8 +2,60 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:vm="clr-namespace:Cycloside.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="Cycloside.MainWindow"
-        Title="Cycloside">
-    Welcome to Avalonia!
+        x:DataType="vm:MainWindowViewModel"
+        Title="Cycloside"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource ApplicationBackgroundBrush}">
+
+    <!--
+      The main window uses a DockPanel to structure the core UI elements:
+      - A Menu is docked to the top.
+      - A status bar could be docked to the bottom.
+      - The main content area fills the rest of the space.
+    -->
+    <DockPanel>
+
+        <!-- === Top Menu Bar === -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <!-- The Exit command will be handled by the ViewModel -->
+                <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Plugins">
+                <!-- 
+                  This is the dynamic menu for your plugins.
+                  It binds to an "AvailablePlugins" collection in the ViewModel.
+                  For each plugin, it creates a new menu item.
+                -->
+                <ItemsControl ItemsSource="{Binding AvailablePlugins}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <MenuItem Header="{Binding Name}"
+                                      Command="{Binding DataContext.StartPluginCommand, RelativeSource={RelativeSource AncestorType=Menu}}"
+                                      CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </MenuItem>
+        </Menu>
+
+        <!-- === Main Content Area === -->
+        <!-- 
+          This Canvas acts as the "desktop" or "workspace" for your application.
+          Plugins like the Widget Host will add their UI elements here.
+          The background is a subtle radial gradient for visual appeal.
+        -->
+        <Canvas Name="DesktopCanvas">
+            <Canvas.Background>
+                <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" Radius="0.7">
+                    <GradientStop Color="{DynamicResource ThemeAccentColor4}" Offset="0" />
+                    <GradientStop Color="{DynamicResource ThemeBackgroundColor}" Offset="1" />
+                </RadialGradientBrush>
+            </Canvas.Background>
+        </Canvas>
+
+    </DockPanel>
 </Window>
