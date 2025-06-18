@@ -111,7 +111,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 Title = "Open Text File",
                 AllowMultiple = false,
-                FileTypeFilter = new[] { FilePickerFileTypes.TextAll }
+                FileTypeFilter = new[] { FilePickerFileTypes.All }
             });
 
             var selectedFile = result.FirstOrDefault();
@@ -152,7 +152,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 Title = "Save Text File As...",
                 SuggestedFileName = Path.GetFileName(_currentFilePath) ?? "Untitled.txt",
-                FileTypeChoices = new[] { FilePickerFileTypes.TextAll }
+                FileTypeChoices = new[] { FilePickerFileTypes.All }
             });
 
             if (result?.TryGetLocalPath() is { } path)
