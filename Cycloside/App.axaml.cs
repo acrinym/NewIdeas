@@ -13,7 +13,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cycloside;
@@ -21,6 +20,7 @@ namespace Cycloside;
 public partial class App : Application
 {
     private const string TrayIconBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGElEQVR4nGNkaGAgCTCRpnxUw6iGoaQBALsfAKDg6Y6zAAAAAElFTkSuQmCC";
+    private RemoteApiServer? _remoteServer;
 
     public override void Initialize()
     {
@@ -39,17 +39,23 @@ public partial class App : Application
         if (settings.FirstRun)
         {
             var wiz = new WizardWindow();
-            // This is the correct, non-crashing way to show the wizard on first run.
-            // It safely pauses the startup process until the user completes the wizard.
-            using (var wizardClosedEvent = new ManualResetEvent(false))
+            wiz.Closed += (_, _) =>
             {
-                wiz.Closed += (_, _) => wizardClosedEvent.Set();
-                wiz.Show();
-                wizardClosedEvent.WaitOne();
-            }
-            // Reload settings after the wizard has saved them
-            settings = SettingsManager.Settings;
+                var updated = SettingsManager.Settings;
+                CompleteStartup(updated);
+            };
+            wiz.Show();
         }
+        else
+        {
+            CompleteStartup(settings);
+        }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    private void CompleteStartup(AppSettings settings)
+    {
 
         SkinManager.LoadCurrent();
         var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
@@ -83,8 +89,8 @@ public partial class App : Application
             manager.AddPlugin(new QBasicRetroIDEPlugin());
         }
 
-        var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
-        remoteServer.Start();
+        _remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
+        _remoteServer.Start();
         
         WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
 
@@ -110,8 +116,6 @@ public partial class App : Application
         TrayIcon.SetIcons(this, icons);
         icons.Add(trayIcon);
         trayIcon.IsVisible = true;
-
-        base.OnFrameworkInitializationCompleted();
     }
 
     /// <summary>
@@ -220,7 +224,7 @@ public partial class App : Application
                     Command = new RelayCommand(() =>
                     {
                         manager.StopAll();
-                        remoteServer.Stop();
+                        _remoteServer?.Stop();
                         HotkeyManager.UnregisterAll();
                         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
                         {
@@ -362,7 +366,7 @@ public partial class App : Application
     private class RelayCommand : System.Windows.Input.ICommand
     {
         private readonly Action<object?> _execute;
-        public event EventHandler? CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
         public RelayCommand(Action<object?> execute) => _execute = execute;
         public RelayCommand(Action execute) : this(_ => execute()) { }
         public bool CanExecute(object? parameter) => true;
