@@ -3,47 +3,79 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Cycloside.ViewModels"
-        mc:Ignorable="d"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="350"
         x:Class="Cycloside.Views.WizardWindow"
         x:DataType="vm:WizardViewModel"
         Width="450" Height="350"
-        Title="Setup Wizard">
-    <StackPanel Margin="10" Spacing="8">
-        <TabControl SelectedIndex="{Binding CurrentStep}">
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Title="Cycloside Setup Wizard"
+        -- FIX: Set the background to a theme resource to ensure content is always visible.
+        Background="{DynamicResource ApplicationBackgroundBrush}">
+
+    <!-- 
+      FIX: Replaced the root StackPanel with a DockPanel. 
+      DockPanel is better for this layout, allowing the buttons to be "docked" 
+      to the bottom and the TabControl to fill the remaining space correctly.
+    -->
+    <DockPanel Margin="10">
+
+        <!-- --- Back/Next Buttons --- -->
+        <!-- FIX: Buttons are now docked to the bottom for a consistent layout. -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,10,0,0">
+            <Button Content="Back" Command="{Binding BackCommand}"/>
+            <Button Content="Next" Command="{Binding NextCommand}" IsDefault="True"/>
+        </StackPanel>
+
+        <!-- --- Wizard Steps --- -->
+        <!-- The TabControl now fills the main area of the window. -->
+        <TabControl SelectedIndex="{Binding CurrentStep}" IsEnabled="False">
             <TabItem Header="Welcome">
-                <TextBlock TextWrapping="Wrap" Text="Welcome to Cycloside! This wizard will help you configure the basics."/>
+                <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
+                           Text="Welcome to Cycloside! This wizard will help you configure the basics."/>
             </TabItem>
+
             <TabItem Header="Plugins">
-                <StackPanel>
+                <StackPanel Spacing="5">
                     <TextBlock Text="Enable built-in plugins:" Margin="0,0,0,4"/>
-                    <ItemsControl ItemsSource="{Binding Plugins}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:PluginItem">
-                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding Plugins}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PluginItem">
+                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </StackPanel>
             </TabItem>
+
             <TabItem Header="Theme">
-                <StackPanel>
+                <StackPanel Spacing="5" VerticalAlignment="Center">
                     <TextBlock Text="Select a theme:" Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding AvailableThemes}" SelectedItem="{Binding SelectedTheme}"/>
+                    <!-- 
+                      FIX: Stretched the ComboBox and gave it a minimum width. This helps ensure
+                      it has enough space to render correctly, which can fix UI glitches.
+                    -->
+                    <ComboBox ItemsSource="{Binding AvailableThemes}" 
+                              SelectedItem="{Binding SelectedTheme}"
+                              HorizontalAlignment="Stretch"
+                              MinWidth="200"/>
                 </StackPanel>
             </TabItem>
+
             <TabItem Header="Profile">
-                <StackPanel>
+                <StackPanel Spacing="5" VerticalAlignment="Center">
                     <TextBlock Text="Profile name:" Margin="0,0,0,4"/>
                     <TextBox Text="{Binding ProfileName}" Width="200"/>
                 </StackPanel>
             </TabItem>
+
             <TabItem Header="Finish">
-                <TextBlock TextWrapping="Wrap" Text="Setup is complete. Click Next to start using Cycloside."/>
+                <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
+                           Text="Setup is complete. Click Next to start using Cycloside."/>
             </TabItem>
         </TabControl>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
-            <Button Content="Back" Click="Back_Click"/>
-            <Button Content="Next" Click="Next_Click"/>
-        </StackPanel>
-    </StackPanel>
+        
+    </DockPanel>
 </Window>
