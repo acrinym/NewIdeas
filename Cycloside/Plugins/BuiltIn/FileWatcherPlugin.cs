@@ -82,7 +82,7 @@ namespace Cycloside.Plugins.BuiltIn
             if (_window == null) return;
 
             // Use the modern, recommended StorageProvider API to open a folder picker.
-            var result = await _window.StorageProvider.OpenFolderPickerAsync(new FilePickerOpenOptions
+            var result = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = "Select a folder to watch",
                 AllowMultiple = false

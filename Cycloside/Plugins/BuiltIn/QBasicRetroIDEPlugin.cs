@@ -109,34 +109,46 @@ namespace Cycloside.Plugins.BuiltIn
         #region UI Construction
         private Menu BuildMenu()
         {
-            var fileItems = new[]
-            {
-                new MenuItem { Header = "_New", InputGesture = new KeyGesture(Key.N, KeyModifiers.Control) },
-                new MenuItem { Header = "_Open...", InputGesture = new KeyGesture(Key.O, KeyModifiers.Control) },
-                new MenuItem { Header = "Open _Project..." },
-                new Separator(),
-                new MenuItem { Header = "_Save", InputGesture = new KeyGesture(Key.S, KeyModifiers.Control) },
-                new MenuItem { Header = "Save _As..." },
-                new Separator(),
-                new MenuItem { Header = "E_xit" }
-            };
-            fileItems[0].Click += async (s, e) => await NewFile();
-            fileItems[1].Click += async (s, e) => await OpenFile();
-            fileItems[2].Click += async (s, e) => await OpenProject();
-            fileItems[4].Click += async (s, e) => await SaveFile();
-            fileItems[5].Click += async (s, e) => await SaveFileAs();
-            fileItems[7].Click += (s, e) => _window?.Close();
+            var newItem = new MenuItem { Header = "_New", InputGesture = new KeyGesture(Key.N, KeyModifiers.Control) };
+            var openItem = new MenuItem { Header = "_Open...", InputGesture = new KeyGesture(Key.O, KeyModifiers.Control) };
+            var openProjectItem = new MenuItem { Header = "Open _Project..." };
+            var saveItem = new MenuItem { Header = "_Save", InputGesture = new KeyGesture(Key.S, KeyModifiers.Control) };
+            var saveAsItem = new MenuItem { Header = "Save _As..." };
+            var exitItem = new MenuItem { Header = "E_xit" };
 
-            var editItems = new[]
+            var fileItems = new object[]
             {
-                new MenuItem { Header = "_Undo" }, new MenuItem { Header = "_Redo" }, new Separator(),
-                new MenuItem { Header = "Cu_t" }, new MenuItem { Header = "_Copy" }, new MenuItem { Header = "_Paste" }
+                newItem, openItem, openProjectItem,
+                new Separator(),
+                saveItem, saveAsItem,
+                new Separator(),
+                exitItem
             };
-            editItems[0].Click += (s, e) => _editor?.Undo();
-            editItems[1].Click += (s, e) => _editor?.Redo();
-            editItems[3].Click += (s, e) => _editor?.Cut();
-            editItems[4].Click += (s, e) => _editor?.Copy();
-            editItems[5].Click += (s, e) => _editor?.Paste();
+
+            newItem.Click += async (s, e) => await NewFile();
+            openItem.Click += async (s, e) => await OpenFile();
+            openProjectItem.Click += async (s, e) => await OpenProject();
+            saveItem.Click += async (s, e) => await SaveFile();
+            saveAsItem.Click += async (s, e) => await SaveFileAs();
+            exitItem.Click += (s, e) => _window?.Close();
+
+            var undoItem = new MenuItem { Header = "_Undo" };
+            var redoItem = new MenuItem { Header = "_Redo" };
+            var cutItem = new MenuItem { Header = "Cu_t" };
+            var copyItem = new MenuItem { Header = "_Copy" };
+            var pasteItem = new MenuItem { Header = "_Paste" };
+
+            var editItems = new object[]
+            {
+                undoItem, redoItem, new Separator(),
+                cutItem, copyItem, pasteItem
+            };
+
+            undoItem.Click += (s, e) => _editor?.Undo();
+            redoItem.Click += (s, e) => _editor?.Redo();
+            cutItem.Click += (s, e) => _editor?.Cut();
+            copyItem.Click += (s, e) => _editor?.Copy();
+            pasteItem.Click += (s, e) => _editor?.Paste();
 
             var searchItems = new[] { new MenuItem { Header = "_Find..." }, new MenuItem { Header = "_Replace..." } };
             searchItems[0].Click += async (s, e) => await Find();
@@ -172,13 +184,14 @@ namespace Cycloside.Plugins.BuiltIn
         #endregion
 
         #region File Operations
-        private async Task NewFile()
+        private Task NewFile()
         {
-            if (_editor == null) return;
+            if (_editor == null) return Task.CompletedTask;
             // TODO: Add check for unsaved changes
             _editor.Text = string.Empty;
             _currentFile = null;
             UpdateStatus();
+            return Task.CompletedTask;
         }
 
         private async Task OpenProject()
