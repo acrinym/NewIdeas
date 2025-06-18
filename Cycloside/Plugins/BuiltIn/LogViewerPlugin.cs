@@ -44,13 +44,18 @@ namespace Cycloside.Plugins.BuiltIn
             var optionsPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(5) };
             var autoScrollCheck = new CheckBox { Content = "Auto-Scroll", IsChecked = true, Margin = new Avalonia.Thickness(5, 0) };
             var wrapLinesCheck = new CheckBox { Content = "Wrap Lines", IsChecked = false, Margin = new Avalonia.Thickness(5, 0) };
-            wrapLinesCheck.IsCheckedChanged += (s, e) =>
+            wrapLinesCheck.Checked += (s, e) =>
             {
                 if (_logBox != null)
                 {
-                    _logBox.TextWrapping = (e.IsChecked ?? false)
-                        ? Avalonia.Media.TextWrapping.Wrap
-                        : Avalonia.Media.TextWrapping.NoWrap;
+                    _logBox.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
+                }
+            };
+            wrapLinesCheck.Unchecked += (s, e) =>
+            {
+                if (_logBox != null)
+                {
+                    _logBox.TextWrapping = Avalonia.Media.TextWrapping.NoWrap;
                 }
             };
             optionsPanel.Children.Add(autoScrollCheck);
@@ -109,7 +114,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 Title = "Select a log file to view",
                 AllowMultiple = false,
-                FileTypeFilter = new[] { FilePickerFileTypes.TextAll }
+                FileTypeFilter = new[] { FilePickerFileTypes.All }
             });
 
             var path = result.FirstOrDefault()?.TryGetLocalPath();
@@ -251,7 +256,7 @@ namespace Cycloside.Plugins.BuiltIn
                 if (_logBox != null)
                 {
                     var fullMessage = $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}";
-                    _logBox.AppendText(fullMessage);
+                    _logBox.Text += fullMessage;
                 }
             });
         }

@@ -21,6 +21,7 @@ namespace Cycloside;
 public partial class App : Application
 {
     private const string TrayIconBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGElEQVR4nGNkaGAgCTCRpnxUw6iGoaQBALsfAKDg6Y6zAAAAAElFTkSuQmCC";
+    private RemoteApiServer? _remoteServer;
 
     public override void Initialize()
     {
@@ -83,8 +84,8 @@ public partial class App : Application
             manager.AddPlugin(new QBasicRetroIDEPlugin());
         }
 
-        var remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
-        remoteServer.Start();
+        _remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
+        _remoteServer.Start();
         
         WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
 
@@ -220,7 +221,7 @@ public partial class App : Application
                     Command = new RelayCommand(() =>
                     {
                         manager.StopAll();
-                        remoteServer.Stop();
+                        _remoteServer?.Stop();
                         HotkeyManager.UnregisterAll();
                         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
                         {
