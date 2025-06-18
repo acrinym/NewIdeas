@@ -260,6 +260,14 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void LogOnUIThread(string message)
         {
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (_logBox != null)
+                {
+                    var fullMessage = $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}";
+                    _logBox.Text += fullMessage;
+                }
+            });
             // BUG FIX: Added the error message to the main line cache so it persists after filtering.
             var fullMessage = $"[{DateTime.Now:HH:mm:ss}] {message}";
             _allLines.Add(fullMessage);

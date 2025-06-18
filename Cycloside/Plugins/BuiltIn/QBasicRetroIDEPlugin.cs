@@ -484,13 +484,20 @@ namespace Cycloside.Plugins.BuiltIn
                     VerticalAlignment = VerticalAlignment.Center
                 }
             };
-            aboutWindow.ShowDialog(_window);
+            if (_window != null)
+            {
+                aboutWindow.ShowDialog(_window);
+            }
         }
 
         private async Task<string?> ShowInputDialog(string title, string prompt)
         {
             var inputWindow = new InputWindow(title, prompt);
-            return await inputWindow.ShowDialog<string?>(_window);
+            if (_window != null)
+            {
+                return await inputWindow.ShowDialog<string?>(_window);
+            }
+            return null;
         }
         #endregion
 

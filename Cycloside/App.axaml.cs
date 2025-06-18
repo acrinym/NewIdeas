@@ -363,7 +363,7 @@ public partial class App : Application
     private class RelayCommand : System.Windows.Input.ICommand
     {
         private readonly Action<object?> _execute;
-        public event EventHandler? CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
         public RelayCommand(Action<object?> execute) => _execute = execute;
         public RelayCommand(Action execute) : this(_ => execute()) { }
         public bool CanExecute(object? parameter) => true;
