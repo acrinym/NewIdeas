@@ -184,13 +184,14 @@ namespace Cycloside.Plugins.BuiltIn
         #endregion
 
         #region File Operations
-        private async Task NewFile()
+        private Task NewFile()
         {
-            if (_editor == null) return;
+            if (_editor == null) return Task.CompletedTask;
             // TODO: Add check for unsaved changes
             _editor.Text = string.Empty;
             _currentFile = null;
             UpdateStatus();
+            return Task.CompletedTask;
         }
 
         private async Task OpenProject()
