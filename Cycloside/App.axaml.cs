@@ -89,8 +89,9 @@ public partial class App : Application
         
         // Connect ViewModel commands to application logic
         viewModel.ExitCommand = new RelayCommand(() => Shutdown(manager));
+        // THIS IS THE MERGED CHANGE: Using EnablePlugin instead of StartPlugin
         viewModel.StartPluginCommand = new RelayCommand(plugin => {
-            if(plugin is IPlugin p) manager.StartPlugin(p);
+            if(plugin is IPlugin p) manager.EnablePlugin(p);
         });
 
         // --- Server & Hotkey Setup ---
@@ -160,14 +161,10 @@ public partial class App : Application
         }
     }
 
-    // The methods for building the tray menu and handling icons remain the same.
-    // I've included them here for completeness.
     #region Tray Menu and Icon Logic
     
     private NativeMenu BuildTrayMenu(PluginManager manager, VolatilePluginManager volatileManager, AppSettings settings)
     {
-        // This logic appears correct and has been retained.
-        // It builds the dynamic menus for plugins and settings.
         var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
         var newPlugins = manager.Plugins.Where(p => manager.GetStatus(p) != PluginChangeStatus.None).ToList();
         var otherPlugins = manager.Plugins.Except(newPlugins).ToList();
