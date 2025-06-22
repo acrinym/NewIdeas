@@ -91,7 +91,7 @@ namespace Cycloside
             // Connect ViewModel commands to application logic
             viewModel.ExitCommand = new RelayCommand(() => Shutdown(manager));
             viewModel.StartPluginCommand = new RelayCommand(plugin => {
-                if(plugin is IPlugin p) manager.StartPlugin(p);
+                if (plugin is IPlugin p) manager.EnablePlugin(p);
             });
 
             // --- Server & Hotkey Setup ---
