@@ -3,8 +3,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Cycloside.ViewModels"
+        xmlns:p="clr-namespace:Cycloside.Plugins"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="Cycloside.MainWindow"
+        x:Name="RootWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Cycloside"
         WindowStartupLocation="CenterScreen"
@@ -32,9 +34,9 @@
                 -->
                 <ItemsControl ItemsSource="{Binding AvailablePlugins}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="p:IPlugin">
                             <MenuItem Header="{Binding Name}"
-                                      Command="{Binding DataContext.StartPluginCommand, RelativeSource={RelativeSource AncestorType=Menu}}"
+                                      Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
                                       CommandParameter="{Binding}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
