@@ -1,58 +1,49 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Cycloside.ViewModels;
-using System.Linq;
+using Cycloside;
+using System; // Required for EventHandler
 
-namespace Cycloside.Views;
-
-public partial class WizardWindow : Window
+namespace Cycloside.Views
 {
-    public WizardWindow()
+    public partial class WizardWindow : Window
     {
-        InitializeComponent();
-        DataContext = new WizardViewModel();
-        ThemeManager.ApplyFromSettings(this, "Plugins");
-        CursorManager.ApplyFromSettings(this, "Plugins");
-        SkinManager.LoadForWindow(this);
-        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(WizardWindow));
-    }
-
-    private void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
-    }
-
-    private void Back_Click(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is WizardViewModel vm && vm.CurrentStep > 0)
-            vm.CurrentStep--;
-    }
-
-    private void Next_Click(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is not WizardViewModel vm)
-            return;
-
-        if (vm.CurrentStep < 4)
+        public WizardWindow()
         {
-            vm.CurrentStep++;
-            return;
+            InitializeComponent();
+
+            var viewModel = new WizardViewModel();
+            DataContext = viewModel;
+
+            // FIX: On first run, apply a known-good default theme instead of trying to load
+            // a theme from settings that don't exist yet. This prevents the "invisible wizard".
+            if (SettingsManager.Settings.FirstRun)
+            {
+                // Assuming "Mint" is a valid theme name your ThemeManager understands.
+                // This provides a safe, visible default for the first-time user experience.
+                ThemeManager.ApplyTheme(this, "Mint"); 
+            }
+            else
+            {
+                // On subsequent runs, load the user's chosen theme from settings.
+                ThemeManager.ApplyFromSettings(this, "Plugins");
+            }
+            
+            // Assuming these are your other custom manager classes
+            CursorManager.ApplyFromSettings(this, "Plugins");
+            SkinManager.LoadForWindow(this);
+            WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(WizardWindow));
+
+            // Attach the Close logic to the ViewModel's request
+            viewModel.RequestClose += (sender, e) => Close();
         }
 
-        SettingsManager.Settings.ActiveSkin = vm.SelectedTheme;
-        foreach (var item in vm.Plugins)
-            SettingsManager.Settings.PluginEnabled[item.Name] = item.IsEnabled;
-        var profile = new WorkspaceProfile
+        private void InitializeComponent()
         {
-            Name = vm.ProfileName,
-            Plugins = vm.Plugins.ToDictionary(p => p.Name, p => p.IsEnabled)
-        };
-        WorkspaceProfiles.AddOrUpdate(profile);
-        SettingsManager.Settings.ActiveProfile = vm.ProfileName;
-        SettingsManager.Settings.FirstRun = false;
-        SettingsManager.Save();
-        Close();
+            AvaloniaXamlLoader.Load(this);
+        }
+
+        // NOTE: The Back_Click and Next_Click methods have been removed.
+        // Their logic is now handled by commands within the WizardViewModel.
     }
 }

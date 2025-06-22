@@ -184,13 +184,14 @@ namespace Cycloside.Plugins.BuiltIn
         #endregion
 
         #region File Operations
-        private async Task NewFile()
+        private Task NewFile()
         {
-            if (_editor == null) return;
+            if (_editor == null) return Task.CompletedTask;
             // TODO: Add check for unsaved changes
             _editor.Text = string.Empty;
             _currentFile = null;
             UpdateStatus();
+            return Task.CompletedTask;
         }
 
         private async Task OpenProject()
@@ -483,13 +484,20 @@ namespace Cycloside.Plugins.BuiltIn
                     VerticalAlignment = VerticalAlignment.Center
                 }
             };
-            aboutWindow.ShowDialog(_window);
+            if (_window != null)
+            {
+                aboutWindow.ShowDialog(_window);
+            }
         }
 
         private async Task<string?> ShowInputDialog(string title, string prompt)
         {
             var inputWindow = new InputWindow(title, prompt);
-            return await inputWindow.ShowDialog<string?>(_window);
+            if (_window != null)
+            {
+                return await inputWindow.ShowDialog<string?>(_window);
+            }
+            return null;
         }
         #endregion
 

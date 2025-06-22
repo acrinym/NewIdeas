@@ -9,8 +9,9 @@ public partial class VolatileRunnerWindow : Window
 {
     private readonly VolatilePluginManager _manager;
 
-    // The default constructor was removed as it created an invalid object 
-    // without a VolatilePluginManager, which would cause a crash later.
+    // Parameterless constructor is required for the Avalonia XAML loader.
+    // It creates a standalone manager for design-time usage.
+    public VolatileRunnerWindow() : this(new VolatilePluginManager()) { }
 
     public VolatileRunnerWindow(VolatilePluginManager manager)
     {
