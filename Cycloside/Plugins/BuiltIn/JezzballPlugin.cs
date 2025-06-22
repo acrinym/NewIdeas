@@ -150,8 +150,9 @@ namespace Cycloside.Plugins.BuiltIn
             mainLayout.Children.Add(statusBar);
             mainLayout.Children.Add(gamePanel);
 
-            // Assign the layout to the parent window
-            this.Parent.EffectiveVisualChildren.OfType<Window>().FirstOrDefault()!.Content = mainLayout;
+            // Assign the layout to the parent window using the visual root
+            if (VisualRoot is Window parentWindow)
+                parentWindow.Content = mainLayout;
             this.Focusable = true; // Make the game area focusable
 
             // --- Event Handlers ---

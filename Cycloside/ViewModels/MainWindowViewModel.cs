@@ -1,12 +1,12 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using Cycloside.Plugins;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using CommunityToolkit.Mvvm.ComponentModel;
-using Cycloside.Plugins;
 
 namespace Cycloside.ViewModels
 {
-    public class MainWindowViewModel : ObservableObject
+    public partial class MainWindowViewModel : ObservableObject
     {
         public ObservableCollection<IPlugin> AvailablePlugins { get; }
 
