@@ -3,6 +3,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Cycloside;
 using System;
 using System.IO;
 using System.Linq;
@@ -16,17 +17,18 @@ namespace Cycloside.Plugins.BuiltIn
         private TextBox? _editorBox;
         private TextBlock? _statusBlock;
         private string? _currentFilePath;
+        private string _lastSavedText = string.Empty;
 
         public string Name => "Text Editor";
         public string Description => "Simple Markdown/text editor";
-        public Version Version => new Version(0, 2, 0); // Incremented for improvements
+        public Version Version => new Version(0, 3, 0); // Incremented for improvements
         public Widgets.IWidget? Widget => null;
 
         public void Start()
         {
             // --- Create UI Controls ---
             var newButton = new Button { Content = "New" };
-            newButton.Click += (s, e) => NewFile();
+            newButton.Click += async (s, e) => await NewFile();
 
             var openButton = new Button { Content = "Open..." };
             openButton.Click += async (s, e) => await OpenFileAsync();
@@ -93,19 +95,36 @@ namespace Cycloside.Plugins.BuiltIn
             _window.Show();
         }
 
-        private void NewFile()
+        private async Task NewFile()
         {
-            if (_editorBox == null) return;
-            // TODO: Add a check for unsaved changes before clearing
+            if (_editorBox == null || _window == null) return;
+
+            if (_editorBox.Text != _lastSavedText)
+            {
+                var confirm = new ConfirmationWindow("Unsaved Changes", "Discard unsaved changes?");
+                var result = await confirm.ShowDialog<bool>(_window);
+                if (!result)
+                    return;
+            }
+
             _editorBox.Text = string.Empty;
             _currentFilePath = null;
+            _lastSavedText = string.Empty;
             SetStatus("New file created.");
             UpdateWindowTitle();
         }
 
         private async Task OpenFileAsync()
         {
-            if (_window == null) return;
+            if (_window == null || _editorBox == null) return;
+
+            if (_editorBox.Text != _lastSavedText)
+            {
+                var confirm = new ConfirmationWindow("Unsaved Changes", "Discard unsaved changes?");
+                var result = await confirm.ShowDialog<bool>(_window);
+                if (!result)
+                    return;
+            }
 
             var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
@@ -121,13 +140,11 @@ namespace Cycloside.Plugins.BuiltIn
                 // Perform file reading on a background thread to prevent UI freezing
                 string content = await Task.Run(() => File.ReadAllTextAsync(path));
 
-                if (_editorBox != null)
-                {
-                    _editorBox.Text = content;
-                    _currentFilePath = path;
-                    SetStatus($"Successfully opened {selectedFile.Name}.");
-                    UpdateWindowTitle(selectedFile.Name);
-                }
+                _editorBox.Text = content;
+                _currentFilePath = path;
+                _lastSavedText = content;
+                SetStatus($"Successfully opened {selectedFile.Name}.");
+                UpdateWindowTitle(selectedFile.Name);
             }
         }
 
@@ -176,6 +193,7 @@ namespace Cycloside.Plugins.BuiltIn
                 string content = _editorBox.Text ?? string.Empty;
                 // Perform file writing on a background thread to prevent UI freezing
                 await Task.Run(() => File.WriteAllTextAsync(path, content));
+                _lastSavedText = content;
                 SetStatus($"File saved successfully.");
             }
             catch (Exception ex)
