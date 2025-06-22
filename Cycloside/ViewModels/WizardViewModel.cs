@@ -1,7 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Cycloside.Models;   // Assuming a 'Models' namespace for WorkspaceProfile
-using Cycloside.Services; // Assuming a 'Services' namespace for your managers
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
