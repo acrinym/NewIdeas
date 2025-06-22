@@ -1,4 +1,4 @@
-using Cycloside.Services; // Assuming a 'Services' namespace for your managers
+using Cycloside; // access SettingsManager and other core services
 using System;
 using System.Collections.Generic;
 using System.IO;
