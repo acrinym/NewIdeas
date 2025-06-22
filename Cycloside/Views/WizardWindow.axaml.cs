@@ -1,11 +1,7 @@
-// FIX: Added likely using statements for your project's custom manager classes.
-// You may need to adjust these namespaces to match your project structure if they differ.
-using Cycloside.Services; // Assuming a 'Services' or 'Managers' namespace for your managers
-using Cycloside.Models;   // Assuming a 'Models' namespace for WorkspaceProfile
-
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Cycloside.ViewModels;
+using Cycloside;
 using System; // Required for EventHandler
 
 namespace Cycloside.Views

@@ -10,22 +10,23 @@
         CanResize="False"
         WindowStartupLocation="CenterScreen"
         Title="Cycloside Setup Wizard"
-        <!-- FIX: Set the background to a theme resource to ensure content is always visible. The previous comment format was invalid. -->
         Background="{DynamicResource ApplicationBackgroundBrush}">
+
+    <!-- FIX: Set the background to a theme resource to ensure content is always visible. The previous comment format was invalid. -->
 
     <!-- Replaced the root StackPanel with a DockPanel. -->
     <!-- DockPanel is better for this layout, allowing the buttons to be "docked" -->
     <!-- to the bottom and the TabControl to fill the remaining space correctly. -->
     <DockPanel Margin="15">
 
-        <!-- --- Back/Next Buttons --- -->
+        <!-- Back and Next Buttons -->
         <!-- Buttons are now docked to the bottom for a consistent layout. -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,15,0,0">
             <Button Content="Back" Command="{Binding BackCommand}"/>
             <Button Content="Next" Command="{Binding NextCommand}" IsDefault="True"/>
         </StackPanel>
 
-        <!-- --- Wizard Steps --- -->
+        <!-- Wizard Steps -->
         <!-- The TabControl now fills the main area of the window. -->
         <!-- IsEnabled is bound to prevent clicking tabs directly. -->
         <TabControl SelectedIndex="{Binding CurrentStep}" IsEnabled="False">
