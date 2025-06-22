@@ -47,7 +47,7 @@ namespace Cycloside.Plugins.BuiltIn
             openButton.Click += async (s, e) => await SelectAndLoadFileAsync();
 
             // --- NEW: Add a Save button ---
-            var saveButton = new Button { Content = "Save Log As...", Margin = new Thickness(5,0) };
+            var saveButton = new Button { Content = "Save Log As...", Margin = new Avalonia.Thickness(5,0) };
             saveButton.Click += async (s, e) => await SaveLogAsync();
 
             var filterBox = new TextBox { Watermark = "Filter (case-insensitive)" };
@@ -57,9 +57,9 @@ namespace Cycloside.Plugins.BuiltIn
                 UpdateDisplayedLog();
             };
 
-            var optionsPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Thickness(5) };
-            _autoScrollCheck = new CheckBox { Content = "Auto-Scroll", IsChecked = true, Margin = new Thickness(5, 0) };
-            var wrapLinesCheck = new CheckBox { Content = "Wrap Lines", IsChecked = false, Margin = new Thickness(5, 0) };
+            var optionsPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(5) };
+            _autoScrollCheck = new CheckBox { Content = "Auto-Scroll", IsChecked = true, Margin = new Avalonia.Thickness(5, 0) };
+            var wrapLinesCheck = new CheckBox { Content = "Wrap Lines", IsChecked = false, Margin = new Avalonia.Thickness(5, 0) };
             wrapLinesCheck.IsCheckedChanged += (_, _) =>
             {
                 if (_logBox != null)
@@ -78,14 +78,14 @@ namespace Cycloside.Plugins.BuiltIn
                 AcceptsReturn = true,
                 TextWrapping = Avalonia.Media.TextWrapping.NoWrap,
                 FontFamily = "Cascadia Code,Consolas,Menlo,monospace",
-                Margin = new Thickness(5)
+                Margin = new Avalonia.Thickness(5)
             };
             ScrollViewer.SetHorizontalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
             ScrollViewer.SetVerticalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
             _logBox.TextChanged += OnLogBoxTextChanged;
 
             // --- Assemble UI Layout ---
-            var topPanel = new DockPanel { Margin = new Thickness(5) };
+            var topPanel = new DockPanel { Margin = new Avalonia.Thickness(5) };
             var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
             buttonPanel.Children.Add(openButton);
             buttonPanel.Children.Add(saveButton);
