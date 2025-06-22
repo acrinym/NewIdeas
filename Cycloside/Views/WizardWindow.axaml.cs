@@ -1,7 +1,7 @@
-
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Cycloside.ViewModels;
+using Cycloside;
 using System; // Required for EventHandler
 
 namespace Cycloside.Views
