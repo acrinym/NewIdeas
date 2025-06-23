@@ -8,6 +8,7 @@ using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 // Managers and other helpers live in the base Cycloside namespace
 using Cycloside.ViewModels;    // For MainWindowViewModel
+using Cycloside.Services;
 using Cycloside.Views;          // For WizardWindow and MainWindow
 using System;
 using System.Collections.Generic; // For IReadOnlyList
@@ -39,6 +40,11 @@ public partial class App : Application
         }
 
         var settings = SettingsManager.Settings;
+
+        // CRITICAL FIX: Load the global theme right away. This ensures even the
+        // wizard is themed correctly.
+        ThemeManager.LoadGlobalTheme(settings.GlobalTheme);
+
         if (settings.FirstRun)
         {
             // Show the wizard and set the main window upon its completion.
@@ -67,13 +73,6 @@ public partial class App : Application
     /// <returns>The fully configured MainWindow instance.</returns>
     private MainWindow CreateMainWindow(AppSettings settings)
     {
-        // --- Theme & Skin Setup ---
-        SkinManager.LoadCurrent();
-        var theme = settings.ComponentThemes.TryGetValue("Cycloside", out var selectedTheme)
-            ? selectedTheme
-            : settings.Theme;
-        ThemeManager.ApplyTheme(this, theme);
-        
         // --- Plugin Management ---
         var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
         var volatileManager = new VolatilePluginManager();

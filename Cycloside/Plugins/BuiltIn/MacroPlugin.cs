@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -26,6 +27,7 @@ public class MacroPlugin : IPlugin
     public Version Version => new(1,1,0);
 
     public Widgets.IWidget? Widget => null;
+    public bool ForceDefaultTheme => false;
 
     public void Start()
     {
@@ -81,7 +83,6 @@ public class MacroPlugin : IPlugin
             Content = main
         };
 
-        ThemeManager.ApplyFromSettings(_window, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(MacroPlugin));
         _window.Show();
     }

@@ -27,6 +27,7 @@ public partial class MP3PlayerPlugin : ObservableObject, IPlugin
     public Version Version => new(1,1,0);
 
     public Widgets.IWidget? Widget => new Widgets.BuiltIn.Mp3Widget(this);
+    public bool ForceDefaultTheme => false;
 
     public void Start()
     {

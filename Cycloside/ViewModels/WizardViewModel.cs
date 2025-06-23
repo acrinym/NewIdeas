@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Cycloside;          // core models and services
-using Cycloside; // For WorkspaceProfile and other core classes
+using Cycloside; // core models and services
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -78,7 +77,7 @@ namespace Cycloside.ViewModels
             // --- This is the logic from your original Next_Click on the final step ---
             
             // 1. Save all the settings gathered from the wizard
-            SettingsManager.Settings.ActiveSkin = SelectedTheme;
+            SettingsManager.Settings.GlobalTheme = SelectedTheme;
             foreach (var item in Plugins)
             {
                 SettingsManager.Settings.PluginEnabled[item.Name] = item.IsEnabled;

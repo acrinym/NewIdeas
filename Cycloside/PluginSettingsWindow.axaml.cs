@@ -7,6 +7,7 @@ using Avalonia.Media;
 using System.Linq;
 using System;
 using System.Diagnostics;
+using Cycloside.Services;
 
 namespace Cycloside;
 
@@ -25,9 +26,7 @@ public partial class PluginSettingsWindow : Window
         _manager = manager;
         InitializeComponent();
 
-        ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
-        SkinManager.LoadForWindow(this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(PluginSettingsWindow));
 
         BuildList();

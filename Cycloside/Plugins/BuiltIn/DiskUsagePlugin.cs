@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -21,6 +22,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Visualize disk usage";
         public Version Version => new Version(0, 2, 0); // Incremented version for improvements
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
@@ -55,7 +57,6 @@ namespace Cycloside.Plugins.BuiltIn
             };
 
             // Apply theming and effects (assuming these are valid managers in your project)
-            ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DiskUsagePlugin));
 
             _window.Show();

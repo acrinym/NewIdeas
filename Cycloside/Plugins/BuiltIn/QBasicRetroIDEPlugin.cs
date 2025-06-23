@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -32,11 +33,12 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Edit and run .BAS files using QB64 Phoenix";
         public Version Version => new Version(0, 3, 1);
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
-            _qb64Path = SettingsManager.Settings.ComponentThemes.TryGetValue("QB64Path", out var p) && !string.IsNullOrWhiteSpace(p)
-                ? p
+            _qb64Path = SettingsManager.Settings.ComponentSkins.TryGetValue("QB64Path", out var list) && list.Count > 0 && !string.IsNullOrWhiteSpace(list[0])
+                ? list[0]
                 : "qb64";
 
             _editor = new TextEditor
@@ -96,7 +98,6 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = dock
             };
 
-            ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
             _window.Show();
@@ -487,7 +488,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 _qb64Path = settingsWindow.QB64Path;
                 _editor.FontSize = settingsWindow.FontSize;
-                SettingsManager.Settings.ComponentThemes["QB64Path"] = _qb64Path;
+                SettingsManager.Settings.ComponentSkins["QB64Path"] = new List<string> { _qb64Path };
                 SettingsManager.Save();
             }
         }

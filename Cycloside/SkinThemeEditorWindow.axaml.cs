@@ -8,6 +8,7 @@ using Avalonia.Styling;
 using System;
 using System.IO;
 using System.Linq;
+using Cycloside.Services;
 
 namespace Cycloside;
 
@@ -16,9 +17,7 @@ public partial class SkinThemeEditorWindow : Window
     public SkinThemeEditorWindow()
     {
         InitializeComponent();
-        ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
-        SkinManager.LoadForWindow(this);
         // WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(SkinThemeEditorWindow));
         BuildFileList();
         BuildCursorList();

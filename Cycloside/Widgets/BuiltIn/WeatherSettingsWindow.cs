@@ -4,6 +4,7 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
 using System;
 using Cycloside;
+using Cycloside.Services;
 
 namespace Cycloside.Widgets.BuiltIn;
 
@@ -35,9 +36,7 @@ public class WeatherSettingsWindow : Window
 
         Content = panel;
 
-        ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
-        SkinManager.LoadForWindow(this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(WeatherSettingsWindow));
     }
 
