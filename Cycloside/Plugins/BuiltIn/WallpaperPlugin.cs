@@ -16,7 +16,7 @@ namespace Cycloside.Plugins.BuiltIn
     /// </summary>
     public class WallpaperPlugin : IPlugin
     {
-        private Window? _window;
+        private WallpaperWindow? _window;
         private TextBlock? _statusBlock;
         private Action<object?>? _wallpaperHandler;
 
@@ -27,30 +27,15 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
-            // --- Create UI Controls ---
-            var selectButton = new Button
-            {
-                Content = "Select Wallpaper Image",
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            selectButton.Click += async (s, e) => await SelectAndSetWallpaperAsync();
+            _window = new WallpaperWindow();
+            _statusBlock = _window.FindControl<TextBlock>("StatusBlock");
+            var selectButton = _window.FindControl<Button>("SelectButton");
 
-            _statusBlock = new TextBlock
-            {
-                Text = "Ready to select an image.",
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(5)
-            };
-
-            // --- Assemble UI Layout ---
-            var mainPanel = new DockPanel();
-            DockPanel.SetDock(_statusBlock, Dock.Bottom);
-            mainPanel.Children.Add(_statusBlock);
-            mainPanel.Children.Add(selectButton); // Fills the remaining center space
+            if (selectButton != null)
+                selectButton.Click += async (_, _) => await SelectAndSetWallpaperAsync();
 
             // --- Set up PluginBus handler ---
-            _wallpaperHandler = (payload) =>
+            _wallpaperHandler = payload =>
             {
                 if (payload is string path && !string.IsNullOrEmpty(path))
                 {
@@ -58,16 +43,7 @@ namespace Cycloside.Plugins.BuiltIn
                 }
             };
             PluginBus.Subscribe("wallpaper:set", _wallpaperHandler);
-
-            // --- Create and Show Window ---
-            _window = new Window
-            {
-                Title = "Wallpaper Changer",
-                Width = 250,
-                Height = 120,
-                Content = mainPanel
-            };
-
+            ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(WallpaperPlugin));
             _window.Show();
         }

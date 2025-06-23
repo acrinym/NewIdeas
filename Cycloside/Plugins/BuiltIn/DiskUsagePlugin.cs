@@ -12,7 +12,7 @@ namespace Cycloside.Plugins.BuiltIn
 {
     public class DiskUsagePlugin : IPlugin
     {
-        private Window? _window;
+        private DiskUsageWindow? _window;
         private TreeView? _tree;
         private Button? _selectFolderButton;
         private TextBlock? _statusText;
@@ -24,37 +24,15 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
-            // --- Create UI Controls ---
-            _tree = new TreeView();
-            _statusText = new TextBlock { Margin = new Thickness(5) };
+            // Load window from XAML and grab named controls
+            _window = new DiskUsageWindow();
+            _tree = _window.FindControl<TreeView>("Tree");
+            _selectFolderButton = _window.FindControl<Button>("SelectFolderButton");
+            _statusText = _window.FindControl<TextBlock>("StatusText");
 
-            _selectFolderButton = new Button
-            {
-                Content = "Select Folder to Analyze",
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Margin = new Thickness(5)
-            };
-            _selectFolderButton.Click += async (s, e) => await SelectAndLoadDirectoryAsync();
+            if (_selectFolderButton != null)
+                _selectFolderButton.Click += async (_, _) => await SelectAndLoadDirectoryAsync();
 
-            // --- Assemble UI Layout ---
-            var mainPanel = new DockPanel();
-            DockPanel.SetDock(_selectFolderButton, Dock.Top);
-            DockPanel.SetDock(_statusText, Dock.Top);
-
-            mainPanel.Children.Add(_selectFolderButton);
-            mainPanel.Children.Add(_statusText);
-            mainPanel.Children.Add(_tree); // The TreeView will fill the remaining space
-
-            // --- Create and Show Window ---
-            _window = new Window
-            {
-                Title = "Disk Usage Analyzer",
-                Width = 600,
-                Height = 500,
-                Content = mainPanel
-            };
-
-            // Apply theming and effects (assuming these are valid managers in your project)
             ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DiskUsagePlugin));
 
