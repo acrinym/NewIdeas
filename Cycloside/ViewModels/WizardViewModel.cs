@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Cycloside;          // core models and services
 using Cycloside; // For WorkspaceProfile and other core classes
 using System;
 using System.Collections.ObjectModel;

@@ -1,3 +1,6 @@
+// FIX: Added likely using statements for your project's custom manager classes.
+// You may need to adjust these namespaces to match your project structure if they differ.
+using Cycloside;          // core services and models
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Cycloside.ViewModels;

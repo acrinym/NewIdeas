@@ -1,3 +1,4 @@
+using Cycloside; // access SettingsManager and other core services
 using System;
 using System.Collections.Generic;
 using System.IO;
