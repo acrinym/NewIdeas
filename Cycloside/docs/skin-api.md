@@ -1,8 +1,8 @@
 # Skinning API
 
-Skins are Avalonia resource dictionaries stored in the `Skins/` folder with the extension `.axaml`. The name of the selected skin is saved in `settings.json` under `ActiveSkin`.
+Skins are Avalonia resource dictionaries stored in the `Skins/` folder with the extension `.axaml`. You can assign one or more skins to a plugin or component in `settings.json` under `ComponentSkins`.
 
-The `SkinManager.LoadCurrent()` method loads the current skin at startup. Contributors can create new skins by placing an `.axaml` style file in the folder and updating the setting via the Runtime Settings panel.
+Use `SkinManager.ApplySkinTo(element, "MySkin")` to layer a skin on top of the global theme at runtime.
 
 A minimal skin file looks like this:
 

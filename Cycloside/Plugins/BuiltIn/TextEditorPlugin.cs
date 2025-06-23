@@ -23,6 +23,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Simple Markdown/text editor";
         public Version Version => new Version(0, 3, 0); // Incremented for improvements
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {

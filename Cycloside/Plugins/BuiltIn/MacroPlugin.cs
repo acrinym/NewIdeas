@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -26,6 +27,7 @@ public class MacroPlugin : IPlugin
     public Version Version => new(1,1,0);
 
     public Widgets.IWidget? Widget => null;
+    public bool ForceDefaultTheme => false;
 
     public void Start()
     {
@@ -45,7 +47,18 @@ public class MacroPlugin : IPlugin
         var stopBtn = new Button { Content = "Stop" };
         stopBtn.Click += (_, __) => StopRecording();
         var playBtn = new Button { Content = "Play" };
-        playBtn.Click += (_, __) => PlaySelected();
+        playBtn.IsEnabled = OperatingSystem.IsWindows();
+        playBtn.Click += (_, __) =>
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                PlaySelected();
+            }
+            else
+            {
+                SetStatus("Playback only works on Windows");
+            }
+        };
         var saveBtn = new Button { Content = "Save" };
         saveBtn.Click += (_, __) => { MacroManager.Save(); SetStatus("Saved"); };
         var loadBtn = new Button { Content = "Reload" };
@@ -81,7 +94,6 @@ public class MacroPlugin : IPlugin
             Content = main
         };
 
-        ThemeManager.ApplyFromSettings(_window, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(MacroPlugin));
         _window.Show();
     }
@@ -121,6 +133,12 @@ public class MacroPlugin : IPlugin
 
     private void PlaySelected()
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            SetStatus("Playback only works on Windows");
+            return;
+        }
+
         if (_macroList?.SelectedIndex >= 0 && _macroList.SelectedIndex < MacroManager.Macros.Count)
         {
             var macro = MacroManager.Macros[_macroList.SelectedIndex];

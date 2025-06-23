@@ -1,6 +1,6 @@
 # Example Theme
 
-This example shows a simple Avalonia theme file that covers the common resources used by Cycloside. Save the file in `Cycloside/Themes/` with a `.axaml` extension and select it from **Settings → Theme Settings**.
+This example shows a simple Avalonia theme file that covers the common resources used by Cycloside. Save the file in `Cycloside/Themes/` with a `.axaml` extension and select it from **Settings → Appearance Editor**.
 
 ```xml
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -38,4 +38,4 @@ This example shows a simple Avalonia theme file that covers the common resources
 </Styles>
 ```
 
-Save this file as `DarkExample.axaml` and pick it as the global theme. Individual components may use a different theme by editing `settings.json` under `ComponentThemes`.
+Save this file as `DarkExample.axaml` and pick it as the global theme. Specific plugins can apply their own skins via `ComponentSkins` in `settings.json`.

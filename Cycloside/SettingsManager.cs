@@ -13,9 +13,13 @@ public class AppSettings
     public bool PluginIsolation { get; set; } = true;
     public bool PluginCrashLogging { get; set; } = true;
     public bool DisableBuiltInPlugins { get; set; } = false;
-    public string ActiveSkin { get; set; } = "Default";
-    public string Theme { get; set; } = "MintGreen";
-    public Dictionary<string, string> ComponentThemes { get; set; } = new();
+
+    // RENAMED: This is now the single, application-wide theme.
+    public string GlobalTheme { get; set; } = "MintGreen";
+
+    // RENAMED: This maps components (like plugin names) to specific skins.
+    public Dictionary<string, List<string>> ComponentSkins { get; set; } = new();
+
     public string Cursor { get; set; } = "Arrow";
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
     public Dictionary<string, List<string>> WindowEffects { get; set; } = new();

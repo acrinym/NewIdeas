@@ -7,9 +7,7 @@ Cycloside separates **themes** and **skins**:
 
 ## Switching Themes
 
-Use the tray icon menu **Settings → Theme Settings** to choose a theme for each part of Cycloside. The **Themes** submenu lets you change the global theme quickly.
-
-Themes are reusable. You can mix and match them for different components – for example, `MintGreen` for the main UI and `ConsoleGreen` for the text editor. Theme selections are stored in `settings.json`.
+Use the tray icon menu **Settings → Appearance Editor** to choose the global theme. Theme selections are stored in `settings.json` under `GlobalTheme`.
 
 ## Using Skins
 
@@ -27,11 +25,10 @@ can supply their own cursor via skins or themes as needed.
 
 See the [theme example](examples/theme-example.md) and [skin example](examples/skin-example.md) for sample resource files. The [custom cursor example](examples/custom-cursor-example.md) shows how to configure cursors.
 
-## Skin/Theme Editor
+## Appearance Editor
 
-Use **Settings → Skin/Theme Editor** from the tray icon to edit theme and skin files.
-Select a theme or skin, edit the XAML directly and hit **Preview** to test it.
-The preview window now loads your markup at runtime so the layout matches the
-XAML exactly. If parsing fails, the error message is displayed inside the
-preview. The editor also exposes a list of available cursors so you can quickly
-try them out while designing your look.
+Open **Settings → Appearance Editor** from the tray icon to manage themes and skins.
+Select the global theme from the dropdown, assign component skins, or directly
+edit theme files. Preview renders your XAML at runtime so you immediately see
+any errors or layout issues. The cursor list lets you experiment with different
+`StandardCursorType` values while designing.

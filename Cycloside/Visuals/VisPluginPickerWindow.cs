@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using System.Collections.Generic;
 using System.Linq;
+using Cycloside.Services;
 
 namespace Cycloside.Visuals;
 
@@ -27,7 +28,6 @@ public class VisPluginPickerWindow : Window
         panel.Children.Add(start);
         Content = panel;
 
-        ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(VisPluginPickerWindow));
     }

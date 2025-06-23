@@ -27,6 +27,7 @@ public class WidgetHostPlugin : IPlugin
     public string Description => "Hosts movable desktop widgets";
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
+    public bool ForceDefaultTheme => false;
 
     public void Start()
     {
@@ -40,6 +41,7 @@ public class WidgetHostPlugin : IPlugin
         foreach (var widget in _manager.Widgets)
         {
             var view = widget.BuildView();
+            view.DataContext = widget;
             Canvas.SetLeft(view, x);
             Canvas.SetTop(view, y);
             EnableDrag(view);
@@ -56,6 +58,7 @@ public class WidgetHostPlugin : IPlugin
                 if (w != null)
                 {
                     var view = w.BuildView();
+                    view.DataContext = plugin;
                     Canvas.SetLeft(view, x);
                     Canvas.SetTop(view, y);
                     EnableDrag(view);

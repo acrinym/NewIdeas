@@ -19,6 +19,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "View and edit environment variables for different scopes.";
         public Version Version => new(1, 0, 0);
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
@@ -84,7 +85,6 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = mainPanel
             };
             // Assuming these are your custom manager classes
-            // ThemeManager.ApplyFromSettings(_window, "Plugins");
             // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(EnvironmentEditorPlugin));
             
             LoadVariables(); // Initial load

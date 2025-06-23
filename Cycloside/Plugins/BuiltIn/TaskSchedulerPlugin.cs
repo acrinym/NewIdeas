@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using System;
 using System.Diagnostics;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -14,6 +15,7 @@ public class TaskSchedulerPlugin : IPlugin
     public string Description => "Schedule commands with cron or Task Scheduler";
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
+    public bool ForceDefaultTheme => false;
 
     public void Start()
     {
@@ -37,7 +39,6 @@ public class TaskSchedulerPlugin : IPlugin
             Height = 150,
             Content = panel
         };
-        ThemeManager.ApplyFromSettings(_window, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TaskSchedulerPlugin));
         _window.Show();
     }

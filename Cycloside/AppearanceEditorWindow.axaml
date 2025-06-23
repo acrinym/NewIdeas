@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.AppearanceEditorWindow"
+        Width="350" Height="400"
+        Title="Appearance Settings">
+    <DockPanel Margin="10">
+        <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="Global Theme" VerticalAlignment="Center"/>
+                <ComboBox x:Name="ThemeBox" Width="150"/>
+            </StackPanel>
+            <ScrollViewer Height="240">
+                <StackPanel x:Name="ComponentPanel"/>
+            </ScrollViewer>
+            <Button HorizontalAlignment="Right" Content="Save" Click="Save_Click"/>
+        </StackPanel>
+    </DockPanel>
+</Window>

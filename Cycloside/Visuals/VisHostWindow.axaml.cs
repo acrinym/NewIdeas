@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using System;
+using Cycloside.Services;
 
 namespace Cycloside.Visuals;
 
@@ -9,7 +10,6 @@ public partial class VisHostWindow : Window
     public VisHostWindow()
     {
         InitializeComponent();
-        ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
     }
 
