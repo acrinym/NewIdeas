@@ -33,7 +33,7 @@ planned features for the Cycloside project.
 | `JezzballPlugin` | Simple recreation of the classic game. |
 | `LogViewerPlugin` | Tails a log file and filters lines on the fly. |
 | `MP3PlayerPlugin` | Basic audio player built on NAudio. |
-| `MacroPlugin` | Records keyboard macros, saves them to disk and supports multi-playback. |
+| `MacroPlugin` | Records keyboard macros and saves them to disk. Playback is Windows-only. |
 | `ProcessMonitorPlugin` | Lists running processes with CPU and memory usage. |
 | `QBasicRetroIDEPlugin` | Minimal IDE for creating QBasic-style programs. |
 | `TaskSchedulerPlugin` | Schedules tasks with cron-style expressions. |

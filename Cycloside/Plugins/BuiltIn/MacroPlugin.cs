@@ -18,11 +18,13 @@ public class MacroPlugin : IPlugin
     private TextBox? _nameBox;
     private TextBox? _repeatBox;
     private TextBlock? _status;
+    private Button? _playButton;
     private IGlobalHook? _hook;
+    private readonly bool _isWindows = OperatingSystem.IsWindows();
     private readonly List<string> _recording = new();
 
     public string Name => "Macro Engine";
-    public string Description => "Records and plays simple keyboard macros.";
+    public string Description => "Records keyboard macros (playback Windows-only).";
     public Version Version => new(1,1,0);
 
     public Widgets.IWidget? Widget => null;
@@ -31,6 +33,11 @@ public class MacroPlugin : IPlugin
     {
         BuildUi();
         RefreshList();
+        if (!_isWindows)
+        {
+            _playButton!.IsEnabled = false;
+            SetStatus("Macro playback is only available on Windows.");
+        }
     }
 
     private void BuildUi()
@@ -44,8 +51,8 @@ public class MacroPlugin : IPlugin
         recordBtn.Click += (_, __) => StartRecording();
         var stopBtn = new Button { Content = "Stop" };
         stopBtn.Click += (_, __) => StopRecording();
-        var playBtn = new Button { Content = "Play" };
-        playBtn.Click += (_, __) => PlaySelected();
+        _playButton = new Button { Content = "Play" };
+        _playButton.Click += (_, __) => PlaySelected();
         var saveBtn = new Button { Content = "Save" };
         saveBtn.Click += (_, __) => { MacroManager.Save(); SetStatus("Saved"); };
         var loadBtn = new Button { Content = "Reload" };
@@ -56,7 +63,7 @@ public class MacroPlugin : IPlugin
         var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
         buttonPanel.Children.Add(recordBtn);
         buttonPanel.Children.Add(stopBtn);
-        buttonPanel.Children.Add(playBtn);
+        buttonPanel.Children.Add(_playButton);
         buttonPanel.Children.Add(saveBtn);
         buttonPanel.Children.Add(loadBtn);
         buttonPanel.Children.Add(delBtn);
@@ -121,6 +128,12 @@ public class MacroPlugin : IPlugin
 
     private void PlaySelected()
     {
+        if (!_isWindows)
+        {
+            SetStatus("Playback not supported on this OS.");
+            return;
+        }
+
         if (_macroList?.SelectedIndex >= 0 && _macroList.SelectedIndex < MacroManager.Macros.Count)
         {
             var macro = MacroManager.Macros[_macroList.SelectedIndex];
@@ -131,8 +144,7 @@ public class MacroPlugin : IPlugin
                 {
                     try
                     {
-                        if (OperatingSystem.IsWindows())
-                            System.Windows.Forms.SendKeys.SendWait(key);
+                        System.Windows.Forms.SendKeys.SendWait(key);
                     }
                     catch (Exception ex)
                     {
