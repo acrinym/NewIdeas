@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using System;
 using System.IO;
+using Cycloside.Services;
 
 namespace Cycloside;
 
@@ -12,9 +13,7 @@ public class PluginDevWizard : Window
 
     public PluginDevWizard()
     {
-        ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
-        SkinManager.LoadForWindow(this);
         BuildUI();
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(PluginDevWizard));
     }

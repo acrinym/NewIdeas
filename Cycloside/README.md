@@ -85,8 +85,8 @@ install them directly into your `Plugins/` directory. Each download is verified
 with a SHA256 hash before it is placed on disk.
 
 ## 🎨 Skins
-Place Avalonia style files inside the `Skins` folder to theme the interface. The
-current skin is loaded at startup based on `ActiveSkin` in `settings.json` and can be changed from **Settings → Runtime Settings**.
+Place Avalonia style files inside the `Skins` folder to customize the interface.
+Assign skins to specific plugins using the `ComponentSkins` section of `settings.json`.
 
 ## 🌀 Window Effects
 Try out wobbly windows, drop shadows and more via **Settings → Runtime Settings**.

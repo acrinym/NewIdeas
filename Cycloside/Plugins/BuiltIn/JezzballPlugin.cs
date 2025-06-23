@@ -18,6 +18,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
         public Version Version => new(1, 1, 0); // Version bump for major gameplay implementation
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
@@ -30,7 +31,6 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = control
             };
             // Assuming these are your custom manager classes
-            // ThemeManager.ApplyFromSettings(_window, "Plugins");
             // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(JezzballPlugin));
             _window.Show();
         }

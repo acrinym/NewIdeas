@@ -25,6 +25,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "A simple Markdown and text editor.";
         public Version Version => new Version(0, 4, 0); // Incremented for refactoring and optimization
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         // --- Plugin Lifecycle Methods ---
         public void Start()

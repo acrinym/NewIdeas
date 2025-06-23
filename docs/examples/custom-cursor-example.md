@@ -25,7 +25,6 @@ To load from settings for a plugin window:
 
 ```csharp
 var win = new Window();
-ThemeManager.ApplyFromSettings(win, "Plugins");
 CursorManager.ApplyFromSettings(win, "Plugins");
 win.Show();
 ```

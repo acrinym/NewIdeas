@@ -7,9 +7,7 @@ Cycloside separates **themes** and **skins**:
 
 ## Switching Themes
 
-Use the tray icon menu **Settings → Theme Settings** to choose a theme for each part of Cycloside. The **Themes** submenu lets you change the global theme quickly.
-
-Themes are reusable. You can mix and match them for different components – for example, `MintGreen` for the main UI and `ConsoleGreen` for the text editor. Theme selections are stored in `settings.json`.
+Use the tray icon menu **Settings → Theme Settings** to choose the global theme. Theme selections are stored in `settings.json` under `GlobalTheme`.
 
 ## Using Skins
 

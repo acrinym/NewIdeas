@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -19,6 +20,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Watch a folder for changes";
         public Version Version => new Version(0, 2, 0);
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
@@ -69,7 +71,6 @@ namespace Cycloside.Plugins.BuiltIn
             };
 
             // Apply theming and effects
-            ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(FileWatcherPlugin));
             _window.Show();
         }

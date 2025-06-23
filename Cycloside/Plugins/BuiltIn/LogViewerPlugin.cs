@@ -30,6 +30,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Tail and filter log files in real-time. Now with auto-loading and saving!";
         public Version Version => new Version(0, 5, 0); // Incremented for new features
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
         
         // --- NEW: Helper to get the application's log directory ---
         private string GetLogDirectory()

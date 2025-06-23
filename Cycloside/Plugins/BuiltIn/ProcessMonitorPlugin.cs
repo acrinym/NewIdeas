@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -16,6 +17,7 @@ public class ProcessMonitorPlugin : IPlugin
     public string Description => "List running processes with memory usage";
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
+    public bool ForceDefaultTheme => false;
 
     public void Start()
     {
@@ -27,7 +29,6 @@ public class ProcessMonitorPlugin : IPlugin
             Height = 500,
             Content = _list
         };
-        ThemeManager.ApplyFromSettings(_window, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ProcessMonitorPlugin));
         _window.Show();
 

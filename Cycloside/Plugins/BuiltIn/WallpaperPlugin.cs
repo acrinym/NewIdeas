@@ -24,6 +24,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Change desktop wallpaper";
         public Version Version => new Version(0, 2, 0); // Incremented for improvements
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
