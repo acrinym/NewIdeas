@@ -224,6 +224,10 @@ namespace Cycloside.Plugins
             }
         }
 
+        // StartPlugin is kept for backward compatibility with older code.
+        // It simply calls EnablePlugin, which starts and tracks the plugin.
+        public void StartPlugin(IPlugin plugin) => EnablePlugin(plugin);
+
         public void DisablePlugin(IPlugin plugin)
         {
             var info = GetInfo(plugin);
@@ -250,36 +254,4 @@ namespace Cycloside.Plugins
         public PluginChangeStatus GetStatus(IPlugin plugin) => GetInfo(plugin)?.Status ?? PluginChangeStatus.None;
     }
 
-    /// <summary>
-    /// Custom AssemblyLoadContext to allow for true unloading of plugin DLLs.
-    /// </summary>
-    public class PluginLoadContext : AssemblyLoadContext
-    {
-        private readonly AssemblyDependencyResolver _resolver;
-
-        public PluginLoadContext(string pluginPath) : base(isCollectible: true)
-        {
-            _resolver = new AssemblyDependencyResolver(pluginPath);
-        }
-
-        protected override Assembly? Load(AssemblyName assemblyName)
-        {
-            string? assemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
-            if (assemblyPath != null)
-            {
-                return LoadFromAssemblyPath(assemblyPath);
-            }
-            return null;
-        }
-
-        protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
-        {
-            string? libraryPath = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
-            if (libraryPath != null)
-            {
-                return LoadUnmanagedDllFromPath(libraryPath);
-            }
-            return IntPtr.Zero;
-        }
-    }
 }

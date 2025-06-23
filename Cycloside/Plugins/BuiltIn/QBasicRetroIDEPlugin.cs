@@ -26,10 +26,11 @@ namespace Cycloside.Plugins.BuiltIn
         private string? _currentFile;
         private string? _projectPath;
         private bool _isCompiling = false;
+        private bool _hasUnsavedChanges = false;
 
         public string Name => "QBasic Retro IDE";
         public string Description => "Edit and run .BAS files using QB64 Phoenix";
-        public Version Version => new Version(0, 3, 0);
+        public Version Version => new Version(0, 3, 1);
         public Widgets.IWidget? Widget => null;
 
         public void Start()
@@ -48,7 +49,12 @@ namespace Cycloside.Plugins.BuiltIn
                 FontSize = 14
             };
             _editor.TextArea.Caret.PositionChanged += (_, _) => UpdateStatus();
-            _editor.TextChanged += (_, _) => UpdateStatus(true);
+            _editor.TextChanged += (_, _)
+                =>
+                {
+                    _hasUnsavedChanges = true;
+                    UpdateStatus();
+                };
 
             _projectTree = new TreeView { Width = 200, Margin = new Thickness(2) };
             _projectTree.DoubleTapped += async (_, __) =>
@@ -184,14 +190,21 @@ namespace Cycloside.Plugins.BuiltIn
         #endregion
 
         #region File Operations
-        private Task NewFile()
+        private async Task NewFile()
         {
-            if (_editor == null) return Task.CompletedTask;
-            // TODO: Add check for unsaved changes
+            if (_editor == null) return;
+
+            if (_hasUnsavedChanges && _window != null)
+            {
+                var confirm = new ConfirmationWindow("Unsaved Changes",
+                    "Discard current changes?");
+                var result = await confirm.ShowDialog<bool>(_window);
+                if (!result) return;
+            }
+
             _editor.Text = string.Empty;
             _currentFile = null;
-            UpdateStatus();
-            return Task.CompletedTask;
+            UpdateStatus(false);
         }
 
         private async Task OpenProject()
@@ -217,6 +230,13 @@ namespace Cycloside.Plugins.BuiltIn
 
             if (result.FirstOrDefault()?.TryGetLocalPath() is { } path)
             {
+                if (_hasUnsavedChanges)
+                {
+                    var confirm = new ConfirmationWindow("Unsaved Changes", "Discard current changes?");
+                    var cont = await confirm.ShowDialog<bool>(_window);
+                    if (!cont) return;
+                }
+
                 await LoadFile(path);
             }
         }
@@ -229,8 +249,9 @@ namespace Cycloside.Plugins.BuiltIn
                 SetStatus($"Loading {Path.GetFileName(path)}...");
                 _currentFile = path;
                 _editor.Text = await File.ReadAllTextAsync(path);
+                _hasUnsavedChanges = false;
                 if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
-                UpdateStatus();
+                UpdateStatus(false);
             }
             catch (Exception ex)
             {
@@ -382,14 +403,17 @@ namespace Cycloside.Plugins.BuiltIn
         #endregion
 
         #region UI Logic and Event Handlers
-        private void UpdateStatus(bool modified = false)
+        private void UpdateStatus(bool? modified = null)
         {
             if (_status == null || _editor == null || _isCompiling) return;
+
+            if (modified.HasValue)
+                _hasUnsavedChanges = modified.Value;
 
             var line = _editor.TextArea.Caret.Line;
             var col = _editor.TextArea.Caret.Column;
             var file = string.IsNullOrWhiteSpace(_currentFile) ? "Untitled" : Path.GetFileName(_currentFile);
-            var modIndicator = modified ? "*" : "";
+            var modIndicator = _hasUnsavedChanges ? "*" : "";
 
             _status.Text = $"Ln {line}, Col {col}  |  {file}{modIndicator}";
         }
@@ -566,6 +590,43 @@ namespace Cycloside.Plugins.BuiltIn
 
             public string QB64Path => _pathBox.Text ?? "qb64";
             public new double FontSize => double.TryParse(_fontSizeBox.Text, out var f) && f > 0 ? f : 14;
+        }
+
+        private class ConfirmationWindow : Window
+        {
+            public ConfirmationWindow(string title, string message)
+            {
+                Title = title;
+                Width = 350;
+                SizeToContent = SizeToContent.Height;
+                WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+                var messageBlock = new TextBlock
+                {
+                    Text = message,
+                    Margin = new Thickness(15),
+                    TextWrapping = TextWrapping.Wrap
+                };
+
+                var yesButton = new Button { Content = "Yes", IsDefault = true, Margin = new Thickness(5) };
+                yesButton.Click += (_, _) => Close(true);
+                var noButton = new Button { Content = "No", IsCancel = true, Margin = new Thickness(5) };
+                noButton.Click += (_, _) => Close(false);
+
+                var buttonPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                };
+                buttonPanel.Children.Add(yesButton);
+                buttonPanel.Children.Add(noButton);
+
+                var mainPanel = new StackPanel { Spacing = 10 };
+                mainPanel.Children.Add(messageBlock);
+                mainPanel.Children.Add(buttonPanel);
+
+                Content = mainPanel;
+            }
         }
         #endregion
     }

@@ -3,3 +3,7 @@
 *.user.js
 *.user.js.txt
 !chrome-api-emulator.user.js
+Cycloside.zip
+Cycloside/AllFiles.txt
+Cycloside/AvaloniaProjectSource.txt
+Cycloside/output.ps1

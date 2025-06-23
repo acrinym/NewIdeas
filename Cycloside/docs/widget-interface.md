@@ -34,6 +34,6 @@ This is currently a design document and serves as a guide for future development
 The repository includes a handful of sample widgets to show how the interface works:
 
 - **ClockWidget** – simple digital clock
-- **Mp3Widget** – play and stop the first song in the `Music` folder
+- **Mp3Widget** – pick MP3 files and control playback
 - **WeatherWidget** – fetches temperature data from Open‑Meteo
 
