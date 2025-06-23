@@ -18,7 +18,7 @@ Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` 
 
 Built-in examples:
 - **Date/Time Overlay** – always-on-top clock overlay
-- **MP3 Player** – plays music from the `Music` folder and has a widget
+- **MP3 Player** – choose songs and control playback with a widget
 - **Macro Engine** – record and replay simple keyboard macros
 - **Text Editor** – small editor for notes or Markdown
 - **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
