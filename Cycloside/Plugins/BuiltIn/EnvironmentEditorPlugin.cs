@@ -26,8 +26,6 @@ namespace Cycloside.Plugins.BuiltIn
             _grid = new DataGrid
             {
                 ItemsSource = _items,
-                CanUserAddRows = false, // We will use a dedicated button for adding
-                CanUserDeleteRows = false, // We will use a dedicated button for deleting
                 AutoGenerateColumns = false, // We will define columns manually for better control
                 Columns =
                 {
