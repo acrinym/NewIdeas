@@ -131,10 +131,12 @@ public class MacroPlugin : IPlugin
                 {
                     try
                     {
+                        // Key playback is only supported on Windows via SendKeys.
                         if (OperatingSystem.IsWindows())
                         {
                             var type = Type.GetType("System.Windows.Forms.SendKeys, System.Windows.Forms");
                             type?.GetMethod("SendWait")?.Invoke(null, new object?[] { key });
+                            // Placeholder for SendKeys.SendWait(key)
                         }
                     }
                     catch (Exception ex)

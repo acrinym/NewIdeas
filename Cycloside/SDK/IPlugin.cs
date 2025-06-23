@@ -1,6 +1,6 @@
 using System;
 
-namespace SiloCide.SDK;
+namespace Cycloside.Plugins;
 
 public interface IPlugin
 {

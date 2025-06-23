@@ -1,5 +1,5 @@
 using System;
-using SiloCide.SDK;
+using Cycloside.Plugins;
 
 public class ExamplePlugin : IPlugin
 {
