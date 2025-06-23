@@ -102,8 +102,8 @@ namespace Cycloside.Plugins.BuiltIn
             if (_editorBox.Text != _lastSavedText)
             {
                 var confirm = new ConfirmationWindow("Unsaved Changes", "Discard unsaved changes?");
-                var result = await confirm.ShowDialog<bool>(_window);
-                if (!result)
+                var confirmResult = await confirm.ShowDialog<bool>(_window);
+                if (!confirmResult)
                     return;
             }
 
@@ -121,19 +121,19 @@ namespace Cycloside.Plugins.BuiltIn
             if (_editorBox.Text != _lastSavedText)
             {
                 var confirm = new ConfirmationWindow("Unsaved Changes", "Discard unsaved changes?");
-                var result = await confirm.ShowDialog<bool>(_window);
-                if (!result)
-                    return;
+            var result = await confirm.ShowDialog<bool>(_window);
+            if (!result)
+                return;
             }
 
-            var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var openResult = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Open Text File",
                 AllowMultiple = false,
                 FileTypeFilter = new[] { FilePickerFileTypes.All }
             });
 
-            var selectedFile = result.FirstOrDefault();
+            var selectedFile = openResult.FirstOrDefault();
             if (selectedFile?.TryGetLocalPath() is { } path)
             {
                 SetStatus($"Opening {selectedFile.Name}...");

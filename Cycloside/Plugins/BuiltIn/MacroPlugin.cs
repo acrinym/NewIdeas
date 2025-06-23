@@ -132,7 +132,10 @@ public class MacroPlugin : IPlugin
                     try
                     {
                         if (OperatingSystem.IsWindows())
-                            System.Windows.Forms.SendKeys.SendWait(key);
+                        {
+                            var type = Type.GetType("System.Windows.Forms.SendKeys, System.Windows.Forms");
+                            type?.GetMethod("SendWait")?.Invoke(null, new object?[] { key });
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -159,7 +162,7 @@ public class MacroPlugin : IPlugin
     {
         if (_macroList != null)
         {
-            _macroList.Items = MacroManager.Macros.Select(m => m.Name).ToList();
+            _macroList.ItemsSource = MacroManager.Macros.Select(m => m.Name).ToList();
         }
     }
 
