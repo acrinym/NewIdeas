@@ -18,7 +18,19 @@ public class WinampVisHostPlugin : IPlugin
         var dir = Path.Combine(AppContext.BaseDirectory, "Plugins", "Winamp");
         _manager = new VisPluginManager();
         _manager.Load(dir);
-        _manager.StartFirst();
+
+        if (_manager.Plugins.Count == 0)
+            return;
+
+        if (_manager.Plugins.Count == 1)
+        {
+            _manager.StartPlugin(_manager.Plugins[0]);
+        }
+        else
+        {
+            var picker = new VisPluginPickerWindow(_manager);
+            picker.Show();
+        }
     }
 
     public void Stop()
