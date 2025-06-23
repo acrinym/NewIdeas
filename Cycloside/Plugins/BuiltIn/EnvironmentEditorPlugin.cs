@@ -19,6 +19,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "View and edit environment variables for different scopes.";
         public Version Version => new(1, 0, 0);
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
@@ -26,8 +27,6 @@ namespace Cycloside.Plugins.BuiltIn
             _grid = new DataGrid
             {
                 ItemsSource = _items,
-                CanUserAddRows = false, // We will use a dedicated button for adding
-                CanUserDeleteRows = false, // We will use a dedicated button for deleting
                 AutoGenerateColumns = false, // We will define columns manually for better control
                 Columns =
                 {
@@ -86,7 +85,6 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = mainPanel
             };
             // Assuming these are your custom manager classes
-            // ThemeManager.ApplyFromSettings(_window, "Plugins");
             // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(EnvironmentEditorPlugin));
             
             LoadVariables(); // Initial load

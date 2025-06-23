@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using Avalonia.Media;
 using System;
 using Cycloside;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -16,6 +17,7 @@ public class DateTimeOverlayPlugin : IPlugin
     public Version Version => new(1,0,0);
 
     public Widgets.IWidget? Widget => null;
+    public bool ForceDefaultTheme => false;
 
     public void Start()
     {
@@ -29,7 +31,6 @@ public class DateTimeOverlayPlugin : IPlugin
             Background = Brushes.Black,
             Opacity = 0.7,
         };
-        ThemeManager.ApplyFromSettings(_window, "Plugins");
         CursorManager.ApplyFromSettings(_window, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DateTimeOverlayPlugin));
         var text = new TextBlock { Foreground = Brushes.White, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };

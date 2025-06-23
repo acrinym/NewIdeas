@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using System.Collections.Generic;
+using Cycloside.Services;
 
 namespace Cycloside;
 
@@ -14,9 +15,7 @@ public partial class ThemeSettingsWindow : Window
     public ThemeSettingsWindow()
     {
         InitializeComponent();
-        ThemeManager.ApplyFromSettings(this, "Plugins");
         CursorManager.ApplyFromSettings(this, "Plugins");
-        SkinManager.LoadForWindow(this);
         BuildList();
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(ThemeSettingsWindow));
     }
@@ -44,22 +43,22 @@ var box = new ComboBox { SelectedIndex = 0, Margin = new Thickness(4, 0, 0, 0) }
             row.Children.Add(box);
             panel.Children.Add(row);
             _controls[comp] = (cb, box);
-            if (SettingsManager.Settings.ComponentThemes.TryGetValue(comp, out var theme))
+            if (SettingsManager.Settings.ComponentSkins.TryGetValue(comp, out var skins) && skins.Count > 0)
             {
                 cb.IsChecked = true;
-                box.SelectedItem = theme;
+                box.SelectedItem = skins[0];
             }
         }
     }
 
     private void SaveButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var map = SettingsManager.Settings.ComponentThemes;
+        var map = SettingsManager.Settings.ComponentSkins;
         map.Clear();
         foreach (var (comp, pair) in _controls)
         {
             if (pair.cb.IsChecked == true)
-                map[comp] = pair.box.SelectedItem?.ToString() ?? _themes[0];
+                map[comp] = new List<string> { pair.box.SelectedItem?.ToString() ?? _themes[0] };
         }
         SettingsManager.Save();
         Close();

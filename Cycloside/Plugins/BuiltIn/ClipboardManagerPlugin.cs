@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using System;
 using System.Collections.Generic;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -17,6 +18,7 @@ public class ClipboardManagerPlugin : IPlugin
     public string Description => "Stores clipboard history";
     public Version Version => new(0,1,0);
     public Widgets.IWidget? Widget => null;
+    public bool ForceDefaultTheme => false;
 
     public void Start()
     {
@@ -38,7 +40,6 @@ public class ClipboardManagerPlugin : IPlugin
             Height = 400,
             Content = _list
         };
-        ThemeManager.ApplyFromSettings(_window, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ClipboardManagerPlugin));
         _window.Show();
 

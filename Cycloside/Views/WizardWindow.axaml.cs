@@ -1,9 +1,11 @@
-
-
+// FIX: Added likely using statements for your project's custom manager classes.
+// You may need to adjust these namespaces to match your project structure if they differ.
+using Cycloside;          // core services and models
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Cycloside.ViewModels;
 using System; // Required for EventHandler
+using Cycloside.Services;
 
 namespace Cycloside.Views
 {
@@ -18,21 +20,10 @@ namespace Cycloside.Views
 
             // FIX: On first run, apply a known-good default theme instead of trying to load
             // a theme from settings that don't exist yet. This prevents the "invisible wizard".
-            if (SettingsManager.Settings.FirstRun)
-            {
-                // Assuming "Mint" is a valid theme name your ThemeManager understands.
-                // This provides a safe, visible default for the first-time user experience.
-                ThemeManager.ApplyTheme(this, "Mint"); 
-            }
-            else
-            {
-                // On subsequent runs, load the user's chosen theme from settings.
-                ThemeManager.ApplyFromSettings(this, "Plugins");
-            }
+            // The global theme is loaded by the application on startup.
             
             // Assuming these are your other custom manager classes
             CursorManager.ApplyFromSettings(this, "Plugins");
-            SkinManager.LoadForWindow(this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(WizardWindow));
 
             // Attach the Close logic to the ViewModel's request

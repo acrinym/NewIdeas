@@ -36,7 +36,12 @@ public class VisPluginManager : IDisposable
     public bool StartFirst()
     {
         var plugin = _plugins.FirstOrDefault();
-        if (plugin == null)
+        return plugin != null && StartPlugin(plugin);
+    }
+
+    public bool StartPlugin(WinampVisPluginAdapter plugin)
+    {
+        if (!_plugins.Contains(plugin))
             return false;
 
         _window = new VisHostWindow();

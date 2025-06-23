@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside
 {
@@ -38,10 +39,8 @@ namespace Cycloside
 
             InitializeComponent();
 
-            // Apply theming and effects
-            ThemeManager.ApplyFromSettings(this, "Plugins");
+            // Apply effects
             CursorManager.ApplyFromSettings(this, "Plugins");
-            SkinManager.LoadForWindow(this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(ProfileEditorWindow));
 
             // Build the dynamic UI parts
