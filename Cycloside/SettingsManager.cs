@@ -20,6 +20,8 @@ public class AppSettings
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
     public Dictionary<string, List<string>> WindowEffects { get; set; } = new();
     public Dictionary<string, ThemeSnapshot> SavedThemes { get; set; } = new();
+    public double WeatherLatitude { get; set; } = 35;
+    public double WeatherLongitude { get; set; } = 139;
     public string ActiveProfile { get; set; } = "default";
     public string RemoteApiToken { get; set; } = "secret";
     public bool FirstRun { get; set; } = true;

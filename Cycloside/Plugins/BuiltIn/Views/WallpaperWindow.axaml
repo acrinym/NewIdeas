@@ -1,0 +1,10 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.WallpaperWindow"
+        Title="Wallpaper Changer"
+        Width="250" Height="120">
+    <DockPanel>
+        <TextBlock x:Name="StatusBlock" DockPanel.Dock="Bottom" Margin="5" HorizontalAlignment="Center"/>
+        <Button x:Name="SelectButton" Content="Select Wallpaper Image" HorizontalAlignment="Center"/>
+    </DockPanel>
+</Window>

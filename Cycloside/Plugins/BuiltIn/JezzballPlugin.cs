@@ -21,12 +21,13 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
+            var control = new JezzballControl();
             _window = new Window
             {
                 Title = "Jezzball",
                 Width = 800,
                 Height = 600,
-                Content = new JezzballControl()
+                Content = control
             };
             // Assuming these are your custom manager classes
             // ThemeManager.ApplyFromSettings(_window, "Plugins");
@@ -94,7 +95,7 @@ namespace Cycloside.Plugins.BuiltIn
 
     // --- Main Game Control ---
 
-    internal class JezzballControl : Control
+    internal class JezzballControl : UserControl
     {
         // Game State
         private readonly List<Ball> _balls = new();
@@ -142,17 +143,14 @@ namespace Cycloside.Plugins.BuiltIn
             statusBar.Children.Add(_capturedText);
             statusBar.Children.Add(_timeText);
             
-            var gameCanvas = new Canvas(); // Use a Canvas to layer the message over the game
-            var gamePanel = new Panel { Children = { this, _messageText } };
+            var gamePanel = new Panel { Children = { _messageText } };
 
             var mainLayout = new DockPanel();
             DockPanel.SetDock(statusBar, Dock.Bottom);
             mainLayout.Children.Add(statusBar);
             mainLayout.Children.Add(gamePanel);
 
-            // Assign the layout to the parent window using the visual root
-            if (VisualRoot is Window parentWindow)
-                parentWindow.Content = mainLayout;
+            Content = mainLayout;
             this.Focusable = true; // Make the game area focusable
 
             // --- Event Handlers ---

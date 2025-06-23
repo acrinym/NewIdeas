@@ -1,36 +1,47 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Cycloside.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="350"
         x:Class="Cycloside.Views.WizardWindow"
         x:DataType="vm:WizardViewModel"
-        Width="450" Height="350"
-        CanResize="False"
+        Width="450" Height="350" CanResize="False"
         WindowStartupLocation="CenterScreen"
         Title="Cycloside Setup Wizard"
         Background="{DynamicResource ApplicationBackgroundBrush}">
+
     <DockPanel Margin="15">
 
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,15,0,0">
-            <Button Content="Back" Command="{Binding BackCommand}"/>
-            <Button Content="Next" Command="{Binding NextCommand}" IsDefault="True"/>
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,15,0,0">
+            <Button Content="Back" Command="{Binding BackCommand}" />
+            <Button Content="Next" Command="{Binding NextCommand}" IsDefault="True" />
         </StackPanel>
 
-        <TabControl SelectedIndex="{Binding CurrentStep}" IsEnabled="False">
+        <TabControl SelectedIndex="{Binding CurrentStep, Mode=OneWay}" IsEnabled="False">
             <TabItem Header="Welcome">
-                <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
-                           Text="Welcome to Cycloside! This wizard will help you configure the basics."/>
+                <TextBlock TextWrapping="Wrap"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Text="Welcome to Cycloside! This wizard will help you configure the basics." />
             </TabItem>
 
             <TabItem Header="Plugins">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="Enable built-in plugins:" Margin="0,0,0,5"/>
-                    <ScrollViewer>
+                    <TextBlock Text="Enable built-in plugins:" Margin="0,0,0,5" />
+                    <ScrollViewer Height="200">
                         <ItemsControl ItemsSource="{Binding Plugins}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:PluginItem">
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}"/>
+                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}" Margin="0,2" />
                                 </DataTemplate>
-                            </Ite
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </StackPanel>
+            </TabItem>
+            
+            </TabControl>
+    </DockPanel>
+</Window>
