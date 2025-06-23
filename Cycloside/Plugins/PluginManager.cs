@@ -1,4 +1,3 @@
-using Cycloside.Services; // Assuming a 'Services' namespace for your managers
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -224,6 +223,10 @@ namespace Cycloside.Plugins
             }
         }
 
+        // StartPlugin is kept for backward compatibility with older code.
+        // It simply calls EnablePlugin, which starts and tracks the plugin.
+        public void StartPlugin(IPlugin plugin) => EnablePlugin(plugin);
+
         public void DisablePlugin(IPlugin plugin)
         {
             var info = GetInfo(plugin);
@@ -250,5 +253,4 @@ namespace Cycloside.Plugins
         public PluginChangeStatus GetStatus(IPlugin plugin) => GetInfo(plugin)?.Status ?? PluginChangeStatus.None;
     }
 
-    
 }
