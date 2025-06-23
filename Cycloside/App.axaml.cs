@@ -6,7 +6,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
-using Cycloside.Services;      // Assuming a 'Services' namespace for your managers
 using Cycloside.ViewModels;    // For MainWindowViewModel
 using Cycloside.Views;         // For WizardWindow and MainWindow
 using System;
