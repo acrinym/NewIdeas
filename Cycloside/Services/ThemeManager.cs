@@ -17,27 +17,8 @@ namespace Cycloside.Services
         /// </summary>
         public static void LoadGlobalTheme(string themeName)
         {
-            if (Application.Current == null) return;
-
             var file = Path.Combine(ThemeDir, $"{themeName}.axaml");
-            if (!File.Exists(file))
-            {
-                Logger.Log($"Global theme '{themeName}' not found at '{file}'.");
-                return;
-            }
-
-            var existing = Application.Current.Styles.OfType<StyleInclude>()
-                .FirstOrDefault(x => x.Source?.OriginalString.Contains("/Themes/Global/") == true);
-            if (existing != null)
-            {
-                Application.Current.Styles.Remove(existing);
-            }
-
-            var newThemeStyle = new StyleInclude(new Uri("resm:Styles?assembly=Cycloside"))
-            {
-                Source = new Uri(file)
-            };
-            Application.Current.Styles.Add(newThemeStyle);
+            SkinManager.LoadIntoApplication(file, "/Themes/Global/");
         }
     }
 }

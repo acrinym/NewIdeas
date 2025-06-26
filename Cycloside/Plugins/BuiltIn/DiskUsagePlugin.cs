@@ -35,9 +35,9 @@ namespace Cycloside.Plugins.BuiltIn
             if (_selectFolderButton != null)
                 _selectFolderButton.Click += async (_, _) => await SelectAndLoadDirectoryAsync();
 
-            // Apply theming and effects (assuming these are valid managers in your project)
-            
-            ThemeManager.ApplyFromSettings(_window, "Plugins");
+            // Apply skins and effects
+
+            SkinManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DiskUsagePlugin));
 
             _window.Show();

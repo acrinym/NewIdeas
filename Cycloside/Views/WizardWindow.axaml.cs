@@ -22,7 +22,8 @@ namespace Cycloside.Views
             // a theme from settings that don't exist yet. This prevents the "invisible wizard".
             // The global theme is loaded by the application on startup.
             
-            // Assuming these are your other custom manager classes
+            // Apply configured skins and cursors
+            SkinManager.ApplyFromSettings(this, "Plugins");
             CursorManager.ApplyFromSettings(this, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(WizardWindow));
 

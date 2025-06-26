@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -44,7 +45,7 @@ namespace Cycloside.Plugins.BuiltIn
                 }
             };
             PluginBus.Subscribe("wallpaper:set", _wallpaperHandler);
-            ThemeManager.ApplyFromSettings(_window, "Plugins");
+            SkinManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(WallpaperPlugin));
             _window.Show();
         }
