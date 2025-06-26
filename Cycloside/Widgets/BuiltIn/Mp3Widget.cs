@@ -41,16 +41,27 @@ namespace Cycloside.Widgets.BuiltIn
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 8)
             };
-            trackDisplay.Bind(TextBlock.TextProperty, new Binding(nameof(_plugin.CurrentTrackName)));
+            trackDisplay.Bind(TextBlock.TextProperty, new Binding(nameof(MP3PlayerPlugin.CurrentTrackName)));
 
             // Buttons are bound to IRelayCommands on the plugin instance.
             // This separates the UI action (a click) from the implementation logic.
-            var openButton = new Button { Content = "Open", Command = _plugin.OpenFilesCommand };
-            var prevButton = new Button { Content = "◀", Command = _plugin.PreviousCommand };
-            var playButton = new Button { Content = "▶", Command = _plugin.PlayCommand };
-            var pauseButton = new Button { Content = "❚❚", Command = _plugin.PauseCommand };
-            var stopButton = new Button { Content = "■", Command = _plugin.StopCommand };
-            var nextButton = new Button { Content = "▶|", Command = _plugin.NextCommand };
+            var openButton = new Button { Content = "Open" };
+            openButton.Bind(Button.CommandProperty, new Binding(nameof(MP3PlayerPlugin.OpenFilesCommand)));
+
+            var prevButton = new Button { Content = "◀" };
+            prevButton.Bind(Button.CommandProperty, new Binding(nameof(MP3PlayerPlugin.PreviousCommand)));
+
+            var playButton = new Button { Content = "▶" };
+            playButton.Bind(Button.CommandProperty, new Binding(nameof(MP3PlayerPlugin.PlayCommand)));
+
+            var pauseButton = new Button { Content = "❚❚" };
+            pauseButton.Bind(Button.CommandProperty, new Binding(nameof(MP3PlayerPlugin.PauseCommand)));
+
+            var stopButton = new Button { Content = "■" };
+            stopButton.Bind(Button.CommandProperty, new Binding(nameof(MP3PlayerPlugin.StopCommand)));
+
+            var nextButton = new Button { Content = "▶|" };
+            nextButton.Bind(Button.CommandProperty, new Binding(nameof(MP3PlayerPlugin.NextCommand)));
 
             // --- Assemble Layout ---
 

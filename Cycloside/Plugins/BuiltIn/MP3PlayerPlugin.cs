@@ -30,6 +30,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Play MP3 files with a simple playlist.";
         public Version Version => new(1, 2, 0); // Incremented for major refactor
         public Widgets.IWidget? Widget => new Widgets.BuiltIn.Mp3Widget(this);
+        public bool ForceDefaultTheme => false;
 
         // --- Observable Properties for UI Binding ---
         [ObservableProperty]
@@ -49,7 +50,7 @@ namespace Cycloside.Plugins.BuiltIn
             // No action needed on start, as this plugin is controlled by its widget.
         }
 
-        public void Stop()
+        void IPlugin.Stop()
         {
             // This is the definitive cleanup method called by the host.
             CleanupPlayback();
