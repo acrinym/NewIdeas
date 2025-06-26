@@ -50,7 +50,12 @@ namespace Cycloside.Plugins.BuiltIn
             // No action needed on start, as this plugin is controlled by its widget.
         }
 
+<<<<<<< codex/update-namespaces-to-cycloside.plugins
+        [RelayCommand(CanExecute = nameof(CanStop))]
+        public void Stop()
+=======
         void IPlugin.Stop()
+>>>>>>> main
         {
             // This is the definitive cleanup method called by the host.
             CleanupPlayback();
@@ -107,9 +112,12 @@ namespace Cycloside.Plugins.BuiltIn
         [RelayCommand(CanExecute = nameof(IsPlaying))]
         private void Pause() => _wavePlayer?.Pause();
 
+<<<<<<< codex/update-namespaces-to-cycloside.plugins
+=======
         [RelayCommand(CanExecute = nameof(CanStop))]
         private void StopPlayback() => CleanupPlayback();
 
+>>>>>>> main
         [RelayCommand(CanExecute = nameof(HasNext))]
         private void Next() => SkipToTrack(_currentIndex + 1);
 
