@@ -39,5 +39,16 @@ namespace Cycloside.Services
             };
             Application.Current.Styles.Add(newThemeStyle);
         }
+
+        /// <summary>
+        /// Applies the global theme configured for a component to a window.
+        /// Stub implementation to satisfy build dependencies.
+        /// </summary>
+        public static void ApplyFromSettings(Window window, string component)
+        {
+            // This repository snapshot lacks full theming logic, so simply
+            // call LoadGlobalTheme with a default value if present.
+            LoadGlobalTheme("Default");
+        }
     }
 }

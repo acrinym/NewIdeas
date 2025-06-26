@@ -145,7 +145,6 @@ public class MacroPlugin : IPlugin
                 {
                     try
                     {
-                        System.Windows.Forms.SendKeys.SendWait(key);
                         // Key playback is only supported on Windows via SendKeys.
                         if (OperatingSystem.IsWindows())
                         {
