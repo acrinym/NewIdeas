@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Threading;
+using System.Runtime.Versioning;
 using SharpHook;
 using SharpHook.Native;
 using System;
@@ -12,6 +13,7 @@ using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn;
 
+[SupportedOSPlatform("windows")]
 public class MacroPlugin : IPlugin
 {
     private Window? _window;
@@ -25,7 +27,7 @@ public class MacroPlugin : IPlugin
     private readonly List<string> _recording = new();
 
     public string Name => "Macro Engine";
-    public string Description => "Records keyboard macros (playback Windows-only).";
+    public string Description => "Windows-only macro recorder and player.";
     public Version Version => new(1,1,0);
 
     public Widgets.IWidget? Widget => null;
@@ -33,13 +35,14 @@ public class MacroPlugin : IPlugin
 
     public void Start()
     {
-        BuildUi();
-        RefreshList();
         if (!_isWindows)
         {
-            _playButton!.IsEnabled = false;
-            SetStatus("Macro playback is only available on Windows.");
+            Logger.Log("Macro Engine plugin is Windows-only and has been disabled.");
+            return;
         }
+
+        BuildUi();
+        RefreshList();
     }
 
     private void BuildUi()
@@ -145,7 +148,6 @@ public class MacroPlugin : IPlugin
                 {
                     try
                     {
-                        System.Windows.Forms.SendKeys.SendWait(key);
                         // Key playback is only supported on Windows via SendKeys.
                         if (OperatingSystem.IsWindows())
                         {

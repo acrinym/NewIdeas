@@ -44,7 +44,6 @@ namespace Cycloside.Plugins.BuiltIn
                 }
             };
             PluginBus.Subscribe("wallpaper:set", _wallpaperHandler);
-            ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(WallpaperPlugin));
             _window.Show();
         }

@@ -57,8 +57,7 @@ namespace Cycloside.Plugins.BuiltIn
                 AcceptsTab = true,
                 FontFamily = new FontFamily("monospace"),
                 TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(5, 0, 5, 5),
-                [!TextBox.TextProperty] = Avalonia.Data.BindingMode.OneWayToSource
+                Margin = new Thickness(5, 0, 5, 5)
             };
             ScrollViewer.SetHorizontalScrollBarVisibility(_editorBox, ScrollBarVisibility.Auto);
             ScrollViewer.SetVerticalScrollBarVisibility(_editorBox, ScrollBarVisibility.Auto);
