@@ -22,7 +22,8 @@ public class ClipboardManagerPlugin : IPlugin
 
     public void Start()
     {
-        _list = new ListBox();
+        _window = new ClipboardManagerWindow();
+        _list = _window.FindControl<ListBox>("HistoryList");
         _list.DoubleTapped += async (_, __) =>
         {
             if (_list.SelectedItem is string text && _window != null)
@@ -31,14 +32,6 @@ public class ClipboardManagerPlugin : IPlugin
                 if (cb != null)
                     await cb.SetTextAsync(text);
             }
-        };
-
-        _window = new Window
-        {
-            Title = "Clipboard History",
-            Width = 300,
-            Height = 400,
-            Content = _list
         };
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ClipboardManagerPlugin));
         _window.Show();
