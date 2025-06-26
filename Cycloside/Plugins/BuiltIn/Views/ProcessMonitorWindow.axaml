@@ -1,0 +1,7 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.ProcessMonitorWindow"
+        Title="Process Monitor"
+        Width="400" Height="500">
+    <ListBox x:Name="ProcessList"/>
+</Window>

@@ -9,7 +9,7 @@ namespace Cycloside.Plugins.BuiltIn;
 
 public class ClipboardManagerPlugin : IPlugin
 {
-    private Window? _window;
+    private ClipboardManagerWindow? _window;
     private ListBox? _list;
     private readonly List<string> _history = new();
     private DispatcherTimer? _timer;
@@ -22,24 +22,20 @@ public class ClipboardManagerPlugin : IPlugin
 
     public void Start()
     {
-        _list = new ListBox();
-        _list.DoubleTapped += async (_, __) =>
+        _window = new ClipboardManagerWindow();
+        _list = _window.FindControl<ListBox>("HistoryList");
+        if (_list != null)
         {
-            if (_list.SelectedItem is string text && _window != null)
+            _list.DoubleTapped += async (_, __) =>
             {
-                var cb = TopLevel.GetTopLevel(_window)?.Clipboard;
-                if (cb != null)
-                    await cb.SetTextAsync(text);
-            }
-        };
-
-        _window = new Window
-        {
-            Title = "Clipboard History",
-            Width = 300,
-            Height = 400,
-            Content = _list
-        };
+                if (_list.SelectedItem is string text && _window != null)
+                {
+                    var cb = TopLevel.GetTopLevel(_window)?.Clipboard;
+                    if (cb != null)
+                        await cb.SetTextAsync(text);
+                }
+            };
+        }
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ClipboardManagerPlugin));
         _window.Show();
 

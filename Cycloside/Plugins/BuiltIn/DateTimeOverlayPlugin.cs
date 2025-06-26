@@ -9,7 +9,7 @@ namespace Cycloside.Plugins.BuiltIn;
 
 public class DateTimeOverlayPlugin : IPlugin
 {
-    private Window? _window;
+    private DateTimeOverlayWindow? _window;
     private DispatcherTimer? _timer;
 
     public string Name => "Date/Time Overlay";
@@ -21,25 +21,17 @@ public class DateTimeOverlayPlugin : IPlugin
 
     public void Start()
     {
-        _window = new Window
-        {
-            Width = 200,
-            Height = 40,
-            SystemDecorations = SystemDecorations.None,
-            CanResize = false,
-            Topmost = true,
-            Background = Brushes.Black,
-            Opacity = 0.7,
-        };
+        _window = new DateTimeOverlayWindow();
         CursorManager.ApplyFromSettings(_window, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DateTimeOverlayPlugin));
-        var text = new TextBlock { Foreground = Brushes.White, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
-        _window.Content = text;
+
+        var text = _window.FindControl<TextBlock>("TimeText");
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += (_, _) =>
         {
             var now = DateTime.Now;
-            text.Text = now.ToString("yyyy-MM-dd HH:mm:ss");
+            if (text != null)
+                text.Text = now.ToString("yyyy-MM-dd HH:mm:ss");
             PluginBus.Publish("clock:tick", now);
         };
         _timer.Start();

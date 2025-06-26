@@ -14,7 +14,7 @@ namespace Cycloside.Plugins.BuiltIn;
 
 public class MacroPlugin : IPlugin
 {
-    private Window? _window;
+    private MacroWindow? _window;
     private ListBox? _macroList;
     private TextBox? _nameBox;
     private TextBox? _repeatBox;
@@ -44,51 +44,19 @@ public class MacroPlugin : IPlugin
 
     private void BuildUi()
     {
-        _macroList = new ListBox { Height = 150 };
-        _nameBox = new TextBox { Watermark = "Macro Name" };
-        _repeatBox = new TextBox { Text = "1", Width = 40 };
-        _status = new TextBlock { Text = "Ready", Margin = new Thickness(5) };
+        _window = new MacroWindow();
+        _macroList = _window.FindControl<ListBox>("MacroList");
+        _nameBox = _window.FindControl<TextBox>("NameBox");
+        _repeatBox = _window.FindControl<TextBox>("RepeatBox");
+        _status = _window.FindControl<TextBlock>("StatusText");
+        _playButton = _window.FindControl<Button>("PlayButton");
 
-        var recordBtn = new Button { Content = "Record" };
-        recordBtn.Click += (_, __) => StartRecording();
-        var stopBtn = new Button { Content = "Stop" };
-        stopBtn.Click += (_, __) => StopRecording();
-        _playButton = new Button { Content = "Play" };
-        _playButton.Click += (_, __) => PlaySelected();
-        var saveBtn = new Button { Content = "Save" };
-        saveBtn.Click += (_, __) => { MacroManager.Save(); SetStatus("Saved"); };
-        var loadBtn = new Button { Content = "Reload" };
-        loadBtn.Click += (_, __) => { MacroManager.Reload(); RefreshList(); };
-        var delBtn = new Button { Content = "Delete" };
-        delBtn.Click += (_, __) => DeleteSelected();
-
-        var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
-        buttonPanel.Children.Add(recordBtn);
-        buttonPanel.Children.Add(stopBtn);
-        buttonPanel.Children.Add(_playButton);
-        buttonPanel.Children.Add(saveBtn);
-        buttonPanel.Children.Add(loadBtn);
-        buttonPanel.Children.Add(delBtn);
-
-        var main = new StackPanel { Margin = new Thickness(5) };
-        main.Children.Add(_macroList);
-        main.Children.Add(_nameBox);
-
-        var repeatRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
-        repeatRow.Children.Add(new TextBlock { Text = "Repeat" });
-        repeatRow.Children.Add(_repeatBox);
-        main.Children.Add(repeatRow);
-
-        main.Children.Add(buttonPanel);
-        main.Children.Add(_status);
-
-        _window = new Window
-        {
-            Title = "Macro Engine",
-            Width = 400,
-            Height = 350,
-            Content = main
-        };
+        _window.FindControl<Button>("RecordButton")?.AddHandler(Button.ClickEvent, (_, __) => StartRecording());
+        _window.FindControl<Button>("StopButton")?.AddHandler(Button.ClickEvent, (_, __) => StopRecording());
+        _playButton?.AddHandler(Button.ClickEvent, (_, __) => PlaySelected());
+        _window.FindControl<Button>("SaveButton")?.AddHandler(Button.ClickEvent, (_, __) => { MacroManager.Save(); SetStatus("Saved"); });
+        _window.FindControl<Button>("ReloadButton")?.AddHandler(Button.ClickEvent, (_, __) => { MacroManager.Reload(); RefreshList(); });
+        _window.FindControl<Button>("DeleteButton")?.AddHandler(Button.ClickEvent, (_, __) => DeleteSelected());
 
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(MacroPlugin));
         _window.Show();

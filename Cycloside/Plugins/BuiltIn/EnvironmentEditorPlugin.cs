@@ -10,7 +10,7 @@ namespace Cycloside.Plugins.BuiltIn
 {
     public class EnvironmentEditorPlugin : IPlugin
     {
-        private Window? _window;
+        private EnvironmentEditorWindow? _window;
         private DataGrid? _grid;
         private ComboBox? _scopeSelector;
         private readonly ObservableCollection<EnvItem> _items = new();
@@ -23,71 +23,39 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
-            // --- DataGrid Setup ---
-            _grid = new DataGrid
+            _window = new EnvironmentEditorWindow();
+            _grid = _window.FindControl<DataGrid>("Grid");
+            _scopeSelector = _window.FindControl<ComboBox>("ScopeSelector");
+            var addButton = _window.FindControl<Button>("AddButton");
+            var removeButton = _window.FindControl<Button>("RemoveButton");
+            var saveButton = _window.FindControl<Button>("SaveButton");
+
+            if (_scopeSelector != null)
             {
-                ItemsSource = _items,
-                AutoGenerateColumns = false, // We will define columns manually for better control
-                Columns =
-                {
-                    new DataGridTextColumn { Header = "Key", Binding = new Avalonia.Data.Binding("Key"), Width = new DataGridLength(1, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Value", Binding = new Avalonia.Data.Binding("Value"), Width = new DataGridLength(2, DataGridLengthUnitType.Star) }
-                }
-            };
+                _scopeSelector.ItemsSource = Enum.GetValues(typeof(EnvironmentVariableTarget));
+                _scopeSelector.SelectedIndex = (int)EnvironmentVariableTarget.User;
+                _scopeSelector.SelectionChanged += (s, e) => LoadVariables();
+            }
 
-            // --- UI Control Setup ---
-            _scopeSelector = new ComboBox
-            {
-                ItemsSource = Enum.GetValues(typeof(EnvironmentVariableTarget)),
-                SelectedIndex = (int)EnvironmentVariableTarget.User // Default to User scope, which is more useful
-            };
-            _scopeSelector.SelectionChanged += (s, e) => LoadVariables();
-
-            var addButton = new Button { Content = "Add" };
-            addButton.Click += (_, _) => _items.Add(new EnvItem { Key = "NEW_VARIABLE", Value = "new value" });
-
-            var removeButton = new Button { Content = "Remove" };
-            removeButton.Click += (_, _) =>
+            addButton?.AddHandler(Button.ClickEvent, (_, _) => _items.Add(new EnvItem { Key = "NEW_VARIABLE", Value = "new value" }));
+            removeButton?.AddHandler(Button.ClickEvent, (_, _) =>
             {
                 if (_grid?.SelectedItem is EnvItem selectedItem)
                 {
                     _items.Remove(selectedItem);
                 }
-            };
-            
-            var saveButton = new Button { Content = "Save Changes" };
-            saveButton.Click += (_, _) => SaveVariables();
-            
-            // --- Layout Panels ---
-            var buttonPanel = new StackPanel 
-            { 
-                Orientation = Orientation.Horizontal, 
-                Spacing = 5, 
-                Margin = new Thickness(5) 
-            };
-            buttonPanel.Children.Add(new Label { Content = "Scope:" });
-            buttonPanel.Children.Add(_scopeSelector);
-            buttonPanel.Children.Add(addButton);
-            buttonPanel.Children.Add(removeButton);
-            buttonPanel.Children.Add(saveButton);
+            });
+            saveButton?.AddHandler(Button.ClickEvent, (_, _) => SaveVariables());
 
-            var mainPanel = new DockPanel();
-            DockPanel.SetDock(buttonPanel, Dock.Top);
-            mainPanel.Children.Add(buttonPanel);
-            mainPanel.Children.Add(_grid); // The DataGrid will fill the remaining space
-
-            // --- Window Setup ---
-            _window = new Window
+            if (_grid != null)
             {
-                Title = "Environment Variables Editor",
-                Width = 700,
-                Height = 500,
-                Content = mainPanel
-            };
-            // Assuming these are your custom manager classes
-            // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(EnvironmentEditorPlugin));
-            
-            LoadVariables(); // Initial load
+                _grid.ItemsSource = _items;
+                _grid.AutoGenerateColumns = false;
+                _grid.Columns.Add(new DataGridTextColumn { Header = "Key", Binding = new Avalonia.Data.Binding("Key"), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+                _grid.Columns.Add(new DataGridTextColumn { Header = "Value", Binding = new Avalonia.Data.Binding("Value"), Width = new DataGridLength(2, DataGridLengthUnitType.Star) });
+            }
+
+            LoadVariables();
             _window.Show();
         }
         

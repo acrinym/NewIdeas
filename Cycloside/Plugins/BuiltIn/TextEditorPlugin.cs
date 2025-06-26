@@ -14,7 +14,7 @@ namespace Cycloside.Plugins.BuiltIn
     public class TextEditorPlugin : IPlugin
     {
         // --- Fields ---
-        private Window? _window;
+        private TextEditorWindow? _window;
         private TextBox? _editorBox;
         private TextBlock? _statusBlock;
         private string? _currentFilePath;
@@ -30,71 +30,45 @@ namespace Cycloside.Plugins.BuiltIn
         // --- Plugin Lifecycle Methods ---
         public void Start()
         {
-            // --- Create UI Controls ---
+            _window = new TextEditorWindow();
+            var buttonPanel = _window.FindControl<StackPanel>("ButtonPanel");
+            _editorBox = _window.FindControl<TextBox>("EditorBox");
+            _statusBlock = _window.FindControl<TextBlock>("StatusBlock");
+
             var newButton = new Button { Content = "New" };
             newButton.Click += async (s, e) => await NewFileAsync();
-
             var openButton = new Button { Content = "Open..." };
             openButton.Click += async (s, e) => await OpenFileAsync();
-
             var saveButton = new Button { Content = "Save" };
             saveButton.Click += async (s, e) => await SaveFileAsync();
-
             var saveAsButton = new Button { Content = "Save As..." };
             saveAsButton.Click += async (s, e) => await SaveFileAsAsync();
 
-            var buttonPanel = new StackPanel
+            if (buttonPanel != null)
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 5,
-                Margin = new Thickness(5),
-                Children = { newButton, openButton, saveButton, saveAsButton }
-            };
+                buttonPanel.Children.Add(newButton);
+                buttonPanel.Children.Add(openButton);
+                buttonPanel.Children.Add(saveButton);
+                buttonPanel.Children.Add(saveAsButton);
+            }
 
-            _editorBox = new TextBox
+            if (_editorBox != null)
             {
-                AcceptsReturn = true,
-                AcceptsTab = true,
-                FontFamily = new FontFamily("monospace"),
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(5, 0, 5, 5),
-                [!TextBox.TextProperty] = Avalonia.Data.BindingMode.OneWayToSource
-            };
-            ScrollViewer.SetHorizontalScrollBarVisibility(_editorBox, ScrollBarVisibility.Auto);
-            ScrollViewer.SetVerticalScrollBarVisibility(_editorBox, ScrollBarVisibility.Auto);
+                _editorBox.AcceptsReturn = true;
+                _editorBox.AcceptsTab = true;
+                _editorBox.FontFamily = new FontFamily("monospace");
+                _editorBox.TextWrapping = TextWrapping.Wrap;
+                _editorBox.Margin = new Thickness(5, 0, 5, 5);
+                ScrollViewer.SetHorizontalScrollBarVisibility(_editorBox, ScrollBarVisibility.Auto);
+                ScrollViewer.SetVerticalScrollBarVisibility(_editorBox, ScrollBarVisibility.Auto);
+            }
 
-            _statusBlock = new TextBlock
+            if (_statusBlock != null)
             {
-                Text = "Ready",
-                Margin = new Thickness(5),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var statusBar = new Border
-            {
-                Background = Brushes.CornflowerBlue,
-                Child = _statusBlock,
-                Height = 24
-            };
-
-            // --- Assemble UI Layout using a DockPanel ---
-            var mainPanel = new DockPanel();
-            DockPanel.SetDock(buttonPanel, Dock.Top);
-            DockPanel.SetDock(statusBar, Dock.Bottom);
-            mainPanel.Children.Add(buttonPanel);
-            mainPanel.Children.Add(statusBar);
-            mainPanel.Children.Add(_editorBox); // Fills the remaining space
-
-            _window = new Window
-            {
-                Title = "Cycloside Editor - Untitled",
-                Width = 700,
-                Height = 550,
-                Content = mainPanel
-            };
-
-            // Assuming WindowEffectsManager is a custom class for applying visual styles
-            // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TextEditorPlugin));
+                _statusBlock.Text = "Ready";
+                _statusBlock.Margin = new Thickness(5);
+                _statusBlock.VerticalAlignment = VerticalAlignment.Center;
+            }
 
             _window.Show();
             UpdateWindowTitle(); // Set initial title
