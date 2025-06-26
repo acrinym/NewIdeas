@@ -1,442 +1,460 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 
 namespace Cycloside.Plugins.BuiltIn
 {
+    #region Plugin Entry Point
     public class JezzballPlugin : IPlugin
     {
         private Window? _window;
 
-        private Window CreateWindow()
-        {
-            return new Window
-            {
-                Title = "Jezzball",
-                Width = 800,
-                Height = 600,
-                Content = new JezzballControl()
-            };
-        }
-
         public string Name => "Jezzball";
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
-        public Version Version => new(1, 1, 0); // Version bump for major gameplay implementation
+        public Version Version => new(1, 2, 0); // Version bump for major refactor
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
         public void Start()
         {
-            _window = CreateWindow();
-            // Assuming these are your custom manager classes
-            // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(JezzballPlugin));
+            _window = new Window
+            {
+                Title = "Jezzball",
+                Width = 800,
+                Height = 600,
+                Content = new JezzballControl() // The Control is now much simpler
+            };
             _window.Show();
         }
 
         public void Stop()
         {
-            if (_window?.Content is JezzballControl jc)
-            {
-                jc.StopTimer();
-            }
+            // The control handles its own timer shutdown now via IDisposable
+            (_window?.Content as IDisposable)?.Dispose();
             _window?.Close();
             _window = null;
         }
     }
+    #endregion
 
-    // --- Helper Classes for Game State ---
+    #region Game Model (State and Logic)
 
-    internal enum WallOrientation
-    {
-        Vertical,
-        Horizontal
-    }
+    public enum WallOrientation { Vertical, Horizontal }
 
     /// <summary>
-    /// Manages the state of a wall as it's being built.
-    /// Crucially, it tracks the two growing halves independently.
+    /// Represents a wall being built.
     /// </summary>
-    internal class BuildingWall
+    public class BuildingWall
     {
         public Rect Area { get; }
         public WallOrientation Orientation { get; }
         public Point Origin { get; }
-
         public Rect WallPart1 { get; set; }
         public Rect WallPart2 { get; set; }
-
-        // State flags for each half of the wall
         public bool IsPart1Active { get; set; } = true;
         public bool IsPart2Active { get; set; } = true;
-        public bool IsPart1Solid { get; set; } = false;
-        public bool IsPart2Solid { get; set; } = false;
 
         public BuildingWall(Rect area, Point origin, WallOrientation orientation)
         {
             Area = area;
             Origin = origin;
             Orientation = orientation;
-            WallPart1 = new Rect(origin, origin);
-            WallPart2 = new Rect(origin, origin);
+            WallPart1 = new Rect(origin, new Size(2, 2));
+            WallPart2 = new Rect(origin, new Size(2, 2));
         }
 
-        /// <summary>
-        /// The wall is "dead" and should be removed if both halves have been destroyed.
-        /// </summary>
         public bool IsDead => !IsPart1Active && !IsPart2Active;
-
-        /// <summary>
-        /// The wall is "complete" and should trigger an area capture if both halves are solid.
-        /// </summary>
-        public bool IsComplete => IsPart1Solid && IsPart2Solid;
+        public bool IsComplete => !IsPart1Active && !IsPart2Active; // True if both hit walls
     }
 
-    // --- Main Game Control ---
-
-    internal class JezzballControl : UserControl
+    /// <summary>
+    /// Represents a single ball.
+    /// </summary>
+    public class Ball
     {
-        // Game State
+        public Point Position { get; private set; }
+        public Vector Velocity { get; private set; }
+        public static double Radius { get; } = 8;
+
+        public Ball(Point position, Vector velocity)
+        {
+            Position = position;
+            Velocity = velocity;
+        }
+
+        public Rect BoundingBox => new(Position.X - Radius, Position.Y - Radius, Radius * 2, Radius * 2);
+
+        public void Update(Rect bounds, double dt)
+        {
+            Position += Velocity * dt;
+
+            if (Position.X - Radius < bounds.Left && Velocity.X < 0) Velocity = Velocity.WithX(-Velocity.X);
+            if (Position.X + Radius > bounds.Right && Velocity.X > 0) Velocity = Velocity.WithX(-Velocity.X);
+            if (Position.Y - Radius < bounds.Top && Velocity.Y < 0) Velocity = Velocity.WithY(-Velocity.Y);
+            if (Position.Y + Radius > bounds.Bottom && Velocity.Y > 0) Velocity = Velocity.WithY(-Velocity.Y);
+
+            // Clamp position to prevent escaping bounds
+            Position = new Point(
+                Math.Clamp(Position.X, bounds.Left + Radius, bounds.Right - Radius),
+                Math.Clamp(Position.Y, bounds.Top + Radius, bounds.Bottom - Radius)
+            );
+        }
+    }
+
+    /// <summary>
+    /// The "Engine". Contains all game state and pure logic, with no UI knowledge.
+    /// </summary>
+    public class JezzballGameState
+    {
+        // --- State Properties ---
+        public int Level { get; private set; } = 1;
+        public int Lives { get; private set; } = 3;
+        public TimeSpan TimeLeft { get; private set; }
+        public double CapturedPercentage { get; private set; }
+        public string Message { get; private set; } = string.Empty;
+
+        public IReadOnlyList<Ball> Balls => _balls;
+        public IReadOnlyList<Rect> ActiveAreas => _activeAreas;
+        public IReadOnlyList<Rect> FilledAreas => _filledAreas;
+        public BuildingWall? CurrentWall { get; private set; }
+
+        // --- Private State ---
         private readonly List<Ball> _balls = new();
         private readonly List<Rect> _activeAreas = new();
         private readonly List<Rect> _filledAreas = new();
-        private BuildingWall? _currentWall;
-        private int _level = 1;
-        private int _lives = 3;
-        private TimeSpan _timeLeft;
         private double _totalPlayArea;
-        private double _capturedPercentage;
-        private string _message = string.Empty;
 
-        // UI Controls for Status
-        private readonly TextBlock _levelText = new TextBlock();
-        private readonly TextBlock _livesText = new TextBlock();
-        private readonly TextBlock _timeText = new TextBlock();
-        private readonly TextBlock _capturedText = new TextBlock();
-        private readonly TextBlock _messageText = new TextBlock { HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
-        private readonly DockPanel _layout = new DockPanel();
-
-        // Input and Timing
-        private readonly DispatcherTimer _timer;
-        private Point _mousePosition;
-        private WallOrientation _orientation = WallOrientation.Vertical;
-
-        // Constants
-        private const double BallRadius = 8;
-        private const double WallSpeed = 2.0;
+        // --- Constants ---
+        private const double WallSpeed = 120.0; // Per second
         private const double CaptureRequirement = 0.75; // 75%
 
-        public JezzballControl()
+        public JezzballGameState()
         {
-            // --- UI Setup ---
-            var statusBar = new DockPanel
-            {
-                Background = Brushes.Black,
-                Height = 30
-            };
-            DockPanel.SetDock(_levelText, Dock.Left);
-            DockPanel.SetDock(_livesText, Dock.Left);
-            DockPanel.SetDock(_capturedText, Dock.Right);
-            DockPanel.SetDock(_timeText, Dock.Right);
-            statusBar.Children.Add(_levelText);
-            statusBar.Children.Add(_livesText);
-            statusBar.Children.Add(_capturedText);
-            statusBar.Children.Add(_timeText);
-            
-            var gamePanel = new Panel { Children = { _messageText } };
-
-            DockPanel.SetDock(statusBar, Dock.Bottom);
-            _layout.Children.Add(statusBar);
-            _layout.Children.Add(gamePanel);
-
-            Content = _layout;
-            this.Focusable = true; // Make the game area focusable
-
-            // --- Event Handlers ---
-            PointerPressed += OnPointerPressed;
-            PointerMoved += OnPointerMoved;
-
-            // --- Game Start ---
+            StartNewGame();
+        }
+        
+        public void StartNewGame()
+        {
+            Level = 1;
+            Lives = 3;
             StartLevel();
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // Approx 60 FPS
-            _timer.Tick += (_, _) => GameTick();
-            _timer.Start();
         }
 
-        public void StopTimer() => _timer.Stop();
-
-        private void StartLevel()
+        public void StartLevel()
         {
             _activeAreas.Clear();
             _filledAreas.Clear();
             _balls.Clear();
-            _currentWall = null;
-            _message = $"Level {_level}";
-            
-            var bounds = this.Bounds;
+            CurrentWall = null;
+            Message = $"Level {Level}";
+
+            // Assume initial bounds are 800x570 (window minus status bar)
+            var bounds = new Rect(0, 0, 800, 570);
             _totalPlayArea = bounds.Width * bounds.Height;
             _activeAreas.Add(bounds);
-
-            _timeLeft = TimeSpan.FromSeconds(30 + _level * 2); // Time increases with level
-
+            TimeLeft = TimeSpan.FromSeconds(30 + Level * 2);
+            
             var rand = new Random();
-            for (int i = 0; i < _level; i++) // Number of balls equals the level number
+            for (int i = 0; i < Level; i++)
             {
-                var area = _activeAreas.First();
-                _balls.Add(new Ball
-                {
-                    X = rand.NextDouble() * (area.Width - BallRadius * 2) + BallRadius,
-                    Y = rand.NextDouble() * (area.Height - BallRadius * 2) + BallRadius,
-                    DX = (rand.NextDouble() > 0.5 ? 1 : -1) * (1.5 + _level * 0.1), // Speed increases with level
-                    DY = (rand.NextDouble() > 0.5 ? 1 : -1) * (1.5 + _level * 0.1)
-                });
+                var angle = rand.NextDouble() * 2 * Math.PI;
+                var speed = 90 + Level * 10;
+                var velocity = new Vector(Math.Cos(angle) * speed, Math.Sin(angle) * speed);
+                _balls.Add(new Ball(bounds.Center, velocity));
             }
             RecalculateCapturedArea();
         }
-
-        // --- Input Handling ---
-        private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(this);
-        private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+        
+        public void ClearMessageAndRestartIfGameOver()
         {
-            if (_message != string.Empty) // Don't allow play while message is shown
+            if (Message == string.Empty) return;
+            
+            Message = string.Empty;
+            if (Lives <= 0)
             {
-                _message = string.Empty;
-                if (_lives <= 0)
-                {
-                    _level = 1;
-                    _lives = 3;
-                    StartLevel();
-                }
-                return;
+                StartNewGame();
             }
+        }
+        
+        public void TryStartWall(Point position, WallOrientation orientation)
+        {
+            if (CurrentWall != null || Message != string.Empty) return;
 
-            var point = e.GetCurrentPoint(this);
-            if (point.Properties.IsRightButtonPressed)
+            var area = _activeAreas.FirstOrDefault(r => r.Contains(position));
+            if (area != default)
             {
-                _orientation = _orientation == WallOrientation.Vertical ? WallOrientation.Horizontal : WallOrientation.Vertical;
-                return;
-            }
-
-            if (point.Properties.IsLeftButtonPressed && _currentWall == null)
-            {
-                var area = _activeAreas.FirstOrDefault(r => r.Contains(_mousePosition));
-                if (area != default)
-                    _currentWall = new BuildingWall(area, _mousePosition, _orientation);
+                CurrentWall = new BuildingWall(area, position, orientation);
             }
         }
 
-        // --- Game Logic ---
-        private void GameTick()
+        public void Update(double dt)
         {
-            if (_message != string.Empty)
-            {
-                // If a message is displayed, pause the game
-                UpdateStatusText();
-                InvalidateVisual();
-                return;
-            }
+            if (Message != string.Empty) return; // Game is paused
 
-            _timeLeft = _timeLeft.Subtract(TimeSpan.FromMilliseconds(16));
-            if (_timeLeft.TotalSeconds <= 0)
+            TimeLeft -= TimeSpan.FromSeconds(dt);
+            if (TimeLeft <= TimeSpan.Zero)
             {
                 LoseLife("Time's Up!");
                 return;
             }
-            
-            UpdateWall();
-            UpdateBalls();
-            UpdateStatusText();
-            InvalidateVisual();
+
+            UpdateBalls(dt);
+            UpdateWall(dt);
         }
 
-        private void UpdateWall()
+        private void UpdateBalls(double dt)
         {
-            if (_currentWall == null) return;
-
-            // --- Grow Part 1 ---
-            if (_currentWall.IsPart1Active)
+            foreach (var ball in _balls)
             {
-                var w1 = _currentWall.WallPart1;
-                w1 = _currentWall.Orientation == WallOrientation.Vertical
-                    ? w1.WithY(w1.Y - WallSpeed).WithHeight(w1.Height + WallSpeed)
-                    : w1.WithX(w1.X - WallSpeed).WithWidth(w1.Width + WallSpeed);
-                _currentWall.WallPart1 = w1;
-
-                // Check for completion or collision
-                if (w1.Intersects(_currentWall.Area) && (_currentWall.Orientation == WallOrientation.Vertical ? w1.Top <= _currentWall.Area.Top : w1.Left <= _currentWall.Area.Left))
+                var area = _activeAreas.FirstOrDefault(r => r.Contains(ball.Position));
+                if (area != default)
                 {
-                    _currentWall.IsPart1Solid = true;
-                    _currentWall.IsPart1Active = false;
-                }
-                else if (_balls.Any(b => b.IntersectsWith(w1)))
-                {
-                    _currentWall.IsPart1Active = false;
+                    ball.Update(area, dt);
                 }
             }
+        }
 
-            // --- Grow Part 2 ---
-            if (_currentWall.IsPart2Active)
+        private void UpdateWall(double dt)
+        {
+            if (CurrentWall == null) return;
+
+            double growAmount = WallSpeed * dt;
+
+            // Grow Part 1
+            if (CurrentWall.IsPart1Active)
             {
-                var w2 = _currentWall.WallPart2;
-                w2 = _currentWall.Orientation == WallOrientation.Vertical
-                    ? w2.WithHeight(w2.Height + WallSpeed)
-                    : w2.WithWidth(w2.Width + WallSpeed);
-                _currentWall.WallPart2 = w2;
+                var w1 = CurrentWall.WallPart1;
+                w1 = CurrentWall.Orientation == WallOrientation.Vertical
+                    ? new Rect(w1.X, w1.Y - growAmount, w1.Width, w1.Height + growAmount)
+                    : new Rect(w1.X - growAmount, w1.Y, w1.Width + growAmount, w1.Height);
+                CurrentWall.WallPart1 = w1;
 
-                // Check for completion or collision
-                if (w2.Intersects(_currentWall.Area) && (_currentWall.Orientation == WallOrientation.Vertical ? w2.Bottom >= _currentWall.Area.Bottom : w2.Right >= _currentWall.Area.Right))
-                {
-                    _currentWall.IsPart2Solid = true;
-                    _currentWall.IsPart2Active = false;
-                }
-                else if (_balls.Any(b => b.IntersectsWith(w2)))
-                {
-                    _currentWall.IsPart2Active = false;
-                }
+                if (CurrentWall.Orientation == WallOrientation.Vertical ? w1.Top <= CurrentWall.Area.Top : w1.Left <= CurrentWall.Area.Left)
+                    CurrentWall.IsPart1Active = false; // Reached boundary
+                else if (_balls.Any(b => b.BoundingBox.Intersects(w1)))
+                    CurrentWall.IsPart1Active = false; // Hit a ball
+            }
+            // Grow Part 2
+            if (CurrentWall.IsPart2Active)
+            {
+                var w2 = CurrentWall.WallPart2;
+                w2 = CurrentWall.Orientation == WallOrientation.Vertical
+                    ? new Rect(w2.X, w2.Y, w2.Width, w2.Height + growAmount)
+                    : new Rect(w2.X, w2.Y, w2.Width + growAmount, w2.Height);
+                CurrentWall.WallPart2 = w2;
+                
+                if (CurrentWall.Orientation == WallOrientation.Vertical ? w2.Bottom >= CurrentWall.Area.Bottom : w2.Right >= CurrentWall.Area.Right)
+                    CurrentWall.IsPart2Active = false; // Reached boundary
+                else if (_balls.Any(b => b.BoundingBox.Intersects(w2)))
+                    CurrentWall.IsPart2Active = false; // Hit a ball
             }
             
-            // --- Check Overall Wall State ---
-            if (_currentWall.IsComplete)
-            {
-                CaptureAreas();
-            }
-            else if (_currentWall.IsDead)
-            {
-                LoseLife("Wall Broken!");
-            }
+            if (CurrentWall.IsComplete) CaptureAreas();
+            else if (CurrentWall.IsDead) LoseLife("Wall Broken!");
         }
         
         private void LoseLife(string reason)
         {
-            _lives--;
-            _message = reason;
-            _currentWall = null;
+            Lives--;
+            CurrentWall = null;
+            Message = Lives <= 0 ? "Game Over! Click to restart." : reason;
 
-            if (_lives <= 0)
+            if (Lives > 0)
             {
-                _message = "Game Over! Click to restart.";
-            }
-            else
-            {
-                // Quick delay then restart the level
-                Dispatcher.UIThread.Post(StartLevel, DispatcherPriority.Background);
+                // Restart level state, but keep lives
+                var currentLives = Lives;
+                StartLevel();
+                Lives = currentLives;
             }
         }
 
         private void CaptureAreas()
         {
-            if (_currentWall == null) return;
-            var area = _currentWall.Area;
+            if (CurrentWall == null) return;
+            var area = CurrentWall.Area;
             Rect newArea1, newArea2;
 
-            if (_currentWall.Orientation == WallOrientation.Vertical)
+            if (CurrentWall.Orientation == WallOrientation.Vertical)
             {
-                newArea1 = new Rect(area.Left, area.Top, _currentWall.Origin.X - area.Left, area.Height);
-                newArea2 = new Rect(_currentWall.Origin.X, area.Top, area.Right - _currentWall.Origin.X, area.Height);
+                newArea1 = area with { Width = CurrentWall.Origin.X - area.Left };
+                newArea2 = new Rect(CurrentWall.Origin.X, area.Top, area.Right - CurrentWall.Origin.X, area.Height);
             }
-            else
+            else // Horizontal
             {
-                newArea1 = new Rect(area.Left, area.Top, area.Width, _currentWall.Origin.Y - area.Top);
-                newArea2 = new Rect(area.Left, _currentWall.Origin.Y, area.Width, area.Bottom - _currentWall.Origin.Y);
+                newArea1 = area with { Height = CurrentWall.Origin.Y - area.Top };
+                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y, area.Width, area.Bottom - CurrentWall.Origin.Y);
             }
 
             _activeAreas.Remove(area);
 
             if (_balls.Any(b => newArea1.Contains(b.Position))) _activeAreas.Add(newArea1); else _filledAreas.Add(newArea1);
             if (_balls.Any(b => newArea2.Contains(b.Position))) _activeAreas.Add(newArea2); else _filledAreas.Add(newArea2);
-
-            _currentWall = null;
+            
+            CurrentWall = null;
             RecalculateCapturedArea();
 
-            if (_capturedPercentage >= CaptureRequirement)
+            if (CapturedPercentage >= CaptureRequirement)
             {
-                _level++;
-                _message = "Level Complete!";
-                Dispatcher.UIThread.Post(StartLevel, DispatcherPriority.Background);
-            }
-        }
-
-        private void UpdateBalls()
-        {
-            foreach (var b in _balls)
-            {
-                var area = _activeAreas.FirstOrDefault(r => r.Contains(b.Position));
-                if (area == default) continue;
-                b.Update(area);
+                Level++;
+                Message = "Level Complete!";
             }
         }
 
         private void RecalculateCapturedArea()
         {
             double filledAreaSum = _filledAreas.Sum(r => r.Width * r.Height);
-            _capturedPercentage = _totalPlayArea > 0 ? filledAreaSum / _totalPlayArea : 0;
+            CapturedPercentage = _totalPlayArea > 0 ? filledAreaSum / _totalPlayArea : 0;
+        }
+    }
+    #endregion
+
+    #region Game View (UI Control)
+
+    /// <summary>
+    /// The "View". Manages input, rendering, and the game loop timer.
+    /// It holds the game state but delegates all logic to it.
+    /// </summary>
+    internal class JezzballControl : UserControl, IDisposable
+    {
+        // --- State and Timing ---
+        private readonly JezzballGameState _gameState = new();
+        private readonly DispatcherTimer _timer;
+        private readonly Stopwatch _stopwatch = new();
+        private Point _mousePosition;
+        private WallOrientation _orientation = WallOrientation.Vertical;
+
+        // --- UI Controls ---
+        private readonly TextBlock _levelText = new() { Margin = new Thickness(10, 0) };
+        private readonly TextBlock _livesText = new() { Margin = new Thickness(10, 0) };
+        private readonly TextBlock _timeText = new() { Margin = new Thickness(10, 0) };
+        private readonly TextBlock _capturedText = new() { Margin = new Thickness(10, 0) };
+        private readonly FormattedText _messageFormattedText = new();
+
+        public JezzballControl()
+        {
+            // --- UI Setup ---
+            var statusBar = new DockPanel { Background = Brushes.DarkSlateGray, Height = 30 };
+            DockPanel.SetDock(_levelText, Dock.Left);
+            DockPanel.SetDock(_livesText, Dock.Left);
+            DockPanel.SetDock(_capturedText, Dock.Right);
+            DockPanel.SetDock(_timeText, Dock.Right);
+            statusBar.Children.AddRange(new Control[] { _levelText, _livesText, _capturedText, _timeText });
+
+            var layout = new DockPanel();
+            DockPanel.SetDock(statusBar, Dock.Bottom);
+            layout.Children.Add(statusBar);
+            layout.Children.Add(new Panel { Content = this }); // The game itself fills the rest
+
+            Content = layout;
+            ClipToBounds = true;
+            Focusable = true;
+
+            // --- Event Handlers ---
+            PointerPressed += OnPointerPressed;
+            PointerMoved += OnPointerMoved;
+            
+            // --- Game Loop Start ---
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60 FPS
+            _timer.Tick += GameTick;
+            _timer.Start();
+            _stopwatch.Start();
+        }
+
+        public void Dispose()
+        {
+            _timer.Stop();
+            PointerPressed -= OnPointerPressed;
+            PointerMoved -= OnPointerMoved;
+        }
+
+        private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(this);
+
+        private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            var point = e.GetCurrentPoint(this);
+            if (point.Properties.IsRightButtonPressed)
+            {
+                _orientation = _orientation == WallOrientation.Vertical ? WallOrientation.Horizontal : WallOrientation.Vertical;
+                return;
+            }
+            if (point.Properties.IsLeftButtonPressed)
+            {
+                if (_gameState.Message != string.Empty)
+                    _gameState.ClearMessageAndRestartIfGameOver();
+                else
+                    _gameState.TryStartWall(_mousePosition, _orientation);
+            }
+        }
+
+        private void GameTick(object? sender, EventArgs e)
+        {
+            var dt = _stopwatch.Elapsed.TotalSeconds;
+            _stopwatch.Restart();
+
+            _gameState.Update(dt);
+            UpdateStatusText();
+            InvalidateVisual(); // Trigger a re-render
         }
 
         private void UpdateStatusText()
         {
-            _levelText.Text = $"Level: {_level}";
-            _livesText.Text = $"Lives: {_lives}";
-            _timeText.Text = $"Time: {_timeLeft:ss}";
-            _capturedText.Text = $"Captured: {_capturedPercentage:P0}";
-            _messageText.Text = _message;
+            _levelText.Text = $"Level: {_gameState.Level}";
+            _livesText.Text = $"Lives: {_gameState.Lives}";
+            _timeText.Text = $"Time: {_gameState.TimeLeft:ss}";
+            _capturedText.Text = $"Captured: {_gameState.CapturedPercentage:P0}";
         }
 
-        // --- Rendering ---
         public override void Render(DrawingContext context)
         {
-            // Draw a solid background
-            context.FillRectangle(Brushes.Black, this.Bounds);
             base.Render(context);
+            context.FillRectangle(Brushes.Black, this.Bounds);
+
+            // Draw Areas
+            foreach (var area in _gameState.FilledAreas) context.FillRectangle(Brushes.DarkCyan, area);
+            foreach (var area in _gameState.ActiveAreas) context.DrawRectangle(new Pen(Brushes.SlateGray, 1), area);
+
+            // Draw Balls
+            foreach (var ball in _gameState.Balls) context.FillRectangle(Brushes.Crimson, ball.BoundingBox);
             
-            foreach (var f in _filledAreas) context.FillRectangle(Brushes.DarkSlateGray, f, 4);
-            foreach (var a in _activeAreas) context.DrawRectangle(new Pen(Brushes.Gray, 1), a, 4);
-            foreach (var b in _balls) context.DrawEllipse(Brushes.Crimson, null, b.Position, BallRadius, BallRadius);
-            
-            if (_currentWall != null)
+            // Draw Building Wall
+            if (_gameState.CurrentWall is { } wall)
             {
-                var pen = new Pen(Brushes.Cyan, 2);
-                if(_currentWall.IsPart1Active || _currentWall.IsPart1Solid)
-                    context.DrawLine(pen, _currentWall.WallPart1.TopLeft, _currentWall.WallPart1.BottomRight);
-                if(_currentWall.IsPart2Active || _currentWall.IsPart2Solid)
-                    context.DrawLine(pen, _currentWall.WallPart2.TopLeft, _currentWall.WallPart2.BottomRight);
+                var buildingPen = new Pen(Brushes.Cyan, 2);
+                if (wall.IsPart1Active) context.DrawRectangle(buildingPen, wall.WallPart1);
+                if (wall.IsPart2Active) context.DrawRectangle(buildingPen, wall.WallPart2);
             }
-            else if (_message == string.Empty) // Only show preview when playing
+            // Draw Preview Wall
+            else if (_gameState.Message == string.Empty)
             {
-                var area = _activeAreas.FirstOrDefault(r => r.Contains(_mousePosition));
+                var area = _gameState.ActiveAreas.FirstOrDefault(r => r.Contains(_mousePosition));
                 if (area != default)
                 {
-                    var pen = new Pen(Brushes.Yellow, 1, new DashStyle(new[] { 4.0, 4.0 }, 0));
+                    var previewPen = new Pen(Brushes.Yellow, 1, DashStyle.Dash);
                     if (_orientation == WallOrientation.Vertical)
-                        context.DrawLine(pen, new Point(_mousePosition.X, area.Top), new Point(_mousePosition.X, area.Bottom));
+                        context.DrawLine(previewPen, new Point(_mousePosition.X, area.Top), new Point(_mousePosition.X, area.Bottom));
                     else
-                        context.DrawLine(pen, new Point(area.Left, _mousePosition.Y), new Point(area.Right, _mousePosition.Y));
+                        context.DrawLine(previewPen, new Point(area.Left, _mousePosition.Y), new Point(area.Right, _mousePosition.Y));
                 }
+            }
+
+            // Draw Message
+            if (_gameState.Message != string.Empty)
+            {
+                _messageFormattedText.Text = _gameState.Message;
+                _messageFormattedText.Typeface = new Typeface(FontFamily, weight: FontWeight.Bold);
+                _messageFormattedText.FontSize = 48;
+                var textPos = new Point((Bounds.Width - _messageFormattedText.Width) / 2, (Bounds.Height - _messageFormattedText.Height) / 2);
+                context.DrawText(Brushes.White, textPos, _messageFormattedText);
             }
         }
     }
-
-    // Refactored Ball class to be more self-contained
-    internal class Ball
-    {
-        public double X, Y, DX, DY;
-        public Point Position => new Point(X, Y);
-        private const double BallRadius = 8;
-        
-        public bool IntersectsWith(Rect rect) => rect.Intersects(new Rect(X - BallRadius, Y - BallRadius, BallRadius * 2, BallRadius * 2));
-
-        public void Update(Rect bounds)
-        {
-            X += DX;
-            Y += DY;
-            if (X - BallRadius <= bounds.Left) { X = bounds.Left + BallRadius; DX *= -1; }
-            if (X + BallRadius >= bounds.Right) { X = bounds.Right - BallRadius; DX *= -1; }
-            if (Y - BallRadius <= bounds.Top) { Y = bounds.Top + BallRadius; DY *= -1; }
-            if (Y + BallRadius >= bounds.Bottom) { Y = bounds.Bottom - BallRadius; DY *= -1; }
-        }
-    }
+    #endregion
 }
