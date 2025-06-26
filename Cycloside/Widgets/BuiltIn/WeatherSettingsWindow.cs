@@ -12,6 +12,7 @@ public class WeatherSettingsWindow : Window
 {
     private readonly TextBox _latBox;
     private readonly TextBox _lonBox;
+    private readonly TextBox _cityBox;
     private readonly Action _onSaved;
 
     public WeatherSettingsWindow(Action onSaved)
@@ -23,6 +24,9 @@ public class WeatherSettingsWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
         var panel = new StackPanel { Margin = new Thickness(10), Spacing = 5 };
+        panel.Children.Add(new TextBlock { Text = "City (optional):" });
+        _cityBox = new TextBox { Text = SettingsManager.Settings.WeatherCity };
+        panel.Children.Add(_cityBox);
         panel.Children.Add(new TextBlock { Text = "Latitude:" });
         _latBox = new TextBox { Text = SettingsManager.Settings.WeatherLatitude.ToString() };
         panel.Children.Add(_latBox);
@@ -46,6 +50,7 @@ public class WeatherSettingsWindow : Window
             SettingsManager.Settings.WeatherLatitude = lat;
         if (double.TryParse(_lonBox.Text, out var lon))
             SettingsManager.Settings.WeatherLongitude = lon;
+        SettingsManager.Settings.WeatherCity = _cityBox.Text ?? string.Empty;
         SettingsManager.Save();
         _onSaved?.Invoke();
         Close();
