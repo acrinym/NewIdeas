@@ -40,6 +40,20 @@ public class WeatherWidget : IWidget
             using var client = new HttpClient();
             var lat = SettingsManager.Settings.WeatherLatitude;
             var lon = SettingsManager.Settings.WeatherLongitude;
+            var city = SettingsManager.Settings.WeatherCity;
+            if (!string.IsNullOrWhiteSpace(city))
+            {
+                var geoUrl = $"https://geocoding-api.open-meteo.com/v1/search?name={Uri.EscapeDataString(city)}&count=1";
+                var geoJson = await client.GetStringAsync(geoUrl);
+                using var geoDoc = JsonDocument.Parse(geoJson);
+                if (geoDoc.RootElement.TryGetProperty("results", out var res) && res.GetArrayLength() > 0)
+                {
+                    var first = res[0];
+                    lat = first.GetProperty("latitude").GetDouble();
+                    lon = first.GetProperty("longitude").GetDouble();
+                }
+            }
+
             var url = $"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true";
             var json = await client.GetStringAsync(url);
             using var doc = JsonDocument.Parse(json);

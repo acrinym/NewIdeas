@@ -10,7 +10,7 @@
 
     <DockPanel Margin="15">
 
-<StackPanel DockPanel.Dock="Bottom"
+        <StackPanel DockPanel.Dock="Bottom"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Spacing="8"
@@ -19,7 +19,8 @@
             <Button Content="Next" Command="{Binding NextCommand}" IsDefault="True" />
         </StackPanel>
 
-                <TabControl SelectedIndex="{Binding CurrentStep, Mode=OneWay}" IsEnabled="False">
+        <TabControl SelectedIndex="{Binding CurrentStep, Mode=OneWay}" IsEnabled="False">
+
             <TabItem Header="Welcome">
                 <TextBlock TextWrapping="Wrap"
                            VerticalAlignment="Center"

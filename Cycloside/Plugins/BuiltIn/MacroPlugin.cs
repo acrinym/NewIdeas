@@ -10,6 +10,11 @@ using System.Linq;
 using System.Text.Json;
 using Cycloside.Services;
 
+// Playback uses SendKeys on Windows. On Linux and macOS, SharpHook's
+// EventSimulator is used to emulate key presses. These platforms may
+// require additional permissions (e.g. accessibility or X11) for
+// input simulation.
+
 namespace Cycloside.Plugins.BuiltIn;
 
 public class MacroPlugin : IPlugin
@@ -22,11 +27,14 @@ public class MacroPlugin : IPlugin
     private Button? _playButton;
     private IGlobalHook? _hook;
     private readonly bool _isWindows = OperatingSystem.IsWindows();
+    // Event simulator from SharpHook is used for cross-platform playback.
+    // It falls back to Windows SendKeys when running on Windows.
+    private readonly IEventSimulator _simulator = new EventSimulator();
     private readonly List<string> _recording = new();
 
     public string Name => "Macro Engine";
-    public string Description => "Records keyboard macros (playback Windows-only).";
-    public Version Version => new(1,1,0);
+    public string Description => "Records keyboard macros (playback uses SendKeys on Windows and SharpHook elsewhere).";
+    public Version Version => new(1,2,0);
 
     public Widgets.IWidget? Widget => null;
     public bool ForceDefaultTheme => false;
@@ -37,8 +45,7 @@ public class MacroPlugin : IPlugin
         RefreshList();
         if (!_isWindows)
         {
-            _playButton!.IsEnabled = false;
-            SetStatus("Macro playback is only available on Windows.");
+            SetStatus("Playback uses SharpHook and may need extra permissions.");
         }
     }
 
@@ -129,12 +136,6 @@ public class MacroPlugin : IPlugin
 
     private void PlaySelected()
     {
-        if (!_isWindows)
-        {
-            SetStatus("Playback not supported on this OS.");
-            return;
-        }
-
         if (_macroList?.SelectedIndex >= 0 && _macroList.SelectedIndex < MacroManager.Macros.Count)
         {
             var macro = MacroManager.Macros[_macroList.SelectedIndex];
@@ -145,13 +146,22 @@ public class MacroPlugin : IPlugin
                 {
                     try
                     {
-                        System.Windows.Forms.SendKeys.SendWait(key);
                         // Key playback is only supported on Windows via SendKeys.
                         if (OperatingSystem.IsWindows())
+                        if (_isWindows)
                         {
-                            var type = Type.GetType("System.Windows.Forms.SendKeys, System.Windows.Forms");
-                            type?.GetMethod("SendWait")?.Invoke(null, new object?[] { key });
-                            // Placeholder for SendKeys.SendWait(key)
+                            // Windows uses SendKeys for playback.
+                            System.Windows.Forms.SendKeys.SendWait(key);
+                        }
+                        else if (Enum.TryParse<KeyCode>(key, out var code))
+                        {
+                            // Other platforms rely on SharpHook's event simulator.
+                            _simulator.SimulateKeyPress(code);
+                            _simulator.SimulateKeyRelease(code);
+                        }
+                        else
+                        {
+                            Logger.Log($"Unknown key code: {key}");
                         }
                     }
                     catch (Exception ex)
