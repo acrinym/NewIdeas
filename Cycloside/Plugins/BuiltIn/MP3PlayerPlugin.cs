@@ -36,7 +36,7 @@ namespace Cycloside.Plugins.BuiltIn
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(PlayCommand))]
         [NotifyCanExecuteChangedFor(nameof(PauseCommand))]
-        [NotifyCanExecuteChangedFor(nameof(StopCommand))]
+        [NotifyCanExecuteChangedFor(nameof(StopPlaybackCommand))]
         [NotifyCanExecuteChangedFor(nameof(NextCommand))]
         [NotifyCanExecuteChangedFor(nameof(PreviousCommand))]
         private string? _currentTrackName;
@@ -108,7 +108,7 @@ namespace Cycloside.Plugins.BuiltIn
         private void Pause() => _wavePlayer?.Pause();
 
         [RelayCommand(CanExecute = nameof(CanStop))]
-        private void Stop() => CleanupPlayback();
+        private void StopPlayback() => CleanupPlayback();
 
         [RelayCommand(CanExecute = nameof(HasNext))]
         private void Next() => SkipToTrack(_currentIndex + 1);
@@ -221,7 +221,7 @@ namespace Cycloside.Plugins.BuiltIn
             // When IsPlaying changes, we need to re-evaluate the CanExecute status of our commands.
             PlayCommand.NotifyCanExecuteChanged();
             PauseCommand.NotifyCanExecuteChanged();
-            StopCommand.NotifyCanExecuteChanged();
+            StopPlaybackCommand.NotifyCanExecuteChanged();
         }
     }
 }
