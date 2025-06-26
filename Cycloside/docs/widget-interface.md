@@ -37,6 +37,6 @@ The repository includes a handful of sample widgets to show how the interface wo
 - **Mp3Widget** – pick MP3 files and control playback
 - **WeatherWidget** – fetches temperature data from Open‑Meteo
 
-Double‑click the Weather widget to set your latitude and longitude. The values
+Double‑click the Weather widget to set your city or latitude and longitude. The values
 are stored in `settings.json` and used when requesting weather data.
 
