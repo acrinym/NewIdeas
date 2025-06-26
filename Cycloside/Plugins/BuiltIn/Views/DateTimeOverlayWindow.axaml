@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.DateTimeOverlayWindow"
+        Width="200" Height="40"
+        SystemDecorations="None" CanResize="False" Topmost="True"
+        Background="Black" Opacity="0.7">
+    <TextBlock x:Name="TimeText"
+               Foreground="White"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"/>
+</Window>
