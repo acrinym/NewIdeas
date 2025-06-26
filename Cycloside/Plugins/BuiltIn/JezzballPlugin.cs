@@ -14,6 +14,17 @@ namespace Cycloside.Plugins.BuiltIn
     {
         private Window? _window;
 
+        private Window CreateWindow()
+        {
+            return new Window
+            {
+                Title = "Jezzball",
+                Width = 800,
+                Height = 600,
+                Content = new JezzballControl()
+            };
+        }
+
         public string Name => "Jezzball";
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
         public Version Version => new(1, 1, 0); // Version bump for major gameplay implementation
@@ -22,14 +33,7 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
-            var control = new JezzballControl();
-            _window = new Window
-            {
-                Title = "Jezzball",
-                Width = 800,
-                Height = 600,
-                Content = control
-            };
+            _window = CreateWindow();
             // Assuming these are your custom manager classes
             // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(JezzballPlugin));
             _window.Show();
@@ -115,6 +119,7 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly TextBlock _timeText = new TextBlock();
         private readonly TextBlock _capturedText = new TextBlock();
         private readonly TextBlock _messageText = new TextBlock { HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+        private readonly DockPanel _layout = new DockPanel();
 
         // Input and Timing
         private readonly DispatcherTimer _timer;
@@ -145,12 +150,11 @@ namespace Cycloside.Plugins.BuiltIn
             
             var gamePanel = new Panel { Children = { _messageText } };
 
-            var mainLayout = new DockPanel();
             DockPanel.SetDock(statusBar, Dock.Bottom);
-            mainLayout.Children.Add(statusBar);
-            mainLayout.Children.Add(gamePanel);
+            _layout.Children.Add(statusBar);
+            _layout.Children.Add(gamePanel);
 
-            Content = mainLayout;
+            Content = _layout;
             this.Focusable = true; // Make the game area focusable
 
             // --- Event Handlers ---
