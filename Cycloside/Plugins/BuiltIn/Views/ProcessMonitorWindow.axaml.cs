@@ -1,12 +1,12 @@
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
-namespace Cycloside.Plugins.BuiltIn;
-
-public partial class ProcessMonitorWindow : Window
+namespace Cycloside.Plugins.BuiltIn
 {
-    public ProcessMonitorWindow()
+    public partial class ProcessMonitorWindow : Window
     {
-        AvaloniaXamlLoader.Load(this);
+        public ProcessMonitorWindow()
+        {
+            InitializeComponent();
+        }
     }
 }
