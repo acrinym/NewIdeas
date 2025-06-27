@@ -52,7 +52,7 @@
         -->
         <Canvas Name="DesktopCanvas">
             <Canvas.Background>
-                <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" Radius="0.7">
+                <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="70%" RadiusY="70%">
                     <GradientStop Color="{DynamicResource ThemeAccentColor4}" Offset="0" />
                     <GradientStop Color="{DynamicResource ThemeBackgroundColor}" Offset="1" />
                 </RadialGradientBrush>

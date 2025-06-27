@@ -29,6 +29,12 @@ namespace Cycloside.Plugins.BuiltIn;
 public class MacroPlugin : IPlugin
 {
     private MacroWindow? _window;
+    // Explicitly qualify Avalonia types to avoid conflicts with
+    // Windows Forms global using directives when building for
+    // net8.0-windows.
+    // Use aliases for Avalonia controls to avoid clashes with WinForms when
+    // targeting net8.0-windows. Keep a single set of fields using the alias
+    // types so the declarations are platform agnostic.
     // Explicitly use the aliased Avalonia types defined above. The
     // fully-qualified versions were duplicated and caused CS0102 errors.
     private AvaloniaListBox? _macroList;
@@ -130,8 +136,6 @@ public class MacroPlugin : IPlugin
                         {
 #if WINDOWS
                             // Windows uses SendKeys for playback.
-                            System.Windows.Forms.SendKeys.SendWait(key);
-
                             SendKeys.SendWait(key);
 #endif
                         }
