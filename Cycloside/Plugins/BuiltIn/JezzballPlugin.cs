@@ -284,13 +284,21 @@ namespace Cycloside.Plugins.BuiltIn
 
             if (CurrentWall.Orientation == WallOrientation.Vertical)
             {
-                newArea1 = area with { Width = CurrentWall.Origin.X - area.Left };
-                newArea2 = new Rect(CurrentWall.Origin.X, area.Top, area.Right - CurrentWall.Origin.X, area.Height);
+                newArea1 = new Rect(area.Left, area.Top,
+                    CurrentWall.Origin.X - area.Left,
+                    area.Height);
+                newArea2 = new Rect(CurrentWall.Origin.X, area.Top,
+                    area.Right - CurrentWall.Origin.X,
+                    area.Height);
             }
             else // Horizontal
             {
-                newArea1 = area with { Height = CurrentWall.Origin.Y - area.Top };
-                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y, area.Width, area.Bottom - CurrentWall.Origin.Y);
+                newArea1 = new Rect(area.Left, area.Top,
+                    area.Width,
+                    CurrentWall.Origin.Y - area.Top);
+                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y,
+                    area.Width,
+                    area.Bottom - CurrentWall.Origin.Y);
             }
 
             _activeAreas.Remove(area);
@@ -331,12 +339,13 @@ namespace Cycloside.Plugins.BuiltIn
         private Point _mousePosition;
         private WallOrientation _orientation = WallOrientation.Vertical;
 
+        private readonly GameCanvas _gameCanvas;
+
         // --- UI Controls ---
         private readonly TextBlock _levelText = new() { Margin = new Thickness(10, 0) };
         private readonly TextBlock _livesText = new() { Margin = new Thickness(10, 0) };
         private readonly TextBlock _timeText = new() { Margin = new Thickness(10, 0) };
         private readonly TextBlock _capturedText = new() { Margin = new Thickness(10, 0) };
-        private readonly FormattedText _messageFormattedText = new();
 
         public JezzballControl()
         {
@@ -351,15 +360,16 @@ namespace Cycloside.Plugins.BuiltIn
             var layout = new DockPanel();
             DockPanel.SetDock(statusBar, Dock.Bottom);
             layout.Children.Add(statusBar);
-            layout.Children.Add(new Panel { Content = this }); // The game itself fills the rest
+            _gameCanvas = new GameCanvas(this);
+            layout.Children.Add(_gameCanvas); // The game itself fills the rest
 
             Content = layout;
             ClipToBounds = true;
             Focusable = true;
 
             // --- Event Handlers ---
-            PointerPressed += OnPointerPressed;
-            PointerMoved += OnPointerMoved;
+            _gameCanvas.PointerPressed += OnPointerPressed;
+            _gameCanvas.PointerMoved += OnPointerMoved;
             
             // --- Game Loop Start ---
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60 FPS
@@ -371,15 +381,15 @@ namespace Cycloside.Plugins.BuiltIn
         public void Dispose()
         {
             _timer.Stop();
-            PointerPressed -= OnPointerPressed;
-            PointerMoved -= OnPointerMoved;
+            _gameCanvas.PointerPressed -= OnPointerPressed;
+            _gameCanvas.PointerMoved -= OnPointerMoved;
         }
 
-        private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(this);
+        private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(_gameCanvas);
 
         private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
-            var point = e.GetCurrentPoint(this);
+            var point = e.GetCurrentPoint(_gameCanvas);
             if (point.Properties.IsRightButtonPressed)
             {
                 _orientation = _orientation == WallOrientation.Vertical ? WallOrientation.Horizontal : WallOrientation.Vertical;
@@ -401,7 +411,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             _gameState.Update(dt);
             UpdateStatusText();
-            InvalidateVisual(); // Trigger a re-render
+            _gameCanvas.InvalidateVisual(); // Trigger a re-render
         }
 
         private void UpdateStatusText()
@@ -412,10 +422,9 @@ namespace Cycloside.Plugins.BuiltIn
             _capturedText.Text = $"Captured: {_gameState.CapturedPercentage:P0}";
         }
 
-        public override void Render(DrawingContext context)
+        internal void RenderGame(DrawingContext context)
         {
-            base.Render(context);
-            context.FillRectangle(Brushes.Black, this.Bounds);
+            context.FillRectangle(Brushes.Black, _gameCanvas.Bounds);
 
             // Draw Areas
             foreach (var area in _gameState.FilledAreas) context.FillRectangle(Brushes.DarkCyan, area);
@@ -448,12 +457,29 @@ namespace Cycloside.Plugins.BuiltIn
             // Draw Message
             if (_gameState.Message != string.Empty)
             {
-                _messageFormattedText.Text = _gameState.Message;
-                _messageFormattedText.Typeface = new Typeface(FontFamily, weight: FontWeight.Bold);
-                _messageFormattedText.FontSize = 48;
-                var textPos = new Point((Bounds.Width - _messageFormattedText.Width) / 2, (Bounds.Height - _messageFormattedText.Height) / 2);
-                context.DrawText(Brushes.White, textPos, _messageFormattedText);
+                var formatted = new FormattedText(
+                    _gameState.Message,
+                    CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface(FontFamily, FontStyle.Normal, FontWeight.Bold),
+                    48,
+                    Brushes.White);
+
+                var textPos = new Point(
+                    (_gameCanvas.Bounds.Width - formatted.Width) / 2,
+                    (_gameCanvas.Bounds.Height - formatted.Height) / 2);
+
+                context.DrawText(formatted, textPos);
             }
+        }
+
+        private class GameCanvas : Control
+        {
+            private readonly JezzballControl _parent;
+
+            public GameCanvas(JezzballControl parent) => _parent = parent;
+
+            public override void Render(DrawingContext context) => _parent.RenderGame(context);
         }
     }
     #endregion

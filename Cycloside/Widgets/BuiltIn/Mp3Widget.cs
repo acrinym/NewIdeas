@@ -62,7 +62,7 @@ namespace Cycloside.Widgets.BuiltIn
             totalTimeText.Bind(TextBlock.TextProperty, new Binding(nameof(MP3PlayerPlugin.TotalTime)) { StringFormat = "mm\\:ss" });
 
             // Buttons are bound using the type-safe nameof() operator.
-            var openButton = new Button { Content = "Open", Command = _plugin.OpenFilesCommand };
+            var openButton = new Button { Content = "Open", Command = _plugin.AddFilesCommand };
             var prevButton = new Button { Content = "◀", Command = _plugin.PreviousCommand };
             var playButton = new Button { Content = "▶", Command = _plugin.PlayCommand };
             var pauseButton = new Button { Content = "❚❚", Command = _plugin.PauseCommand };

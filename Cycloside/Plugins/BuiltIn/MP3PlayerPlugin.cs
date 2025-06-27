@@ -48,13 +48,15 @@ namespace Cycloside.Plugins.BuiltIn
         public void GetFftData(byte[] fftData)
         {
             // Read samples from the source audio into our buffer
-            int read = _source.Read(_sampleBuffer, 0, _fftLength);
+            int read = _source is SampleAggregator agg
+                ? agg.Read(_sampleBuffer)
+                : _source.Read(_sampleBuffer, 0, _fftLength);
             if (read == 0) return;
 
             // Apply a window function to the samples and load them into the FFT buffer
             for (int i = 0; i < read; i++)
             {
-                _fftBuffer[i].X = (float)(_sampleBuffer[i] * FastFourierTransform.BlackmanHarrisWindow(i, _fftLength));
+                _fftBuffer[i].X = (float)(_sampleBuffer[i] * FftExtensions.BlackmanHarrisWindow(i, _fftLength));
                 _fftBuffer[i].Y = 0;
             }
             // Zero out the rest of the buffer if we didn't read a full block
