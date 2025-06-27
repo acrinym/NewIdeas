@@ -284,13 +284,21 @@ namespace Cycloside.Plugins.BuiltIn
 
             if (CurrentWall.Orientation == WallOrientation.Vertical)
             {
-                newArea1 = area with { Width = CurrentWall.Origin.X - area.Left };
-                newArea2 = new Rect(CurrentWall.Origin.X, area.Top, area.Right - CurrentWall.Origin.X, area.Height);
+                newArea1 = new Rect(area.Left, area.Top,
+                    CurrentWall.Origin.X - area.Left,
+                    area.Height);
+                newArea2 = new Rect(CurrentWall.Origin.X, area.Top,
+                    area.Right - CurrentWall.Origin.X,
+                    area.Height);
             }
             else // Horizontal
             {
-                newArea1 = area with { Height = CurrentWall.Origin.Y - area.Top };
-                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y, area.Width, area.Bottom - CurrentWall.Origin.Y);
+                newArea1 = new Rect(area.Left, area.Top,
+                    area.Width,
+                    CurrentWall.Origin.Y - area.Top);
+                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y,
+                    area.Width,
+                    area.Bottom - CurrentWall.Origin.Y);
             }
 
             _activeAreas.Remove(area);
