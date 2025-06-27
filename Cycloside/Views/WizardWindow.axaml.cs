@@ -39,6 +39,7 @@ namespace Cycloside.Views
             // We only want to drag when the left mouse button is pressed.
             if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             {
+                // Ensure the DataContext is our ViewModel before dragging.
                 // Check if the DataContext is our ViewModel
                 if (DataContext is WizardViewModel)
                 {
