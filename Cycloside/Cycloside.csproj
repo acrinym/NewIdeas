@@ -1,6 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFrameworks>net8.0;net8.0-windows</TargetFrameworks>
@@ -19,30 +18,31 @@
   <ItemGroup>
     <AvaloniaResource Include="Resources\**" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.1" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.1" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.1" />
-    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.3.0" />
-    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.3.0" />
-    <PackageReference Include="NAudio" Version="2.2.1" />
-    <PackageReference Include="MoonSharp" Version="2.0.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.1" />
     <PackageReference Include="Avalonia.Markup.Xaml.Loader" Version="11.3.1" />
-    <PackageReference Include="CliWrap" Version="3.7.0" /> 
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.1">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="SharpHook" Version="5.0.0" />
+    
+    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.0.11" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.0.11" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
+    
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="MoonSharp" Version="2.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
+    <PackageReference Include="SharpHook" Version="5.0.0" />
+    <PackageReference Include="CliWrap" Version="3.7.0" /> 
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.0" />
   </ItemGroup>
 
-  </Project>
+</Project>
