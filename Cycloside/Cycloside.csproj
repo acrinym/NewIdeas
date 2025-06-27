@@ -35,9 +35,8 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     
-    <!-- UI Interactivity for MVVM -->
-    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.0.11" />
-    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.0.11" />
+    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.1.0" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.1.0" />
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
     
     <!-- Feature Packages -->
