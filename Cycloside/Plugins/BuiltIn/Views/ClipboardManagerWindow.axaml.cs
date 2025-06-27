@@ -1,12 +1,13 @@
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
-namespace Cycloside.Plugins.BuiltIn;
-
-public partial class ClipboardManagerWindow : Window
+namespace Cycloside.Plugins.BuiltIn
 {
-    public ClipboardManagerWindow()
+    public partial class ClipboardManagerWindow : Window
     {
-        AvaloniaXamlLoader.Load(this);
+        public ClipboardManagerWindow()
+        {
+            // This line is essential to load the UI defined in the .axaml file.
+            InitializeComponent();
+        }
     }
 }
