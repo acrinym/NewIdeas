@@ -339,6 +339,8 @@ namespace Cycloside.Plugins.BuiltIn
         private Point _mousePosition;
         private WallOrientation _orientation = WallOrientation.Vertical;
 
+        private readonly GameCanvas _gameCanvas;
+
         // --- UI Controls ---
         private readonly TextBlock _levelText = new() { Margin = new Thickness(10, 0) };
         private readonly TextBlock _livesText = new() { Margin = new Thickness(10, 0) };
@@ -358,15 +360,16 @@ namespace Cycloside.Plugins.BuiltIn
             var layout = new DockPanel();
             DockPanel.SetDock(statusBar, Dock.Bottom);
             layout.Children.Add(statusBar);
-            layout.Children.Add(new Panel { Content = this }); // The game itself fills the rest
+            _gameCanvas = new GameCanvas(this);
+            layout.Children.Add(_gameCanvas); // The game itself fills the rest
 
             Content = layout;
             ClipToBounds = true;
             Focusable = true;
 
             // --- Event Handlers ---
-            PointerPressed += OnPointerPressed;
-            PointerMoved += OnPointerMoved;
+            _gameCanvas.PointerPressed += OnPointerPressed;
+            _gameCanvas.PointerMoved += OnPointerMoved;
             
             // --- Game Loop Start ---
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60 FPS
@@ -378,15 +381,15 @@ namespace Cycloside.Plugins.BuiltIn
         public void Dispose()
         {
             _timer.Stop();
-            PointerPressed -= OnPointerPressed;
-            PointerMoved -= OnPointerMoved;
+            _gameCanvas.PointerPressed -= OnPointerPressed;
+            _gameCanvas.PointerMoved -= OnPointerMoved;
         }
 
-        private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(this);
+        private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(_gameCanvas);
 
         private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
-            var point = e.GetCurrentPoint(this);
+            var point = e.GetCurrentPoint(_gameCanvas);
             if (point.Properties.IsRightButtonPressed)
             {
                 _orientation = _orientation == WallOrientation.Vertical ? WallOrientation.Horizontal : WallOrientation.Vertical;
@@ -408,7 +411,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             _gameState.Update(dt);
             UpdateStatusText();
-            InvalidateVisual(); // Trigger a re-render
+            _gameCanvas.InvalidateVisual(); // Trigger a re-render
         }
 
         private void UpdateStatusText()
@@ -419,10 +422,9 @@ namespace Cycloside.Plugins.BuiltIn
             _capturedText.Text = $"Captured: {_gameState.CapturedPercentage:P0}";
         }
 
-        public override void Render(DrawingContext context)
+        internal void RenderGame(DrawingContext context)
         {
-            base.Render(context);
-            context.FillRectangle(Brushes.Black, this.Bounds);
+            context.FillRectangle(Brushes.Black, _gameCanvas.Bounds);
 
             // Draw Areas
             foreach (var area in _gameState.FilledAreas) context.FillRectangle(Brushes.DarkCyan, area);
@@ -464,11 +466,20 @@ namespace Cycloside.Plugins.BuiltIn
                     Brushes.White);
 
                 var textPos = new Point(
-                    (Bounds.Width - formatted.Width) / 2,
-                    (Bounds.Height - formatted.Height) / 2);
+                    (_gameCanvas.Bounds.Width - formatted.Width) / 2,
+                    (_gameCanvas.Bounds.Height - formatted.Height) / 2);
 
                 context.DrawText(formatted, textPos);
             }
+        }
+
+        private class GameCanvas : Control
+        {
+            private readonly JezzballControl _parent;
+
+            public GameCanvas(JezzballControl parent) => _parent = parent;
+
+            public override void Render(DrawingContext context) => _parent.RenderGame(context);
         }
     }
     #endregion

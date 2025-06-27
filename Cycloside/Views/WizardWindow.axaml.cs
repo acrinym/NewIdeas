@@ -40,6 +40,7 @@ namespace Cycloside.Views
             if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             {
                 // Ensure the DataContext is our ViewModel before dragging.
+                // Check if the DataContext is our ViewModel
                 if (DataContext is WizardViewModel)
                 {
                     // This command tells the OS to start a drag operation.
