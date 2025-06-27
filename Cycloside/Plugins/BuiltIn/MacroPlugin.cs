@@ -32,11 +32,9 @@ public class MacroPlugin : IPlugin
     // Explicitly qualify Avalonia types to avoid conflicts with
     // Windows Forms global using directives when building for
     // net8.0-windows.
-    private Avalonia.Controls.ListBox? _macroList;
-    private Avalonia.Controls.TextBox? _nameBox;
-    private Avalonia.Controls.TextBox? _repeatBox;
-    private Avalonia.Controls.TextBlock? _status;
-    private Avalonia.Controls.Button? _playButton;
+    // Use aliases for Avalonia controls to avoid clashes with WinForms when
+    // targeting net8.0-windows. Keep a single set of fields using the alias
+    // types so the declarations are platform agnostic.
     private AvaloniaListBox? _macroList;
     private AvaloniaTextBox? _nameBox;
     private AvaloniaTextBox? _repeatBox;
@@ -136,8 +134,6 @@ public class MacroPlugin : IPlugin
                         {
 #if WINDOWS
                             // Windows uses SendKeys for playback.
-                            System.Windows.Forms.SendKeys.SendWait(key);
-
                             SendKeys.SendWait(key);
 #endif
                         }

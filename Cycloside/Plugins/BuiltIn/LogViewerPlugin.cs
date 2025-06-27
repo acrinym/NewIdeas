@@ -87,10 +87,10 @@ namespace Cycloside.Plugins.BuiltIn
                 _logBox.TextWrapping = Avalonia.Media.TextWrapping.NoWrap;
                 _logBox.FontFamily = "Cascadia Code,Consolas,Menlo,monospace";
                 _logBox.Margin = new Avalonia.Thickness(5);
+                ScrollViewer.SetHorizontalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
+                ScrollViewer.SetVerticalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
+                _logBox.TextChanged += OnLogBoxTextChanged;
             }
-            ScrollViewer.SetHorizontalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
-            ScrollViewer.SetVerticalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
-            _logBox.TextChanged += OnLogBoxTextChanged;
 
             // --- Assemble UI Layout ---
             var topPanel = _window.FindControl<DockPanel>("TopPanel");
