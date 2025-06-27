@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <!-- Define multiple target frameworks for cross-platform builds -->
     <TargetFrameworks>net8.0;net8.0-windows</TargetFrameworks>
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -10,20 +9,17 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
-  <!-- This section defines settings that ONLY apply when building for Windows -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net8.0-windows'">
     <UseWindowsForms>true</UseWindowsForms>
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
-  <!-- This ensures your icon and other resources are included in the application -->
   <ItemGroup>
     <AvaloniaResource Include="Resources\**" />
   </ItemGroup>
   
   <ItemGroup>
-    <!-- Avalonia and Core Packages -->
     <PackageReference Include="Avalonia" Version="11.3.1" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.1" />
@@ -35,11 +31,10 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     
-    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.1.0" />
+    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.3.0" />
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
     
-    <!-- Feature Packages -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />
