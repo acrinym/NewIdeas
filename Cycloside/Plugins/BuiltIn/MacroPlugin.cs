@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text.Json;
 using Cycloside.Services;
 #if WINDOWS
+// Only needed for SendKeys on Windows; no other WinForms types should be referenced.
 using System.Windows.Forms;
 #endif
 
@@ -122,6 +123,7 @@ public class MacroPlugin : IPlugin
                         {
 #if WINDOWS
                             // Windows uses SendKeys for playback.
+                            System.Windows.Forms.SendKeys.SendWait(key);
                             SendKeys.SendWait(key);
 #endif
                         }
