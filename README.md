@@ -49,6 +49,17 @@ Examples live under [`docs/examples/`](docs/examples/).
 * Skinnable widgets surface plugin features directly on the desktop.
 * Window effects like wobbly windows or drop shadows are plugin friendly.
 * Optional auto-update helper swaps in new versions using a checksum.
+
+## Building
+
+Ensure the .NET 8 SDK is installed. Compile the main application with:
+
+```bash
+dotnet build Cycloside/Cycloside.csproj
+```
+
+The build targets both `net8.0` and `net8.0-windows` and should finish with no warnings.
+
 ---
 
 ## FUTURE TODO

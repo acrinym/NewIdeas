@@ -35,8 +35,10 @@ public class MacroPlugin : IPlugin
     // Use aliases for Avalonia controls to avoid clashes with WinForms when
     // targeting net8.0-windows. Keep a single set of fields using the alias
     // types so the declarations are platform agnostic.
+
     // Explicitly use the aliased Avalonia types defined above. The
     // fully-qualified versions were duplicated and caused CS0102 errors.
+
     private AvaloniaListBox? _macroList;
     private AvaloniaTextBox? _nameBox;
     private AvaloniaTextBox? _repeatBox;
