@@ -9,6 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Cycloside.Services;
+#if WINDOWS
+// Only needed for SendKeys on Windows; no other WinForms types should be referenced.
+#endif
 
 // Playback uses SendKeys on Windows. On Linux and macOS, SharpHook's
 // EventSimulator is used to emulate key presses. These platforms may
@@ -117,8 +120,10 @@ public class MacroPlugin : IPlugin
                         // Key playback is only supported on Windows via SendKeys.
                         if (_isWindows)
                         {
+#if WINDOWS
                             // Windows uses SendKeys for playback.
                             System.Windows.Forms.SendKeys.SendWait(key);
+#endif
                         }
                         else if (Enum.TryParse<KeyCode>(key, out var code))
                         {

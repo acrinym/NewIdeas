@@ -29,7 +29,7 @@
   <Window.ContextMenu>
     <ContextMenu>
       <MenuItem Header="Cycle Format" Command="{Binding CycleFormatCommand}"/>
-      <MenuItem Header="Lock Position" IsCheckable="True" IsChecked="{Binding IsLocked, Mode=TwoWay}"/>
+      <MenuItem Header="Lock Position" ToggleType="CheckBox" IsChecked="{Binding IsLocked, Mode=TwoWay}"/>
       <Separator/>
       <MenuItem Header="Close" Command="{Binding CloseCommand}"/>
     </ContextMenu>

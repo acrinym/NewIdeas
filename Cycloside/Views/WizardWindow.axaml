@@ -29,9 +29,6 @@
     </DockPanel>
 
     <TabControl SelectedIndex="{Binding CurrentStep, Mode=OneWay}" IsEnabled="False">
-      <TabControl.PageTransition>
-        <CrossFade Duration="0.25"/>
-      </TabControl.PageTransition>
 
       <TabItem Header="Welcome">
         <TextBlock TextWrapping="Wrap"
