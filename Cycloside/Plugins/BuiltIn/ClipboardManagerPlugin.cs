@@ -1,49 +1,51 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Cycloside.Services;
-using System;
-using System.Collections.ObjectModel; // Changed from System.Collections.Generic
-using System.Linq;
 
 namespace Cycloside.Plugins.BuiltIn
 {
-    public class ClipboardManagerPlugin : IPlugin
+    /// <summary>
+    /// Acts as the ViewModel for the Clipboard Manager window.
+    /// It polls the clipboard and manages the history collection for the UI to display.
+    /// </summary>
+    public partial class ClipboardManagerPlugin : ObservableObject, IPlugin, IDisposable
     {
-        private const int MaxHistoryCount = 25; // Extracted for easy configuration
+        private const int MaxHistoryCount = 25;
 
-        private readonly ObservableCollection<string> _history = new();
         private ClipboardManagerWindow? _window;
-        private ListBox? _historyListBox;
         private DispatcherTimer? _timer;
         private string? _lastSeenText;
 
+        // --- IPlugin Properties ---
         public string Name => "Clipboard Manager";
         public string Description => "Stores and manages clipboard history.";
-        public Version Version => new(0, 2, 0); // Incremented for major refactor
+        public Version Version => new(0, 2, 0);
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
+        // --- Observable Properties for UI Binding ---
+
+        /// <summary>
+        /// A collection of clipboard history items. The View will bind its ListBox directly to this.
+        /// Because it's an ObservableCollection, the UI will update automatically.
+        /// </summary>
+        public ObservableCollection<string> History { get; } = new();
+
+        // --- Plugin Lifecycle & Disposal ---
+
         public void Start()
         {
-            _window = new ClipboardManagerWindow();
-            _historyListBox = _window.FindControl<ListBox>("HistoryList");
-
-            if (_historyListBox != null)
-            {
-                // Set the ItemsSource once to our ObservableCollection.
-                // The UI will now update automatically when the collection changes.
-                _historyListBox.ItemsSource = _history;
-                _historyListBox.DoubleTapped += HistoryListBox_DoubleTapped;
-            }
-
+            // The ViewModel's job is to create its View and set the DataContext.
+            _window = new ClipboardManagerWindow { DataContext = this };
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ClipboardManagerPlugin));
             _window.Show();
-            
-            // Set up a timer to poll for clipboard changes.
-            // Note: Polling is a simple, cross-platform approach. A more advanced
-            // solution would use platform-specific hooks, but is more complex.
+
             _timer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, CheckClipboard);
             _timer.Start();
         }
@@ -51,30 +53,38 @@ namespace Cycloside.Plugins.BuiltIn
         public void Stop()
         {
             _timer?.Stop();
-            _timer = null;
-
-            if (_window != null)
-            {
-                if (_historyListBox != null)
-                {
-                    // Detach the event handler to prevent memory leaks.
-                    _historyListBox.DoubleTapped -= HistoryListBox_DoubleTapped;
-                }
-                _window.Close();
-            }
-
-            // Clear fields to release references
-            _window = null;
-            _historyListBox = null;
-            _history.Clear();
+            _window?.Close();
         }
 
+        public void Dispose() => Stop();
+
+        // --- Commands for UI Binding ---
+
         /// <summary>
-        /// Checks the system clipboard and updates the history if new text is found.
+        /// This command is executed when an item in the ListBox is double-tapped.
+        /// The 'selectedItem' is passed from the View via CommandParameter.
+        /// </summary>
+        [RelayCommand]
+        private async Task EntrySelected(string? selectedText)
+        {
+            if (string.IsNullOrEmpty(selectedText)) return;
+
+            // Get the application's clipboard in a robust way.
+            var clipboard = Application.Current?.GetMainTopLevel()?.Clipboard;
+            if (clipboard != null)
+            {
+                await clipboard.SetTextAsync(selectedText);
+            }
+        }
+
+        // --- Private Logic ---
+
+        /// <summary>
+        /// Polls the system clipboard for changes.
         /// </summary>
         private async void CheckClipboard(object? sender, EventArgs e)
         {
-            var clipboard = _window?.Clipboard;
+            var clipboard = Application.Current?.GetMainTopLevel()?.Clipboard;
             if (clipboard == null) return;
 
             var currentText = await clipboard.GetTextAsync();
@@ -83,32 +93,16 @@ namespace Cycloside.Plugins.BuiltIn
                 return;
             }
 
-            // A new, unique item is found. Add it to the history.
+            // A new, unique item is found.
             _lastSeenText = currentText;
 
-            // Remove the item if it already exists to avoid duplicates and move it to the top.
-            _history.Remove(currentText);
-            _history.Insert(0, currentText); // Add new items to the top of the list.
+            // This logic ensures no duplicates and adds the new item to the top.
+            History.Remove(currentText);
+            History.Insert(0, currentText);
 
-            // Trim the collection if it exceeds the maximum size.
-            if (_history.Count > MaxHistoryCount)
+            if (History.Count > MaxHistoryCount)
             {
-                _history.RemoveAt(MaxHistoryCount);
-            }
-        }
-
-        /// <summary>
-        /// Handles the DoubleTapped event on the history ListBox.
-        /// Sets the selected item's text back to the system clipboard.
-        /// </summary>
-        private async void HistoryListBox_DoubleTapped(object? sender, TappedEventArgs e)
-        {
-            if (_historyListBox?.SelectedItem is string selectedText && _window?.Clipboard is { } clipboard)
-            {
-                await clipboard.SetTextAsync(selectedText);
-                
-                // Optional: Give user feedback that the item was copied.
-                // For example, by briefly changing the window title or a status bar.
+                History.RemoveAt(History.Count - 1);
             }
         }
     }
