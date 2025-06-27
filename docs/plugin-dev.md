@@ -1,6 +1,25 @@
 # Plugin Development
 
-Cycloside supports drop-in plugins written as DLLs or volatile scripts.
+Cycloside supports drop‑in plugins written as DLLs or as in‑memory scripts.
+
+Plugins implement the `IPlugin` interface which exposes the following
+properties and methods:
+
+```csharp
+public interface IPlugin
+{
+    string Name { get; }
+    string Description { get; }
+    Version Version { get; }
+    Cycloside.Widgets.IWidget? Widget { get; }
+    bool ForceDefaultTheme { get; }
+    void Start();
+    void Stop();
+}
+```
+
+Additional hooks like `OnSettingsSaved()` and `OnCrash(Exception ex)` can be
+implemented by inheriting `IPluginExtended`.
 
 ## DLL Plugins
 
@@ -18,6 +37,19 @@ Lua (`.lua`) and C# script (`.csx`) files can be executed in memory. Use the tra
 ## Metadata
 
 Each plugin should expose `Name`, `Description` and `Version`. The plugin manager uses these to display information in the GUI.
+
+## Communication
+
+Plugins can talk to one another using the global `PluginBus`:
+
+```csharp
+PluginBus.Subscribe("my:event", data => Handle(data));
+PluginBus.Publish("my:event", payload);
+```
+
+The optional `RemoteApiServer` publishes bus events over HTTP. POST a topic name
+to `http://localhost:4123/trigger` with `X-Api-Token` or a `token` query
+parameter. See `docs/plugin-lifecycle.md` for details.
 
 ## Marketplace
 
