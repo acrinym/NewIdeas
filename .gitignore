@@ -2,6 +2,7 @@
 */obj/
 *.user.js
 *.user.js.txt
+*.ico
 !chrome-api-emulator.user.js
 Cycloside.zip
 Cycloside/AllFiles.txt
