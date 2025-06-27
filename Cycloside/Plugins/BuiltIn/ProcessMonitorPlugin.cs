@@ -9,7 +9,7 @@ namespace Cycloside.Plugins.BuiltIn;
 
 public class ProcessMonitorPlugin : IPlugin
 {
-    private Window? _window;
+    private ProcessMonitorWindow? _window;
     private ListBox? _list;
     private DispatcherTimer? _timer;
 
@@ -21,14 +21,8 @@ public class ProcessMonitorPlugin : IPlugin
 
     public void Start()
     {
-        _list = new ListBox();
-        _window = new Window
-        {
-            Title = "Process Monitor",
-            Width = 400,
-            Height = 500,
-            Content = _list
-        };
+        _window = new ProcessMonitorWindow();
+        _list = _window.FindControl<ListBox>("ProcessList");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ProcessMonitorPlugin));
         _window.Show();
 

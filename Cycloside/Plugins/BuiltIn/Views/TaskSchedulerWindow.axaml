@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.TaskSchedulerWindow"
+        Title="Task Scheduler"
+        Width="400" Height="150">
+    <StackPanel Margin="5">
+        <TextBox x:Name="CmdBox" Watermark="Command"/>
+        <TextBox x:Name="TimeBox" Watermark="Time/Cron"/>
+        <Button x:Name="AddButton" Content="Add"/>
+    </StackPanel>
+</Window>

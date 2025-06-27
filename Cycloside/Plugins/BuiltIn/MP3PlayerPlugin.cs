@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NAudio.Wave;
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel; // Switched to ObservableCollection
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,31 +16,28 @@ namespace Cycloside.Plugins.BuiltIn
     public partial class MP3PlayerPlugin : ObservableObject, IPlugin, IDisposable
     {
         // --- Fields ---
-        private readonly List<string> _playlist = new();
         private readonly DispatcherTimer _progressTimer;
         private int _currentIndex = -1;
         private IWavePlayer? _wavePlayer;
         private AudioFileReader? _audioReader;
+        private float _volumeBeforeMute;
 
         // --- IPlugin Properties ---
         public string Name => "MP3 Player";
         public string Description => "Play MP3 files with a simple playlist.";
-        public Version Version => new(1, 3, 0); // Incremented for optimization and features
+        public Version Version => new(1, 4, 0); // Incremented for new features
         public Widgets.IWidget? Widget => new Widgets.BuiltIn.Mp3Widget(this);
+        public bool ForceDefaultTheme => false;
 
-        // --- Observable Properties for UI Binding ---
+        // --- Public Properties & Collections for UI Binding ---
+        public ObservableCollection<string> Playlist { get; } = new();
+
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(PlayCommand))]
-        [NotifyCanExecuteChangedFor(nameof(PauseCommand))]
-        [NotifyCanExecuteChangedFor(nameof(StopCommand))]
-        [NotifyCanExecuteChangedFor(nameof(NextCommand))]
-        [NotifyCanExecuteChangedFor(nameof(PreviousCommand))]
         private string? _currentTrackName;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsStopped))]
         private bool _isPlaying;
-
         public bool IsStopped => !IsPlaying;
 
         [ObservableProperty]
@@ -49,11 +46,19 @@ namespace Cycloside.Plugins.BuiltIn
         [ObservableProperty]
         private TimeSpan _totalTime;
 
+        [ObservableProperty]
+        private string? _errorMessage;
+        
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(ToggleMuteCommand))]
+        private float _volume = 1.0f; // Default to 100% volume
+
+        [ObservableProperty]
+        private bool _isMuted;
+
         public MP3PlayerPlugin()
         {
-            // Set up a timer to update the current time property for UI progress bars.
-            _progressTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(250), DispatcherPriority.Normal, OnTimerTick);
-            _progressTimer.Stop();
+            _progressTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(250), DispatcherPriority.Background, OnTimerTick) { IsEnabled = false };
         }
 
         // --- IPlugin Lifecycle & Disposal ---
@@ -67,9 +72,8 @@ namespace Cycloside.Plugins.BuiltIn
         }
 
         // --- Commands for UI Binding ---
-
         [RelayCommand]
-        private async Task OpenFilesAsync()
+        private async Task AddFiles()
         {
             if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
 
@@ -81,13 +85,18 @@ namespace Cycloside.Plugins.BuiltIn
             });
 
             if (openResult is null) return;
-            
-            // Use OfType<string>() for a cleaner way to filter and cast non-null paths.
-            var validFiles = openResult.Select(f => f.TryGetLocalPath()).OfType<string>().ToList();
 
-            if (validFiles.Any())
+            var validFiles = openResult.Select(f => f.TryGetLocalPath()).OfType<string>();
+            foreach (var file in validFiles.Where(File.Exists))
             {
-                LoadFiles(validFiles);
+                if (!Playlist.Contains(file)) Playlist.Add(file);
+            }
+
+            // If nothing was playing and we added songs, start playing the first new one.
+            if (!IsPlaying && Playlist.Any())
+            {
+                _currentIndex = 0;
+                UpdateCurrentTrackInfo();
                 Play();
             }
         }
@@ -97,25 +106,17 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (_wavePlayer is null && _currentIndex != -1)
             {
-                if (!InitializeReader(_playlist[_currentIndex]))
+                if (!InitializeReader(Playlist[_currentIndex]))
                 {
-                    Next(); // Failed to open, try the next file
+                    Next();
                     return;
                 }
             }
-            
             _wavePlayer?.Play();
-            IsPlaying = true;
-            _progressTimer.Start();
         }
 
         [RelayCommand(CanExecute = nameof(IsPlaying))]
-        private void Pause()
-        {
-            _wavePlayer?.Pause();
-            IsPlaying = false;
-            _progressTimer.Stop();
-        }
+        private void Pause() => _wavePlayer?.Pause();
 
         [RelayCommand(CanExecute = nameof(IsPlaying))]
         private void Stop() => CleanupPlayback();
@@ -129,32 +130,26 @@ namespace Cycloside.Plugins.BuiltIn
         [RelayCommand]
         private void Seek(TimeSpan position)
         {
-            if (_audioReader is not null)
-            {
-                _audioReader.CurrentTime = position;
-                CurrentTime = _audioReader.CurrentTime; // Update property immediately
-            }
+            if (_audioReader is not null) _audioReader.CurrentTime = position;
+        }
+
+        [RelayCommand(CanExecute = nameof(CanMute))]
+        private void ToggleMute()
+        {
+            IsMuted = !IsMuted;
+            Volume = IsMuted ? 0f : _volumeBeforeMute;
         }
 
         // --- Command CanExecute Conditions ---
-        private bool CanPlay() => !IsPlaying && _playlist.Any();
-        private bool HasNext() => _currentIndex < _playlist.Count - 1;
+        private bool CanPlay() => !IsPlaying && Playlist.Any();
+        private bool HasNext() => _currentIndex < Playlist.Count - 1;
         private bool HasPrevious() => _currentIndex > 0;
+        private bool CanMute() => _wavePlayer != null;
 
         // --- Private Helper Methods ---
-
-        private void LoadFiles(IEnumerable<string> files)
-        {
-            CleanupPlayback();
-            _playlist.Clear();
-            _playlist.AddRange(files.Where(File.Exists));
-            _currentIndex = _playlist.Any() ? 0 : -1;
-            UpdateCurrentTrackInfo();
-        }
-
         private void SkipToTrack(int index)
         {
-            if (index < 0 || index >= _playlist.Count) return;
+            if (index < 0 || index >= Playlist.Count) return;
             var wasPlaying = IsPlaying;
             CleanupPlayback();
             _currentIndex = index;
@@ -164,20 +159,23 @@ namespace Cycloside.Plugins.BuiltIn
 
         private bool InitializeReader(string filePath)
         {
+            ErrorMessage = null; // Clear previous errors
             try
             {
                 _audioReader = new AudioFileReader(filePath);
-                _wavePlayer = new WaveOutEvent();
+                _wavePlayer = new WaveOutEvent { Volume = Volume }; // Apply current volume
                 _wavePlayer.Init(_audioReader);
                 _wavePlayer.PlaybackStopped += OnPlaybackStopped;
-                
+
                 TotalTime = _audioReader.TotalTime;
                 CurrentTime = TimeSpan.Zero;
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Could not open audio file '{filePath}': {ex.Message}");
+                var friendlyError = $"Failed to load: {Path.GetFileName(filePath)}";
+                Console.WriteLine($"[ERROR] {friendlyError} | Details: {ex.Message}");
+                ErrorMessage = friendlyError; // Set property for UI to display
                 CleanupPlayback();
                 return false;
             }
@@ -185,62 +183,60 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
         {
-            // The IsPlaying flag is now set by Play/Pause/Stop commands.
-            // This handler is only for auto-advancing to the next track.
-            bool finishedNaturally = _audioReader is not null && Math.Abs(_audioReader.Position - _audioReader.Length) < 1000;
+            IsPlaying = false;
+            _progressTimer.Stop();
 
-            if (finishedNaturally)
+            // Only auto-advance if playback finished naturally (not stopped by user)
+            if (e.Exception is null && _audioReader is not null && _audioReader.Position >= _audioReader.Length)
             {
-                if (HasNext())
-                {
-                    Next();
-                    Play();
-                }
-                else
-                {
-                    CleanupPlayback(); // Last song finished
-                }
+                if (HasNext()) Next();
+                else CleanupPlayback(); // Last song finished
             }
         }
-
-        private void UpdateCurrentTrackInfo()
-        {
-            CurrentTrackName = _currentIndex != -1 ? Path.GetFileNameWithoutExtension(_playlist[_currentIndex]) : "No track loaded";
-        }
-
+        
         private void OnTimerTick(object? sender, EventArgs e)
         {
-            if (_audioReader is not null && IsPlaying)
-            {
-                CurrentTime = _audioReader.CurrentTime;
-            }
+            if (_audioReader is not null && IsPlaying) CurrentTime = _audioReader.CurrentTime;
         }
 
         private void CleanupPlayback()
         {
             _progressTimer.Stop();
-            if (_wavePlayer is not null)
+            if (_wavePlayer != null)
             {
                 _wavePlayer.PlaybackStopped -= OnPlaybackStopped;
                 _wavePlayer.Stop();
                 _wavePlayer.Dispose();
                 _wavePlayer = null;
             }
-            if (_audioReader is not null)
+            if (_audioReader != null)
             {
                 _audioReader.Dispose();
                 _audioReader = null;
             }
-
             IsPlaying = false;
             CurrentTime = TimeSpan.Zero;
             TotalTime = TimeSpan.Zero;
         }
 
+        private void UpdateCurrentTrackInfo()
+        {
+            CurrentTrackName = _currentIndex != -1 ? Path.GetFileNameWithoutExtension(Playlist[_currentIndex]) : "No track loaded";
+        }
+        
         // --- Property Change Handlers ---
+        partial void OnVolumeChanged(float value)
+        {
+            if (_wavePlayer != null) _wavePlayer.Volume = value;
+            if (value > 0) IsMuted = false;
+        }
+        
         partial void OnIsPlayingChanged(bool value)
         {
-            // When IsPlaying changes, re-evaluate the CanExecute status of our commands.
+            if (value) _progressTimer.Start();
+            else _progressTimer.Stop();
+            
+            // Re-evaluate the CanExecute status of commands that depend on this state
             PlayCommand.NotifyCanExecuteChanged();
             PauseCommand.NotifyCanExecuteChanged();
             StopCommand.NotifyCanExecuteChanged();

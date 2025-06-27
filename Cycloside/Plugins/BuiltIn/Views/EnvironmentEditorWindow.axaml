@@ -1,0 +1,16 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.EnvironmentEditorWindow"
+        Title="Environment Variables Editor"
+        Width="700" Height="500">
+    <DockPanel>
+        <StackPanel Orientation="Horizontal" Spacing="5" Margin="5" DockPanel.Dock="Top">
+            <Label Content="Scope:"/>
+            <ComboBox x:Name="ScopeSelector" Width="150"/>
+            <Button x:Name="AddButton" Content="Add"/>
+            <Button x:Name="RemoveButton" Content="Remove"/>
+            <Button x:Name="SaveButton" Content="Save Changes"/>
+        </StackPanel>
+        <DataGrid x:Name="Grid"/>
+    </DockPanel>
+</Window>

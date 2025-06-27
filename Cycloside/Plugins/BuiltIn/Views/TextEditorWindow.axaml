@@ -1,0 +1,13 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.TextEditorWindow"
+        Title="Cycloside Editor - Untitled"
+        Width="700" Height="550">
+    <DockPanel>
+        <StackPanel x:Name="ButtonPanel" Orientation="Horizontal" Spacing="5" Margin="5" DockPanel.Dock="Top" />
+        <Border x:Name="StatusBar" DockPanel.Dock="Bottom" Height="24" Background="CornflowerBlue">
+            <TextBlock x:Name="StatusBlock" Margin="5" VerticalAlignment="Center" />
+        </Border>
+        <TextBox x:Name="EditorBox" AcceptsReturn="True" AcceptsTab="True" FontFamily="monospace" Margin="5,0,5,5"/>
+    </DockPanel>
+</Window>

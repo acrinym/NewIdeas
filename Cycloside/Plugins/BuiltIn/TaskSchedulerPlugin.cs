@@ -7,7 +7,7 @@ namespace Cycloside.Plugins.BuiltIn;
 
 public class TaskSchedulerPlugin : IPlugin
 {
-    private Window? _window;
+    private TaskSchedulerWindow? _window;
     private TextBox? _cmdBox;
     private TextBox? _timeBox;
 
@@ -19,26 +19,15 @@ public class TaskSchedulerPlugin : IPlugin
 
     public void Start()
     {
-        _cmdBox = new TextBox { Watermark = "Command" };
-        _timeBox = new TextBox { Watermark = "Time/Cron" };
-        var addButton = new Button { Content = "Add" };
-        addButton.Click += (_, __) =>
+        _window = new TaskSchedulerWindow();
+        _cmdBox = _window.FindControl<TextBox>("CmdBox");
+        _timeBox = _window.FindControl<TextBox>("TimeBox");
+        var addButton = _window.FindControl<Button>("AddButton");
+        addButton?.AddHandler(Button.ClickEvent, (_, __) =>
         {
-            if (!string.IsNullOrWhiteSpace(_cmdBox!.Text) && !string.IsNullOrWhiteSpace(_timeBox!.Text))
-                AddTask(_cmdBox.Text!, _timeBox.Text!);
-        };
-        var panel = new StackPanel();
-        panel.Children.Add(_cmdBox);
-        panel.Children.Add(_timeBox);
-        panel.Children.Add(addButton);
-
-        _window = new Window
-        {
-            Title = "Task Scheduler",
-            Width = 400,
-            Height = 150,
-            Content = panel
-        };
+            if (!string.IsNullOrWhiteSpace(_cmdBox?.Text) && !string.IsNullOrWhiteSpace(_timeBox?.Text))
+                AddTask(_cmdBox!.Text, _timeBox!.Text);
+        });
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TaskSchedulerPlugin));
         _window.Show();
     }

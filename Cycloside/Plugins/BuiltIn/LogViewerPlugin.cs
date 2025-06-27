@@ -14,7 +14,7 @@ namespace Cycloside.Plugins.BuiltIn
 {
     public class LogViewerPlugin : IPlugin, IDisposable
     {
-        private Window? _window;
+        private LogViewerWindow? _window;
         private TextBox? _logBox;
         private CheckBox? _autoScrollCheck;
         private FileSystemWatcher? _watcher;
@@ -43,6 +43,8 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
+            _window = new LogViewerWindow();
+
             // --- Create UI Controls ---
             var openButton = new Button { Content = "Open Log File" };
             openButton.Click += async (s, e) => await SelectAndLoadFileAsync();
@@ -51,14 +53,18 @@ namespace Cycloside.Plugins.BuiltIn
             var saveButton = new Button { Content = "Save Log As...", Margin = new Avalonia.Thickness(5,0) };
             saveButton.Click += async (s, e) => await SaveLogAsync();
 
-            var filterBox = new TextBox { Watermark = "Filter (case-insensitive)" };
-            filterBox.TextChanged += (s, e) =>
+            var filterBox = _window.FindControl<TextBox>("FilterBox");
+            if (filterBox != null)
             {
-                _currentFilter = filterBox.Text ?? string.Empty;
-                UpdateDisplayedLog();
-            };
+                filterBox.Watermark = "Filter (case-insensitive)";
+                filterBox.TextChanged += (s, e) =>
+                {
+                    _currentFilter = filterBox.Text ?? string.Empty;
+                    UpdateDisplayedLog();
+                };
+            }
 
-            var optionsPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(5) };
+            var optionsPanel = _window.FindControl<StackPanel>("OptionsPanel") ?? new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(5) };
             _autoScrollCheck = new CheckBox { Content = "Auto-Scroll", IsChecked = true, Margin = new Avalonia.Thickness(5, 0) };
             var wrapLinesCheck = new CheckBox { Content = "Wrap Lines", IsChecked = false, Margin = new Avalonia.Thickness(5, 0) };
             wrapLinesCheck.IsCheckedChanged += (_, _) =>
@@ -73,43 +79,34 @@ namespace Cycloside.Plugins.BuiltIn
             optionsPanel.Children.Add(_autoScrollCheck);
             optionsPanel.Children.Add(wrapLinesCheck);
 
-            _logBox = new TextBox
+            _logBox = _window.FindControl<TextBox>("LogBox");
+            if (_logBox != null)
             {
-                IsReadOnly = true,
-                AcceptsReturn = true,
-                TextWrapping = Avalonia.Media.TextWrapping.NoWrap,
-                FontFamily = "Cascadia Code,Consolas,Menlo,monospace",
-                Margin = new Avalonia.Thickness(5)
-            };
+                _logBox.IsReadOnly = true;
+                _logBox.AcceptsReturn = true;
+                _logBox.TextWrapping = Avalonia.Media.TextWrapping.NoWrap;
+                _logBox.FontFamily = "Cascadia Code,Consolas,Menlo,monospace";
+                _logBox.Margin = new Avalonia.Thickness(5);
+            }
             ScrollViewer.SetHorizontalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
             ScrollViewer.SetVerticalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
             _logBox.TextChanged += OnLogBoxTextChanged;
 
             // --- Assemble UI Layout ---
-            var topPanel = new DockPanel { Margin = new Avalonia.Thickness(5) };
-            var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
-            buttonPanel.Children.Add(openButton);
-            buttonPanel.Children.Add(saveButton);
-            
-            DockPanel.SetDock(buttonPanel, Dock.Left);
-            topPanel.Children.Add(buttonPanel);
-            topPanel.Children.Add(filterBox); 
+            var topPanel = _window.FindControl<DockPanel>("TopPanel");
+            var buttonPanel = _window.FindControl<StackPanel>("ButtonPanel");
+            var mainOptions = _window.FindControl<StackPanel>("OptionsPanel");
 
-            var mainPanel = new DockPanel();
-            DockPanel.SetDock(topPanel, Dock.Top);
-            DockPanel.SetDock(optionsPanel, Dock.Top);
-            mainPanel.Children.Add(topPanel);
-            mainPanel.Children.Add(optionsPanel);
-            mainPanel.Children.Add(_logBox); 
+            buttonPanel?.Children.Add(openButton);
+            buttonPanel?.Children.Add(saveButton);
 
-            // --- Create and Show Window ---
-            _window = new Window
+            if (optionsPanel != null && mainOptions != null)
             {
-                Title = "Log Viewer",
-                Width = 800,
-                Height = 600,
-                Content = mainPanel
-            };
+                foreach (var child in optionsPanel.Children)
+                {
+                    mainOptions.Children.Add(child);
+                }
+            }
 
             _window.Show();
 
