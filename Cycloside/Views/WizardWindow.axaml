@@ -8,40 +8,60 @@
         Title="Cycloside Setup Wizard"
         Background="{DynamicResource ApplicationBackgroundBrush}">
 
-    <DockPanel Margin="15">
+  <DockPanel Margin="15">
 
-        <StackPanel DockPanel.Dock="Bottom"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Spacing="8"
-                    Margin="0,15,0,0">
-            <Button Content="Back" Command="{Binding BackCommand}" />
-            <Button Content="Next" Command="{Binding NextCommand}" IsDefault="True" />
-        </StackPanel>
-
-                <TabControl SelectedIndex="{Binding CurrentStep, Mode=OneWay}" IsEnabled="False">
-            <TabItem Header="Welcome">
-                <TextBlock TextWrapping="Wrap"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Center"
-                           Text="Welcome to Cycloside! This wizard will help you configure the basics." />
-            </TabItem>
-
-            <TabItem Header="Plugins">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Enable built-in plugins:" Margin="0,0,0,5" />
-                    <ScrollViewer Height="200">
-                        <ItemsControl ItemsSource="{Binding Plugins}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PluginItem">
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}" Margin="0,2" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </StackPanel>
-            </TabItem>
-            
-            </TabControl>
+    <DockPanel DockPanel.Dock="Bottom" Margin="0,15,0,0">
+      <TextBlock Text="{Binding ProgressText}"
+                   DockPanel.Dock="Left"
+                   VerticalAlignment="Center"
+                   Opacity="0.7"/>
+      
+      <StackPanel Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8">
+        <Button Content="Back"
+                Command="{Binding BackCommand}"
+                IsEnabled="{Binding CanGoBack}"/>
+        <Button Content="{Binding NextButtonText}"
+                Command="{Binding NextCommand}"
+                IsDefault="True"
+                Classes="accent"/> </StackPanel>
     </DockPanel>
+
+    <TabControl SelectedIndex="{Binding CurrentStep, Mode=OneWay}" IsEnabled="False">
+      <TabControl.PageTransition>
+        <CrossFade Duration="0.25"/>
+      </TabControl.PageTransition>
+
+      <TabItem Header="Welcome">
+        <TextBlock TextWrapping="Wrap"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center"
+                   Text="Welcome to Cycloside! This wizard will help you configure the basics." />
+      </TabItem>
+
+      <TabItem Header="Plugins">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Enable built-in plugins:" Margin="0,0,0,5" />
+          <ScrollViewer Height="200">
+            <ItemsControl ItemsSource="{Binding Plugins}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PluginItem">
+                  <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}" Margin="0,2" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+      </TabItem>
+      
+      <TabItem Header="Finish">
+          <TextBlock TextWrapping="Wrap"
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"
+                     Text="Setup is complete. Click Finish to launch the application." />
+      </TabItem>
+
+    </TabControl>
+  </DockPanel>
 </Window>

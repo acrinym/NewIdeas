@@ -1,48 +1,74 @@
-using Avalonia.Controls;
-using Avalonia.Threading;
-using Avalonia.Media;
-using System;
-using Cycloside;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Cycloside.Services;
+using System;
+using System.Collections.Generic;
+using Avalonia.Threading;
 
-namespace Cycloside.Plugins.BuiltIn;
-
-public class DateTimeOverlayPlugin : IPlugin
+namespace Cycloside.Plugins.BuiltIn
 {
-    private DateTimeOverlayWindow? _window;
-    private DispatcherTimer? _timer;
-
-    public string Name => "Date/Time Overlay";
-    public string Description => "Displays the current date and time in a small overlay.";
-    public Version Version => new(1,0,0);
-
-    public Widgets.IWidget? Widget => null;
-    public bool ForceDefaultTheme => false;
-
-    public void Start()
+    public partial class DateTimeOverlayPlugin : ObservableObject, IPlugin
     {
-        _window = new DateTimeOverlayWindow();
-        CursorManager.ApplyFromSettings(_window, "Plugins");
-        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DateTimeOverlayPlugin));
+        // --- Fields ---
+        private DateTimeOverlayWindow? _window;
+        private DispatcherTimer? _timer;
+        
+        // --- Configuration for new features ---
+        private readonly List<string> _formats = new() { "G", "g", "yyyy-MM-dd HH:mm:ss", "T", "t" };
+        private int _currentFormatIndex = 0;
 
-        var text = _window.FindControl<TextBlock>("TimeText");
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _timer.Tick += (_, _) =>
+        // --- IPlugin Properties ---
+        public string Name => "Date/Time Overlay";
+        public string Description => "A movable overlay that displays the current date and time.";
+        public Version Version => new(1, 1, 0); // Incremented for new features
+        public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
+
+        // --- Observable Properties for UI Binding ---
+        [ObservableProperty]
+        private string _timeText = string.Empty;
+
+        [ObservableProperty]
+        private bool _isLocked = false;
+
+        // --- Plugin Lifecycle ---
+        public void Start()
+        {
+            _window = new DateTimeOverlayWindow { DataContext = this };
+            WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DateTimeOverlayPlugin));
+            
+            // Set up the timer
+            _timer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_,_) => UpdateTime());
+            
+            UpdateTime(); // Update immediately on start
+            _timer.Start();
+            _window.Show();
+        }
+
+        public void Stop()
+        {
+            _timer?.Stop();
+            _window?.Close();
+            _window = null;
+        }
+
+        // --- Commands for the Context Menu ---
+        [RelayCommand]
+        private void CycleFormat()
+        {
+            _currentFormatIndex = (_currentFormatIndex + 1) % _formats.Count;
+            UpdateTime(); // Update text with new format
+        }
+
+        [RelayCommand]
+        private void Close() => Stop();
+
+        // --- Private Helper Methods ---
+        private void UpdateTime()
         {
             var now = DateTime.Now;
-            if (text != null)
-                text.Text = now.ToString("yyyy-MM-dd HH:mm:ss");
+            TimeText = now.ToString(_formats[_currentFormatIndex]);
             PluginBus.Publish("clock:tick", now);
-        };
-        _timer.Start();
-        _window.Show();
-    }
-
-    public void Stop()
-    {
-        _timer?.Stop();
-        _window?.Close();
-        _timer = null;
-        _window = null;
+        }
     }
 }

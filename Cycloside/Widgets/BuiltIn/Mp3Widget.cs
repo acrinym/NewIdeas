@@ -1,23 +1,18 @@
 using Avalonia.Controls;
 using Avalonia.Data;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Cycloside.Plugins.BuiltIn;
+using System;
 
 namespace Cycloside.Widgets.BuiltIn
 {
-    /// <summary>
-    /// The View for the MP3 Player plugin. This class is responsible for building
-    /// the UI controls and binding them to the MP3PlayerPlugin instance (which acts as the ViewModel).
-    /// </summary>
     public class Mp3Widget : IWidget
     {
         private readonly MP3PlayerPlugin _plugin;
 
-        /// <summary>
-        /// The widget receives an instance of its parent plugin via dependency injection.
-        /// This decouples the View from the playback logic.
-        /// </summary>
         public Mp3Widget(MP3PlayerPlugin plugin)
         {
             _plugin = plugin;
@@ -25,26 +20,48 @@ namespace Cycloside.Widgets.BuiltIn
 
         public string Name => "MP3 Player";
 
-        /// <summary>
-        /// Builds the UI for the widget.
-        /// </summary>
         public Control BuildView()
         {
             // --- Create Controls ---
 
-            // The TextBlock for displaying the current track name.
-            // It binds its Text property to the CurrentTrackName property on the plugin.
             var trackDisplay = new TextBlock
             {
                 Foreground = Brushes.White,
-                VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 8)
+                Margin = new Thickness(0, 0, 0, 4)
             };
-            trackDisplay.Bind(TextBlock.TextProperty, new Binding(nameof(_plugin.CurrentTrackName)));
+            trackDisplay.Bind(TextBlock.TextProperty, new Binding(nameof(MP3PlayerPlugin.CurrentTrackName)));
 
-            // Buttons are bound to IRelayCommands on the plugin instance.
-            // This separates the UI action (a click) from the implementation logic.
+            // A slider for showing progress and seeking
+            var progressSlider = new Slider
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0)
+            };
+            // We bind the slider's range and value to the TimeSpan properties in the plugin, converting to TotalSeconds.
+            progressSlider.Bind(RangeBase.MaximumProperty, new Binding(nameof(MP3PlayerPlugin.TotalTime.TotalSeconds)));
+            progressSlider.Bind(RangeBase.ValueProperty, new Binding(nameof(MP3PlayerPlugin.CurrentTime.TotalSeconds)));
+
+            // To implement seeking, we handle when the user releases the slider thumb.
+            // This is more performant than updating on every tiny movement.
+            progressSlider.AddHandler(InputElement.PointerReleasedEvent, (s, e) =>
+            {
+                // We execute the SeekCommand with the slider's final value as a TimeSpan.
+                if (_plugin.SeekCommand.CanExecute(null))
+                {
+                    _plugin.SeekCommand.Execute(TimeSpan.FromSeconds(progressSlider.Value));
+                }
+            }, RoutingStrategies.Tunnel);
+            
+            // TextBlocks to display "01:23 / 04:56" style time.
+            // We use StringFormat in the binding to format the TimeSpan without needing a converter.
+            var currentTimeText = new TextBlock { Foreground = Brushes.LightGray, VerticalAlignment = VerticalAlignment.Center };
+            currentTimeText.Bind(TextBlock.TextProperty, new Binding(nameof(MP3PlayerPlugin.CurrentTime)) { StringFormat = "mm\\:ss" });
+
+            var totalTimeText = new TextBlock { Foreground = Brushes.LightGray, VerticalAlignment = VerticalAlignment.Center };
+            totalTimeText.Bind(TextBlock.TextProperty, new Binding(nameof(MP3PlayerPlugin.TotalTime)) { StringFormat = "mm\\:ss" });
+
+            // Buttons are bound using the type-safe nameof() operator.
             var openButton = new Button { Content = "Open", Command = _plugin.OpenFilesCommand };
             var prevButton = new Button { Content = "◀", Command = _plugin.PreviousCommand };
             var playButton = new Button { Content = "▶", Command = _plugin.PlayCommand };
@@ -52,30 +69,45 @@ namespace Cycloside.Widgets.BuiltIn
             var stopButton = new Button { Content = "■", Command = _plugin.StopCommand };
             var nextButton = new Button { Content = "▶|", Command = _plugin.NextCommand };
 
-            // --- Assemble Layout ---
+            // --- Assemble Layout using a Grid for precise alignment ---
 
+            var mainPanel = new Grid
+            {
+                DataContext = _plugin, // Set DataContext for all children
+                RowDefinitions = new RowDefinitions("Auto,Auto,Auto"), // 3 rows for track, progress, buttons
+                ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), // 3 columns for time, slider, time
+                Margin = new Thickness(4)
+            };
+
+            // Row 0: Track Name
+            Grid.SetRow(trackDisplay, 0);
+            Grid.SetColumn(trackDisplay, 0);
+            Grid.SetColumnSpan(trackDisplay, 3);
+
+            // Row 1: Progress Bar and Times
+            Grid.SetRow(currentTimeText, 1);
+            Grid.SetColumn(currentTimeText, 0);
+            Grid.SetRow(progressSlider, 1);
+            Grid.SetColumn(progressSlider, 1);
+            Grid.SetRow(totalTimeText, 1);
+            Grid.SetColumn(totalTimeText, 2);
+
+            // Row 2: Button Panel
             var buttonPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 Spacing = 5,
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 8, 0, 0)
             };
-            buttonPanel.Children.Add(openButton);
-            buttonPanel.Children.Add(prevButton);
-            buttonPanel.Children.Add(playButton);
-            buttonPanel.Children.Add(pauseButton);
-            buttonPanel.Children.Add(stopButton);
-            buttonPanel.Children.Add(nextButton);
+            buttonPanel.Children.AddRange(new Control[] { openButton, prevButton, playButton, pauseButton, stopButton, nextButton });
+            
+            Grid.SetRow(buttonPanel, 2);
+            Grid.SetColumn(buttonPanel, 0);
+            Grid.SetColumnSpan(buttonPanel, 3);
+            
+            mainPanel.Children.AddRange(new Control[] { trackDisplay, currentTimeText, progressSlider, totalTimeText, buttonPanel });
 
-            var mainPanel = new StackPanel
-            {
-                Orientation = Orientation.Vertical,
-                DataContext = _plugin // Set the DataContext for all children to the plugin instance.
-            };
-            mainPanel.Children.Add(trackDisplay);
-            mainPanel.Children.Add(buttonPanel);
-
-            // The final control is wrapped in a semi-transparent Border for styling.
             return new Border
             {
                 Background = Brushes.Black,

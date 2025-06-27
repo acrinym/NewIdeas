@@ -1,11 +1,8 @@
-// FIX: Added likely using statements for your project's custom manager classes.
-// You may need to adjust these namespaces to match your project structure if they differ.
-using Cycloside;          // core services and models
 using Avalonia.Controls;
+using Avalonia.Input; // Required for PointerPressedEventArgs
 using Avalonia.Markup.Xaml;
-using Cycloside.ViewModels;
-using System; // Required for EventHandler
 using Cycloside.Services;
+using Cycloside.ViewModels;
 
 namespace Cycloside.Views
 {
@@ -18,16 +15,15 @@ namespace Cycloside.Views
             var viewModel = new WizardViewModel();
             DataContext = viewModel;
 
-            // FIX: On first run, apply a known-good default theme instead of trying to load
-            // a theme from settings that don't exist yet. This prevents the "invisible wizard".
-            // The global theme is loaded by the application on startup.
-            
-            // Assuming these are your other custom manager classes
+            // Apply custom styling and effects
             CursorManager.ApplyFromSettings(this, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(WizardWindow));
 
-            // Attach the Close logic to the ViewModel's request
+            // Subscribe to the ViewModel's request to close the window.
             viewModel.RequestClose += (sender, e) => Close();
+
+            // *** ADDED: Attach the event handler for dragging the window ***
+            this.PointerPressed += Window_PointerPressed;
         }
 
         private void InitializeComponent()
@@ -35,7 +31,21 @@ namespace Cycloside.Views
             AvaloniaXamlLoader.Load(this);
         }
 
-        // NOTE: The Back_Click and Next_Click methods have been removed.
-        // Their logic is now handled by commands within the WizardViewModel.
+        /// <summary>
+        /// This event handler makes our borderless window draggable.
+        /// </summary>
+        private void Window_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            // We only want to drag when the left mouse button is pressed.
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                // Check if the DataContext is our ViewModel and if it's not locked.
+                if (DataContext is WizardViewModel vm && !vm.IsLocked)
+                {
+                    // This command tells the OS to start a drag operation.
+                    BeginMoveDrag(e);
+                }
+            }
+        }
     }
 }
