@@ -336,7 +336,6 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly TextBlock _livesText = new() { Margin = new Thickness(10, 0) };
         private readonly TextBlock _timeText = new() { Margin = new Thickness(10, 0) };
         private readonly TextBlock _capturedText = new() { Margin = new Thickness(10, 0) };
-        private readonly FormattedText _messageFormattedText = new();
 
         public JezzballControl()
         {
@@ -448,11 +447,19 @@ namespace Cycloside.Plugins.BuiltIn
             // Draw Message
             if (_gameState.Message != string.Empty)
             {
-                _messageFormattedText.Text = _gameState.Message;
-                _messageFormattedText.Typeface = new Typeface(FontFamily, weight: FontWeight.Bold);
-                _messageFormattedText.FontSize = 48;
-                var textPos = new Point((Bounds.Width - _messageFormattedText.Width) / 2, (Bounds.Height - _messageFormattedText.Height) / 2);
-                context.DrawText(Brushes.White, textPos, _messageFormattedText);
+                var formatted = new FormattedText(
+                    _gameState.Message,
+                    CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface(FontFamily, FontStyle.Normal, FontWeight.Bold),
+                    48,
+                    Brushes.White);
+
+                var textPos = new Point(
+                    (Bounds.Width - formatted.Width) / 2,
+                    (Bounds.Height - formatted.Height) / 2);
+
+                context.DrawText(formatted, textPos);
             }
         }
     }
