@@ -12,6 +12,7 @@
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net8.0-windows'">
     <UseWindowsForms>true</UseWindowsForms>
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +24,8 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.3.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.1" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.1" />
-    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.0.11" />
+    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.3.1" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.3.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
