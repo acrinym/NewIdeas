@@ -115,7 +115,6 @@ public class MacroPlugin : IPlugin
                     try
                     {
                         // Key playback is only supported on Windows via SendKeys.
-                        if (OperatingSystem.IsWindows())
                         if (_isWindows)
                         {
                             // Windows uses SendKeys for playback.
