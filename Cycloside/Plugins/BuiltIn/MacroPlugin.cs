@@ -11,6 +11,7 @@ using System.Text.Json;
 using Cycloside.Services;
 #if WINDOWS
 // Only needed for SendKeys on Windows; no other WinForms types should be referenced.
+using System.Windows.Forms;
 #endif
 
 // Playback uses SendKeys on Windows. On Linux and macOS, SharpHook's
@@ -123,6 +124,7 @@ public class MacroPlugin : IPlugin
 #if WINDOWS
                             // Windows uses SendKeys for playback.
                             System.Windows.Forms.SendKeys.SendWait(key);
+                            SendKeys.SendWait(key);
 #endif
                         }
                         else if (Enum.TryParse<KeyCode>(key, out var code))
