@@ -24,6 +24,17 @@ namespace Cycloside.ViewModels
         [ObservableProperty]
         private int currentStep;
 
+        partial void OnCurrentStepChanged(int value)
+        {
+            OnPropertyChanged(nameof(CanGoBack));
+            OnPropertyChanged(nameof(NextButtonText));
+            OnPropertyChanged(nameof(ProgressText));
+        }
+        
+        public string ProgressText => $"Step {CurrentStep + 1} of 5";
+        public bool CanGoBack => CurrentStep > 0;
+        public string NextButtonText => CurrentStep < 4 ? "Next" : "Finish";
+
         [ObservableProperty]
         private string selectedTheme = string.Empty;
 

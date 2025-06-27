@@ -10,15 +10,7 @@
         Height="450">
   
   <ListBox ItemsSource="{Binding History}"
-           SelectionMode="Single">
-
-    <i:Interaction.Behaviors>
-      <i:EventTriggerBehavior EventName="DoubleTapped">
-        <ia:InvokeCommandAction Command="{Binding EntrySelectedCommand}"
-                                  CommandParameter="{Binding $parent[ListBox].SelectedItem}"/>
-      </i:EventTriggerBehavior>
-    </i:Interaction.Behaviors>
-    
-  </ListBox>
+           SelectionMode="Single"
+           DoubleTapped="ListBox_DoubleTapped" />
   
 </Window>
