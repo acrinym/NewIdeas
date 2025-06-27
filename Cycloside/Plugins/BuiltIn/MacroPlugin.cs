@@ -9,6 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Cycloside.Services;
+#if WINDOWS
+// Only needed for SendKeys on Windows; no other WinForms types should be referenced.
+#endif
 
 // Playback uses SendKeys on Windows. On Linux and macOS, SharpHook's
 // EventSimulator is used to emulate key presses. These platforms may
@@ -20,11 +23,14 @@ namespace Cycloside.Plugins.BuiltIn;
 public class MacroPlugin : IPlugin
 {
     private MacroWindow? _window;
-    private ListBox? _macroList;
-    private TextBox? _nameBox;
-    private TextBox? _repeatBox;
-    private TextBlock? _status;
-    private Button? _playButton;
+    // Explicitly qualify Avalonia types to avoid conflicts with
+    // Windows Forms global using directives when building for
+    // net8.0-windows.
+    private Avalonia.Controls.ListBox? _macroList;
+    private Avalonia.Controls.TextBox? _nameBox;
+    private Avalonia.Controls.TextBox? _repeatBox;
+    private Avalonia.Controls.TextBlock? _status;
+    private Avalonia.Controls.Button? _playButton;
     private IGlobalHook? _hook;
     private readonly bool _isWindows = OperatingSystem.IsWindows();
     // Event simulator from SharpHook is used for cross-platform playback.
@@ -117,8 +123,10 @@ public class MacroPlugin : IPlugin
                         // Key playback is only supported on Windows via SendKeys.
                         if (_isWindows)
                         {
+#if WINDOWS
                             // Windows uses SendKeys for playback.
                             System.Windows.Forms.SendKeys.SendWait(key);
+#endif
                         }
                         else if (Enum.TryParse<KeyCode>(key, out var code))
                         {
