@@ -1,4 +1,9 @@
 using Avalonia.Controls;
+// Alias commonly used Avalonia control types to avoid ambiguity with WinForms
+using AvaloniaListBox = Avalonia.Controls.ListBox;
+using AvaloniaTextBox = Avalonia.Controls.TextBox;
+using AvaloniaTextBlock = Avalonia.Controls.TextBlock;
+using AvaloniaButton = Avalonia.Controls.Button;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using SharpHook;
@@ -24,11 +29,11 @@ namespace Cycloside.Plugins.BuiltIn;
 public class MacroPlugin : IPlugin
 {
     private MacroWindow? _window;
-    private ListBox? _macroList;
-    private TextBox? _nameBox;
-    private TextBox? _repeatBox;
-    private TextBlock? _status;
-    private Button? _playButton;
+    private AvaloniaListBox? _macroList;
+    private AvaloniaTextBox? _nameBox;
+    private AvaloniaTextBox? _repeatBox;
+    private AvaloniaTextBlock? _status;
+    private AvaloniaButton? _playButton;
     private IGlobalHook? _hook;
     private readonly bool _isWindows = OperatingSystem.IsWindows();
     // Event simulator from SharpHook is used for cross-platform playback.
@@ -56,18 +61,18 @@ public class MacroPlugin : IPlugin
     private void BuildUi()
     {
         _window = new MacroWindow();
-        _macroList = _window.FindControl<ListBox>("MacroList");
-        _nameBox = _window.FindControl<TextBox>("NameBox");
-        _repeatBox = _window.FindControl<TextBox>("RepeatBox");
-        _status = _window.FindControl<TextBlock>("StatusText");
-        _playButton = _window.FindControl<Button>("PlayButton");
+        _macroList = _window.FindControl<AvaloniaListBox>("MacroList");
+        _nameBox = _window.FindControl<AvaloniaTextBox>("NameBox");
+        _repeatBox = _window.FindControl<AvaloniaTextBox>("RepeatBox");
+        _status = _window.FindControl<AvaloniaTextBlock>("StatusText");
+        _playButton = _window.FindControl<AvaloniaButton>("PlayButton");
 
-        _window.FindControl<Button>("RecordButton")?.AddHandler(Button.ClickEvent, (_, __) => StartRecording());
-        _window.FindControl<Button>("StopButton")?.AddHandler(Button.ClickEvent, (_, __) => StopRecording());
-        _playButton?.AddHandler(Button.ClickEvent, (_, __) => PlaySelected());
-        _window.FindControl<Button>("SaveButton")?.AddHandler(Button.ClickEvent, (_, __) => { MacroManager.Save(); SetStatus("Saved"); });
-        _window.FindControl<Button>("ReloadButton")?.AddHandler(Button.ClickEvent, (_, __) => { MacroManager.Reload(); RefreshList(); });
-        _window.FindControl<Button>("DeleteButton")?.AddHandler(Button.ClickEvent, (_, __) => DeleteSelected());
+        _window.FindControl<AvaloniaButton>("RecordButton")?.AddHandler(AvaloniaButton.ClickEvent, (_, __) => StartRecording());
+        _window.FindControl<AvaloniaButton>("StopButton")?.AddHandler(AvaloniaButton.ClickEvent, (_, __) => StopRecording());
+        _playButton?.AddHandler(AvaloniaButton.ClickEvent, (_, __) => PlaySelected());
+        _window.FindControl<AvaloniaButton>("SaveButton")?.AddHandler(AvaloniaButton.ClickEvent, (_, __) => { MacroManager.Save(); SetStatus("Saved"); });
+        _window.FindControl<AvaloniaButton>("ReloadButton")?.AddHandler(AvaloniaButton.ClickEvent, (_, __) => { MacroManager.Reload(); RefreshList(); });
+        _window.FindControl<AvaloniaButton>("DeleteButton")?.AddHandler(AvaloniaButton.ClickEvent, (_, __) => DeleteSelected());
 
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(MacroPlugin));
         _window.Show();
