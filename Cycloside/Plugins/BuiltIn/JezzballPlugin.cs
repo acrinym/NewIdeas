@@ -431,7 +431,11 @@ namespace Cycloside.Plugins.BuiltIn
             foreach (var area in _gameState.ActiveAreas) context.DrawRectangle(new Pen(Brushes.SlateGray, 1), area);
 
             // Draw Balls
-            foreach (var ball in _gameState.Balls) context.FillRectangle(Brushes.Crimson, ball.BoundingBox);
+            foreach (var ball in _gameState.Balls)
+            {
+            // Center of the ball is its Position, Brush is the color, Radius is used for both X and Y.
+            context.DrawEllipse(Brushes.Crimson, null, ball.Position, Ball.Radius, Ball.Radius);
+            }
             
             // Draw Building Wall
             if (_gameState.CurrentWall is { } wall)
