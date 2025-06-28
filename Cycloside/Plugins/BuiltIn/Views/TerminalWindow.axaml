@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.TerminalWindow"
+        Title="Terminal"
+        Width="700" Height="500">
+    <DockPanel>
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" Spacing="5" Margin="5">
+            <TextBox x:Name="InputBox" Width="600" />
+            <Button x:Name="RunButton" Content="Run" />
+        </StackPanel>
+        <TextBox x:Name="OutputBox"
+                 AcceptsReturn="True"
+                 IsReadOnly="True"
+                 FontFamily="monospace"
+                 Margin="5" />
+    </DockPanel>
+</Window>

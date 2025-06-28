@@ -129,6 +129,7 @@ public partial class App : Application
         manager.AddPlugin(new ProcessMonitorPlugin());
         manager.AddPlugin(new TaskSchedulerPlugin());
         manager.AddPlugin(new DiskUsagePlugin());
+        manager.AddPlugin(new TerminalPlugin());
         manager.AddPlugin(new LogViewerPlugin());
         manager.AddPlugin(new EnvironmentEditorPlugin());
         manager.AddPlugin(new JezzballPlugin());
