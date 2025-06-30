@@ -70,3 +70,8 @@ foreach (var p in plugins)
 - [Skin Example](examples/skin-example.md)
 - [Custom Cursor Example](examples/custom-cursor-example.md)
 
+## Notes
+
+`EnvironmentEditorPlugin` lists environment variables from the selected scope.
+On Linux and macOS only the `Process` scope is available.
+
