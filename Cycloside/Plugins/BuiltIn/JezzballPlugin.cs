@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -44,6 +45,7 @@ namespace Cycloside.Plugins.BuiltIn
                 CanResize = false, // Prevent resizing to keep the play area consistent
                 Content = layout
             };
+            ThemeManager.ApplyFromSettings(_window, nameof(JezzballPlugin));
             _window.KeyDown += OnWindowKeyDown;
             _window.Show();
         }
