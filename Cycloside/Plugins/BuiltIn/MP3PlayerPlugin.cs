@@ -180,10 +180,21 @@ namespace Cycloside.Plugins.BuiltIn
                 }
             }
             _wavePlayer?.Play();
+            if (_wavePlayer != null)
+            {
+                IsPlaying = true;
+            }
         }
 
         [RelayCommand(CanExecute = nameof(IsPlaying))]
-        private void Pause() => _wavePlayer?.Pause();
+        private void Pause()
+        {
+            if (_wavePlayer != null)
+            {
+                _wavePlayer.Pause();
+                IsPlaying = false;
+            }
+        }
 
         [RelayCommand(CanExecute = nameof(IsPlaying))]
         private void Stop() => CleanupPlayback();

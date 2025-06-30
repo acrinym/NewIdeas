@@ -32,8 +32,16 @@ namespace Cycloside.Plugins.BuiltIn
 
             if (_scopeSelector != null)
             {
-                _scopeSelector.ItemsSource = Enum.GetValues(typeof(EnvironmentVariableTarget));
-                _scopeSelector.SelectedIndex = (int)EnvironmentVariableTarget.User;
+                var targets = OperatingSystem.IsWindows()
+                    ? new[]
+                    {
+                        EnvironmentVariableTarget.User,
+                        EnvironmentVariableTarget.Machine,
+                        EnvironmentVariableTarget.Process
+                    }
+                    : new[] { EnvironmentVariableTarget.Process };
+                _scopeSelector.ItemsSource = targets;
+                _scopeSelector.SelectedItem = targets.First();
                 _scopeSelector.SelectionChanged += (s, e) => LoadVariables();
             }
 

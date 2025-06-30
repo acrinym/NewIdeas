@@ -28,7 +28,7 @@ planned features for the Cycloside project.
   broadcasts changes on `bus:clipboard`. |
 | `DateTimeOverlayPlugin` | Small always-on-top window showing the current time. |
 | `DiskUsagePlugin` | Visualises folder sizes in a tree view. |
-| `EnvironmentEditorPlugin` | Edits environment variables at runtime. |
+| `EnvironmentEditorPlugin` | Edits environment variables at runtime (Process scope only on Linux/macOS). |
 | `FileWatcherPlugin` | Watches a directory and logs file system events. |
 | `JezzballPlugin` | Simple recreation of the classic game. |
 | `LogViewerPlugin` | Tails a log file and filters lines on the fly. |
