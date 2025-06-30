@@ -9,8 +9,17 @@
         Width="300"
         Height="450">
   
-  <ListBox ItemsSource="{Binding History}"
+  <ListBox x:Name="HistoryList"
+           ItemsSource="{Binding History}"
+           SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
            SelectionMode="Single"
-           DoubleTapped="ListBox_DoubleTapped" />
+           DoubleTapped="ListBox_DoubleTapped">
+    <ListBox.ContextMenu>
+      <ContextMenu>
+        <MenuItem Header="Copy" Command="{Binding CopySelectedCommand}"/>
+        <MenuItem Header="Delete" Command="{Binding DeleteSelectedCommand}"/>
+      </ContextMenu>
+    </ListBox.ContextMenu>
+  </ListBox>
   
 </Window>
