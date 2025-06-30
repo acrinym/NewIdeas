@@ -21,7 +21,7 @@ namespace Cycloside.Plugins.BuiltIn
 
         public string Name => "Jezzball";
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
-        public Version Version => new(1, 3, 0); // Version bump for new features
+        public Version Version => new(1, 3, 0);
         public Cycloside.Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
@@ -42,7 +42,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Title = "Jezzball",
                 Width = 800,
                 Height = 600,
-                CanResize = false, // Prevent resizing to keep the play area consistent
+                CanResize = false,
                 Content = layout
             };
             ThemeManager.ApplyFromSettings(_window, nameof(JezzballPlugin));
@@ -431,9 +431,9 @@ namespace Cycloside.Plugins.BuiltIn
         {
             Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
             GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
-            // FIXED: Replaced obsolete Radius property with RadiusX and RadiusY
-            RadiusX = 0.8,
-            RadiusY = 0.8,
+            // FINAL FIX: The RadiusX and RadiusY properties now require a RelativeScalar object.
+            RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative),
+            RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative),
             GradientStops = new GradientStops { new(Colors.DarkSlateBlue, 0), new(Colors.Black, 1) }
         };
         private readonly Pen _wallPen = new(Brushes.Cyan, 4, lineCap: PenLineCap.Round);
