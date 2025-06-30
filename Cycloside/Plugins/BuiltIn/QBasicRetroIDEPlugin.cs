@@ -13,6 +13,7 @@ using CliWrap;
 using System.Diagnostics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -104,6 +105,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
+            _window.Opened += (_, _) => _editor?.Focus();
             _window.Show();
             UpdateStatus();
             LaunchQB64();
@@ -138,13 +140,14 @@ namespace Cycloside.Plugins.BuiltIn
                 Command = SaveCommand
             };
             var saveAsItem = new MenuItem { Header = "Save _As..." };
+            var openInQb64Item = new MenuItem { Header = "Open in _QB64" };
             var exitItem = new MenuItem { Header = "E_xit" };
 
             var fileItems = new object[]
             {
                 newItem, openItem, openProjectItem,
                 new Separator(),
-                saveItem, saveAsItem,
+                saveItem, saveAsItem, openInQb64Item,
                 new Separator(),
                 exitItem
             };
@@ -153,6 +156,7 @@ namespace Cycloside.Plugins.BuiltIn
             openItem.Click += async (s, e) => await OpenFile();
             openProjectItem.Click += async (s, e) => await OpenProject();
             saveAsItem.Click += async (s, e) => await SaveFileAs();
+            openInQb64Item.Click += async (s, e) => await LaunchQb64Editor();
             exitItem.Click += (s, e) => _window?.Close();
 
             var undoItem = new MenuItem { Header = "_Undo" };
@@ -421,6 +425,33 @@ namespace Cycloside.Plugins.BuiltIn
             else
             {
                 SetStatus("Executable not found. Compile the file first (F5).");
+            }
+        }
+
+        private async Task LaunchQb64Editor()
+        {
+            if (string.IsNullOrEmpty(_currentFile))
+            {
+                await SaveFileAs();
+                if (string.IsNullOrEmpty(_currentFile))
+                {
+                    return;
+                }
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = _qb64Path,
+                    Arguments = $"\"{_currentFile}\"",
+                    UseShellExecute = false
+                });
+                SetStatus("QB64 launched.");
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"Error launching QB64: {ex.Message}");
             }
         }
         #endregion

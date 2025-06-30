@@ -35,7 +35,7 @@ planned features for the Cycloside project.
 | `MP3PlayerPlugin` | Basic audio player built on NAudio. |
 | `MacroPlugin` | Records keyboard macros and saves them to disk. Playback is Windows-only. |
 | `ProcessMonitorPlugin` | Lists running processes with CPU and memory usage. |
-| `QBasicRetroIDEPlugin` | Minimal IDE for creating QBasic-style programs. |
+| `QBasicRetroIDEPlugin` | Minimal IDE for creating QBasic-style programs. Includes an option to launch QB64 for editing. |
 | `TaskSchedulerPlugin` | Schedules tasks with cron-style expressions. |
 | `TextEditorPlugin` | Notepad-like editor supporting multiple files. |
 | `WallpaperPlugin` | Changes the desktop wallpaper periodically. |
