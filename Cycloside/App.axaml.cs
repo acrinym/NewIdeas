@@ -156,6 +156,8 @@ public partial class App : Application
         manager.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
+        // Ensure queued log messages are written before exit
+        Logger.Shutdown();
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
         {
             appLifetime.Shutdown();
@@ -291,8 +293,9 @@ public partial class App : Application
             try
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
-                var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
-                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
+            var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
+                       ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
+                       ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
                     using var stream = new MemoryStream();
@@ -330,15 +333,5 @@ public partial class App : Application
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
-    
-    private class RelayCommand : System.Windows.Input.ICommand
-    {
-        private readonly Action<object?> _execute;
-        public event EventHandler? CanExecuteChanged { add {} remove {} }
-        public RelayCommand(Action<object?> execute) => _execute = execute;
-        public RelayCommand(Action execute) : this(_ => execute()) {}
-        public bool CanExecute(object? parameter) => true;
-        public void Execute(object? parameter) => _execute(parameter);
-    }
     #endregion
 }

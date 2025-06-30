@@ -48,8 +48,10 @@ namespace Cycloside.Visuals
         public bool StartPlugin(WinampVisPluginAdapter plugin)
         {
             if (!_plugins.Contains(plugin)) return false;
-            
+
+            _window?.Close();
             _window = new VisHostWindow();
+            _window.Closed += (_, _) => StopPlugin();
             _window.Show();
             
             plugin.SetParent(_window.GetHandle());
@@ -60,10 +62,20 @@ namespace Cycloside.Visuals
             // Subscribe to the audio data when the plugin starts
             PluginBus.Subscribe(AudioDataTopic, _busHandler);
 
-            _renderTimer = new System.Timers.Timer(33); // ~30 FPS render target
+            _renderTimer?.Stop();
+            _renderTimer = new System.Timers.Timer(33);
             _renderTimer.Elapsed += (_, _) => _active?.Render();
             _renderTimer.Start();
             return true;
+        }
+
+        private void StopPlugin()
+        {
+            PluginBus.Unsubscribe(AudioDataTopic, _busHandler);
+            _renderTimer?.Stop();
+            _active?.Quit();
+            _active = null;
+            _window = null;
         }
 
         /// <summary>
@@ -80,11 +92,7 @@ namespace Cycloside.Visuals
 
         public void Dispose()
         {
-            // Unsubscribe from the bus to prevent memory leaks
-            PluginBus.Unsubscribe(AudioDataTopic, _busHandler);
-            _renderTimer?.Stop();
-            _window?.Close();
-            _active?.Quit();
+            StopPlugin();
             foreach (var p in _plugins)
             {
                 p.Quit();

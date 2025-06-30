@@ -9,7 +9,7 @@
     </Application.Styles>
 
     <!--
-      NEW: This is the central resource dictionary for the application.
+      REFACTOR: This is the central resource dictionary for the application.
       It's empty by default.
       Your 'ThemeManager' or 'SkinManager' (in C#) will be responsible for loading 
       the selected skin file (e.g., Mint.axaml) and merging its resources here at runtime.
