@@ -26,21 +26,23 @@
                 <!-- The Exit command will be handled by the ViewModel -->
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
             </MenuItem>
-            <MenuItem Header="_Plugins">
-                <!-- 
-                  This is the dynamic menu for your plugins.
-                  It binds to an "AvailablePlugins" collection in the ViewModel.
-                  For each plugin, it creates a new menu item.
+            <MenuItem Header="_Plugins"
+                      ItemsSource="{Binding AvailablePlugins}">
+                <!--
+                  Dynamically generate a menu item for each available plugin.
+                  Each item invokes the StartPluginCommand when clicked.
                 -->
-                <ItemsControl ItemsSource="{Binding AvailablePlugins}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="p:IPlugin">
-                            <MenuItem Header="{Binding Name}"
-                                      Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
-                                      CommandParameter="{Binding}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <MenuItem.ItemTemplate>
+                    <DataTemplate x:DataType="p:IPlugin">
+                        <MenuItem Header="{Binding Name}"
+                                  Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
+                                  CommandParameter="{Binding}" />
+                    </DataTemplate>
+                </MenuItem.ItemTemplate>
+            </MenuItem>
+            <MenuItem Header="_Settings">
+                <MenuItem Header="Theme _Settings..." Click="OpenThemeSettings"/>
+                <MenuItem Header="Skin/Theme _Editor..." Click="OpenSkinEditor"/>
             </MenuItem>
         </Menu>
 
