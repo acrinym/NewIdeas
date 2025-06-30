@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn"
+        x:Class="Cycloside.Plugins.BuiltIn.AddEditVariableWindow"
+        x:CompileBindings="False"
+        Title="{Binding Title}"
+        Width="450" Height="220"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+    <Design.DataContext>
+        <local:AddEditVariableViewModel />
+    </Design.DataContext>
+    <Grid RowDefinitions="Auto,Auto,*" Margin="15">
+        <TextBlock Grid.Row="0" Text="Variable Name:"/>
+        <TextBox Grid.Row="0" Margin="110,0,0,0" Text="{Binding Key}" IsEnabled="{Binding !IsEditMode}"/>
+        <TextBlock Grid.Row="1" Text="Variable Value:" Margin="0,10,0,0"/>
+        <TextBox Grid.Row="1" Margin="110,10,0,0" Text="{Binding Value}"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+            <Button Content="OK" IsDefault="True" Command="{Binding OkCommand}" CommandParameter="{Binding $parent[Window]}"/>
+            <Button Content="Cancel" IsCancel="True" Command="{Binding CancelCommand}" CommandParameter="{Binding $parent[Window]}"/>
+        </StackPanel>
+    </Grid>
+</Window>
