@@ -82,7 +82,7 @@ public partial class App : Application
         
         // --- View & ViewModel Creation ---
         var viewModel = new MainWindowViewModel(manager.Plugins);
-        var mainWindow = new MainWindow
+        var mainWindow = new MainWindow(manager)
         {
             DataContext = viewModel
         };

@@ -1,13 +1,27 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Cycloside.Plugins;
 using Cycloside.Services;
 
 namespace Cycloside;
 
 public partial class MainWindow : Window
 {
+    private readonly PluginManager _manager;
+
+    // Parameterless constructor for designer support
     public MainWindow()
     {
+        InitializeComponent();
+        _manager = null!;
+        ThemeManager.ApplyFromSettings(this, nameof(MainWindow));
+        CursorManager.ApplyFromSettings(this, nameof(MainWindow));
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(MainWindow));
+    }
+
+    public MainWindow(PluginManager manager)
+    {
+        _manager = manager;
         InitializeComponent();
         ThemeManager.ApplyFromSettings(this, nameof(MainWindow));
         CursorManager.ApplyFromSettings(this, nameof(MainWindow));
@@ -15,7 +29,7 @@ public partial class MainWindow : Window
     }
 
     private void OpenThemeSettings(object? sender, RoutedEventArgs e) =>
-        new ThemeSettingsWindow().Show();
+        new ThemeSettingsWindow(_manager).Show();
 
     private void OpenSkinEditor(object? sender, RoutedEventArgs e) =>
         new SkinThemeEditorWindow().Show();
