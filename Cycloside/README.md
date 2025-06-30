@@ -79,6 +79,11 @@ Use **Settings → Plugin Manager** to:
 
 All plugin states are persistently stored.
 
+## ⚙️ Control Panel
+Launch **Settings → Control Panel** for a single place to tweak common options.
+It lets you toggle startup behavior, set the `dotnet` path and jump to other
+settings windows.
+
 ## 📦 Plugin Marketplace
 `PluginMarketplace` can fetch a list of available modules from a remote URL and
 install them directly into your `Plugins/` directory. Each download is verified

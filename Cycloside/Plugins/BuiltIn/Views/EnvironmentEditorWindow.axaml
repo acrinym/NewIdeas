@@ -1,16 +1,26 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Cycloside.Plugins.BuiltIn.EnvironmentEditorWindow"
+        x:CompileBindings="False"
         Title="Environment Variables Editor"
-        Width="700" Height="500">
-    <DockPanel>
-        <StackPanel Orientation="Horizontal" Spacing="5" Margin="5" DockPanel.Dock="Top">
-            <Label Content="Scope:"/>
-            <ComboBox x:Name="ScopeSelector" Width="150"/>
-            <Button x:Name="AddButton" Content="Add"/>
-            <Button x:Name="RemoveButton" Content="Remove"/>
-            <Button x:Name="SaveButton" Content="Save Changes"/>
+        Width="800" Height="600">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="15">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="20">
+            <TextBlock Text="Variable Scope:" VerticalAlignment="Center"/>
+            <RadioButton x:Name="UserScope" Content="User" GroupName="Scope"/>
+            <RadioButton x:Name="MachineScope" Content="System/Machine" GroupName="Scope"/>
+            <RadioButton x:Name="ProcessScope" Content="Process" GroupName="Scope"/>
         </StackPanel>
-        <DataGrid x:Name="Grid"/>
-    </DockPanel>
+        <DataGrid Grid.Row="1" x:Name="Grid" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="True" GridLinesVisibility="All">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Variable" Binding="{Binding Key}" Width="250"/>
+                <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button x:Name="AddButton" Content="Add..."/>
+            <Button x:Name="EditButton" Content="Edit..."/>
+            <Button x:Name="DeleteButton" Content="Delete"/>
+        </StackPanel>
+    </Grid>
 </Window>

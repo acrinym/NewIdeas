@@ -31,9 +31,11 @@ namespace Cycloside.ViewModels
             OnPropertyChanged(nameof(ProgressText));
         }
         
-        public string ProgressText => $"Step {CurrentStep + 1} of 5";
+        private const int TotalSteps = 3; // Number of TabItems in WizardWindow
+
+        public string ProgressText => $"Step {CurrentStep + 1} of {TotalSteps}";
         public bool CanGoBack => CurrentStep > 0;
-        public string NextButtonText => CurrentStep < 4 ? "Next" : "Finish";
+        public string NextButtonText => CurrentStep < TotalSteps - 1 ? "Next" : "Finish";
 
         [ObservableProperty]
         private string selectedTheme = string.Empty;
@@ -79,7 +81,7 @@ namespace Cycloside.ViewModels
         private void Next()
         {
             // If we are not on the last step, just advance to the next tab.
-            if (CurrentStep < 4) // Assuming 5 steps, indexed 0-4
+            if (CurrentStep < TotalSteps - 1)
             {
                 CurrentStep++;
                 return;

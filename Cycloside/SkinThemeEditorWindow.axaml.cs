@@ -88,7 +88,16 @@ public partial class SkinThemeEditorWindow : Window
     private void Preview(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         var xaml = Editor.Text ?? string.Empty;
+
+        // Profile memory before creating the preview window
+        var before = GC.GetTotalMemory(forceFullCollection: true);
+
         var win = new PreviewWindow(xaml);
+
+        // Log the memory consumed by the preview window
+        var after = GC.GetTotalMemory(forceFullCollection: true);
+        Logger.Log($"PreviewWindow allocation: {after - before} bytes");
+
         win.Show();
     }
 }
@@ -118,5 +127,18 @@ public class PreviewWindow : Window
             };
         }
         // WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(PreviewWindow));
+
+        // Ensure resources are released when the window closes
+        Closed += OnClosed;
+    }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        if (Content is IDisposable disposable)
+            disposable.Dispose();
+
+        Content = null;
+        DataContext = null;
+        Closed -= OnClosed;
     }
 }

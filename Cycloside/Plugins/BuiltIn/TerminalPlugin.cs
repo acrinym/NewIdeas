@@ -4,6 +4,8 @@ using Cycloside.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 
 namespace Cycloside.Plugins.BuiltIn;
 
@@ -81,36 +83,40 @@ public class TerminalPlugin : IPlugin
         _historyIndex = _history.Count;
 
         AppendOutput($"> {cmd}\n");
-        try
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = GetShell(),
-                Arguments = GetShellArguments(cmd),
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+        _inputBox.Text = string.Empty;
 
-            using var process = Process.Start(psi);
-            if (process != null)
+        Task.Run(() =>
+        {
+            try
             {
-                var stdout = process.StandardOutput.ReadToEnd();
-                var stderr = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-                if (!string.IsNullOrEmpty(stdout)) AppendOutput(stdout);
-                if (!string.IsNullOrEmpty(stderr)) AppendOutput(stderr);
+                var psi = new ProcessStartInfo
+                {
+                    FileName = GetShell(),
+                    Arguments = GetShellArguments(cmd),
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(psi);
+                if (process != null)
+                {
+                    var stdout = process.StandardOutput.ReadToEnd();
+                    var stderr = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+                    if (!string.IsNullOrEmpty(stdout))
+                        Dispatcher.UIThread.InvokeAsync(() => AppendOutput(stdout));
+                    if (!string.IsNullOrEmpty(stderr))
+                        Dispatcher.UIThread.InvokeAsync(() => AppendOutput(stderr));
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            AppendOutput($"Error: {ex.Message}\n");
-        }
-        finally
-        {
-            _inputBox.Text = string.Empty;
-        }
+            catch (Exception ex)
+            {
+                Dispatcher.UIThread.InvokeAsync(() => AppendOutput($"Error: {ex.Message}\n"));
+                Logger.Log($"Terminal plugin error: {ex.Message}");
+            }
+        });
     }
 
     private void AppendOutput(string text)

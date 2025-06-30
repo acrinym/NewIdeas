@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Avalonia.Input;
 using Cycloside.Hotkeys;
 
-namespace Cycloside;
+namespace Cycloside.Services;
 
 /// <summary>
 /// Cross-platform hotkey registration based on Avalonia.Controls.HotKeys.

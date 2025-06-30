@@ -37,6 +37,15 @@ namespace Cycloside.Plugins.BuiltIn
         /// </summary>
         public ObservableCollection<string> History { get; } = new();
 
+        [ObservableProperty]
+        private string? _selectedEntry;
+
+        partial void OnSelectedEntryChanged(string? value)
+        {
+            CopySelectedCommand.NotifyCanExecuteChanged();
+            DeleteSelectedCommand.NotifyCanExecuteChanged();
+        }
+
         // --- Plugin Lifecycle & Disposal ---
 
         public void Start()
@@ -76,6 +85,28 @@ namespace Cycloside.Plugins.BuiltIn
                 await clipboard.SetTextAsync(selectedText);
             }
         }
+
+        [RelayCommand(CanExecute = nameof(HasSelection))]
+        private async Task CopySelected()
+        {
+            if (string.IsNullOrEmpty(SelectedEntry)) return;
+
+            var clipboard = Application.Current?.GetMainTopLevel()?.Clipboard;
+            if (clipboard != null)
+            {
+                await clipboard.SetTextAsync(SelectedEntry);
+            }
+        }
+
+        [RelayCommand(CanExecute = nameof(HasSelection))]
+        private void DeleteSelected()
+        {
+            if (string.IsNullOrEmpty(SelectedEntry)) return;
+            History.Remove(SelectedEntry);
+            SelectedEntry = null;
+        }
+
+        private bool HasSelection() => !string.IsNullOrEmpty(SelectedEntry);
 
         // --- Private Logic ---
 

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -16,6 +17,7 @@ namespace Cycloside.Plugins.BuiltIn
     public class JezzballPlugin : IPlugin
     {
         private Window? _window;
+        private JezzballControl? _control;
 
         public string Name => "Jezzball";
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
@@ -25,22 +27,48 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
+            _control = new JezzballControl();
+
+            var restartButton = new Button { Content = "Restart", Margin = new Thickness(5) };
+            restartButton.Click += (_, _) => _control.RestartGame();
+
+            var layout = new DockPanel();
+            DockPanel.SetDock(restartButton, Dock.Top);
+            layout.Children.Add(restartButton);
+            layout.Children.Add(_control);
+
             _window = new Window
             {
                 Title = "Jezzball",
                 Width = 800,
                 Height = 600,
                 CanResize = false, // Prevent resizing to keep the play area consistent
-                Content = new JezzballControl()
+                Content = layout
             };
+            ThemeManager.ApplyFromSettings(_window, nameof(JezzballPlugin));
+            _window.KeyDown += OnWindowKeyDown;
             _window.Show();
         }
 
         public void Stop()
         {
-            (_window?.Content as IDisposable)?.Dispose();
-            _window?.Close();
+            if (_window != null)
+            {
+                _window.KeyDown -= OnWindowKeyDown;
+                (_window.Content as IDisposable)?.Dispose();
+                _window.Close();
+            }
             _window = null;
+            _control = null;
+        }
+
+        private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.R)
+            {
+                _control?.RestartGame();
+                e.Handled = true;
+            }
         }
     }
     #endregion
@@ -468,6 +496,8 @@ namespace Cycloside.Plugins.BuiltIn
             _timer.Start();
             _stopwatch.Start();
         }
+
+        public void RestartGame() => _gameState.StartNewGame();
 
         public void Dispose()
         {

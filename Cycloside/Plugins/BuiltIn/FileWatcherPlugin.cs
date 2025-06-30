@@ -27,10 +27,12 @@ namespace Cycloside.Plugins.BuiltIn
             _window = new FileWatcherWindow();
             _selectFolderButton = _window.FindControl<Button>("SelectFolderButton");
             var clearLogButton = _window.FindControl<Button>("ClearLogButton");
+            var saveLogButton = _window.FindControl<Button>("SaveLogButton");
             _log = _window.FindControl<TextBox>("LogBox");
 
             _selectFolderButton?.AddHandler(Button.ClickEvent, async (s, e) => await SelectAndWatchDirectoryAsync());
             clearLogButton?.AddHandler(Button.ClickEvent, (s, e) => { if (_log != null) _log.Text = string.Empty; });
+            saveLogButton?.AddHandler(Button.ClickEvent, async (s, e) => await SaveLogAsync());
 
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(FileWatcherPlugin));
             _window.Show();
@@ -108,6 +110,34 @@ namespace Cycloside.Plugins.BuiltIn
                 _log.Text += $"[{timestamp}] {msg}{Environment.NewLine}";
                 _log.CaretIndex = _log.Text.Length; // Auto-scroll to the end
             });
+        }
+
+        /// <summary>
+        /// Saves the current log text to a user-selected file.
+        /// </summary>
+        private async Task SaveLogAsync()
+        {
+            if (_window == null || _log == null) return;
+
+            var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save Log As...",
+                SuggestedFileName = $"watch_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
+                DefaultExtension = "txt",
+                FileTypeChoices = new[] { new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } } }
+            });
+
+            if (file?.Path.LocalPath != null)
+            {
+                try
+                {
+                    await File.WriteAllTextAsync(file.Path.LocalPath, _log.Text);
+                }
+                catch (Exception ex)
+                {
+                    Log($"[ERROR] Could not save file: {ex.Message}");
+                }
+            }
         }
 
         public void Stop()

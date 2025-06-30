@@ -7,7 +7,7 @@ using Avalonia.Platform.Storage;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 // Managers and other helpers live in the base Cycloside namespace
-using Cycloside.ViewModels;    // For MainWindowViewModel
+using Cycloside.ViewModels;      // For MainWindowViewModel
 using Cycloside.Services;
 using Cycloside.Views;          // For WizardWindow and MainWindow
 using System;
@@ -82,7 +82,7 @@ public partial class App : Application
         
         // --- View & ViewModel Creation ---
         var viewModel = new MainWindowViewModel(manager.Plugins);
-        var mainWindow = new MainWindow
+        var mainWindow = new MainWindow(manager)
         {
             DataContext = viewModel
         };
@@ -156,6 +156,8 @@ public partial class App : Application
         manager.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
+        // Ensure queued log messages are written before exit
+        Logger.Shutdown();
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
         {
             appLifetime.Shutdown();
@@ -193,9 +195,10 @@ public partial class App : Application
             Items =
             {
                 new NativeMenuItem("Settings") { Menu = new NativeMenu { Items = {
+                    new NativeMenuItem("Control Panel...") { Command = new RelayCommand(() => new ControlPanelWindow(manager).Show()) },
                     new NativeMenuItem("Plugin Manager...") { Command = new RelayCommand(() => new PluginSettingsWindow(manager).Show()) },
                     new NativeMenuItem("Generate New Plugin...") { Command = new RelayCommand(() => new PluginDevWizard().Show()) },
-                    new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow().Show()) },
+                    new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
                     new NativeMenuItem("Skin/Theme Editor...") { Command = new RelayCommand(() => new SkinThemeEditorWindow().Show()) },
                     new NativeMenuItem("Workspace Profiles...") { Command = new RelayCommand(() => new ProfileEditorWindow(manager).Show()) },
                     new NativeMenuItem("Runtime Settings...") { Command = new RelayCommand(() => new RuntimeSettingsWindow(manager).Show()) }
@@ -242,13 +245,17 @@ public partial class App : Application
 
         menuItem.Command = new RelayCommand(o =>
         {
-            if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
-            else manager.EnablePlugin(plugin);
-            
-            menuItem.IsChecked = manager.IsEnabled(plugin);
-            settings.PluginEnabled[plugin.Name] = menuItem.IsChecked;
+            var item = (NativeMenuItem)o!;
+            if (manager.IsEnabled(plugin))
+                manager.DisablePlugin(plugin);
+            else
+                manager.EnablePlugin(plugin);
+
+            item.IsChecked = manager.IsEnabled(plugin);
+            settings.PluginEnabled[plugin.Name] = item.IsChecked;
             SettingsManager.Save();
         });
+        menuItem.CommandParameter = menuItem;
 
         return menuItem;
     }
@@ -258,8 +265,9 @@ public partial class App : Application
         var menuItem = new NativeMenuItem(title);
         menuItem.Click += async (_, _) =>
         {
-            var window = new Window();
-            var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
+
+            var files = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
                 FileTypeFilter = new[] { filter }
@@ -288,6 +296,7 @@ public partial class App : Application
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
                 var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
+                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
                            ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
@@ -327,14 +336,6 @@ public partial class App : Application
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
     
-    private class RelayCommand : System.Windows.Input.ICommand
-    {
-        private readonly Action<object?> _execute;
-        public event EventHandler? CanExecuteChanged { add {} remove {} }
-        public RelayCommand(Action<object?> execute) => _execute = execute;
-        public RelayCommand(Action execute) : this(_ => execute()) {}
-        public bool CanExecute(object? parameter) => true;
-        public void Execute(object? parameter) => _execute(parameter);
-    }
+    // RelayCommand moved to Cycloside.Services namespace
     #endregion
 }

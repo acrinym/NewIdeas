@@ -7,9 +7,13 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using AvaloniaEdit;
 using AvaloniaEdit.Highlighting;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using CliWrap;
+using System.Diagnostics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,13 +21,14 @@ using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
-    public class QBasicRetroIDEPlugin : IPlugin
+    public partial class QBasicRetroIDEPlugin : ObservableObject, IPlugin
     {
         private Window? _window;
         private TextEditor? _editor;
         private TreeView? _projectTree;
         private TextBlock? _status;
         private string _qb64Path = "qb64";
+        private Process? _qb64Process;
         private string? _currentFile;
         private string? _projectPath;
         private bool _isCompiling = false;
@@ -37,8 +42,8 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
-            _qb64Path = SettingsManager.Settings.ComponentSkins.TryGetValue("QB64Path", out var list) && list.Count > 0 && !string.IsNullOrWhiteSpace(list[0])
-                ? list[0]
+            _qb64Path = !string.IsNullOrWhiteSpace(SettingsManager.Settings.QB64Path)
+                ? SettingsManager.Settings.QB64Path
                 : "qb64";
 
             _editor = new TextEditor
@@ -48,7 +53,8 @@ namespace Cycloside.Plugins.BuiltIn
                 Background = new SolidColorBrush(Color.FromRgb(0, 0, 128)),
                 Foreground = Brushes.White,
                 FontFamily = new FontFamily("Consolas"),
-                FontSize = 14
+                FontSize = 14,
+                IsReadOnly = false
             };
             _editor.TextArea.Caret.PositionChanged += (_, _) => UpdateStatus();
             _editor.TextChanged += (_, _)
@@ -98,10 +104,14 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = dock
             };
 
+            ThemeManager.ApplyFromSettings(_window, nameof(QBasicRetroIDEPlugin));
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
+            _window.Opened += (_, _) => _editor?.Focus();
             _window.Show();
+            LaunchQB64Editor();
             UpdateStatus();
+            LaunchQB64();
         }
 
         public void Stop()
@@ -111,7 +121,29 @@ namespace Cycloside.Plugins.BuiltIn
             _editor = null;
             _projectTree = null;
             _status = null;
+            try
+            {
+                if (_qb64Process != null && !_qb64Process.HasExited)
+                {
+                    _qb64Process.Kill();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to close QB64 process: {ex.Message}");
+            }
+            finally
+            {
+                _qb64Process = null;
+            }
         }
+
+        // Commands exposed for UI bindings
+        [RelayCommand]
+        private async Task Save() => await SaveFile();
+
+        [RelayCommand]
+        private async Task Compile() => await CompileAndRun();
 
         #region UI Construction
         private Menu BuildMenu()
@@ -119,15 +151,21 @@ namespace Cycloside.Plugins.BuiltIn
             var newItem = new MenuItem { Header = "_New", InputGesture = new KeyGesture(Key.N, KeyModifiers.Control) };
             var openItem = new MenuItem { Header = "_Open...", InputGesture = new KeyGesture(Key.O, KeyModifiers.Control) };
             var openProjectItem = new MenuItem { Header = "Open _Project..." };
-            var saveItem = new MenuItem { Header = "_Save", InputGesture = new KeyGesture(Key.S, KeyModifiers.Control) };
+            var saveItem = new MenuItem
+            {
+                Header = "_Save",
+                InputGesture = new KeyGesture(Key.S, KeyModifiers.Control),
+                Command = SaveCommand
+            };
             var saveAsItem = new MenuItem { Header = "Save _As..." };
+            var openInQb64Item = new MenuItem { Header = "Open in _QB64" };
             var exitItem = new MenuItem { Header = "E_xit" };
 
             var fileItems = new object[]
             {
                 newItem, openItem, openProjectItem,
                 new Separator(),
-                saveItem, saveAsItem,
+                saveItem, saveAsItem, openInQb64Item,
                 new Separator(),
                 exitItem
             };
@@ -135,8 +173,8 @@ namespace Cycloside.Plugins.BuiltIn
             newItem.Click += async (s, e) => await NewFile();
             openItem.Click += async (s, e) => await OpenFile();
             openProjectItem.Click += async (s, e) => await OpenProject();
-            saveItem.Click += async (s, e) => await SaveFile();
             saveAsItem.Click += async (s, e) => await SaveFileAs();
+            openInQb64Item.Click += async (s, e) => await LaunchQb64Editor();
             exitItem.Click += (s, e) => _window?.Close();
 
             var undoItem = new MenuItem { Header = "_Undo" };
@@ -163,14 +201,20 @@ namespace Cycloside.Plugins.BuiltIn
 
             var runItems = new[]
             {
-                new MenuItem { Header = "_Compile & Run", InputGesture = new KeyGesture(Key.F5) },
+                new MenuItem
+                {
+                    Header = "_Compile & Run",
+                    InputGesture = new KeyGesture(Key.F5),
+                    Command = CompileCommand
+                },
                 new MenuItem { Header = "Run _Executable" }
             };
-            runItems[0].Click += async (s, e) => await CompileAndRun();
             runItems[1].Click += async (s, e) => await RunExecutable();
 
             var settingsItem = new MenuItem { Header = "_Settings..." };
             settingsItem.Click += (s, e) => OpenSettings();
+            var launchQb64Item = new MenuItem { Header = "Launch _QB64" };
+            launchQb64Item.Click += (s, e) => LaunchQB64(_currentFile);
 
             var helpItem = new MenuItem { Header = "_About" };
             helpItem.Click += (s, e) => ShowHelp();
@@ -183,7 +227,7 @@ namespace Cycloside.Plugins.BuiltIn
                     new MenuItem { Header = "_Edit", ItemsSource = editItems },
                     new MenuItem { Header = "_Search", ItemsSource = searchItems },
                     new MenuItem { Header = "_Run", ItemsSource = runItems },
-                    new MenuItem { Header = "T_ools", ItemsSource = new [] { settingsItem } },
+                    new MenuItem { Header = "T_ools", ItemsSource = new [] { settingsItem, launchQb64Item } },
                     new MenuItem { Header = "_Help", ItemsSource = new [] { helpItem } }
                 }
             };
@@ -206,6 +250,7 @@ namespace Cycloside.Plugins.BuiltIn
             _editor.Text = string.Empty;
             _currentFile = null;
             UpdateStatus(false);
+            LaunchQB64Editor();
         }
 
         private async Task OpenProject()
@@ -253,6 +298,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _hasUnsavedChanges = false;
                 if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
                 UpdateStatus(false);
+                LaunchQB64Editor(path);
             }
             catch (Exception ex)
             {
@@ -317,6 +363,24 @@ namespace Cycloside.Plugins.BuiltIn
             catch (Exception ex)
             {
                 SetStatus($"Error reading project directory: {ex.Message}");
+            }
+        }
+
+        private void LaunchQB64Editor(string? file = null)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = _qb64Path,
+                    UseShellExecute = true,
+                    Arguments = string.IsNullOrWhiteSpace(file) ? string.Empty : $"\"{file}\""
+                };
+                _qb64Process = Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"QB64 launch error: {ex.Message}");
             }
         }
         #endregion
@@ -399,6 +463,33 @@ namespace Cycloside.Plugins.BuiltIn
             else
             {
                 SetStatus("Executable not found. Compile the file first (F5).");
+            }
+        }
+
+        private async Task LaunchQb64Editor()
+        {
+            if (string.IsNullOrEmpty(_currentFile))
+            {
+                await SaveFileAs();
+                if (string.IsNullOrEmpty(_currentFile))
+                {
+                    return;
+                }
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = _qb64Path,
+                    Arguments = $"\"{_currentFile}\"",
+                    UseShellExecute = false
+                });
+                SetStatus("QB64 launched.");
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"Error launching QB64: {ex.Message}");
             }
         }
         #endregion
@@ -488,7 +579,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 _qb64Path = settingsWindow.QB64Path;
                 _editor.FontSize = settingsWindow.FontSize;
-                SettingsManager.Settings.ComponentSkins["QB64Path"] = new List<string> { _qb64Path };
+                SettingsManager.Settings.QB64Path = _qb64Path;
                 SettingsManager.Save();
             }
         }
@@ -509,12 +600,34 @@ namespace Cycloside.Plugins.BuiltIn
                     VerticalAlignment = VerticalAlignment.Center
                 }
             };
+            ThemeManager.ApplyFromSettings(aboutWindow, nameof(QBasicRetroIDEPlugin));
             if (_window != null)
             {
                 aboutWindow.ShowDialog(_window);
             }
         }
 
+        private void LaunchQB64(string? file = null)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = _qb64Path,
+                    UseShellExecute = true
+                };
+                if (!string.IsNullOrWhiteSpace(file))
+                {
+                    psi.ArgumentList.Add(file);
+                }
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"Error launching QB64: {ex.Message}");
+            }
+        }
+        
         private async Task<string?> ShowInputDialog(string title, string prompt)
         {
             var inputWindow = new InputWindow(title, prompt);
@@ -571,8 +684,23 @@ namespace Cycloside.Plugins.BuiltIn
 
                 var panel = new StackPanel { Margin = new Thickness(10), Spacing = 5 };
                 panel.Children.Add(new TextBlock { Text = "QB64 Executable Path:" });
-                _pathBox = new TextBox { Text = path };
-                panel.Children.Add(_pathBox);
+                var pathPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
+                _pathBox = new TextBox { Text = path, Width = 250 };
+                var browseButton = new Button { Content = "Browse..." };
+                browseButton.Click += async (_, _) =>
+                {
+                    var result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                    {
+                        Title = "Select QB64 Executable"
+                    });
+                    if (result.FirstOrDefault()?.TryGetLocalPath() is { } p)
+                    {
+                        _pathBox.Text = p;
+                    }
+                };
+                pathPanel.Children.Add(_pathBox);
+                pathPanel.Children.Add(browseButton);
+                panel.Children.Add(pathPanel);
                 panel.Children.Add(new TextBlock { Text = "Font Size:" });
                 _fontSizeBox = new TextBox { Text = fontSize.ToString() };
                 panel.Children.Add(_fontSizeBox);

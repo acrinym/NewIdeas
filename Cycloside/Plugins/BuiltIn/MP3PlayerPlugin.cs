@@ -10,6 +10,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Cycloside.Services;
+using Cycloside.Plugins.BuiltIn.Views;
 using NAudio.Wave;
 using NAudio.Dsp; // Required for FastFourierTransform
 
@@ -109,7 +110,8 @@ namespace Cycloside.Plugins.BuiltIn
         private IWavePlayer? _wavePlayer;
         private AudioFileReader? _audioReader;
         private float _volumeBeforeMute;
-        private SpectrumAnalyzer? _spectrumAnalyzer; // Field for our new analyzer
+        private SpectrumAnalyzer? _spectrumAnalyzer;
+        private MP3PlayerWindow? _window;
 
         // --- IPlugin Properties ---
         public string Name => "MP3 Player";
@@ -135,12 +137,25 @@ namespace Cycloside.Plugins.BuiltIn
         }
 
         // --- Plugin Lifecycle & Disposal ---
-        void IPlugin.Start() { /* No startup action needed */ }
-        void IPlugin.Stop() => Dispose();
+        public void Start()
+        {
+            if (_window != null)
+            {
+                _window.Activate();
+                return;
+            }
+            _window = new MP3PlayerWindow { DataContext = this };
+            WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
+            _window.Closed += (_, _) => _window = null;
+            _window.Show();
+        }
+
+        public void Stop() => Dispose();
         public void Dispose()
         {
             _progressTimer.Stop();
             CleanupPlayback();
+            _window?.Close();
             GC.SuppressFinalize(this);
         }
 
@@ -148,8 +163,9 @@ namespace Cycloside.Plugins.BuiltIn
         [RelayCommand]
         private async Task AddFiles()
         {
-            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
-            var openResult = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var topLevel = _window ?? Application.Current?.GetMainTopLevel();
+            if (topLevel is null) return;
+            var openResult = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Select MP3 Files", AllowMultiple = true,
                 FileTypeFilter = new[] { new FilePickerFileType("MP3 Files") { Patterns = new[] { "*.mp3" } } }
@@ -180,13 +196,24 @@ namespace Cycloside.Plugins.BuiltIn
                 }
             }
             _wavePlayer?.Play();
+            if (_wavePlayer != null)
+            {
+                IsPlaying = true;
+            }
         }
 
         [RelayCommand(CanExecute = nameof(IsPlaying))]
-        private void Pause() => _wavePlayer?.Pause();
+        private void Pause()
+        {
+            if (_wavePlayer != null)
+            {
+                _wavePlayer.Pause();
+                IsPlaying = false;
+            }
+        }
 
         [RelayCommand(CanExecute = nameof(IsPlaying))]
-        private void Stop() => CleanupPlayback();
+        private void StopPlayback() => CleanupPlayback();
 
         [RelayCommand(CanExecute = nameof(HasNext))]
         private void Next() => SkipToTrack(_currentIndex + 1);
@@ -246,7 +273,7 @@ namespace Cycloside.Plugins.BuiltIn
             catch (Exception ex)
             {
                 var friendlyError = $"Failed to load: {Path.GetFileName(filePath)}";
-                Console.WriteLine($"[ERROR] {friendlyError} | Details: {ex.Message}");
+                Logger.Log($"[ERROR] {friendlyError} | Details: {ex.Message}");
                 ErrorMessage = friendlyError;
                 CleanupPlayback();
                 return false;
@@ -258,8 +285,7 @@ namespace Cycloside.Plugins.BuiltIn
             IsPlaying = false;
             if (e.Exception is null && _audioReader is not null && _audioReader.Position >= _audioReader.Length)
             {
-                if (HasNext()) Next();
-                else CleanupPlayback();
+                Dispatcher.UIThread.InvokeAsync(() => { if (HasNext()) Next(); else CleanupPlayback(); });
             }
         }
 
@@ -268,13 +294,20 @@ namespace Cycloside.Plugins.BuiltIn
             if (_audioReader is null || !IsPlaying || _spectrumAnalyzer is null) return;
             CurrentTime = _audioReader.CurrentTime;
 
-            var spectrum = new byte[576 * 2];
-            var waveform = new byte[576 * 2];
-            
+            var spectrum = new byte[576];
+            var waveform = new byte[576];
+
             _spectrumAnalyzer.GetFftData(spectrum);
             _spectrumAnalyzer.GetWaveformData(waveform);
 
-            var payload = new AudioData(spectrum, waveform);
+            var stereoSpectrum = new byte[1152];
+            var stereoWaveform = new byte[1152];
+            Array.Copy(spectrum, 0, stereoSpectrum, 0, 576);
+            Array.Copy(spectrum, 0, stereoSpectrum, 576, 576);
+            Array.Copy(waveform, 0, stereoWaveform, 0, 576);
+            Array.Copy(waveform, 0, stereoWaveform, 576, 576);
+
+            var payload = new AudioData(stereoSpectrum, stereoWaveform);
             PluginBus.Publish(AudioDataTopic, payload);
         }
 
@@ -317,7 +350,7 @@ namespace Cycloside.Plugins.BuiltIn
             
             PlayCommand.NotifyCanExecuteChanged();
             PauseCommand.NotifyCanExecuteChanged();
-            StopCommand.NotifyCanExecuteChanged();
+            StopPlaybackCommand.NotifyCanExecuteChanged();
         }
     }
 }
