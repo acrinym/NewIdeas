@@ -10,7 +10,6 @@ using AvaloniaEdit.Highlighting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CliWrap;
-using System.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
