@@ -7,6 +7,8 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using AvaloniaEdit;
 using AvaloniaEdit.Highlighting;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using CliWrap;
 using System;
 using System.Collections.Generic;
@@ -17,7 +19,7 @@ using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
-    public class QBasicRetroIDEPlugin : IPlugin
+    public partial class QBasicRetroIDEPlugin : ObservableObject, IPlugin
     {
         private Window? _window;
         private TextEditor? _editor;
@@ -48,7 +50,8 @@ namespace Cycloside.Plugins.BuiltIn
                 Background = new SolidColorBrush(Color.FromRgb(0, 0, 128)),
                 Foreground = Brushes.White,
                 FontFamily = new FontFamily("Consolas"),
-                FontSize = 14
+                FontSize = 14,
+                IsReadOnly = false
             };
             _editor.TextArea.Caret.PositionChanged += (_, _) => UpdateStatus();
             _editor.TextChanged += (_, _)
@@ -113,13 +116,25 @@ namespace Cycloside.Plugins.BuiltIn
             _status = null;
         }
 
+        // Commands exposed for UI bindings
+        [RelayCommand]
+        private async Task Save() => await SaveFile();
+
+        [RelayCommand]
+        private async Task Compile() => await CompileAndRun();
+
         #region UI Construction
         private Menu BuildMenu()
         {
             var newItem = new MenuItem { Header = "_New", InputGesture = new KeyGesture(Key.N, KeyModifiers.Control) };
             var openItem = new MenuItem { Header = "_Open...", InputGesture = new KeyGesture(Key.O, KeyModifiers.Control) };
             var openProjectItem = new MenuItem { Header = "Open _Project..." };
-            var saveItem = new MenuItem { Header = "_Save", InputGesture = new KeyGesture(Key.S, KeyModifiers.Control) };
+            var saveItem = new MenuItem
+            {
+                Header = "_Save",
+                InputGesture = new KeyGesture(Key.S, KeyModifiers.Control),
+                Command = SaveCommand
+            };
             var saveAsItem = new MenuItem { Header = "Save _As..." };
             var exitItem = new MenuItem { Header = "E_xit" };
 
@@ -135,7 +150,6 @@ namespace Cycloside.Plugins.BuiltIn
             newItem.Click += async (s, e) => await NewFile();
             openItem.Click += async (s, e) => await OpenFile();
             openProjectItem.Click += async (s, e) => await OpenProject();
-            saveItem.Click += async (s, e) => await SaveFile();
             saveAsItem.Click += async (s, e) => await SaveFileAs();
             exitItem.Click += (s, e) => _window?.Close();
 
@@ -163,10 +177,14 @@ namespace Cycloside.Plugins.BuiltIn
 
             var runItems = new[]
             {
-                new MenuItem { Header = "_Compile & Run", InputGesture = new KeyGesture(Key.F5) },
+                new MenuItem
+                {
+                    Header = "_Compile & Run",
+                    InputGesture = new KeyGesture(Key.F5),
+                    Command = CompileCommand
+                },
                 new MenuItem { Header = "Run _Executable" }
             };
-            runItems[0].Click += async (s, e) => await CompileAndRun();
             runItems[1].Click += async (s, e) => await RunExecutable();
 
             var settingsItem = new MenuItem { Header = "_Settings..." };
