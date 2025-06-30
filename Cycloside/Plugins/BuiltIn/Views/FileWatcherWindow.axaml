@@ -7,6 +7,7 @@
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" DockPanel.Dock="Top">
             <Button x:Name="SelectFolderButton" Content="Select Folder to Watch" Margin="5"/>
             <Button x:Name="ClearLogButton" Content="Clear Log" Margin="5,0,5,5"/>
+            <Button x:Name="SaveLogButton" Content="Save Log" Margin="0,0,5,5"/>
         </StackPanel>
         <TextBox x:Name="LogBox" AcceptsReturn="True" IsReadOnly="True" Margin="5"/>
     </DockPanel>
