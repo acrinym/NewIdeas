@@ -33,4 +33,7 @@ public partial class MainWindow : Window
 
     private void OpenSkinEditor(object? sender, RoutedEventArgs e) =>
         new SkinThemeEditorWindow().Show();
+
+    private void OpenControlPanel(object? sender, RoutedEventArgs e) =>
+        new ControlPanelWindow(_manager).Show();
 }

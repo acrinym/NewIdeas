@@ -7,7 +7,7 @@ using Avalonia.Platform.Storage;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 // Managers and other helpers live in the base Cycloside namespace
-using Cycloside.ViewModels;    // For MainWindowViewModel
+using Cycloside.ViewModels;      // For MainWindowViewModel
 using Cycloside.Services;
 using Cycloside.Views;          // For WizardWindow and MainWindow
 using System;
@@ -195,6 +195,7 @@ public partial class App : Application
             Items =
             {
                 new NativeMenuItem("Settings") { Menu = new NativeMenu { Items = {
+                    new NativeMenuItem("Control Panel...") { Command = new RelayCommand(() => new ControlPanelWindow(manager).Show()) },
                     new NativeMenuItem("Plugin Manager...") { Command = new RelayCommand(() => new PluginSettingsWindow(manager).Show()) },
                     new NativeMenuItem("Generate New Plugin...") { Command = new RelayCommand(() => new PluginDevWizard().Show()) },
                     new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
@@ -264,8 +265,9 @@ public partial class App : Application
         var menuItem = new NativeMenuItem(title);
         menuItem.Click += async (_, _) =>
         {
-            var window = new Window();
-            var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
+
+            var files = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
                 FileTypeFilter = new[] { filter }
@@ -293,9 +295,9 @@ public partial class App : Application
             try
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
-            var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
-                       ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
-                       ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
+                var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
+                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
+                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
                     using var stream = new MemoryStream();
@@ -333,5 +335,7 @@ public partial class App : Application
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
+    
+    // RelayCommand moved to Cycloside.Services namespace
     #endregion
 }
