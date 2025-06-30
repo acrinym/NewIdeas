@@ -156,6 +156,7 @@ public partial class App : Application
         manager.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
+        Logger.Shutdown();
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
         {
             appLifetime.Shutdown();
@@ -262,8 +263,9 @@ public partial class App : Application
         var menuItem = new NativeMenuItem(title);
         menuItem.Click += async (_, _) =>
         {
-            var window = new Window();
-            var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
+
+            var files = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
                 FileTypeFilter = new[] { filter }
@@ -331,14 +333,6 @@ public partial class App : Application
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
     
-    private class RelayCommand : System.Windows.Input.ICommand
-    {
-        private readonly Action<object?> _execute;
-        public event EventHandler? CanExecuteChanged { add {} remove {} }
-        public RelayCommand(Action<object?> execute) => _execute = execute;
-        public RelayCommand(Action execute) : this(_ => execute()) {}
-        public bool CanExecute(object? parameter) => true;
-        public void Execute(object? parameter) => _execute(parameter);
-    }
+    // RelayCommand moved to Cycloside.Services namespace
     #endregion
 }
