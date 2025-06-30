@@ -104,6 +104,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = dock
             };
 
+            ThemeManager.ApplyFromSettings(_window, nameof(QBasicRetroIDEPlugin));
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
             _window.Opened += (_, _) => _editor?.Focus();
@@ -599,6 +600,7 @@ namespace Cycloside.Plugins.BuiltIn
                     VerticalAlignment = VerticalAlignment.Center
                 }
             };
+            ThemeManager.ApplyFromSettings(aboutWindow, nameof(QBasicRetroIDEPlugin));
             if (_window != null)
             {
                 aboutWindow.ShowDialog(_window);
