@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn"
+        x:Class="Cycloside.Plugins.BuiltIn.TextEditorWindow"
+        x:DataType="local:TextEditorPlugin"
+        Title="Cycloside Editor - Untitled"
+        Width="700" Height="550">
+    <DockPanel>
+        <StackPanel x:Name="ButtonPanel"
+                    Orientation="Horizontal"
+                    Spacing="5"
+                    Margin="5"
+                    DockPanel.Dock="Top">
+            <Button Content="New" Command="{Binding NewFileCommand}" />
+            <Button Content="Open" Command="{Binding OpenFileCommand}" />
+            <Button Content="Save" Command="{Binding SaveFileCommand}" />
+            <Button Content="Save As" Command="{Binding SaveFileAsCommand}" />
+        </StackPanel>
+        <Border x:Name="StatusBar" DockPanel.Dock="Bottom" Height="24" Background="CornflowerBlue">
+            <TextBlock x:Name="StatusBlock" Margin="5" VerticalAlignment="Center" />
+        </Border>
+        <TextBox x:Name="EditorBox" AcceptsReturn="True" AcceptsTab="True" FontFamily="monospace" Margin="5,0,5,5"/>
+    </DockPanel>
+</Window>

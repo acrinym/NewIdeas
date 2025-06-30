@@ -1,101 +1,77 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml;
+using Avalonia.Media;
+using ReactiveUI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive;
+using System.Threading.Tasks;
 
 namespace Cycloside.Plugins.BuiltIn
 {
     public class EnvironmentEditorPlugin : IPlugin
     {
-        private Window? _window;
+        private EnvironmentEditorWindow? _window;
         private DataGrid? _grid;
-        private ComboBox? _scopeSelector;
+        private RadioButton? _userScope;
+        private RadioButton? _machineScope;
+        private RadioButton? _processScope;
+        private EnvironmentVariableTarget _currentTarget = EnvironmentVariableTarget.User;
         private readonly ObservableCollection<EnvItem> _items = new();
 
         public string Name => "Environment Editor";
         public string Description => "View and edit environment variables for different scopes.";
-        public Version Version => new(1, 0, 0);
+        public Version Version => new(1, 1, 0);
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
-            // --- DataGrid Setup ---
-            _grid = new DataGrid
+            _window = new EnvironmentEditorWindow();
+            _grid = _window.FindControl<DataGrid>("Grid");
+            _userScope = _window.FindControl<RadioButton>("UserScope");
+            _machineScope = _window.FindControl<RadioButton>("MachineScope");
+            _processScope = _window.FindControl<RadioButton>("ProcessScope");
+            var addButton = _window.FindControl<Button>("AddButton");
+            var editButton = _window.FindControl<Button>("EditButton");
+            var deleteButton = _window.FindControl<Button>("DeleteButton");
+
+            if (OperatingSystem.IsWindows())
             {
-                ItemsSource = _items,
-                CanUserAddRows = false, // We will use a dedicated button for adding
-                CanUserDeleteRows = false, // We will use a dedicated button for deleting
-                AutoGenerateColumns = false, // We will define columns manually for better control
-                Columns =
-                {
-                    new DataGridTextColumn { Header = "Key", Binding = new Avalonia.Data.Binding("Key"), Width = new DataGridLength(1, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Value", Binding = new Avalonia.Data.Binding("Value"), Width = new DataGridLength(2, DataGridLengthUnitType.Star) }
-                }
-            };
-
-            // --- UI Control Setup ---
-            _scopeSelector = new ComboBox
+                _userScope!.IsChecked = true;
+                _userScope.Checked += (_, _) => UpdateScope(EnvironmentVariableTarget.User);
+                _machineScope!.Checked += (_, _) => UpdateScope(EnvironmentVariableTarget.Machine);
+                _processScope!.Checked += (_, _) => UpdateScope(EnvironmentVariableTarget.Process);
+            }
+            else
             {
-                ItemsSource = Enum.GetValues(typeof(EnvironmentVariableTarget)),
-                SelectedIndex = (int)EnvironmentVariableTarget.User // Default to User scope, which is more useful
-            };
-            _scopeSelector.SelectionChanged += (s, e) => LoadVariables();
+                _userScope!.IsEnabled = false;
+                _machineScope!.IsEnabled = false;
+                _processScope!.IsChecked = true;
+                _processScope.Checked += (_, _) => UpdateScope(EnvironmentVariableTarget.Process);
+                _currentTarget = EnvironmentVariableTarget.Process;
+            }
 
-            var addButton = new Button { Content = "Add" };
-            addButton.Click += (_, _) => _items.Add(new EnvItem { Key = "NEW_VARIABLE", Value = "new value" });
+            addButton?.AddHandler(Button.ClickEvent, async (_, _) => await AddVariableAsync());
+            editButton?.AddHandler(Button.ClickEvent, async (_, _) => await EditVariableAsync());
+            deleteButton?.AddHandler(Button.ClickEvent, async (_, _) => await DeleteVariableAsync());
 
-            var removeButton = new Button { Content = "Remove" };
-            removeButton.Click += (_, _) =>
+            if (_grid != null)
             {
-                if (_grid?.SelectedItem is EnvItem selectedItem)
-                {
-                    _items.Remove(selectedItem);
-                }
-            };
-            
-            var saveButton = new Button { Content = "Save Changes" };
-            saveButton.Click += (_, _) => SaveVariables();
-            
-            // --- Layout Panels ---
-            var buttonPanel = new StackPanel 
-            { 
-                Orientation = Orientation.Horizontal, 
-                Spacing = 5, 
-                Margin = new Thickness(5) 
-            };
-            buttonPanel.Children.Add(new Label { Content = "Scope:" });
-            buttonPanel.Children.Add(_scopeSelector);
-            buttonPanel.Children.Add(addButton);
-            buttonPanel.Children.Add(removeButton);
-            buttonPanel.Children.Add(saveButton);
+                _grid.ItemsSource = _items;
+            }
 
-            var mainPanel = new DockPanel();
-            DockPanel.SetDock(buttonPanel, Dock.Top);
-            mainPanel.Children.Add(buttonPanel);
-            mainPanel.Children.Add(_grid); // The DataGrid will fill the remaining space
-
-            // --- Window Setup ---
-            _window = new Window
-            {
-                Title = "Environment Variables Editor",
-                Width = 700,
-                Height = 500,
-                Content = mainPanel
-            };
-            // Assuming these are your custom manager classes
-            // ThemeManager.ApplyFromSettings(_window, "Plugins");
-            // WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(EnvironmentEditorPlugin));
-            
-            LoadVariables(); // Initial load
+            LoadVariables();
             _window.Show();
         }
-        
+
         private void LoadVariables()
         {
-            if (_scopeSelector?.SelectedItem is not EnvironmentVariableTarget target) return;
+            var target = _currentTarget;
             
             _items.Clear();
             try
@@ -118,7 +94,7 @@ namespace Cycloside.Plugins.BuiltIn
         
         private void SaveVariables()
         {
-            if (_scopeSelector?.SelectedItem is not EnvironmentVariableTarget target) return;
+            var target = _currentTarget;
 
             // Important: A straight save is destructive. We need to compare to original state.
             // First, get all original keys for the target scope.
@@ -165,15 +141,152 @@ namespace Cycloside.Plugins.BuiltIn
             LoadVariables();
         }
 
+        private void UpdateScope(EnvironmentVariableTarget target)
+        {
+            _currentTarget = target;
+            LoadVariables();
+        }
+
+        private async Task AddVariableAsync()
+        {
+            if (_window is null) return;
+
+            var vm = new AddEditVariableViewModel();
+            var dlg = new AddEditVariableWindow { DataContext = vm };
+            var result = await dlg.ShowDialog<EnvironmentEditorPlugin.EnvItem?>(_window);
+            if (result != null)
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable(result.Key, result.Value, _currentTarget);
+                    LoadVariables();
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage("Error Adding Variable", ex.Message);
+                }
+            }
+        }
+
+        private async Task EditVariableAsync()
+        {
+            if (_window is null || _grid?.SelectedItem is not EnvItem selected) return;
+
+            var vm = new AddEditVariableViewModel(selected);
+            var dlg = new AddEditVariableWindow { DataContext = vm };
+            var result = await dlg.ShowDialog<EnvironmentEditorPlugin.EnvItem?>(_window);
+            if (result != null)
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable(result.Key, result.Value, _currentTarget);
+                    LoadVariables();
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage("Error Editing Variable", ex.Message);
+                }
+            }
+        }
+
+        private async Task DeleteVariableAsync()
+        {
+            if (_window is null || _grid?.SelectedItem is not EnvItem selected) return;
+
+            var confirm = new ConfirmationWindow("Confirm Delete", $"Delete variable '{selected.Key}'?");
+            if (await confirm.ShowDialog<bool>(_window))
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable(selected.Key, null, _currentTarget);
+                    LoadVariables();
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage("Error Deleting Variable", ex.Message);
+                }
+            }
+        }
+
+        private void ShowMessage(string title, string message)
+        {
+            if (_window is null) return;
+            var msg = new MessageWindow(title, message);
+            msg.ShowDialog(_window);
+        }
+
         public void Stop()
         {
             _window?.Close();
         }
 
-        private class EnvItem
+        public class EnvItem
         {
             public string Key { get; set; } = string.Empty;
             public string Value { get; set; } = string.Empty;
+        }
+
+        private class ConfirmationWindow : Window
+        {
+            public ConfirmationWindow(string title, string message)
+            {
+                Title = title;
+                Width = 350;
+                SizeToContent = SizeToContent.Height;
+                WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+                var msg = new TextBlock
+                {
+                    Text = message,
+                    Margin = new Thickness(15),
+                    TextWrapping = TextWrapping.Wrap
+                };
+
+                var yes = new Button { Content = "Yes", IsDefault = true, Margin = new Thickness(5) };
+                yes.Click += (_, _) => Close(true);
+                var no = new Button { Content = "No", IsCancel = true, Margin = new Thickness(5) };
+                no.Click += (_, _) => Close(false);
+
+                var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
+                buttons.Children.Add(yes);
+                buttons.Children.Add(no);
+
+                var panel = new StackPanel { Spacing = 10 };
+                panel.Children.Add(msg);
+                panel.Children.Add(buttons);
+                Content = panel;
+            }
+        }
+
+        private class MessageWindow : Window
+        {
+            public MessageWindow(string title, string message)
+            {
+                Title = title;
+                Width = 350;
+                SizeToContent = SizeToContent.Height;
+                WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+                var msg = new TextBlock
+                {
+                    Text = message,
+                    Margin = new Thickness(15),
+                    TextWrapping = TextWrapping.Wrap
+                };
+
+                var ok = new Button { Content = "OK", IsDefault = true, Margin = new Thickness(5) };
+                ok.Click += (_, _) => Close();
+
+                var panel = new StackPanel { Spacing = 10 };
+                panel.Children.Add(msg);
+                panel.Children.Add(new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Children = { ok }
+                });
+                Content = panel;
+            }
         }
     }
 }

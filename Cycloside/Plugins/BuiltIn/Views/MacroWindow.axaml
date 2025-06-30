@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.MacroWindow"
+        Title="Macro Engine"
+        Width="400" Height="350">
+    <StackPanel Margin="5" x:Name="MainPanel">
+        <ListBox x:Name="MacroList" Height="150"/>
+        <TextBox x:Name="NameBox" Watermark="Macro Name"/>
+        <StackPanel Orientation="Horizontal" Spacing="5">
+            <TextBlock Text="Repeat"/>
+            <TextBox x:Name="RepeatBox" Width="40" Text="1"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="5">
+            <Button x:Name="RecordButton" Content="Record"/>
+            <Button x:Name="StopButton" Content="Stop"/>
+            <Button x:Name="PlayButton" Content="Play"/>
+            <Button x:Name="SaveButton" Content="Save"/>
+            <Button x:Name="ReloadButton" Content="Reload"/>
+            <Button x:Name="DeleteButton" Content="Delete"/>
+        </StackPanel>
+        <TextBlock x:Name="StatusText" Margin="5" Text="Ready"/>
+    </StackPanel>
+</Window>

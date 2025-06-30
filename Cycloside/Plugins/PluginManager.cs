@@ -1,4 +1,4 @@
-using Cycloside.Services; // Assuming a 'Services' namespace for your managers
+using Cycloside; // access SettingsManager and other core services
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -83,6 +83,8 @@ namespace Cycloside.Plugins
             _watcher.Changed += eventHandler;
             _watcher.Deleted += eventHandler;
             _watcher.Renamed += new RenamedEventHandler((s, e) => _reloadTimer.Change(500, Timeout.Infinite));
+
+            ApplyEnabledSettings();
         }
 
         public void LoadPlugins()
@@ -147,10 +149,14 @@ namespace Cycloside.Plugins
                 GC.WaitForPendingFinalizers();
 
                 LoadPlugins();
+                StartWatching();
                 _notify?.Invoke("Plugins have been reloaded.");
-                
-                // Re-apply settings to the newly loaded plugins
+
+                // Re-apply settings to the newly loaded plugins so reloaded
+                // plugins are enabled or disabled based on the active profile.
                 WorkspaceProfiles.Apply(SettingsManager.Settings.ActiveProfile, this);
+
+                ApplyEnabledSettings();
             }
         }
 
@@ -224,6 +230,10 @@ namespace Cycloside.Plugins
             }
         }
 
+        // StartPlugin is kept for backward compatibility with older code.
+        // It simply calls EnablePlugin, which starts and tracks the plugin.
+        public void StartPlugin(IPlugin plugin) => EnablePlugin(plugin);
+
         public void DisablePlugin(IPlugin plugin)
         {
             var info = GetInfo(plugin);
@@ -248,38 +258,17 @@ namespace Cycloside.Plugins
 
         public bool IsEnabled(IPlugin plugin) => GetInfo(plugin)?.IsEnabled ?? false;
         public PluginChangeStatus GetStatus(IPlugin plugin) => GetInfo(plugin)?.Status ?? PluginChangeStatus.None;
-    }
 
-    /// <summary>
-    /// Custom AssemblyLoadContext to allow for true unloading of plugin DLLs.
-    /// </summary>
-    public class PluginLoadContext : AssemblyLoadContext
-    {
-        private readonly AssemblyDependencyResolver _resolver;
-
-        public PluginLoadContext(string pluginPath) : base(isCollectible: true)
+        private void ApplyEnabledSettings()
         {
-            _resolver = new AssemblyDependencyResolver(pluginPath);
-        }
-
-        protected override Assembly? Load(AssemblyName assemblyName)
-        {
-            string? assemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
-            if (assemblyPath != null)
+            var enabled = SettingsManager.Settings.PluginEnabled;
+            foreach (var info in _pluginInfos)
             {
-                return LoadFromAssemblyPath(assemblyPath);
+                if (enabled.TryGetValue(info.Instance.Name, out var shouldEnable) && shouldEnable)
+                {
+                    EnablePlugin(info.Instance);
+                }
             }
-            return null;
-        }
-
-        protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
-        {
-            string? libraryPath = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
-            if (libraryPath != null)
-            {
-                return LoadUnmanagedDllFromPath(libraryPath);
-            }
-            return IntPtr.Zero;
         }
     }
 }

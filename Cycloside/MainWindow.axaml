@@ -3,8 +3,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Cycloside.ViewModels"
+        xmlns:p="clr-namespace:Cycloside.Plugins"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="Cycloside.MainWindow"
+        x:Name="RootWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Cycloside"
         WindowStartupLocation="CenterScreen"
@@ -24,21 +26,24 @@
                 <!-- The Exit command will be handled by the ViewModel -->
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
             </MenuItem>
-            <MenuItem Header="_Plugins">
-                <!-- 
-                  This is the dynamic menu for your plugins.
-                  It binds to an "AvailablePlugins" collection in the ViewModel.
-                  For each plugin, it creates a new menu item.
+            <MenuItem Header="_Plugins"
+                      ItemsSource="{Binding AvailablePlugins}">
+                <!--
+                  Dynamically generate a menu item for each available plugin.
+                  Each item invokes the StartPluginCommand when clicked.
                 -->
-                <ItemsControl ItemsSource="{Binding AvailablePlugins}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <MenuItem Header="{Binding Name}"
-                                      Command="{Binding DataContext.StartPluginCommand, RelativeSource={RelativeSource AncestorType=Menu}}"
-                                      CommandParameter="{Binding}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <MenuItem.ItemTemplate>
+                    <DataTemplate x:DataType="p:IPlugin">
+                        <MenuItem Header="{Binding Name}"
+                                  Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
+                                  CommandParameter="{Binding}" />
+                    </DataTemplate>
+                </MenuItem.ItemTemplate>
+            </MenuItem>
+            <MenuItem Header="_Settings">
+                <MenuItem Header="_Control Panel..." Click="OpenControlPanel"/>
+                <MenuItem Header="Theme _Settings..." Click="OpenThemeSettings"/>
+                <MenuItem Header="Skin/Theme _Editor..." Click="OpenSkinEditor"/>
             </MenuItem>
         </Menu>
 
@@ -50,7 +55,7 @@
         -->
         <Canvas Name="DesktopCanvas">
             <Canvas.Background>
-                <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" Radius="0.7">
+                <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="70%" RadiusY="70%">
                     <GradientStop Color="{DynamicResource ThemeAccentColor4}" Offset="0" />
                     <GradientStop Color="{DynamicResource ThemeBackgroundColor}" Offset="1" />
                 </RadialGradientBrush>

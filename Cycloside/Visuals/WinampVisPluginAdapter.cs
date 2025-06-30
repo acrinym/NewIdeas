@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Cycloside.Interop;
+using Cycloside.Plugins.BuiltIn;
 
 namespace Cycloside.Visuals;
 
@@ -71,6 +72,12 @@ public class WinampVisPluginAdapter
     public void Render()
     {
         _render?.Invoke(ref _module);
+    }
+
+    public void UpdateAudioData(AudioData data)
+    {
+        Array.Copy(data.Spectrum, _module.spectrumData, Math.Min(data.Spectrum.Length, _module.spectrumData.Length));
+        Array.Copy(data.Waveform, _module.waveformData, Math.Min(data.Waveform.Length, _module.waveformData.Length));
     }
 
     public void Quit()

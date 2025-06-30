@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.LogViewerWindow"
+        Title="Log Viewer"
+        Width="800" Height="600">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="5" x:Name="TopPanel">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" x:Name="ButtonPanel" />
+            <TextBox x:Name="FilterBox" Width="200" Margin="5,0" />
+        </DockPanel>
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" x:Name="OptionsPanel" Margin="5" />
+        <TextBox x:Name="LogBox" AcceptsReturn="True" FontFamily="Cascadia Code,Consolas,Menlo,monospace" Margin="5" />
+    </DockPanel>
+</Window>

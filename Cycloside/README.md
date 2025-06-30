@@ -18,7 +18,7 @@ Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` 
 
 Built-in examples:
 - **Date/Time Overlay** – always-on-top clock overlay
-- **MP3 Player** – plays music from the `Music` folder and has a widget
+- **MP3 Player** – choose songs and control playback with a widget
 - **Macro Engine** – record and replay simple keyboard macros
 - **Text Editor** – small editor for notes or Markdown
 - **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
@@ -79,14 +79,19 @@ Use **Settings → Plugin Manager** to:
 
 All plugin states are persistently stored.
 
+## ⚙️ Control Panel
+Launch **Settings → Control Panel** for a single place to tweak common options.
+It lets you toggle startup behavior, set the `dotnet` path and jump to other
+settings windows.
+
 ## 📦 Plugin Marketplace
 `PluginMarketplace` can fetch a list of available modules from a remote URL and
 install them directly into your `Plugins/` directory. Each download is verified
 with a SHA256 hash before it is placed on disk.
 
 ## 🎨 Skins
-Place Avalonia style files inside the `Skins` folder to theme the interface. The
-current skin is loaded at startup based on `ActiveSkin` in `settings.json` and can be changed from **Settings → Runtime Settings**.
+Place Avalonia style files inside the `Skins` folder to customize the interface.
+Assign skins to specific plugins using the `ComponentSkins` section of `settings.json`.
 
 ## 🌀 Window Effects
 Try out wobbly windows, drop shadows and more via **Settings → Runtime Settings**.

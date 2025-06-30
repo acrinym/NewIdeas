@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
     public class DiskUsagePlugin : IPlugin
     {
-        private Window? _window;
+        private DiskUsageWindow? _window;
         private TreeView? _tree;
         private Button? _selectFolderButton;
         private TextBlock? _statusText;
@@ -21,40 +22,21 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Visualize disk usage";
         public Version Version => new Version(0, 2, 0); // Incremented version for improvements
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
-            // --- Create UI Controls ---
-            _tree = new TreeView();
-            _statusText = new TextBlock { Margin = new Thickness(5) };
+            // Load window from XAML and grab named controls
+            _window = new DiskUsageWindow();
+            _tree = _window.FindControl<TreeView>("Tree");
+            _selectFolderButton = _window.FindControl<Button>("SelectFolderButton");
+            _statusText = _window.FindControl<TextBlock>("StatusText");
 
-            _selectFolderButton = new Button
-            {
-                Content = "Select Folder to Analyze",
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Margin = new Thickness(5)
-            };
-            _selectFolderButton.Click += async (s, e) => await SelectAndLoadDirectoryAsync();
-
-            // --- Assemble UI Layout ---
-            var mainPanel = new DockPanel();
-            DockPanel.SetDock(_selectFolderButton, Dock.Top);
-            DockPanel.SetDock(_statusText, Dock.Top);
-
-            mainPanel.Children.Add(_selectFolderButton);
-            mainPanel.Children.Add(_statusText);
-            mainPanel.Children.Add(_tree); // The TreeView will fill the remaining space
-
-            // --- Create and Show Window ---
-            _window = new Window
-            {
-                Title = "Disk Usage Analyzer",
-                Width = 600,
-                Height = 500,
-                Content = mainPanel
-            };
+            if (_selectFolderButton != null)
+                _selectFolderButton.Click += async (_, _) => await SelectAndLoadDirectoryAsync();
 
             // Apply theming and effects (assuming these are valid managers in your project)
+            
             ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DiskUsagePlugin));
 
@@ -82,18 +64,22 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 // Disable button and show a loading message to provide user feedback.
                 _selectFolderButton.IsEnabled = false;
-                _tree.ItemsSource = null; // Clear previous results
-                _statusText.Text = $"Analyzing '{path}'... (This may take a while)";
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    _tree.ItemsSource = null; // Clear previous results
+                    _statusText.Text = $"Analyzing '{path}'... (This may take a while)";
+                });
 
                 try
                 {
-                    // Run the heavy directory scanning on a background thread to keep the UI responsive.
-                    var rootNode = await Task.Run(() => BuildNodeRecursive(new DirectoryInfo(path)));
+                    // Build a simple model on a background thread to avoid creating
+                    // UI elements off the UI thread.
+                    var rootModel = await Task.Run(() => BuildDirectoryModel(new DirectoryInfo(path)));
 
-                    // Once done, update the UI on the UI thread.
+                    // Once done, create TreeViewItems on the UI thread from the model.
                     await Dispatcher.UIThread.InvokeAsync(() =>
                     {
-                        _tree.ItemsSource = new[] { rootNode };
+                        _tree.ItemsSource = new[] { ConvertToTreeViewItem(rootModel) };
                         _statusText.Text = $"Analysis complete for '{path}'.";
                     });
                 }
@@ -117,49 +103,67 @@ namespace Cycloside.Plugins.BuiltIn
         }
 
         /// <summary>
-        /// Recursively builds a TreeViewItem for a directory, calculating its total size.
-        /// This method is designed to be run on a background thread.
+        /// Plain model representing a directory and its children. This can be
+        /// safely created on a background thread.
+        /// </summary>
+        private class DirectoryNode
+        {
+            public string Name { get; set; } = string.Empty;
+            public long Size { get; set; }
+            public bool AccessDenied { get; set; }
+            public List<DirectoryNode> Children { get; set; } = new();
+        }
+
+        /// <summary>
+        /// Recursively builds a DirectoryNode for a directory, calculating its
+        /// total size. Designed to run on a background thread.
         /// </summary>
         /// <param name="dir">The directory to process.</param>
-        /// <returns>A TreeViewItem representing the directory and its contents.</returns>
-        private TreeViewItem BuildNodeRecursive(DirectoryInfo dir)
+        private DirectoryNode BuildDirectoryModel(DirectoryInfo dir)
         {
+            var node = new DirectoryNode { Name = dir.Name };
             long totalSize = 0;
-            var subNodes = new List<TreeViewItem>();
 
             try
             {
-                // Sum the size of all files in the current directory.
-                totalSize += dir.GetFiles().Sum(file => file.Length);
+                totalSize += dir.GetFiles().Sum(f => f.Length);
 
-                // Recursively process all subdirectories.
                 foreach (var subDir in dir.GetDirectories())
                 {
-                    var subNode = BuildNodeRecursive(subDir);
-                    // Add the size of the subdirectory to the parent's total.
-                    totalSize += (long)(subNode.Tag ?? 0L);
-                    subNodes.Add(subNode);
+                    var child = BuildDirectoryModel(subDir);
+                    totalSize += child.Size;
+                    node.Children.Add(child);
                 }
             }
             catch (UnauthorizedAccessException)
             {
-                // Gracefully handle directories that we don't have permission to access.
-                return new TreeViewItem
-                {
-                    Header = $"{dir.Name} (Access Denied)",
-                    Tag = 0L // Size is 0 as we couldn't read it.
-                };
+                node.AccessDenied = true;
             }
 
-            // Create the UI node for the current directory.
-            var node = new TreeViewItem
+            node.Size = totalSize;
+            return node;
+        }
+
+        /// <summary>
+        /// Converts a DirectoryNode into a TreeViewItem. Should be called on the
+        /// UI thread.
+        /// </summary>
+        private TreeViewItem ConvertToTreeViewItem(DirectoryNode node)
+        {
+            var item = new TreeViewItem
             {
-                Header = $"{dir.Name} ({FormatSize(totalSize)})",
-                ItemsSource = subNodes.OrderByDescending(n => (long)(n.Tag ?? 0L)).ToList(),
-                Tag = totalSize // Store the raw size in the Tag for sorting.
+                Header = node.AccessDenied
+                    ? $"{node.Name} (Access Denied)"
+                    : $"{node.Name} ({FormatSize(node.Size)})",
+                Tag = node.Size
             };
 
-            return node;
+            item.ItemsSource = node.Children
+                .OrderByDescending(n => n.Size)
+                .Select(ConvertToTreeViewItem)
+                .ToList();
+
+            return item;
         }
 
         /// <summary>

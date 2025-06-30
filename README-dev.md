@@ -28,14 +28,14 @@ planned features for the Cycloside project.
   broadcasts changes on `bus:clipboard`. |
 | `DateTimeOverlayPlugin` | Small always-on-top window showing the current time. |
 | `DiskUsagePlugin` | Visualises folder sizes in a tree view. |
-| `EnvironmentEditorPlugin` | Edits environment variables at runtime. |
+| `EnvironmentEditorPlugin` | Edits environment variables at runtime (Process scope only on Linux/macOS). |
 | `FileWatcherPlugin` | Watches a directory and logs file system events. |
 | `JezzballPlugin` | Simple recreation of the classic game. |
 | `LogViewerPlugin` | Tails a log file and filters lines on the fly. |
 | `MP3PlayerPlugin` | Basic audio player built on NAudio. |
-| `MacroPlugin` | Records simple text macros and replays them. |
+| `MacroPlugin` | Records keyboard macros and saves them to disk. Playback is Windows-only. |
 | `ProcessMonitorPlugin` | Lists running processes with CPU and memory usage. |
-| `QBasicRetroIDEPlugin` | Minimal IDE for creating QBasic-style programs. |
+| `QBasicRetroIDEPlugin` | Minimal IDE for creating QBasic-style programs. Includes an option to launch QB64 for editing. |
 | `TaskSchedulerPlugin` | Schedules tasks with cron-style expressions. |
 | `TextEditorPlugin` | Notepad-like editor supporting multiple files. |
 | `WallpaperPlugin` | Changes the desktop wallpaper periodically. |

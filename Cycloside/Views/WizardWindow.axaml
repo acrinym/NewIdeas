@@ -1,77 +1,67 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Cycloside.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="350"
         x:Class="Cycloside.Views.WizardWindow"
         x:DataType="vm:WizardViewModel"
-        Width="450" Height="350"
-        CanResize="False"
+        Width="450" Height="350" CanResize="False"
         WindowStartupLocation="CenterScreen"
         Title="Cycloside Setup Wizard"
         Background="{DynamicResource ApplicationBackgroundBrush}">
 
-    <!-- Replaced the root StackPanel with a DockPanel. -->
-    <!-- DockPanel is better for this layout, allowing the buttons to be "docked" -->
-    <!-- to the bottom and the TabControl to fill the remaining space correctly. -->
-    <DockPanel Margin="15">
+  <DockPanel Margin="15">
 
-        <!-- Back/Next Buttons -->
-        <!-- Buttons are now docked to the bottom for a consistent layout. -->
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,15,0,0">
-            <Button Content="Back" Command="{Binding BackCommand}"/>
-            <Button Content="Next" Command="{Binding NextCommand}" IsDefault="True"/>
-        </StackPanel>
-
-        <!-- Wizard Steps -->
-        <!-- The TabControl now fills the main area of the window. -->
-        <!-- IsEnabled is bound to prevent clicking tabs directly. -->
-        <TabControl SelectedIndex="{Binding CurrentStep}" IsEnabled="False">
-            <TabItem Header="Welcome">
-                <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
-                           Text="Welcome to Cycloside! This wizard will help you configure the basics."/>
-            </TabItem>
-
-            <TabItem Header="Plugins">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Enable built-in plugins:" Margin="0,0,0,5"/>
-                    <ScrollViewer>
-                        <ItemsControl ItemsSource="{Binding Plugins}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PluginItem">
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </StackPanel>
-            </TabItem>
-
-            <TabItem Header="Theme">
-                <StackPanel Spacing="8" VerticalAlignment="Center">
-                    <TextBlock Text="Select a theme:" Margin="0,0,0,5"/>
-                    <!-- Stretched the ComboBox and gave it a minimum width. This helps ensure -->
-                    <!-- it has enough space to render correctly, which can fix UI glitches. -->
-                    <ComboBox ItemsSource="{Binding AvailableThemes}" 
-                              SelectedItem="{Binding SelectedTheme}"
-                              HorizontalAlignment="Stretch"
-                              MinWidth="200"/>
-                </StackPanel>
-            </TabItem>
-
-            <TabItem Header="Profile">
-                <StackPanel Spacing="8" VerticalAlignment="Center">
-                    <TextBlock Text="Profile name:" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding ProfileName}" Width="200"/>
-                </StackPanel>
-            </TabItem>
-
-            <TabItem Header="Finish">
-                <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
-                           Text="Setup is complete. Click Next to start using Cycloside."/>
-            </TabItem>
-        </TabControl>
-        
+    <!-- Merged Button Bar from 'main' branch -->
+    <DockPanel DockPanel.Dock="Bottom" Margin="0,15,0,0">
+      <TextBlock Text="{Binding ProgressText}"
+                 DockPanel.Dock="Left"
+                 VerticalAlignment="Center"
+                 Opacity="0.7"/>
+      
+      <StackPanel Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="8">
+        <Button Content="Back"
+                Command="{Binding BackCommand}"
+                IsEnabled="{Binding CanGoBack}"/>
+        <Button Content="{Binding NextButtonText}"
+                Command="{Binding NextCommand}"
+                IsDefault="True"
+                Classes="accent"/>
+      </StackPanel>
     </DockPanel>
+
+    <!-- Main Wizard Content Area -->
+    <TabControl SelectedIndex="{Binding CurrentStep, Mode=OneWay}" IsEnabled="False">
+
+      <TabItem Header="Welcome">
+        <TextBlock TextWrapping="Wrap"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center"
+                   Text="Welcome to Cycloside! This wizard will help you configure the basics." />
+      </TabItem>
+
+      <TabItem Header="Plugins">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Enable built-in plugins:" Margin="0,0,0,5" />
+          <ScrollViewer Height="200">
+            <ItemsControl ItemsSource="{Binding Plugins}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PluginItem">
+                  <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled}" Margin="0,2" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+      </TabItem>
+      
+      <TabItem Header="Finish">
+          <TextBlock TextWrapping="Wrap"
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"
+                     Text="Setup is complete. Click Finish to launch the application." />
+      </TabItem>
+
+    </TabControl>
+  </DockPanel>
 </Window>

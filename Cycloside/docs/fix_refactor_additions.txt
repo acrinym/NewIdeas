@@ -1,0 +1,425 @@
+--- FILE: Cycloside/App.axaml ---<Application xmlns="https://github.com/avaloniaui"xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"x:Class="Cycloside.App"RequestedThemeVariant="Default"><Application.Styles><FluentTheme /></Application.Styles><Application.Resources><ResourceDictionary><!-- This will be populated by your ThemeManager at runtime --></ResourceDictionary></Application.Resources></Application>--- FILE: Cycloside/App.axaml.cs ---using Avalonia;using Avalonia.Controls.ApplicationLifetimes;using Avalonia.Input;using Avalonia.Markup.Xaml;using Avalonia.Platform.Storage;using Cycloside.Plugins;using Cycloside.Plugins.BuiltIn;using Cycloside.ViewModels;using Cycloside.Services;using Cycloside.Views;using System;using System.Collections.Generic;using System.Diagnostics;using System.Drawing;using System.IO;using System.Linq;using System.Runtime.InteropServices;using System.Runtime.Versioning;namespace Cycloside;public partial class App : Application{private const string TrayIconBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGElEQVR4nGNkaGAgCTCRpnxUw6iGoaQBALsfAKDg6Y6zAAAAAElFTkSuQmCC";private RemoteApiServer? _remoteServer;private PluginManager? _pluginManager;public override void Initialize()
+{
+    AvaloniaXamlLoader.Load(this);
+}
+
+public override void OnFrameworkInitializationCompleted()
+{
+    if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        base.OnFrameworkInitializationCompleted();
+        return;
+    }
+
+    var settings = SettingsManager.Settings;
+    ThemeManager.LoadGlobalThemeFromSettings();
+
+    if (settings.FirstRun)
+    {
+        var wiz = new WizardWindow();
+        wiz.Closed += (_, _) =>
+        {
+            desktop.MainWindow = CreateMainWindow(settings);
+            desktop.MainWindow.Show();
+        };
+        wiz.Show();
+    }
+    else
+    {
+        desktop.MainWindow = CreateMainWindow(settings);
+        desktop.MainWindow.Show();
+    }
+
+    base.OnFrameworkInitializationCompleted();
+}
+
+private MainWindow CreateMainWindow(AppSettings settings)
+{
+    _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
+    var volatileManager = new VolatilePluginManager();
+    
+    LoadAllPlugins(_pluginManager, settings);
+    _pluginManager.StartWatching();
+    
+    var viewModel = new MainWindowViewModel(_pluginManager.Plugins);
+    var mainWindow = new MainWindow(_pluginManager)
+    {
+        DataContext = viewModel
+    };
+    
+    viewModel.ExitCommand = new RelayCommand(() => Shutdown(_pluginManager));
+    viewModel.StartPluginCommand = new RelayCommand(plugin => {
+        if(plugin is IPlugin p) _pluginManager.EnablePlugin(p);
+    });
+
+    _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
+    _remoteServer.Start();
+    WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
+    RegisterHotkeys(_pluginManager);
+    
+    var trayIcon = new TrayIcon
+    {
+        Icon = CreateTrayIcon(),
+        ToolTipText = "Cycloside",
+        Menu = BuildTrayMenu(_pluginManager, volatileManager, settings)
+    };
+    
+    var icons = TrayIcon.GetIcons(this) ?? new TrayIcons();
+    TrayIcon.SetIcons(this, icons);
+    if (!icons.Contains(trayIcon))
+    {
+        icons.Add(trayIcon);
+    }
+    trayIcon.IsVisible = true;
+    
+    return mainWindow;
+}
+
+private void LoadAllPlugins(PluginManager manager, AppSettings settings)
+{
+    if (settings.DisableBuiltInPlugins) return;
+
+    manager.AddPlugin(new DateTimeOverlayPlugin());
+    manager.AddPlugin(new MP3PlayerPlugin());
+    manager.AddPlugin(new MacroPlugin());
+    manager.AddPlugin(new TextEditorPlugin());
+    manager.AddPlugin(new WallpaperPlugin());
+    manager.AddPlugin(new ClipboardManagerPlugin());
+    manager.AddPlugin(new FileWatcherPlugin());
+    manager.AddPlugin(new ProcessMonitorPlugin());
+    manager.AddPlugin(new TaskSchedulerPlugin());
+    manager.AddPlugin(new DiskUsagePlugin());
+    manager.AddPlugin(new TerminalPlugin());
+    manager.AddPlugin(new LogViewerPlugin());
+    manager.AddPlugin(new EnvironmentEditorPlugin());
+    manager.AddPlugin(new JezzballPlugin());
+    manager.AddPlugin(new WidgetHostPlugin(manager));
+    manager.AddPlugin(new WinampVisHostPlugin());
+    manager.AddPlugin(new QBasicRetroIDEPlugin());
+}
+
+private void RegisterHotkeys(PluginManager manager)
+{
+    HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
+    {
+        var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
+        if (plugin != null)
+        {
+            if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
+            else manager.EnablePlugin(plugin);
+        }
+    });
+}
+
+private void Shutdown(PluginManager manager)
+{
+    manager.StopAll();
+    _remoteServer?.Stop();
+    HotkeyManager.UnregisterAll();
+    Logger.Shutdown();
+    if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
+    {
+        appLifetime.Shutdown();
+    }
+}
+
+#region Tray Menu and Icon Logic
+
+private NativeMenu BuildTrayMenu(PluginManager manager, VolatilePluginManager volatileManager, AppSettings settings)
+{
+    var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
+    var newPlugins = manager.Plugins.Where(p => manager.GetStatus(p) != PluginChangeStatus.None).ToList();
+    var otherPlugins = manager.Plugins.Except(newPlugins).OrderBy(p => p.Name).ToList();
+
+    if (newPlugins.Any())
+    {
+        var newMenu = new NativeMenuItem("New/Updated") { Menu = new NativeMenu() };
+        foreach (var p in newPlugins) newMenu.Menu!.Items.Add(BuildPluginMenuItem(p, manager, settings));
+        pluginsMenu.Menu!.Items.Add(newMenu);
+        pluginsMenu.Menu!.Items.Add(new NativeMenuItemSeparator());
+    }
+
+    foreach (var p in otherPlugins) pluginsMenu.Menu!.Items.Add(BuildPluginMenuItem(p, manager, settings));
+
+    var volatileMenu = new NativeMenuItem("Volatile") { Menu = new NativeMenu() };
+    volatileMenu.Menu!.Items.Add(BuildVolatileScriptMenuItem("Run Lua Script...", new FilePickerFileType("Lua Script") { Patterns = new[] { "*.lua" } }, volatileManager.RunLua));
+    volatileMenu.Menu!.Items.Add(BuildVolatileScriptMenuItem("Run C# Script...", new FilePickerFileType("C# Script") { Patterns = new[] { "*.csx" } }, volatileManager.RunCSharp));
+    volatileMenu.Menu!.Items.Add(new NativeMenuItemSeparator());
+    var inlineItem = new NativeMenuItem("Run Inline...");
+    inlineItem.Click += (_, _) => new VolatileRunnerWindow(volatileManager).Show();
+    volatileMenu.Menu!.Items.Add(inlineItem);
+
+    return new NativeMenu
+    {
+        Items =
+        {
+            // REFACTOR: Consolidated all settings windows under a single "Control Panel" entry.
+            new NativeMenuItem("Control Panel...") { Command = new RelayCommand(() => new ControlPanelWindow(manager).Show()) },
+            new NativeMenuItemSeparator(),
+            new NativeMenuItem("Launch at Startup") { IsChecked = settings.LaunchAtStartup, ToggleType = NativeMenuItemToggleType.CheckBox, Command = new RelayCommand(o => {
+                if (o is not NativeMenuItem item) return;
+                settings.LaunchAtStartup = !settings.LaunchAtStartup;
+                if (settings.LaunchAtStartup) StartupManager.Enable(); else StartupManager.Disable();
+                SettingsManager.Save();
+                item.IsChecked = settings.LaunchAtStartup;
+            })},
+            new NativeMenuItemSeparator(),
+            pluginsMenu,
+            volatileMenu,
+            new NativeMenuItem("Open Plugins Folder") { Command = new RelayCommand(() => {
+                try { Process.Start(new ProcessStartInfo { FileName = manager.PluginDirectory, UseShellExecute = true }); } 
+                catch (Exception ex) { Logger.Log($"Failed to open plugin folder: {ex.Message}"); }
+            })},
+            new NativeMenuItemSeparator(),
+            new NativeMenuItem("Exit") { Command = new RelayCommand(() => Shutdown(manager)) }
+        }
+    };
+}
+
+private NativeMenuItem BuildPluginMenuItem(IPlugin plugin, PluginManager manager, AppSettings settings)
+{
+    var status = manager.GetStatus(plugin);
+    string label = plugin.Name + status switch
+    {
+        PluginChangeStatus.New => " (NEW)",
+        PluginChangeStatus.Updated => " (UPDATED)",
+        _ => ""
+    };
+
+    var menuItem = new NativeMenuItem(label)
+    {
+        ToggleType = NativeMenuItemToggleType.CheckBox,
+        IsChecked = settings.PluginEnabled.TryGetValue(plugin.Name, out var isEnabled) ? isEnabled : true
+    };
+
+    if (menuItem.IsChecked && !manager.IsEnabled(plugin)) manager.EnablePlugin(plugin);
+    else if (!menuItem.IsChecked && manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
+
+    menuItem.Command = new RelayCommand(o =>
+    {
+        if (o is not NativeMenuItem item) return;
+        if (manager.IsEnabled(plugin))
+            manager.DisablePlugin(plugin);
+        else
+            manager.EnablePlugin(plugin);
+
+        item.IsChecked = manager.IsEnabled(plugin);
+        settings.PluginEnabled[plugin.Name] = item.IsChecked;
+        SettingsManager.Save();
+    });
+    menuItem.CommandParameter = menuItem;
+
+    return menuItem;
+}
+
+private NativeMenuItem BuildVolatileScriptMenuItem(string title, FilePickerFileType filter, Action<string> scriptRunner)
+{
+    var menuItem = new NativeMenuItem(title);
+    menuItem.Click += async (_, _) =>
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
+
+        var files = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            AllowMultiple = false,
+            FileTypeFilter = new[] { filter }
+        });
+
+        if (files.FirstOrDefault() is { } file)
+        {
+            try
+            {
+                await using var stream = await file.OpenReadAsync();
+                using var reader = new StreamReader(stream);
+                var code = await reader.ReadToEndAsync();
+                scriptRunner(code);
+            }
+            catch (Exception ex) { Logger.Log($"Failed to run volatile script {file.Name}: {ex.Message}"); }
+        }
+    };
+    return menuItem;
+}
+
+private static WindowIcon CreateTrayIcon()
+{
+    if (OperatingSystem.IsWindows())
+    {
+        try
+        {
+            var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
+                       ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
+                       ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
+            if (icon != null)
+            {
+                using var stream = new MemoryStream();
+                #pragma warning disable CA1416
+                icon.Save(stream);
+                #pragma warning restore CA1416
+                stream.Position = 0;
+                return new WindowIcon(stream);
+            }
+        }
+        catch (Exception ex) { Logger.Log($"Failed to extract system icon: {ex.Message}"); }
+    }
+    var bytes = Convert.FromBase64String(TrayIconBase64);
+    return new WindowIcon(new MemoryStream(bytes));
+}
+
+[SupportedOSPlatform("windows")]
+private static Icon? ExtractIconFromDll(string path, int index)
+{
+    IntPtr hIcon = ExtractIcon(IntPtr.Zero, path, index);
+    if (hIcon == IntPtr.Zero) return null;
+    try
+    {
+        var icon = (Icon)Icon.FromHandle(hIcon).Clone();
+        return icon;
+    }
+    finally
+    {
+        DestroyIcon(hIcon);
+    }
+}
+
+[DllImport("shell32.dll", CharSet = CharSet.Auto)]
+private static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, int nIconIndex);
+
+[DllImport("user32.dll", SetLastError = true)]
+[return: MarshalAs(UnmanagedType.Bool)]
+private static extern bool DestroyIcon(IntPtr handle);
+
+#endregion
+}--- FILE: Cycloside/MainWindow.axaml ---<Window xmlns="https://github.com/avaloniaui"xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"xmlns:d="http://schemas.microsoft.com/expression/blend/2008"xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"xmlns:vm="clr-namespace:Cycloside.ViewModels"xmlns:p="clr-namespace:Cycloside.Plugins"mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"x:Class="Cycloside.MainWindow"x:Name="RootWindow"x:DataType="vm:MainWindowViewModel"Title="Cycloside"WindowStartupLocation="CenterScreen"Background="{DynamicResource ApplicationBackgroundBrush}"><DockPanel>
+    <Menu DockPanel.Dock="Top">
+        <MenuItem Header="_File">
+            <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
+        </MenuItem>
+        <MenuItem Header="_Plugins"
+                  ItemsSource="{Binding AvailablePlugins}">
+            <MenuItem.ItemTemplate>
+                <DataTemplate x:DataType="p:IPlugin">
+                    <MenuItem Header="{Binding Name}"
+                              Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
+                              CommandParameter="{Binding}" />
+                </DataTemplate>
+            </MenuItem.ItemTemplate>
+        </MenuItem>
+        <MenuItem Header="_Settings">
+            <!-- REFACTOR: This now opens the single, unified Control Panel -->
+            <MenuItem Header="_Control Panel..." Click="OpenControlPanel"/>
+        </MenuItem>
+    </Menu>
+
+    <Canvas Name="DesktopCanvas">
+        <Canvas.Background>
+            <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="70%" RadiusY="70%">
+                <GradientStop Color="{DynamicResource ThemeAccentColor4}" Offset="0" />
+                <GradientStop Color="{DynamicResource ThemeBackgroundColor}" Offset="1" />
+            </RadialGradientBrush>
+        </Canvas.Background>
+    </Canvas>
+
+</DockPanel>
+</Window>--- FILE: Cycloside/MainWindow.axaml.cs ---using Avalonia.Controls;using Avalonia.Interactivity;using Cycloside.Plugins;using Cycloside.Services;using Cycloside.Views;namespace Cycloside;public partial class MainWindow : Window{private readonly PluginManager _manager;public MainWindow()
+{
+    // Parameterless constructor for designer support
+    InitializeComponent();
+    _manager = null!; // This will crash if used at runtime, which is intended.
+}
+
+public MainWindow(PluginManager manager)
+{
+    _manager = manager;
+    InitializeComponent();
+    ThemeManager.ApplyFromSettings(this, nameof(MainWindow));
+    CursorManager.ApplyFromSettings(this, nameof(MainWindow));
+    WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(MainWindow));
+}
+
+// REFACTOR: Removed individual settings window methods.
+private void OpenControlPanel(object? sender, RoutedEventArgs e) =>
+    new ControlPanelWindow(_manager).Show();
+}--- FILE: Cycloside/Program.cs ---using Avalonia;using System;using System.IO;namespace Cycloside;class Program{[STAThread]public static void Main(string[] args){if (args.Length == 2 && args[0] == "--newplugin"){GeneratePluginTemplate(args[1]);return;}    AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+    {
+        if (e.ExceptionObject is Exception ex)
+            Logger.Log($"Unhandled: {ex}");
+    };
+    System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, e) =>
+    {
+        Logger.Log($"Unobserved: {e.Exception}");
+    };
+
+    BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+}
+
+internal static void GeneratePluginTemplate(string name)
+{
+    var dir = Path.Combine("Plugins", name);
+    Directory.CreateDirectory(dir);
+
+    var path = Path.Combine(dir, $"{name}.cs");
+    if (File.Exists(path))
+        return;
+
+    // REFACTOR: Updated template to reflect new project structure and interfaces.
+    var content = $@"using System;
+using Cycloside.Plugins;using Cycloside.Widgets;public class {name}Plugin : IPlugin{{public string Name => ""{name}"";public string Description => ""Describe your plugin."";public Version Version => new(1, 0, 0);public IWidget? Widget => null;public bool ForceDefaultTheme => false;public void Start()
+{{
+    // Plugin startup logic here
+}}
+
+public void Stop()
+{{
+    // Plugin shutdown logic here
+}}
+}}";    File.WriteAllText(path, content);
+}
+
+public static AppBuilder BuildAvaloniaApp()
+    => AppBuilder.Configure<App>()
+        .UsePlatformDetect()
+        .WithInterFont()
+        .LogToTrace();
+}--- FILE: Cycloside/Services/Logger.cs ---using System;using System.IO;using System.Threading.Tasks;using System.Collections.Concurrent;namespace Cycloside.Services;/// <summary>/// REFACTOR: A more robust, thread-safe, and asynchronous logger./// </summary>public static class Logger{private static readonly string LogDir = Path.Combine(AppContext.BaseDirectory, "logs");private static readonly string LogFile = Path.Combine(LogDir, "app.log");private static readonly BlockingCollection<string> _logQueue = new();private static readonly Task _logTask;static Logger()
+{
+    Directory.CreateDirectory(LogDir);
+    _logTask = Task.Run(ProcessLogQueue);
+}
+
+public static void Log(string message)
+{
+    if (!_logQueue.IsAddingCompleted)
+    {
+        _logQueue.Add($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}");
+    }
+}
+
+private static void ProcessLogQueue()
+{
+    foreach (var message in _logQueue.GetConsumingEnumerable())
+    {
+        try
+        {
+            File.AppendAllText(LogFile, message + Environment.NewLine);
+            var fileInfo = new FileInfo(LogFile);
+            if (fileInfo.Exists && fileInfo.Length > 1_048_576) // 1 MB
+            {
+                var backupFile = Path.Combine(LogDir, "app.log.1");
+                File.Move(LogFile, backupFile, overwrite: true);
+            }
+        }
+        catch (Exception) { /* If logging fails, there's not much we can do. */ }
+    }
+}
+
+public static void Shutdown()
+{
+    _logQueue.CompleteAdding();
+    try
+    {
+        _logTask.Wait(TimeSpan.FromSeconds(2));
+    }
+    catch (TaskCanceledException) { /* Expected */ }
+}
+}

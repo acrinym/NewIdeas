@@ -5,12 +5,13 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
     public class FileWatcherPlugin : IPlugin
     {
-        private Window? _window;
+        private FileWatcherWindow? _window;
         private TextBox? _log;
         private Button? _selectFolderButton;
         private FileSystemWatcher? _watcher;
@@ -19,57 +20,20 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Watch a folder for changes";
         public Version Version => new Version(0, 2, 0);
         public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
         public void Start()
         {
-            // --- Create UI Controls ---
-            _selectFolderButton = new Button
-            {
-                Content = "Select Folder to Watch",
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Margin = new Avalonia.Thickness(5)
-            };
-            _selectFolderButton.Click += async (s, e) => await SelectAndWatchDirectoryAsync();
+            _window = new FileWatcherWindow();
+            _selectFolderButton = _window.FindControl<Button>("SelectFolderButton");
+            var clearLogButton = _window.FindControl<Button>("ClearLogButton");
+            var saveLogButton = _window.FindControl<Button>("SaveLogButton");
+            _log = _window.FindControl<TextBox>("LogBox");
 
-            var clearLogButton = new Button
-            {
-                Content = "Clear Log",
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Margin = new Avalonia.Thickness(5, 0, 5, 5)
-            };
-            clearLogButton.Click += (s, e) => { if (_log != null) _log.Text = string.Empty; };
+            _selectFolderButton?.AddHandler(Button.ClickEvent, async (s, e) => await SelectAndWatchDirectoryAsync());
+            clearLogButton?.AddHandler(Button.ClickEvent, (s, e) => { if (_log != null) _log.Text = string.Empty; });
+            saveLogButton?.AddHandler(Button.ClickEvent, async (s, e) => await SaveLogAsync());
 
-            var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center };
-            buttonPanel.Children.Add(_selectFolderButton);
-            buttonPanel.Children.Add(clearLogButton);
-
-            _log = new TextBox
-            {
-                AcceptsReturn = true,
-                IsReadOnly = true,
-                TextWrapping = Avalonia.Media.TextWrapping.NoWrap, // Better for file paths
-                Margin = new Avalonia.Thickness(5)
-            };
-            ScrollViewer.SetHorizontalScrollBarVisibility(_log, ScrollBarVisibility.Auto);
-            ScrollViewer.SetVerticalScrollBarVisibility(_log, ScrollBarVisibility.Auto);
-
-            // --- Assemble UI Layout ---
-            var mainPanel = new DockPanel();
-            DockPanel.SetDock(buttonPanel, Dock.Top);
-            mainPanel.Children.Add(buttonPanel);
-            mainPanel.Children.Add(_log); // The TextBox will fill the remaining space
-
-            // --- Create and Show Window ---
-            _window = new Window
-            {
-                Title = "File Watcher",
-                Width = 550,
-                Height = 450,
-                Content = mainPanel
-            };
-
-            // Apply theming and effects
-            ThemeManager.ApplyFromSettings(_window, "Plugins");
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(FileWatcherPlugin));
             _window.Show();
         }
@@ -146,6 +110,34 @@ namespace Cycloside.Plugins.BuiltIn
                 _log.Text += $"[{timestamp}] {msg}{Environment.NewLine}";
                 _log.CaretIndex = _log.Text.Length; // Auto-scroll to the end
             });
+        }
+
+        /// <summary>
+        /// Saves the current log text to a user-selected file.
+        /// </summary>
+        private async Task SaveLogAsync()
+        {
+            if (_window == null || _log == null) return;
+
+            var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save Log As...",
+                SuggestedFileName = $"watch_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
+                DefaultExtension = "txt",
+                FileTypeChoices = new[] { new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } } }
+            });
+
+            if (file?.Path.LocalPath != null)
+            {
+                try
+                {
+                    await File.WriteAllTextAsync(file.Path.LocalPath, _log.Text);
+                }
+                catch (Exception ex)
+                {
+                    Log($"[ERROR] Could not save file: {ex.Message}");
+                }
+            }
         }
 
         public void Stop()

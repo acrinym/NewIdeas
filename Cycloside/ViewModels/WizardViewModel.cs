@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Cycloside.Models;   // Assuming a 'Models' namespace for WorkspaceProfile
-using Cycloside.Services; // Assuming a 'Services' namespace for your managers
+using Cycloside; // core models and services
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -24,6 +23,19 @@ namespace Cycloside.ViewModels
 
         [ObservableProperty]
         private int currentStep;
+
+        partial void OnCurrentStepChanged(int value)
+        {
+            OnPropertyChanged(nameof(CanGoBack));
+            OnPropertyChanged(nameof(NextButtonText));
+            OnPropertyChanged(nameof(ProgressText));
+        }
+        
+        private const int TotalSteps = 3; // Number of TabItems in WizardWindow
+
+        public string ProgressText => $"Step {CurrentStep + 1} of {TotalSteps}";
+        public bool CanGoBack => CurrentStep > 0;
+        public string NextButtonText => CurrentStep < TotalSteps - 1 ? "Next" : "Finish";
 
         [ObservableProperty]
         private string selectedTheme = string.Empty;
@@ -69,7 +81,7 @@ namespace Cycloside.ViewModels
         private void Next()
         {
             // If we are not on the last step, just advance to the next tab.
-            if (CurrentStep < 4) // Assuming 5 steps, indexed 0-4
+            if (CurrentStep < TotalSteps - 1)
             {
                 CurrentStep++;
                 return;
@@ -78,7 +90,7 @@ namespace Cycloside.ViewModels
             // --- This is the logic from your original Next_Click on the final step ---
             
             // 1. Save all the settings gathered from the wizard
-            SettingsManager.Settings.ActiveSkin = SelectedTheme;
+            SettingsManager.Settings.GlobalTheme = SelectedTheme;
             foreach (var item in Plugins)
             {
                 SettingsManager.Settings.PluginEnabled[item.Name] = item.IsEnabled;

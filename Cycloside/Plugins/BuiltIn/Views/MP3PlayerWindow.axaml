@@ -1,0 +1,73 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn"
+        xmlns:view="clr-namespace:Cycloside.Plugins.BuiltIn.Views"
+        x:Class="Cycloside.Plugins.BuiltIn.Views.MP3PlayerWindow"
+        x:DataType="local:MP3PlayerPlugin"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="MP3 Player"
+        Width="400" MinWidth="350"
+        Height="180" MinHeight="180"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen">
+    <Design.DataContext>
+        <local:MP3PlayerPlugin/>
+    </Design.DataContext>
+
+    <Border Padding="10" Background="{DynamicResource ThemeBackgroundBrush}">
+        <DockPanel LastChildFill="True">
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                       DockPanel.Dock="Top"
+                       Margin="0,0,0,5"
+                       TextWrapping="Wrap"/>
+
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding CurrentTrackName}"
+                           Grid.Column="0"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+                <Button Content="Add Files..."
+                        Grid.Column="1"
+                        Command="{Binding AddFilesCommand}"/>
+            </Grid>
+
+            <DockPanel DockPanel.Dock="Top" Margin="0,8">
+                <TextBlock Text="{Binding CurrentTime, StringFormat=mm\:ss}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding TotalTime, StringFormat=mm\:ss}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                <Slider Value="{Binding CurrentTime.TotalSeconds}"
+                        Maximum="{Binding TotalTime.TotalSeconds}"
+                        PointerReleased="SeekSlider_OnPointerReleased"
+                        Margin="8,0"/>
+            </DockPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="5"
+                        HorizontalAlignment="Center"
+                        DockPanel.Dock="Top" Margin="0,5,0,10">
+                <Button Content="&#x25C0;&#x25C0;" Command="{Binding PreviousCommand}"/>
+                <Button Content="&#x25B6;" Command="{Binding PlayCommand}"/>
+                <Button Content="&#x23F8;" Command="{Binding PauseCommand}"/>
+                <Button Content="&#x25A0;" Command="{Binding StopPlaybackCommand}"/>
+                <Button Content="&#x25B6;&#x25B6;" Command="{Binding NextCommand}"/>
+            </StackPanel>
+
+            <DockPanel DockPanel.Dock="Top">
+                <Button Content="&#x1F507;" Command="{Binding ToggleMuteCommand}" DockPanel.Dock="Left"/>
+                <Slider Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1.0" Margin="8,0"/>
+            </DockPanel>
+
+            <ListBox ItemsSource="{Binding Playlist}"
+                     Margin="0,10,0,0"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding ., Converter={x:Static view:FullPathToFileNameConverter.Instance}}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+        </DockPanel>
+    </Border>
+</Window>

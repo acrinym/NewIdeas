@@ -1,6 +1,6 @@
 using System;
 
-namespace SiloCide.SDK;
+namespace Cycloside.Plugins;
 
 public interface IPlugin
 {
@@ -8,6 +8,14 @@ public interface IPlugin
     string Description { get; }
     Version Version { get; }
     Cycloside.Widgets.IWidget? Widget { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether this plugin should block
+    /// component-specific skins from being applied, forcing it to
+    /// always use the global application theme.
+    /// </summary>
+    bool ForceDefaultTheme { get; }
+
     void Start();
     void Stop();
 }
