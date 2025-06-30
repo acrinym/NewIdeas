@@ -19,9 +19,14 @@ public partial class ThemeSettingsWindow : Window
     public ThemeSettingsWindow(PluginManager manager)
     {
         _manager = manager;
+        
+        // Dynamically load theme names from the Themes/Global directory.
+        // This is the more robust approach from the 'main' branch.
         _themes = Directory.Exists(Path.Combine(AppContext.BaseDirectory, "Themes/Global"))
             ? Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "Themes/Global"), "*.axaml")
-                .Select(f => Path.GetFileNameWithoutExtension(f)).ToArray()
+                .Select(f => Path.GetFileNameWithoutExtension(f) ?? string.Empty)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToArray()
             : Array.Empty<string>();
 
         InitializeComponent();
@@ -42,6 +47,8 @@ public partial class ThemeSettingsWindow : Window
             return;
         panel.Children.Clear();
 
+        // Dynamically build the list of components starting with the main app,
+        // then adding all loaded plugins.
         var components = new List<string> { "Cycloside" };
         components.AddRange(_manager.Plugins.Select(p => p.Name));
 
@@ -67,6 +74,7 @@ public partial class ThemeSettingsWindow : Window
             panel.Children.Add(row);
             _controls[comp] = (cb, box);
 
+            // Load the currently saved settings for this component.
             if (SettingsManager.Settings.ComponentSkins.TryGetValue(comp, out var skins) && skins.Count > 0)
             {
                 cb.IsChecked = true;
@@ -84,11 +92,10 @@ public partial class ThemeSettingsWindow : Window
             if (pair.cb.IsChecked == true)
                 map[comp] = new List<string>
                 {
-                    pair.box.SelectedItem?.ToString() ?? _themes.FirstOrDefault() ?? "MintGreen"
+                    pair.box.SelectedItem?.ToString() ?? _themes.FirstOrDefault() ?? "Default" // Fallback to "Default"
                 };
         }
         SettingsManager.Save();
         Close();
     }
 }
-
