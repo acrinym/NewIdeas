@@ -10,6 +10,7 @@ using AvaloniaEdit.Highlighting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CliWrap;
+using System.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -105,6 +106,7 @@ namespace Cycloside.Plugins.BuiltIn
             _window.KeyDown += Window_KeyDown;
             _window.Show();
             UpdateStatus();
+            LaunchQB64();
         }
 
         public void Stop()
@@ -189,6 +191,8 @@ namespace Cycloside.Plugins.BuiltIn
 
             var settingsItem = new MenuItem { Header = "_Settings..." };
             settingsItem.Click += (s, e) => OpenSettings();
+            var launchQb64Item = new MenuItem { Header = "Launch _QB64" };
+            launchQb64Item.Click += (s, e) => LaunchQB64(_currentFile);
 
             var helpItem = new MenuItem { Header = "_About" };
             helpItem.Click += (s, e) => ShowHelp();
@@ -201,7 +205,7 @@ namespace Cycloside.Plugins.BuiltIn
                     new MenuItem { Header = "_Edit", ItemsSource = editItems },
                     new MenuItem { Header = "_Search", ItemsSource = searchItems },
                     new MenuItem { Header = "_Run", ItemsSource = runItems },
-                    new MenuItem { Header = "T_ools", ItemsSource = new [] { settingsItem } },
+                    new MenuItem { Header = "T_ools", ItemsSource = new [] { settingsItem, launchQb64Item } },
                     new MenuItem { Header = "_Help", ItemsSource = new [] { helpItem } }
                 }
             };
@@ -533,6 +537,27 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
+        private void LaunchQB64(string? file = null)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = _qb64Path,
+                    UseShellExecute = true
+                };
+                if (!string.IsNullOrWhiteSpace(file))
+                {
+                    psi.ArgumentList.Add(file);
+                }
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"Error launching QB64: {ex.Message}");
+            }
+        }
+        
         private async Task<string?> ShowInputDialog(string title, string prompt)
         {
             var inputWindow = new InputWindow(title, prompt);
