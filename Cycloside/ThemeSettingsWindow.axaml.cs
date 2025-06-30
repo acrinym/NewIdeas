@@ -8,7 +8,30 @@ namespace Cycloside;
 
 public partial class ThemeSettingsWindow : Window
 {
-    private readonly string[] _components = new[] { "Cycloside", "TextEditor", "MediaPlayer", "Plugins" };
+    // Expanded list of components so all built-in plugins can have skins
+    // assigned through the settings UI.
+    private readonly string[] _components = new[]
+    {
+        "Cycloside",
+        "Text Editor",
+        "MP3 Player",
+        "Terminal",
+        "Macro Engine",
+        "Process Monitor",
+        "Wallpaper Changer",
+        "Clipboard Manager",
+        "Date/Time Overlay",
+        "Disk Usage",
+        "Environment Editor",
+        "File Watcher",
+        "Jezzball",
+        "Log Viewer",
+        "QBasic Retro IDE",
+        "Task Scheduler",
+        "Widget Host",
+        "Winamp Visual Host",
+        "Plugins"
+    };
     private readonly string[] _themes = new[] { "MintGreen", "Matrix", "Orange", "ConsoleGreen", "MonochromeOrange", "DeepBlue" };
     private readonly Dictionary<string, (CheckBox cb, ComboBox box)> _controls = new();
 

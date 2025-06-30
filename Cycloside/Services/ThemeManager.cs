@@ -26,23 +26,28 @@ namespace Cycloside.Services
             {
                 themeName = "MintGreen";
             }
-            
-            LoadGlobalTheme(themeName);
+
+            // Attempt to load the requested theme. If it fails (e.g. file
+            // missing) fall back to the default so the UI is always styled.
+            if (!LoadGlobalTheme(themeName) && themeName != "MintGreen")
+            {
+                LoadGlobalTheme("MintGreen");
+            }
         }
 
         /// <summary>
         /// Applies a single global theme to the entire application.
         /// It clears any previously loaded global theme first.
         /// </summary>
-        public static void LoadGlobalTheme(string themeName)
+        public static bool LoadGlobalTheme(string themeName)
         {
-            if (Application.Current == null) return;
+            if (Application.Current == null) return false;
 
             var file = Path.Combine(GlobalThemeDir, $"{themeName}.axaml");
             if (!File.Exists(file))
             {
                 Logger.Log($"Global theme '{themeName}' not found at '{file}'.");
-                return;
+                return false;
             }
 
             // Remove any existing global theme to prevent conflicts
@@ -60,6 +65,7 @@ namespace Cycloside.Services
             Application.Current.Styles.Add(newThemeStyle);
             SettingsManager.Settings.GlobalTheme = themeName; // Save the active theme
             SettingsManager.Save();
+            return true;
         }
 
         /// <summary>
