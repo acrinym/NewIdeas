@@ -242,13 +242,17 @@ public partial class App : Application
 
         menuItem.Command = new RelayCommand(o =>
         {
-            if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
-            else manager.EnablePlugin(plugin);
-            
-            menuItem.IsChecked = manager.IsEnabled(plugin);
-            settings.PluginEnabled[plugin.Name] = menuItem.IsChecked;
+            var item = (NativeMenuItem)o!;
+            if (manager.IsEnabled(plugin))
+                manager.DisablePlugin(plugin);
+            else
+                manager.EnablePlugin(plugin);
+
+            item.IsChecked = manager.IsEnabled(plugin);
+            settings.PluginEnabled[plugin.Name] = item.IsChecked;
             SettingsManager.Save();
         });
+        menuItem.CommandParameter = menuItem;
 
         return menuItem;
     }
