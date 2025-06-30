@@ -20,7 +20,7 @@ public class MacroEvent
 public class Macro
 {
     public string Name { get; set; } = "";
-    // FIXED: This now stores the detailed MacroEvent objects instead of a simple list of strings.
+    // FIXED: This now stores the detailed MacroEvent objects.
     public List<MacroEvent> Events { get; set; } = new();
 }
 
@@ -43,7 +43,7 @@ public static class MacroManager
                     return list;
             }
         }
-        catch { }
+        catch { /* Ignore errors during load */ }
         return new List<Macro>();
     }
 
@@ -59,7 +59,7 @@ public static class MacroManager
             var json = JsonSerializer.Serialize(_macros, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(MacroPath, json);
         }
-        catch { }
+        catch { /* Ignore errors during save */ }
     }
 
     public static void Add(Macro macro)
