@@ -71,4 +71,11 @@ public static class Logger
         catch (TaskCanceledException) { }
         catch (AggregateException) { } // Can be thrown if the task faults, ignore on shutdown.
     }
+
+    /// <summary>
+    /// Gracefully shuts down the logger. No-op for current implementation.
+    /// </summary>
+    public static void Shutdown()
+    {
+    }
 }

@@ -111,12 +111,13 @@ namespace Cycloside.Plugins.BuiltIn
         private AudioFileReader? _audioReader;
         private float _volumeBeforeMute;
         private SpectrumAnalyzer? _spectrumAnalyzer;
-        private MP3PlayerWindow? _window;
+        // MERGED: Using the explicit `Views` namespace to avoid ambiguity.
+        private Views.MP3PlayerWindow? _window;
 
         // --- IPlugin Properties ---
         public string Name => "MP3 Player";
-        public string Description => "Play MP3 files with a simple playlist.";
-        public Version Version => new(1, 6, 0); // Incremented for real-time analysis
+        public string Description => "Play MP3 files with a simple playlist and visualization support.";
+        public Version Version => new(1, 7, 0);
         public Widgets.IWidget? Widget => new Widgets.BuiltIn.Mp3Widget(this);
         public bool ForceDefaultTheme => false;
 
@@ -144,7 +145,8 @@ namespace Cycloside.Plugins.BuiltIn
                 _window.Activate();
                 return;
             }
-            _window = new MP3PlayerWindow { DataContext = this };
+            // MERGED: Using the explicit `Views` namespace here as well.
+            _window = new Views.MP3PlayerWindow { DataContext = this };
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
             _window.Closed += (_, _) => _window = null;
             _window.Show();
@@ -261,9 +263,10 @@ namespace Cycloside.Plugins.BuiltIn
                 
                 // OPTIMIZED: Use a SampleAggregator to properly handle audio samples for FFT.
                 var aggregator = new SampleAggregator(_audioReader);
-                _spectrumAnalyzer = new SpectrumAnalyzer(aggregator, 2048);
+                _spectrumAnalyzer = new SpectrumAnalyzer(aggregator, 1024);
 
-                _wavePlayer = new WaveOutEvent { Volume = Volume };
+                // MERGED: Kept the `DesiredLatency` setting for better performance.
+                _wavePlayer = new WaveOutEvent { Volume = Volume, DesiredLatency = 200 };
                 _wavePlayer.Init(aggregator); // Play through the aggregator
                 _wavePlayer.PlaybackStopped += OnPlaybackStopped;
                 TotalTime = _audioReader.TotalTime;
@@ -294,16 +297,19 @@ namespace Cycloside.Plugins.BuiltIn
             if (_audioReader is null || !IsPlaying || _spectrumAnalyzer is null) return;
             CurrentTime = _audioReader.CurrentTime;
 
+            // MERGED: Kept the more descriptive comments from the `hkqxjj-codex` branch.
+            // FIX: Ensure byte arrays are correctly sized for Winamp visualizers (576 samples)
             var spectrum = new byte[576];
             var waveform = new byte[576];
 
             _spectrumAnalyzer.GetFftData(spectrum);
             _spectrumAnalyzer.GetWaveformData(waveform);
 
+            // NEW: Publish a stereo version of the data for plugins that expect it.
             var stereoSpectrum = new byte[1152];
             var stereoWaveform = new byte[1152];
             Array.Copy(spectrum, 0, stereoSpectrum, 0, 576);
-            Array.Copy(spectrum, 0, stereoSpectrum, 576, 576);
+            Array.Copy(spectrum, 0, stereoSpectrum, 576, 576); // Duplicate mono to right channel
             Array.Copy(waveform, 0, stereoWaveform, 0, 576);
             Array.Copy(waveform, 0, stereoWaveform, 576, 576);
 

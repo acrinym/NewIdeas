@@ -4,8 +4,14 @@ using System;
 
 namespace Cycloside.Services;
 
+/// <summary>
+/// Manages the application of custom cursors to UI elements.
+/// </summary>
 public static class CursorManager
 {
+    /// <summary>
+    /// Applies a standard cursor to a UI element by its name.
+    /// </summary>
     public static void ApplyCursor(InputElement element, string cursorName)
     {
         try
@@ -26,6 +32,9 @@ public static class CursorManager
         }
     }
 
+    /// <summary>
+    /// Applies a cursor to a UI element based on the component's name from the global settings.
+    /// </summary>
     public static void ApplyFromSettings(InputElement element, string component)
     {
         var map = SettingsManager.Settings.ComponentCursors;
@@ -35,4 +44,3 @@ public static class CursorManager
         }
     }
 }
-
