@@ -1,0 +1,480 @@
+How to build the environment editor. 
+
+// ====================================================================================
+// App.axaml.cs - The Application Entry Point
+// No changes are needed here from the default template.
+// ====================================================================================
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
+using AvaloniaEnvEditor.ViewModels;
+using AvaloniaEnvEditor.Views;
+
+namespace AvaloniaEnvEditor
+{
+    public partial class App : Application
+    {
+        public override void Initialize()
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
+
+        public override void OnFrameworkInitializationCompleted()
+        {
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                desktop.MainWindow = new MainWindow
+                {
+                    DataContext = new MainWindowViewModel(),
+                };
+            }
+
+            base.OnFrameworkInitializationCompleted();
+        }
+    }
+}
+
+
+// ====================================================================================
+// Models/EnvironmentVariableItem.cs - The "Model" Layer
+// This is a simple class to hold the data for a single environment variable.
+// ====================================================================================
+namespace AvaloniaEnvEditor.Models
+{
+    public class EnvironmentVariableItem
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+}
+
+
+// ====================================================================================
+// ViewModels/ViewModelBase.cs - A base class for all ViewModels
+// This is part of the standard Avalonia MVVM template.
+// ====================================================================================
+using ReactiveUI;
+
+namespace AvaloniaEnvEditor.ViewModels
+{
+    public class ViewModelBase : ReactiveObject
+    {
+    }
+}
+
+
+// ====================================================================================
+// ViewModels/MainWindowViewModel.cs - The "ViewModel" Layer for the Main Window
+// This is the core logic of the application.
+// ====================================================================================
+using System;
+using System.Collections;
+using System.Collections.ObjectModel;
+using System.Reactive;
+using System.Threading.Tasks;
+using Avalonia.Controls;
+using AvaloniaEnvEditor.Models;
+using AvaloniaEnvEditor.Views;
+using ReactiveUI;
+
+namespace AvaloniaEnvEditor.ViewModels
+{
+    public class MainWindowViewModel : ViewModelBase
+    {
+        // --- Private Fields ---
+        private EnvironmentVariableTarget _currentTarget = EnvironmentVariableTarget.User;
+        private EnvironmentVariableItem? _selectedVariable;
+        private bool _isUserScope = true;
+        private bool _isMachineScope = false;
+        private bool _isProcessScope = false;
+
+        // --- Public Properties for UI Binding ---
+
+        /// <summary>
+        /// A collection of variables to display in the DataGrid.
+        /// ObservableCollection automatically notifies the UI when items are added or removed.
+        /// </summary>
+        public ObservableCollection<EnvironmentVariableItem> Variables { get; } = new();
+
+        /// <summary>
+        /// The variable currently selected by the user in the DataGrid.
+        /// We use this.RaiseAndSetIfChanged to notify the UI of changes.
+        /// </summary>
+        public EnvironmentVariableItem? SelectedVariable
+        {
+            get => _selectedVariable;
+            set => this.RaiseAndSetIfChanged(ref _selectedVariable, value);
+        }
+
+        // Properties for the RadioButtons to select the scope
+        public bool IsUserScope
+        {
+            get => _isUserScope;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _isUserScope, value);
+                if (value) UpdateScope(EnvironmentVariableTarget.User);
+            }
+        }
+
+        public bool IsMachineScope
+        {
+            get => _isMachineScope;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _isMachineScope, value);
+                if (value) UpdateScope(EnvironmentVariableTarget.Machine);
+            }
+        }
+
+        public bool IsProcessScope
+        {
+            get => _isProcessScope;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _isProcessScope, value);
+                if (value) UpdateScope(EnvironmentVariableTarget.Process);
+            }
+        }
+
+        // --- Commands for Buttons ---
+        
+        public ReactiveCommand<Unit, Unit> AddCommand { get; }
+        public ReactiveCommand<Unit, Unit> EditCommand { get; }
+        public ReactiveCommand<Unit, Unit> DeleteCommand { get; }
+
+        // --- Constructor ---
+        public MainWindowViewModel()
+        {
+            // The 'canExecute' observable for Edit and Delete commands ensures the buttons
+            // are only enabled when a variable is actually selected in the list.
+            var canEditOrDelete = this.WhenAnyValue(
+                x => x.SelectedVariable,
+                (selected) => selected != null);
+
+            AddCommand = ReactiveCommand.CreateFromTask(AddVariableAsync);
+            EditCommand = ReactiveCommand.CreateFromTask(EditVariableAsync, canEditOrDelete);
+            DeleteCommand = ReactiveCommand.CreateFromTask(DeleteVariableAsync, canEditOrDelete);
+
+            // Load the initial set of variables
+            LoadVariables();
+        }
+
+        // --- Core Logic Methods ---
+
+        private void UpdateScope(EnvironmentVariableTarget target)
+        {
+            _currentTarget = target;
+            LoadVariables();
+        }
+
+        private void LoadVariables()
+        {
+            Variables.Clear();
+            try
+            {
+                IDictionary? variables = Environment.GetEnvironmentVariables(_currentTarget);
+                if (variables == null) return;
+                
+                var sortedKeys = new ArrayList(variables.Keys);
+                sortedKeys.Sort();
+
+                foreach (string key in sortedKeys)
+                {
+                    if (variables[key] is string value)
+                    {
+                        Variables.Add(new EnvironmentVariableItem { Key = key, Value = value });
+                    }
+                }
+            }
+            catch (System.Security.SecurityException)
+            {
+                // This is the key for cross-platform compatibility.
+                // Instead of crashing, we inform the user.
+                ShowErrorDialog("Access Denied", "Reading or writing System/Machine variables requires administrator (or 'sudo') privileges. Please restart the application with elevated permissions.");
+            }
+            catch (Exception ex)
+            {
+                ShowErrorDialog("An Error Occurred", $"An unexpected error occurred while loading variables: {ex.Message}");
+            }
+        }
+
+        private async Task AddVariableAsync()
+        {
+            var dialogViewModel = new AddEditVariableViewModel();
+            var dialog = new AddEditVariableWindow
+            {
+                DataContext = dialogViewModel
+            };
+
+            var result = await dialog.ShowDialog<EnvironmentVariableItem?>(App.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop ? desktop.MainWindow : null);
+
+            if (result != null)
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable(result.Key, result.Value, _currentTarget);
+                    LoadVariables(); // Refresh the list
+                }
+                catch (Exception ex)
+                {
+                    ShowErrorDialog("Error Adding Variable", $"Could not add the variable. This operation may require administrator privileges.\n\nError: {ex.Message}");
+                }
+            }
+        }
+
+        private async Task EditVariableAsync()
+        {
+            if (SelectedVariable == null) return;
+
+            var dialogViewModel = new AddEditVariableViewModel(SelectedVariable);
+            var dialog = new AddEditVariableWindow
+            {
+                DataContext = dialogViewModel
+            };
+
+            var result = await dialog.ShowDialog<EnvironmentVariableItem?>(App.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop ? desktop.MainWindow : null);
+
+            if (result != null)
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable(result.Key, result.Value, _currentTarget);
+                    LoadVariables(); // Refresh the list
+                }
+                catch (Exception ex)
+                {
+                    ShowErrorDialog("Error Editing Variable", $"Could not edit the variable. This operation may require administrator privileges.\n\nError: {ex.Message}");
+                }
+            }
+        }
+
+        private async Task DeleteVariableAsync()
+        {
+            if (SelectedVariable == null) return;
+
+            // Simple confirmation dialog (can be replaced with a more styled one)
+            var confirmDialog = new MessageBox.Avalonia.MessageBoxManager()
+                .GetMessageBoxStandardWindow("Confirm Delete", $"Are you sure you want to delete the variable '{SelectedVariable.Key}'?");
+            
+            var result = await confirmDialog.ShowAsync();
+
+            if (result == MessageBox.Avalonia.Enums.ButtonResult.Yes)
+            {
+                try
+                {
+                    // To delete a variable, you set its value to null.
+                    Environment.SetEnvironmentVariable(SelectedVariable.Key, null, _currentTarget);
+                    LoadVariables(); // Refresh the list
+                }
+                catch (Exception ex)
+                {
+                    ShowErrorDialog("Error Deleting Variable", $"Could not delete the variable. This operation may require administrator privileges.\n\nError: {ex.Message}");
+                }
+            }
+        }
+        
+        private void ShowErrorDialog(string title, string message)
+        {
+             var errorDialog = new MessageBox.Avalonia.MessageBoxManager()
+                .GetMessageBoxStandardWindow(title, message);
+            errorDialog.Show();
+        }
+    }
+}
+
+
+// ====================================================================================
+// ViewModels/AddEditVariableViewModel.cs - The "ViewModel" for the Dialog
+// This handles the logic for the popup window used to add or edit a variable.
+// ====================================================================================
+using Avalonia.Controls;
+using AvaloniaEnvEditor.Models;
+using ReactiveUI;
+using System.Reactive;
+
+namespace AvaloniaEnvEditor.ViewModels
+{
+    public class AddEditVariableViewModel : ViewModelBase
+    {
+        private string _key = "";
+        private string _value = "";
+        private bool _isEditMode = false;
+
+        public string Key
+        {
+            get => _key;
+            set => this.RaiseAndSetIfChanged(ref _key, value);
+        }
+
+        public string Value
+        {
+            get => _value;
+            set => this.RaiseAndSetIfChanged(ref _value, value);
+        }
+
+        public bool IsEditMode
+        {
+            get => _isEditMode;
+            set => this.RaiseAndSetIfChanged(ref _isEditMode, value);
+        }
+        
+        public string Title => IsEditMode ? "Edit Variable" : "Add New Variable";
+
+        public ReactiveCommand<Window, Unit> OkCommand { get; }
+        public ReactiveCommand<Window, Unit> CancelCommand { get; }
+
+        // Constructor for "Add" mode
+        public AddEditVariableViewModel()
+        {
+            var canExecuteOk = this.WhenAnyValue(
+                x => x.Key,
+                (key) => !string.IsNullOrWhiteSpace(key));
+
+            OkCommand = ReactiveCommand.Create<Window>(w => w.Close(new EnvironmentVariableItem { Key = this.Key, Value = this.Value }), canExecuteOk);
+            CancelCommand = ReactiveCommand.Create<Window>(w => w.Close(null));
+        }
+
+        // Constructor for "Edit" mode
+        public AddEditVariableViewModel(EnvironmentVariableItem itemToEdit) : this()
+        {
+            IsEditMode = true;
+            Key = itemToEdit.Key;
+            Value = itemToEdit.Value;
+        }
+    }
+}
+
+
+// ====================================================================================
+// Views/MainWindow.axaml - The "View" Layer (UI Definition) for the Main Window
+// This XAML file defines the layout and binds controls to the ViewModel.
+// ====================================================================================
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AvaloniaEnvEditor.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="AvaloniaEnvEditor.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Avalonia Environment Variable Editor"
+        Width="800" Height="600"
+        WindowStartupLocation="CenterScreen">
+
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in your IDE -->
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <Grid RowDefinitions="Auto, *, Auto" Margin="15">
+
+    <!-- Row 0: Scope Selection -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="20" Margin="0,0,0,15">
+      <TextBlock Text="Variable Scope:" VerticalAlignment="Center"/>
+      <RadioButton Content="User" GroupName="Scope" IsChecked="{Binding IsUserScope, Mode=TwoWay}"/>
+      <RadioButton Content="System/Machine" GroupName="Scope" IsChecked="{Binding IsMachineScope, Mode=TwoWay}"/>
+      <RadioButton Content="Process" GroupName="Scope" IsChecked="{Binding IsProcessScope, Mode=TwoWay}"/>
+    </StackPanel>
+
+    <!-- Row 1: DataGrid for displaying variables -->
+    <DataGrid Grid.Row="1"
+              ItemsSource="{Binding Variables}"
+              SelectedItem="{Binding SelectedVariable, Mode=TwoWay}"
+              IsReadOnly="True"
+              CanUserSortColumns="True"
+              GridLinesVisibility="All">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Variable" Binding="{Binding Key}" Width="250"/>
+        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+      </DataGrid.Columns>
+    </DataGrid>
+
+    <!-- Row 2: Action Buttons -->
+    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,15,0,0">
+      <Button Content="Add..." Command="{Binding AddCommand}"/>
+      <Button Content="Edit..." Command="{Binding EditCommand}"/>
+      <Button Content="Delete" Command="{Binding DeleteCommand}"/>
+    </StackPanel>
+    
+  </Grid>
+</Window>
+
+
+// ====================================================================================
+// Views/MainWindow.axaml.cs - Code-behind for the Main Window
+// Usually empty in a clean MVVM application.
+// ====================================================================================
+using Avalonia.Controls;
+
+namespace AvaloniaEnvEditor.Views
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+    }
+}
+
+
+// ====================================================================================
+// Views/AddEditVariableWindow.axaml - The "View" for the Dialog
+// This defines the UI for the popup window.
+// ====================================================================================
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AvaloniaEnvEditor.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+        x:Class="AvaloniaEnvEditor.Views.AddEditVariableWindow"
+        x:DataType="vm:AddEditVariableViewModel"
+        Title="{Binding Title}"
+        Width="450" Height="220"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+
+  <Design.DataContext>
+    <vm:AddEditVariableViewModel/>
+  </Design.DataContext>
+
+  <Grid RowDefinitions="Auto, Auto, *" Margin="15">
+    
+    <!-- Row 0: Variable Name (Key) -->
+    <TextBlock Grid.Row="0" Text="Variable Name:"/>
+    <TextBox Grid.Row="0" Margin="110,0,0,0" Text="{Binding Key}" IsEnabled="{Binding !IsEditMode}"/>
+    
+    <!-- Row 1: Variable Value -->
+    <TextBlock Grid.Row="1" Text="Variable Value:" Margin="0,10,0,0"/>
+    <TextBox Grid.Row="1" Margin="110,10,0,0" Text="{Binding Value}"/>
+
+    <!-- Row 2: OK / Cancel Buttons -->
+    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+      <!-- The CommandParameter is bound to the Window itself to allow the ViewModel to close it. -->
+      <Button Content="OK" IsDefault="True" Command="{Binding OkCommand}" CommandParameter="{Binding $parent[Window]}"/>
+      <Button Content="Cancel" IsCancel="True" Command="{Binding CancelCommand}" CommandParameter="{Binding $parent[Window]}"/>
+    </StackPanel>
+    
+  </Grid>
+</Window>
+
+
+// ====================================================================================
+// Views/AddEditVariableWindow.axaml.cs - Code-behind for the Dialog
+// ====================================================================================
+using Avalonia.Controls;
+
+namespace AvaloniaEnvEditor.Views
+{
+    public partial class AddEditVariableWindow : Window
+    {
+        public AddEditVariableWindow()
+        {
+            InitializeComponent();
+        }
+    }
+}
