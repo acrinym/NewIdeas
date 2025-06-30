@@ -153,7 +153,6 @@ private NativeMenu BuildTrayMenu(PluginManager manager, VolatilePluginManager vo
     {
         Items =
         {
-            // REFACTOR: Consolidated all settings windows under a single "Control Panel" entry.
             new NativeMenuItem("Control Panel...") { Command = new RelayCommand(() => new ControlPanelWindow(manager).Show()) },
             new NativeMenuItemSeparator(),
             new NativeMenuItem("Launch at Startup") { IsChecked = settings.LaunchAtStartup, ToggleType = NativeMenuItemToggleType.CheckBox, Command = new RelayCommand(o => {
@@ -290,7 +289,7 @@ private static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, i
 private static extern bool DestroyIcon(IntPtr handle);
 
 #endregion
-}--- FILE: Cycloside/MainWindow.axaml ---<Window xmlns="https://github.com/avaloniaui"xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"xmlns:d="http://schemas.microsoft.com/expression/blend/2008"xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"xmlns:vm="clr-namespace:Cycloside.ViewModels"xmlns:p="clr-namespace:Cycloside.Plugins"mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"x:Class="Cycloside.MainWindow"x:Name="RootWindow"x:DataType="vm:MainWindowViewModel"Title="Cycloside"WindowStartupLocation="CenterScreen"Background="{DynamicResource ApplicationBackgroundBrush}"><DockPanel>
+}--- FILE: Cycloside/MainWindow.axaml ---<Window xmlns="https://github.com/avaloniaui"xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"xmlns:d="http://schemas.microsoft.com/expression/blend/2008"xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"xmlns:vm="clr-namespace:Cycloside.ViewModels"xmlns:p="clr-namespace:Cycloside.Plugins"mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"x:Class="Cycloside.Views.MainWindow"x:Name="RootWindow"x:DataType="vm:MainWindowViewModel"Title="Cycloside"WindowStartupLocation="CenterScreen"Background="{DynamicResource ApplicationBackgroundBrush}"><DockPanel>
     <Menu DockPanel.Dock="Top">
         <MenuItem Header="_File">
             <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
@@ -306,7 +305,6 @@ private static extern bool DestroyIcon(IntPtr handle);
             </MenuItem.ItemTemplate>
         </MenuItem>
         <MenuItem Header="_Settings">
-            <!-- REFACTOR: This now opens the single, unified Control Panel -->
             <MenuItem Header="_Control Panel..." Click="OpenControlPanel"/>
         </MenuItem>
     </Menu>
@@ -321,11 +319,10 @@ private static extern bool DestroyIcon(IntPtr handle);
     </Canvas>
 
 </DockPanel>
-</Window>--- FILE: Cycloside/MainWindow.axaml.cs ---using Avalonia.Controls;using Avalonia.Interactivity;using Cycloside.Plugins;using Cycloside.Services;using Cycloside.Views;namespace Cycloside;public partial class MainWindow : Window{private readonly PluginManager _manager;public MainWindow()
+</Window>--- FILE: Cycloside/MainWindow.axaml.cs ---using Avalonia.Controls;using Avalonia.Interactivity;using Cycloside.Plugins;using Cycloside.Services;using Cycloside.Views;namespace Cycloside.Views;public partial class MainWindow : Window{private readonly PluginManager _manager;public MainWindow()
 {
-    // Parameterless constructor for designer support
     InitializeComponent();
-    _manager = null!; // This will crash if used at runtime, which is intended.
+    _manager = null!; 
 }
 
 public MainWindow(PluginManager manager)
@@ -337,7 +334,6 @@ public MainWindow(PluginManager manager)
     WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(MainWindow));
 }
 
-// REFACTOR: Removed individual settings window methods.
 private void OpenControlPanel(object? sender, RoutedEventArgs e) =>
     new ControlPanelWindow(_manager).Show();
 }--- FILE: Cycloside/Program.cs ---using Avalonia;using System;using System.IO;namespace Cycloside;class Program{[STAThread]public static void Main(string[] args){if (args.Length == 2 && args[0] == "--newplugin"){GeneratePluginTemplate(args[1]);return;}    AppDomain.CurrentDomain.UnhandledException += (_, e) =>
@@ -362,7 +358,6 @@ internal static void GeneratePluginTemplate(string name)
     if (File.Exists(path))
         return;
 
-    // REFACTOR: Updated template to reflect new project structure and interfaces.
     var content = $@"using System;
 using Cycloside.Plugins;using Cycloside.Widgets;public class {name}Plugin : IPlugin{{public string Name => ""{name}"";public string Description => ""Describe your plugin."";public Version Version => new(1, 0, 0);public IWidget? Widget => null;public bool ForceDefaultTheme => false;public void Start()
 {{
@@ -381,45 +376,46 @@ public static AppBuilder BuildAvaloniaApp()
         .UsePlatformDetect()
         .WithInterFont()
         .LogToTrace();
-}--- FILE: Cycloside/Services/Logger.cs ---using System;using System.IO;using System.Threading.Tasks;using System.Collections.Concurrent;namespace Cycloside.Services;/// <summary>/// REFACTOR: A more robust, thread-safe, and asynchronous logger./// </summary>public static class Logger{private static readonly string LogDir = Path.Combine(AppContext.BaseDirectory, "logs");private static readonly string LogFile = Path.Combine(LogDir, "app.log");private static readonly BlockingCollection<string> _logQueue = new();private static readonly Task _logTask;static Logger()
+}--- FILE: Cycloside/Services/Logger.cs ---using System;using System.IO;using System.Threading.Tasks;using System.Collections.Concurrent;namespace Cycloside.Services;public static class Logger{private static readonly string LogDir = Path.Combine(AppContext.BaseDirectory, "logs");private static readonly string LogFile = Path.Combine(LogDir, "app.log");private static readonly BlockingCollection<string> _queue = new();private static readonly Task _logTask;static Logger()
 {
     Directory.CreateDirectory(LogDir);
-    _logTask = Task.Run(ProcessLogQueue);
+    _logTask = Task.Run(ProcessQueue);
 }
 
 public static void Log(string message)
 {
-    if (!_logQueue.IsAddingCompleted)
+    if (!_queue.IsAddingCompleted)
     {
-        _logQueue.Add($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}");
+        _queue.Add($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}");
     }
 }
 
-private static void ProcessLogQueue()
+private static void ProcessQueue()
 {
-    foreach (var message in _logQueue.GetConsumingEnumerable())
+    foreach (var msg in _queue.GetConsumingEnumerable())
     {
         try
         {
-            File.AppendAllText(LogFile, message + Environment.NewLine);
-            var fileInfo = new FileInfo(LogFile);
-            if (fileInfo.Exists && fileInfo.Length > 1_048_576) // 1 MB
+            File.AppendAllText(LogFile, msg + Environment.NewLine);
+            var info = new FileInfo(LogFile);
+            if (info.Exists && info.Length > 1_048_576) // 1 MB
             {
-                var backupFile = Path.Combine(LogDir, "app.log.1");
-                File.Move(LogFile, backupFile, overwrite: true);
+                var backup = Path.Combine(LogDir, "app.log.1");
+                File.Move(LogFile, backup, overwrite: true);
             }
         }
-        catch (Exception) { /* If logging fails, there's not much we can do. */ }
+        catch { /* ignore logging errors */ }
     }
 }
 
 public static void Shutdown()
 {
-    _logQueue.CompleteAdding();
+    _queue.CompleteAdding();
     try
     {
         _logTask.Wait(TimeSpan.FromSeconds(2));
     }
-    catch (TaskCanceledException) { /* Expected */ }
+    catch (TaskCanceledException) { }
+    catch (AggregateException) { }
 }
 }
