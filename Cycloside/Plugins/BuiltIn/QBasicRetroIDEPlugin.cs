@@ -10,6 +10,7 @@ using AvaloniaEdit.Highlighting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CliWrap;
+using System.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +27,7 @@ namespace Cycloside.Plugins.BuiltIn
         private TreeView? _projectTree;
         private TextBlock? _status;
         private string _qb64Path = "qb64";
+        private Process? _qb64Process;
         private string? _currentFile;
         private string? _projectPath;
         private bool _isCompiling = false;
@@ -104,6 +106,7 @@ namespace Cycloside.Plugins.BuiltIn
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
             _window.Show();
+            LaunchQB64Editor();
             UpdateStatus();
         }
 
@@ -114,6 +117,21 @@ namespace Cycloside.Plugins.BuiltIn
             _editor = null;
             _projectTree = null;
             _status = null;
+            try
+            {
+                if (_qb64Process != null && !_qb64Process.HasExited)
+                {
+                    _qb64Process.Kill();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to close QB64 process: {ex.Message}");
+            }
+            finally
+            {
+                _qb64Process = null;
+            }
         }
 
         // Commands exposed for UI bindings
@@ -224,6 +242,7 @@ namespace Cycloside.Plugins.BuiltIn
             _editor.Text = string.Empty;
             _currentFile = null;
             UpdateStatus(false);
+            LaunchQB64Editor();
         }
 
         private async Task OpenProject()
@@ -271,6 +290,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _hasUnsavedChanges = false;
                 if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
                 UpdateStatus(false);
+                LaunchQB64Editor(path);
             }
             catch (Exception ex)
             {
@@ -335,6 +355,24 @@ namespace Cycloside.Plugins.BuiltIn
             catch (Exception ex)
             {
                 SetStatus($"Error reading project directory: {ex.Message}");
+            }
+        }
+
+        private void LaunchQB64Editor(string? file = null)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = _qb64Path,
+                    UseShellExecute = true,
+                    Arguments = string.IsNullOrWhiteSpace(file) ? string.Empty : $"\"{file}\""
+                };
+                _qb64Process = Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"QB64 launch error: {ex.Message}");
             }
         }
         #endregion
