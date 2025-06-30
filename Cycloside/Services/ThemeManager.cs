@@ -63,6 +63,19 @@ namespace Cycloside.Services
         }
 
         /// <summary>
+        /// Applies the global theme and any component specific skins
+        /// based on the current settings. This provides a single
+        /// convenience entry point for plugins to style their windows.
+        /// </summary>
+        /// <param name="window">The window or control to skin.</param>
+        /// <param name="componentName">The component identifier used when looking up skins.</param>
+        public static void ApplyFromSettings(Window window, string componentName)
+        {
+            LoadGlobalThemeFromSettings();
+            ApplyComponentSkins(window, componentName);
+        }
+
+        /// <summary>
         /// Applies component-specific skins from settings to a given window or control.
         /// This method is the missing link that connects the ComponentSkins setting to the UI.
         /// </summary>
