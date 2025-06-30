@@ -66,7 +66,7 @@ namespace Cycloside.Widgets.BuiltIn
             var prevButton = new Button { Content = "◀", Command = _plugin.PreviousCommand };
             var playButton = new Button { Content = "▶", Command = _plugin.PlayCommand };
             var pauseButton = new Button { Content = "❚❚", Command = _plugin.PauseCommand };
-            var stopButton = new Button { Content = "■", Command = _plugin.StopCommand };
+            var stopButton = new Button { Content = "■", Command = _plugin.StopPlaybackCommand };
             var nextButton = new Button { Content = "▶|", Command = _plugin.NextCommand };
 
             // --- Assemble Layout using a Grid for precise alignment ---

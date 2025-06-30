@@ -13,7 +13,7 @@ namespace Cycloside.Visuals
 
         private readonly List<WinampVisPluginAdapter> _plugins = new();
         private WinampVisPluginAdapter? _active;
-        private System.Timers.Timer? _renderTimer;
+        private Timer? _renderTimer;
         private VisHostWindow? _window;
         private readonly Action<object?> _busHandler;
 
@@ -49,7 +49,10 @@ namespace Cycloside.Visuals
         {
             if (!_plugins.Contains(plugin)) return false;
             
+            // FIX: Ensure any existing window is closed before creating a new one.
+            _window?.Close();
             _window = new VisHostWindow();
+            _window.Closed += (_, _) => StopPlugin(); // NEW: Ensure cleanup when window is closed by user.
             _window.Show();
             
             plugin.SetParent(_window.GetHandle());
@@ -60,10 +63,21 @@ namespace Cycloside.Visuals
             // Subscribe to the audio data when the plugin starts
             PluginBus.Subscribe(AudioDataTopic, _busHandler);
 
-            _renderTimer = new System.Timers.Timer(33); // ~30 FPS render target
+            _renderTimer?.Stop();
+            _renderTimer = new Timer(33); // ~30 FPS
             _renderTimer.Elapsed += (_, _) => _active?.Render();
             _renderTimer.Start();
             return true;
+        }
+
+        // NEW: Method to properly stop the active visualization.
+        private void StopPlugin()
+        {
+            PluginBus.Unsubscribe(AudioDataTopic, _busHandler);
+            _renderTimer?.Stop();
+            _active?.Quit();
+            _active = null;
+            _window = null;
         }
 
         /// <summary>
@@ -80,11 +94,7 @@ namespace Cycloside.Visuals
 
         public void Dispose()
         {
-            // Unsubscribe from the bus to prevent memory leaks
-            PluginBus.Unsubscribe(AudioDataTopic, _busHandler);
-            _renderTimer?.Stop();
-            _window?.Close();
-            _active?.Quit();
+            StopPlugin();
             foreach (var p in _plugins)
             {
                 p.Quit();

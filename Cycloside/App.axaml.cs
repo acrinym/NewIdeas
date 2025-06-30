@@ -15,6 +15,7 @@ using System.Collections.Generic; // For IReadOnlyList
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ public partial class App : Application
 {
     private const string TrayIconBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGElEQVR4nGNkaGAgCTCRpnxUw6iGoaQBALsfAKDg6Y6zAAAAAElFTkSuQmCC";
     private RemoteApiServer? _remoteServer;
+    private PluginManager? _pluginManager;
 
     public override void Initialize()
     {
@@ -41,9 +43,7 @@ public partial class App : Application
 
         var settings = SettingsManager.Settings;
 
-        // CRITICAL FIX: Load the global theme right away. This ensures even the
-        // wizard is themed correctly.
-        ThemeManager.LoadGlobalTheme(settings.GlobalTheme);
+        ThemeManager.LoadGlobalThemeFromSettings();
 
         if (settings.FirstRun)
         {
@@ -74,42 +74,45 @@ public partial class App : Application
     private MainWindow CreateMainWindow(AppSettings settings)
     {
         // --- Plugin Management ---
-        var manager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
+        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
         var volatileManager = new VolatilePluginManager();
-        
-        LoadAllPlugins(manager, settings);
-        manager.StartWatching();
-        
+
+        LoadAllPlugins(_pluginManager, settings);
+        _pluginManager.StartWatching();
+
         // --- View & ViewModel Creation ---
-        var viewModel = new MainWindowViewModel(manager.Plugins);
-        var mainWindow = new MainWindow(manager)
+        var viewModel = new MainWindowViewModel(_pluginManager.Plugins);
+        var mainWindow = new MainWindow(_pluginManager)
         {
             DataContext = viewModel
         };
-        
+
         // Connect ViewModel commands to application logic
-        viewModel.ExitCommand = new RelayCommand(() => Shutdown(manager));
+        viewModel.ExitCommand = new RelayCommand(() => Shutdown(_pluginManager));
         // THIS IS THE MERGED CHANGE: Using EnablePlugin instead of StartPlugin
         viewModel.StartPluginCommand = new RelayCommand(plugin => {
-            if(plugin is IPlugin p) manager.EnablePlugin(p);
+            if(plugin is IPlugin p) _pluginManager.EnablePlugin(p);
         });
 
         // --- Server & Hotkey Setup ---
-        _remoteServer = new RemoteApiServer(manager, settings.RemoteApiToken);
+        _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
         _remoteServer.Start();
-        WorkspaceProfiles.Apply(settings.ActiveProfile, manager);
-        RegisterHotkeys(manager);
+        WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
+        RegisterHotkeys(_pluginManager);
         
         // --- Tray Icon Setup ---
         var trayIcon = new TrayIcon
         {
             Icon = CreateTrayIcon(),
             ToolTipText = "Cycloside",
-            Menu = BuildTrayMenu(manager, volatileManager, settings)
+            Menu = BuildTrayMenu(_pluginManager, volatileManager, settings)
         };
         var icons = TrayIcon.GetIcons(this) ?? new TrayIcons();
         TrayIcon.SetIcons(this, icons);
-        icons.Add(trayIcon);
+        if (!icons.Contains(trayIcon))
+        {
+            icons.Add(trayIcon);
+        }
         trayIcon.IsVisible = true;
         
         return mainWindow;
@@ -156,6 +159,7 @@ public partial class App : Application
         manager.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
+        Logger.Shutdown();
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
         {
             appLifetime.Shutdown();
@@ -168,7 +172,7 @@ public partial class App : Application
     {
         var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
         var newPlugins = manager.Plugins.Where(p => manager.GetStatus(p) != PluginChangeStatus.None).ToList();
-        var otherPlugins = manager.Plugins.Except(newPlugins).ToList();
+        var otherPlugins = manager.Plugins.Except(newPlugins).OrderBy(p => p.Name).ToList();
 
         if (newPlugins.Any())
         {
@@ -242,7 +246,7 @@ public partial class App : Application
 
         menuItem.Command = new RelayCommand(o =>
         {
-            var item = (NativeMenuItem)o!;
+            if (o is not NativeMenuItem item) return;
             if (manager.IsEnabled(plugin))
                 manager.DisablePlugin(plugin);
             else
@@ -262,8 +266,8 @@ public partial class App : Application
         var menuItem = new NativeMenuItem(title);
         menuItem.Click += async (_, _) =>
         {
-            var window = new Window();
-            var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
+            var files = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
                 FileTypeFilter = new[] { filter }
@@ -292,6 +296,7 @@ public partial class App : Application
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
                 var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
+                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
                            ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
@@ -331,14 +336,5 @@ public partial class App : Application
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
     
-    private class RelayCommand : System.Windows.Input.ICommand
-    {
-        private readonly Action<object?> _execute;
-        public event EventHandler? CanExecuteChanged { add {} remove {} }
-        public RelayCommand(Action<object?> execute) => _execute = execute;
-        public RelayCommand(Action execute) : this(_ => execute()) {}
-        public bool CanExecute(object? parameter) => true;
-        public void Execute(object? parameter) => _execute(parameter);
-    }
     #endregion
 }
