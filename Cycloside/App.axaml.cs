@@ -7,7 +7,7 @@ using Avalonia.Platform.Storage;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 // Managers and other helpers live in the base Cycloside namespace
-using Cycloside.ViewModels;    // For MainWindowViewModel
+using Cycloside.ViewModels;      // For MainWindowViewModel
 using Cycloside.Services;
 using Cycloside.Views;          // For WizardWindow and MainWindow
 using System;
@@ -156,6 +156,7 @@ public partial class App : Application
         manager.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
+        // Ensure queued log messages are written before exit
         Logger.Shutdown();
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
         {
@@ -295,6 +296,7 @@ public partial class App : Application
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
                 var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
+                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
                            ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
