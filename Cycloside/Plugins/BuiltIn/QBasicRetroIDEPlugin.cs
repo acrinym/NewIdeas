@@ -42,8 +42,8 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
-            _qb64Path = SettingsManager.Settings.ComponentSkins.TryGetValue("QB64Path", out var list) && list.Count > 0 && !string.IsNullOrWhiteSpace(list[0])
-                ? list[0]
+            _qb64Path = !string.IsNullOrWhiteSpace(SettingsManager.Settings.QB64Path)
+                ? SettingsManager.Settings.QB64Path
                 : "qb64";
 
             _editor = new TextEditor
@@ -578,7 +578,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 _qb64Path = settingsWindow.QB64Path;
                 _editor.FontSize = settingsWindow.FontSize;
-                SettingsManager.Settings.ComponentSkins["QB64Path"] = new List<string> { _qb64Path };
+                SettingsManager.Settings.QB64Path = _qb64Path;
                 SettingsManager.Save();
             }
         }
@@ -682,8 +682,23 @@ namespace Cycloside.Plugins.BuiltIn
 
                 var panel = new StackPanel { Margin = new Thickness(10), Spacing = 5 };
                 panel.Children.Add(new TextBlock { Text = "QB64 Executable Path:" });
-                _pathBox = new TextBox { Text = path };
-                panel.Children.Add(_pathBox);
+                var pathPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
+                _pathBox = new TextBox { Text = path, Width = 250 };
+                var browseButton = new Button { Content = "Browse..." };
+                browseButton.Click += async (_, _) =>
+                {
+                    var result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                    {
+                        Title = "Select QB64 Executable"
+                    });
+                    if (result.FirstOrDefault()?.TryGetLocalPath() is { } p)
+                    {
+                        _pathBox.Text = p;
+                    }
+                };
+                pathPanel.Children.Add(_pathBox);
+                pathPanel.Children.Add(browseButton);
+                panel.Children.Add(pathPanel);
                 panel.Children.Add(new TextBlock { Text = "Font Size:" });
                 _fontSizeBox = new TextBox { Text = fontSize.ToString() };
                 panel.Children.Add(_fontSizeBox);
