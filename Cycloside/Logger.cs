@@ -24,4 +24,11 @@ public static class Logger
             File.AppendAllText(LogFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}\n");
         }
     }
+
+    /// <summary>
+    /// Gracefully shuts down the logger. No-op for current implementation.
+    /// </summary>
+    public static void Shutdown()
+    {
+    }
 }
