@@ -20,6 +20,9 @@ public class AppSettings
     // Path to the QB64 executable for the QBasic IDE plugin.
     public string QB64Path { get; set; } = "qb64";
 
+    // Path to the dotnet executable used by plugins or scripts.
+    public string DotNetPath { get; set; } = "dotnet";
+
     // RENAMED: This maps components (like plugin names) to specific skins.
     public Dictionary<string, List<string>> ComponentSkins { get; set; } = new();
 
