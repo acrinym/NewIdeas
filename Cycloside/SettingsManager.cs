@@ -17,6 +17,9 @@ public class AppSettings
     // RENAMED: This is now the single, application-wide theme.
     public string GlobalTheme { get; set; } = "MintGreen";
 
+    // Path to the QB64 executable for the QBasic IDE plugin.
+    public string QB64Path { get; set; } = "qb64";
+
     // RENAMED: This maps components (like plugin names) to specific skins.
     public Dictionary<string, List<string>> ComponentSkins { get; set; } = new();
 
