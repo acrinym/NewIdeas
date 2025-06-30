@@ -64,8 +64,11 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 // Disable button and show a loading message to provide user feedback.
                 _selectFolderButton.IsEnabled = false;
-                _tree.ItemsSource = null; // Clear previous results
-                _statusText.Text = $"Analyzing '{path}'... (This may take a while)";
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    _tree.ItemsSource = null; // Clear previous results
+                    _statusText.Text = $"Analyzing '{path}'... (This may take a while)";
+                });
 
                 try
                 {
