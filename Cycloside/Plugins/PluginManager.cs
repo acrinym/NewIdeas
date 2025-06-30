@@ -147,9 +147,11 @@ namespace Cycloside.Plugins
                 GC.WaitForPendingFinalizers();
 
                 LoadPlugins();
+                StartWatching();
                 _notify?.Invoke("Plugins have been reloaded.");
-                
-                // Re-apply settings to the newly loaded plugins
+
+                // Re-apply settings to the newly loaded plugins so reloaded
+                // plugins are enabled or disabled based on the active profile.
                 WorkspaceProfiles.Apply(SettingsManager.Settings.ActiveProfile, this);
             }
         }
