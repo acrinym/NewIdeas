@@ -10,6 +10,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Cycloside.Services;
+using Cycloside.Plugins.BuiltIn.Views;
 using NAudio.Wave;
 using NAudio.Dsp; // Required for FastFourierTransform
 
@@ -109,7 +110,8 @@ namespace Cycloside.Plugins.BuiltIn
         private IWavePlayer? _wavePlayer;
         private AudioFileReader? _audioReader;
         private float _volumeBeforeMute;
-        private SpectrumAnalyzer? _spectrumAnalyzer; // Field for our new analyzer
+        private SpectrumAnalyzer? _spectrumAnalyzer;
+        // MERGED: Using the explicit `Views` namespace to avoid ambiguity.
         private Views.MP3PlayerWindow? _window;
 
         // --- IPlugin Properties ---
@@ -143,6 +145,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _window.Activate();
                 return;
             }
+            // MERGED: Using the explicit `Views` namespace here as well.
             _window = new Views.MP3PlayerWindow { DataContext = this };
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
             _window.Closed += (_, _) => _window = null;
@@ -262,6 +265,7 @@ namespace Cycloside.Plugins.BuiltIn
                 var aggregator = new SampleAggregator(_audioReader);
                 _spectrumAnalyzer = new SpectrumAnalyzer(aggregator, 1024);
 
+                // MERGED: Kept the `DesiredLatency` setting for better performance.
                 _wavePlayer = new WaveOutEvent { Volume = Volume, DesiredLatency = 200 };
                 _wavePlayer.Init(aggregator); // Play through the aggregator
                 _wavePlayer.PlaybackStopped += OnPlaybackStopped;
@@ -272,7 +276,7 @@ namespace Cycloside.Plugins.BuiltIn
             catch (Exception ex)
             {
                 var friendlyError = $"Failed to load: {Path.GetFileName(filePath)}";
-                Console.WriteLine($"[ERROR] {friendlyError} | Details: {ex.Message}");
+                Logger.Log($"[ERROR] {friendlyError} | Details: {ex.Message}");
                 ErrorMessage = friendlyError;
                 CleanupPlayback();
                 return false;
@@ -284,8 +288,7 @@ namespace Cycloside.Plugins.BuiltIn
             IsPlaying = false;
             if (e.Exception is null && _audioReader is not null && _audioReader.Position >= _audioReader.Length)
             {
-                if (HasNext()) Next();
-                else CleanupPlayback();
+                Dispatcher.UIThread.InvokeAsync(() => { if (HasNext()) Next(); else CleanupPlayback(); });
             }
         }
 
@@ -294,6 +297,7 @@ namespace Cycloside.Plugins.BuiltIn
             if (_audioReader is null || !IsPlaying || _spectrumAnalyzer is null) return;
             CurrentTime = _audioReader.CurrentTime;
 
+            // MERGED: Kept the more descriptive comments from the `hkqxjj-codex` branch.
             // FIX: Ensure byte arrays are correctly sized for Winamp visualizers (576 samples)
             var spectrum = new byte[576];
             var waveform = new byte[576];

@@ -17,6 +17,7 @@
     <Border Padding="10" Background="{DynamicResource ThemeBackgroundBrush}">
         <DockPanel LastChildFill="True">
 
+            <!-- MERGED: Kept the descriptive comments for better code readability. -->
             <!-- Error Message Display -->
             <TextBlock Text="{Binding ErrorMessage}"
                        Foreground="Red"
@@ -39,6 +40,7 @@
 
             <!-- Progress Bar -->
             <DockPanel DockPanel.Dock="Top" Margin="0,8">
+                <!-- MERGED: Used the double-backslash version `mm\\:ss` which is the correct way to escape the colon in XAML. -->
                 <TextBlock Text="{Binding CurrentTime, StringFormat=mm\\:ss}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding TotalTime, StringFormat=mm\\:ss}" DockPanel.Dock="Right" VerticalAlignment="Center"/>
                 <Slider Value="{Binding CurrentTime.TotalSeconds}"

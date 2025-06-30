@@ -7,7 +7,7 @@ using Avalonia.Platform.Storage;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 // Managers and other helpers live in the base Cycloside namespace
-using Cycloside.ViewModels;    // For MainWindowViewModel
+using Cycloside.ViewModels;      // For MainWindowViewModel
 using Cycloside.Services;
 using Cycloside.Views;          // For WizardWindow and MainWindow
 using System;
@@ -26,6 +26,10 @@ public partial class App : Application
 {
     private const string TrayIconBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGElEQVR4nGNkaGAgCTCRpnxUw6iGoaQBALsfAKDg6Y6zAAAAAElFTkSuQmCC";
     private RemoteApiServer? _remoteServer;
+    
+    // MERGED: The _pluginManager field is necessary for other methods like Shutdown and BuildTrayMenu.
+    // The 'hkqxjj-codex/review-fix_refactor_additions-file-for-updates' branch correctly defined and used this, 
+    // while the 'main' branch had a bug where it used a local 'manager' but later referenced this uninitialized field.
     private PluginManager? _pluginManager;
 
     public override void Initialize()
@@ -74,6 +78,7 @@ public partial class App : Application
     private MainWindow CreateMainWindow(AppSettings settings)
     {
         // --- Plugin Management ---
+        // MERGED: Using the 'hkqxjj' branch's approach of assigning to the class field `_pluginManager`.
         _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
         var volatileManager = new VolatilePluginManager();
 
@@ -95,6 +100,7 @@ public partial class App : Application
         });
 
         // --- Server & Hotkey Setup ---
+        // MERGED: This now correctly uses the initialized `_pluginManager` field.
         _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
         _remoteServer.Start();
         WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
@@ -159,6 +165,8 @@ public partial class App : Application
         manager.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
+        // MERGED: Kept the descriptive comment from the 'main' branch.
+        // Ensure queued log messages are written before exit
         Logger.Shutdown();
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
         {
@@ -197,6 +205,7 @@ public partial class App : Application
             Items =
             {
                 new NativeMenuItem("Settings") { Menu = new NativeMenu { Items = {
+                    new NativeMenuItem("Control Panel...") { Command = new RelayCommand(() => new ControlPanelWindow(manager).Show()) },
                     new NativeMenuItem("Plugin Manager...") { Command = new RelayCommand(() => new PluginSettingsWindow(manager).Show()) },
                     new NativeMenuItem("Generate New Plugin...") { Command = new RelayCommand(() => new PluginDevWizard().Show()) },
                     new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
@@ -244,6 +253,7 @@ public partial class App : Application
         if (menuItem.IsChecked && !manager.IsEnabled(plugin)) manager.EnablePlugin(plugin);
         else if (!menuItem.IsChecked && manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
 
+        // MERGED: Using the safer 'is not' pattern matching from the 'hkqxjj' branch, which is more robust than a direct cast.
         menuItem.Command = new RelayCommand(o =>
         {
             if (o is not NativeMenuItem item) return;
@@ -266,7 +276,9 @@ public partial class App : Application
         var menuItem = new NativeMenuItem(title);
         menuItem.Click += async (_, _) =>
         {
+            // MERGED: Kept the extra newline from 'main' for readability.
             if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
+
             var files = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
@@ -295,6 +307,7 @@ public partial class App : Application
             try
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                // MERGED: Code was identical in both branches.
                 var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
                            ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
                            ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
@@ -336,5 +349,7 @@ public partial class App : Application
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
     
+    // MERGED: Kept this informative comment from the 'main' branch.
+    // RelayCommand moved to Cycloside.Services namespace
     #endregion
 }

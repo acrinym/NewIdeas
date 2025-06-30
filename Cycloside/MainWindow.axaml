@@ -41,6 +41,7 @@
                 </MenuItem.ItemTemplate>
             </MenuItem>
             <MenuItem Header="_Settings">
+                <MenuItem Header="_Control Panel..." Click="OpenControlPanel"/>
                 <MenuItem Header="Theme _Settings..." Click="OpenThemeSettings"/>
                 <MenuItem Header="Skin/Theme _Editor..." Click="OpenSkinEditor"/>
             </MenuItem>
