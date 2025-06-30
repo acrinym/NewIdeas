@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Cycloside.Plugins.BuiltIn.EnvironmentEditorWindow"
+        x:CompileBindings="False"
         Title="Environment Variables Editor"
         Width="700" Height="500">
     <DockPanel>
@@ -11,6 +12,11 @@
             <Button x:Name="RemoveButton" Content="Remove"/>
             <Button x:Name="SaveButton" Content="Save Changes"/>
         </StackPanel>
-        <DataGrid x:Name="Grid"/>
+        <DataGrid x:Name="Grid" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Key" Binding="{Binding Path=Key, Mode=TwoWay}" IsReadOnly="False" Width="*" />
+                <DataGridTextColumn Header="Value" Binding="{Binding Path=Value, Mode=TwoWay}" IsReadOnly="False" Width="2*" />
+            </DataGrid.Columns>
+        </DataGrid>
     </DockPanel>
 </Window>

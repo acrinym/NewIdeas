@@ -37,7 +37,11 @@ namespace Cycloside.Plugins.BuiltIn
                 _scopeSelector.SelectionChanged += (s, e) => LoadVariables();
             }
 
-            addButton?.AddHandler(Button.ClickEvent, (_, _) => _items.Add(new EnvItem { Key = "NEW_VARIABLE", Value = "new value" }));
+            addButton?.AddHandler(Button.ClickEvent, (_, _) =>
+            {
+                _items.Add(new EnvItem { Key = "NEW_VARIABLE", Value = "new value" });
+                SaveVariables();
+            });
             removeButton?.AddHandler(Button.ClickEvent, (_, _) =>
             {
                 if (_grid?.SelectedItem is EnvItem selectedItem)
@@ -51,8 +55,6 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 _grid.ItemsSource = _items;
                 _grid.AutoGenerateColumns = false;
-                _grid.Columns.Add(new DataGridTextColumn { Header = "Key", Binding = new Avalonia.Data.Binding("Key"), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-                _grid.Columns.Add(new DataGridTextColumn { Header = "Value", Binding = new Avalonia.Data.Binding("Value"), Width = new DataGridLength(2, DataGridLengthUnitType.Star) });
             }
 
             LoadVariables();
