@@ -24,4 +24,12 @@ public static class Logger
             File.AppendAllText(LogFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}\n");
         }
     }
+
+    /// <summary>
+    /// Allows consumers to flush and close the logger if needed.
+    /// </summary>
+    public static void Shutdown()
+    {
+        // Current implementation writes directly, so nothing to flush.
+    }
 }
