@@ -43,16 +43,17 @@ namespace Cycloside.Plugins.BuiltIn
             if (OperatingSystem.IsWindows())
             {
                 _userScope!.IsChecked = true;
-                _userScope.Checked += (_, _) => UpdateScope(EnvironmentVariableTarget.User);
-                _machineScope!.Checked += (_, _) => UpdateScope(EnvironmentVariableTarget.Machine);
-                _processScope!.Checked += (_, _) => UpdateScope(EnvironmentVariableTarget.Process);
+                // FIXED: Use the modern IsCheckedChanged event instead of the obsolete Checked event.
+                _userScope.IsCheckedChanged += (_, _) => { if (_userScope.IsChecked == true) UpdateScope(EnvironmentVariableTarget.User); };
+                _machineScope!.IsCheckedChanged += (_, _) => { if (_machineScope.IsChecked == true) UpdateScope(EnvironmentVariableTarget.Machine); };
+                _processScope!.IsCheckedChanged += (_, _) => { if (_processScope.IsChecked == true) UpdateScope(EnvironmentVariableTarget.Process); };
             }
             else
             {
                 _userScope!.IsEnabled = false;
                 _machineScope!.IsEnabled = false;
                 _processScope!.IsChecked = true;
-                _processScope.Checked += (_, _) => UpdateScope(EnvironmentVariableTarget.Process);
+                _processScope.IsCheckedChanged += (_, _) => { if (_processScope.IsChecked == true) UpdateScope(EnvironmentVariableTarget.Process); };
                 _currentTarget = EnvironmentVariableTarget.Process;
             }
 
@@ -96,24 +97,20 @@ namespace Cycloside.Plugins.BuiltIn
         {
             var target = _currentTarget;
 
-            // Important: A straight save is destructive. We need to compare to original state.
-            // First, get all original keys for the target scope.
             var originalKeys = new HashSet<string>();
             foreach (DictionaryEntry de in Environment.GetEnvironmentVariables(target))
             {
                 originalKeys.Add(de.Key.ToString()!);
             }
 
-            // Get all keys currently in our editor.
             var currentKeys = new HashSet<string>(_items.Select(i => i.Key));
 
-            // Find keys that were removed.
             var removedKeys = originalKeys.Except(currentKeys);
             foreach (var key in removedKeys)
             {
                 try
                 {
-                    Environment.SetEnvironmentVariable(key, null, target); // Setting value to null removes it.
+                    Environment.SetEnvironmentVariable(key, null, target);
                 }
                 catch(Exception ex)
                 {
@@ -121,7 +118,6 @@ namespace Cycloside.Plugins.BuiltIn
                 }
             }
 
-            // Set/update all current keys.
             foreach (var item in _items)
             {
                 if(string.IsNullOrWhiteSpace(item.Key)) continue;
@@ -132,12 +128,10 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 catch (Exception ex)
                 {
-                    // This will likely fail for Machine scope without admin rights.
                     _items.Add(new EnvItem { Key = "ERROR", Value = $"Could not save '{item.Key}': {ex.Message}" });
                 }
             }
             
-            // Show a confirmation or status. For now, just reload the list.
             LoadVariables();
         }
 
