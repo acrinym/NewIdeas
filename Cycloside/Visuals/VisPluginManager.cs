@@ -1,65 +1,123 @@
 using System;
-using System.Windows.Input;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Avalonia.Threading;
+using Cycloside.Plugins.BuiltIn; // For AudioData
+using Cycloside.Services;
 
-namespace Cycloside.Services;
-
-/// <summary>
-/// A reusable command that relays its Execute and CanExecute
-/// logic to delegates. This is a foundational piece for the MVVM pattern.
-/// </summary>
-public class RelayCommand : ICommand
+namespace Cycloside.Visuals
 {
-    private readonly Action<object?> _execute;
-    private readonly Predicate<object?>? _canExecute;
-
     /// <summary>
-    /// Occurs when changes occur that affect whether or not the command should execute.
+    /// Manages the loading, selection, and lifecycle of Winamp visualization plugins.
     /// </summary>
-    public event EventHandler? CanExecuteChanged;
-
-    /// <summary>
-    /// Creates a new command.
-    /// </summary>
-    /// <param name="execute">The execution logic.</param>
-    /// <param name="canExecute">The execution status logic.</param>
-    public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
+    public class VisPluginManager : IDisposable
     {
-        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-        _canExecute = canExecute;
-    }
+        private readonly List<WinampVisPluginAdapter> _plugins = new();
+        private WinampVisPluginAdapter? _activePlugin;
+        private VisHostWindow? _window;
+        private DispatcherTimer? _renderTimer;
+        private readonly Action<object?> _audioHandler;
 
-    /// <summary>
-    /// Creates a new command that does not take a parameter.
-    /// </summary>
-    /// <param name="execute">The execution logic.</param>
-    public RelayCommand(Action execute) : this(_ => execute()) { }
+        public IReadOnlyList<WinampVisPluginAdapter> Plugins => _plugins.AsReadOnly();
 
-    /// <summary>
-    /// Determines whether the command can execute in its current state.
-    /// </summary>
-    /// <param name="parameter">Data used by the command. If the command does not require data to be passed, this object can be set to null.</param>
-    /// <returns>true if this command can be executed; otherwise, false.</returns>
-    public bool CanExecute(object? parameter)
-    {
-        return _canExecute == null || _canExecute(parameter);
-    }
+        public VisPluginManager()
+        {
+            // Subscribe to the audio data stream published by the MP3PlayerPlugin
+            _audioHandler = OnAudioData;
+            PluginBus.Subscribe("audio:data", _audioHandler);
+        }
 
-    /// <summary>
-    /// Defines the method to be called when the command is invoked.
-    /// </summary>
-    /// <param name="parameter">Data used by the command. If the command does not require data to be passed, this object can be set to null.</param>
-    public void Execute(object? parameter)
-    {
-        _execute(parameter);
-    }
+        /// <summary>
+        /// Loads all valid Winamp visualization plugins from a given directory.
+        /// </summary>
+        public void Load(string directory)
+        {
+            if (!Directory.Exists(directory)) return;
 
-    /// <summary>
-    /// Method used to raise the CanExecuteChanged event
-    /// to indicate that the return value of the CanExecute
-    /// method has changed.
-    /// </summary>
-    public void NotifyCanExecuteChanged()
-    {
-        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            foreach (var dll in Directory.GetFiles(directory, "*.dll"))
+            {
+                try
+                {
+                    var adapter = new WinampVisPluginAdapter(dll);
+                    if (adapter.Load())
+                    {
+                        _plugins.Add(adapter);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"Failed to load Winamp visualization '{Path.GetFileName(dll)}': {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Starts a selected visualization plugin, creating a window for it and beginning the render loop.
+        /// </summary>
+        public void StartPlugin(WinampVisPluginAdapter plugin)
+        {
+            if (_activePlugin != null)
+            {
+                StopPlugin();
+            }
+
+            _window = new VisHostWindow { Title = plugin.Description };
+            _window.Show();
+            _window.Closed += (s, e) => StopPlugin();
+
+            plugin.SetParent(_window.GetHandle());
+            if (plugin.Initialize())
+            {
+                _activePlugin = plugin;
+                _renderTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(33), DispatcherPriority.Normal, (_, _) =>
+                {
+                    _activePlugin?.Render();
+                });
+                _renderTimer.Start();
+            }
+            else
+            {
+                _window.Close();
+            }
+        }
+
+        /// <summary>
+        /// Handles incoming audio data from the PluginBus and passes it to the active visualization.
+        /// </summary>
+        private void OnAudioData(object? payload)
+        {
+            if (payload is AudioData data && _activePlugin != null)
+            {
+                _activePlugin.UpdateAudioData(data);
+            }
+        }
+
+        /// <summary>
+        /// Stops the currently active visualization plugin and closes its window.
+        /// </summary>
+        public void StopPlugin()
+        {
+            _renderTimer?.Stop();
+            _activePlugin?.Quit();
+            _activePlugin = null;
+            _window?.Close();
+            _window = null;
+        }
+
+        /// <summary>
+        /// Disposes of all resources, quits all loaded plugins, and unsubscribes from the PluginBus.
+        /// </summary>
+        public void Dispose()
+        {
+            StopPlugin();
+            PluginBus.Unsubscribe("audio:data", _audioHandler);
+            foreach (var plugin in _plugins)
+            {
+                plugin.Quit();
+            }
+            _plugins.Clear();
+            GC.SuppressFinalize(this);
+        }
     }
 }
