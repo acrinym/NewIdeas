@@ -7,8 +7,8 @@ using System.IO;
 using System.Linq;
 using Cycloside.Plugins;
 using Cycloside.Services;
-using Avalonia.Media; // FIX: Added missing using statement
-using Avalonia.Layout; // FIX: Added missing using statement
+using Avalonia.Media;
+using Avalonia.Layout;
 
 namespace Cycloside;
 
@@ -17,15 +17,21 @@ public partial class ThemeSettingsWindow : Window
     private readonly PluginManager _manager;
     private readonly string[] _themes;
     
-    // This dictionary now holds controls for both the global theme and component-specific themes.
     private readonly Dictionary<string, ComboBox> _componentComboBoxes = new();
     private ComboBox? _globalThemeBox;
+
+    // FIX: Add a parameterless constructor for XAML designer support.
+    // This resolves the AVLN3001 build warning.
+    public ThemeSettingsWindow() : this(new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), _ => {}))
+    {
+        // This constructor is used by the Avalonia designer and XAML loader.
+        // It calls the main constructor with a temporary PluginManager instance.
+    }
 
     public ThemeSettingsWindow(PluginManager manager)
     {
         _manager = manager;
         
-        // Correctly points to the global themes directory
         var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
         _themes = Directory.Exists(themeDir)
             ? Directory.GetFiles(themeDir, "*.axaml")
@@ -60,7 +66,7 @@ public partial class ThemeSettingsWindow : Window
 
         // --- Per-Component Theme Settings ---
         panel.Children.Add(new TextBlock { Text = "Component-Specific Themes (Overrides Global)", FontWeight = FontWeight.Bold, Margin = new Thickness(0,0,0,4) });
-        var components = new List<string> { "MainWindow" }; // Start with the main window
+        var components = new List<string> { "MainWindow" };
         components.AddRange(_manager.Plugins.Select(p => p.Name));
 
         foreach (var comp in components.Distinct().OrderBy(c => c))
@@ -68,19 +74,17 @@ public partial class ThemeSettingsWindow : Window
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*") };
             row.Children.Add(new TextBlock { Text = comp, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
             
-            // Add "(Global Theme)" as the first option to allow users to revert to the default
             var box = new ComboBox { ItemsSource = _themes.Prepend("(Global Theme)").ToList() };
             Grid.SetColumn(box, 1);
             row.Children.Add(box);
             
-            // Load saved setting for this component
             if (SettingsManager.Settings.ComponentThemes.TryGetValue(comp, out var themeName))
             {
                 box.SelectedItem = themeName;
             }
             else
             {
-                box.SelectedIndex = 0; // Default to "(Global Theme)"
+                box.SelectedIndex = 0;
             }
 
             panel.Children.Add(row);
@@ -90,19 +94,17 @@ public partial class ThemeSettingsWindow : Window
 
     private void SaveButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        // Save Global Theme
         if (_globalThemeBox?.SelectedItem is string globalTheme)
         {
             SettingsManager.Settings.GlobalTheme = globalTheme;
-            ThemeManager.LoadGlobalTheme(globalTheme); // Apply immediately
+            ThemeManager.LoadGlobalTheme(globalTheme);
         }
 
-        // Save Component Themes
         var map = SettingsManager.Settings.ComponentThemes;
         map.Clear();
         foreach (var (comp, box) in _componentComboBoxes)
         {
-            if (box.SelectedItem is string themeName && box.SelectedIndex != 0) // Index 0 is "(Global Theme)", so we don't save it
+            if (box.SelectedItem is string themeName && box.SelectedIndex != 0)
             {
                 map[comp] = themeName;
             }
@@ -110,14 +112,12 @@ public partial class ThemeSettingsWindow : Window
         
         SettingsManager.Save();
         
-        // Inform the user a restart might be needed for all changes to apply
         var msg = new MessageWindow("Settings Saved", "Theme settings have been saved. Some changes may require an application restart to fully apply.");
         msg.ShowDialog(this);
         
         Close();
     }
 
-    // FIX: Added the private MessageWindow helper class, which was missing.
     private class MessageWindow : Window
     {
         public MessageWindow(string title, string message)
