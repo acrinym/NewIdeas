@@ -24,7 +24,7 @@ public class AppSettings
     public string DotNetPath { get; set; } = "dotnet";
 
     // RENAMED: This maps components (like plugin names) to specific skins.
-    public Dictionary<string, List<string>> ComponentSkins { get; set; } = new();
+    public Dictionary<string, string> ComponentThemes { get; set; } = new();
 
     public string Cursor { get; set; } = "Arrow";
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
