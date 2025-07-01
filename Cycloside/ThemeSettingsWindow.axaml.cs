@@ -14,18 +14,21 @@ public partial class ThemeSettingsWindow : Window
 {
     private readonly PluginManager _manager;
     private readonly string[] _themes;
-    private readonly Dictionary<string, (CheckBox cb, ComboBox box)> _controls = new();
+    
+    // This dictionary now holds controls for both the global theme aand component-specific themes.
+    private readonly Dictionary<string, ComboBox> _componentComboBoxes = new();
+    private ComboBox? _globalThemeBox;
 
     public ThemeSettingsWindow(PluginManager manager)
     {
         _manager = manager;
         
-        // Dynamically load theme names from the Themes/Global directory.
-        // This is the more robust approach from the 'main' branch.
-        _themes = Directory.Exists(Path.Combine(AppContext.BaseDirectory, "Themes/Global"))
-            ? Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "Themes/Global"), "*.axaml")
-                .Select(f => Path.GetFileNameWithoutExtension(f) ?? string.Empty)
-                .Where(s => !string.IsNullOrEmpty(s))
+        var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes");
+        _themes = Directory.Exists(themeDir)
+            ? Directory.GetFiles(themeDir, "*.axaml")
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(s => s != null)
+                .Select(s => s!)
                 .ToArray()
             : Array.Empty<string>();
 
@@ -43,59 +46,70 @@ public partial class ThemeSettingsWindow : Window
     private void BuildList()
     {
         var panel = this.FindControl<StackPanel>("ThemePanel");
-        if (panel is null)
-            return;
+        if (panel is null) return;
         panel.Children.Clear();
 
-        // Dynamically build the list of components starting with the main app,
-        // then adding all loaded plugins.
-        var components = new List<string> { "Cycloside" };
+        // --- Global Theme Setting ---
+        panel.Children.Add(new TextBlock { Text = "Global Application Theme", FontWeight = FontWeight.Bold, Margin = new Thickness(0,0,0,4) });
+        _globalThemeBox = new ComboBox { ItemsSource = _themes, SelectedItem = SettingsManager.Settings.GlobalTheme };
+        panel.Children.Add(_globalThemeBox);
+        panel.Children.Add(new Separator{ Margin = new Thickness(0, 10)});
+
+        // --- Per-Component Theme Settings ---
+        panel.Children.Add(new TextBlock { Text = "Component-Specific Themes (Overrides Global)", FontWeight = FontWeight.Bold, Margin = new Thickness(0,0,0,4) });
+        var components = new List<string> { "MainWindow" }; // Start with the main window
         components.AddRange(_manager.Plugins.Select(p => p.Name));
 
-        foreach (var comp in components.Distinct())
+        foreach (var comp in components.Distinct().OrderBy(c => c))
         {
-            var row = new StackPanel
-            {
-                Orientation = Avalonia.Layout.Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 4)
-            };
-            var cb = new CheckBox
-            {
-                Content = comp,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-            };
-            var box = new ComboBox { SelectedIndex = 0, Margin = new Thickness(4, 0, 0, 0) };
-
-            foreach (var th in _themes)
-                box.Items.Add(th);
-
-            row.Children.Add(cb);
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*") };
+            row.Children.Add(new TextBlock { Text = comp, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            
+            var box = new ComboBox { ItemsSource = _themes.Prepend("(Global Theme)").ToList() };
+            Grid.SetColumn(box, 1);
             row.Children.Add(box);
-            panel.Children.Add(row);
-            _controls[comp] = (cb, box);
-
-            // Load the currently saved settings for this component.
-            if (SettingsManager.Settings.ComponentSkins.TryGetValue(comp, out var skins) && skins.Count > 0)
+            
+            // Load saved setting for this component
+            if (SettingsManager.Settings.ComponentThemes.TryGetValue(comp, out var themeName))
             {
-                cb.IsChecked = true;
-                box.SelectedItem = skins[0];
+                box.SelectedItem = themeName;
             }
+            else
+            {
+                box.SelectedIndex = 0; // Default to "(Global Theme)"
+            }
+
+            panel.Children.Add(row);
+            _componentComboBoxes[comp] = box;
         }
     }
 
     private void SaveButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var map = SettingsManager.Settings.ComponentSkins;
-        map.Clear();
-        foreach (var (comp, pair) in _controls)
+        // Save Global Theme
+        if (_globalThemeBox?.SelectedItem is string globalTheme)
         {
-            if (pair.cb.IsChecked == true)
-                map[comp] = new List<string>
-                {
-                    pair.box.SelectedItem?.ToString() ?? _themes.FirstOrDefault() ?? "Default" // Fallback to "Default"
-                };
+            SettingsManager.Settings.GlobalTheme = globalTheme;
+            ThemeManager.LoadGlobalTheme(globalTheme); // Apply immediately
         }
+
+        // Save Component Themes
+        var map = SettingsManager.Settings.ComponentThemes;
+        map.Clear();
+        foreach (var (comp, box) in _componentComboBoxes)
+        {
+            if (box.SelectedItem is string themeName && box.SelectedIndex != 0) // Index 0 is "(Global Theme)"
+            {
+                map[comp] = themeName;
+            }
+        }
+        
         SettingsManager.Save();
+        
+        // Inform the user a restart might be needed for all changes to apply
+        var msg = new MessageWindow("Settings Saved", "Theme settings have been saved. Some changes may require an application restart to fully apply.");
+        msg.ShowDialog(this);
+        
         Close();
     }
 }
