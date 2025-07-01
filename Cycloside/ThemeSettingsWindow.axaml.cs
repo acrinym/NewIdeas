@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using Cycloside.Plugins;
 using Cycloside.Services;
+using Avalonia.Media; // FIX: Added missing using statement
+using Avalonia.Layout; // FIX: Added missing using statement
 
 namespace Cycloside;
 
@@ -15,7 +17,7 @@ public partial class ThemeSettingsWindow : Window
     private readonly PluginManager _manager;
     private readonly string[] _themes;
     
-    // This dictionary now holds controls for both the global theme aand component-specific themes.
+    // This dictionary now holds controls for both the global theme and component-specific themes.
     private readonly Dictionary<string, ComboBox> _componentComboBoxes = new();
     private ComboBox? _globalThemeBox;
 
@@ -23,7 +25,8 @@ public partial class ThemeSettingsWindow : Window
     {
         _manager = manager;
         
-        var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes");
+        // Correctly points to the global themes directory
+        var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
         _themes = Directory.Exists(themeDir)
             ? Directory.GetFiles(themeDir, "*.axaml")
                 .Select(Path.GetFileNameWithoutExtension)
@@ -65,6 +68,7 @@ public partial class ThemeSettingsWindow : Window
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*") };
             row.Children.Add(new TextBlock { Text = comp, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
             
+            // Add "(Global Theme)" as the first option to allow users to revert to the default
             var box = new ComboBox { ItemsSource = _themes.Prepend("(Global Theme)").ToList() };
             Grid.SetColumn(box, 1);
             row.Children.Add(box);
@@ -98,7 +102,7 @@ public partial class ThemeSettingsWindow : Window
         map.Clear();
         foreach (var (comp, box) in _componentComboBoxes)
         {
-            if (box.SelectedItem is string themeName && box.SelectedIndex != 0) // Index 0 is "(Global Theme)"
+            if (box.SelectedItem is string themeName && box.SelectedIndex != 0) // Index 0 is "(Global Theme)", so we don't save it
             {
                 map[comp] = themeName;
             }
@@ -111,5 +115,37 @@ public partial class ThemeSettingsWindow : Window
         msg.ShowDialog(this);
         
         Close();
+    }
+
+    // FIX: Added the private MessageWindow helper class, which was missing.
+    private class MessageWindow : Window
+    {
+        public MessageWindow(string title, string message)
+        {
+            Title = title;
+            Width = 350;
+            SizeToContent = SizeToContent.Height;
+            WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+            var msg = new TextBlock
+            {
+                Text = message,
+                Margin = new Thickness(15),
+                TextWrapping = TextWrapping.Wrap
+            };
+
+            var ok = new Button { Content = "OK", IsDefault = true, Margin = new Thickness(5) };
+            ok.Click += (_, _) => Close();
+
+            var panel = new StackPanel { Spacing = 10 };
+            panel.Children.Add(msg);
+            panel.Children.Add(new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Children = { ok }
+            });
+            Content = panel;
+        }
     }
 }
