@@ -21,7 +21,7 @@ namespace Cycloside.Plugins.BuiltIn
 
         public string Name => "Jezzball";
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
-        public Version Version => new(1, 3, 0);
+        public Version Version => new(1, 4, 0); // Version bump for bug fixes
         public Cycloside.Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
@@ -99,12 +99,8 @@ namespace Cycloside.Plugins.BuiltIn
             WallPart2 = new Rect(origin, new Size(thickness, thickness));
         }
         
-        public bool IsDead(IReadOnlyList<Ball> balls)
-        {
-            var part1HitBall = !IsPart1Active && (Orientation == WallOrientation.Vertical ? WallPart1.Top > Area.Top : WallPart1.Left > Area.Left);
-            var part2HitBall = !IsPart2Active && (Orientation == WallOrientation.Vertical ? WallPart2.Bottom < Area.Bottom : WallPart2.Right < Area.Right);
-            return part1HitBall || part2HitBall;
-        }
+        // This check was flawed and has been removed in favor of direct checks in the update loop.
+        // public bool IsDead(IReadOnlyList<Ball> balls) { ... }
 
         public bool IsComplete => !IsPart1Active && !IsPart2Active;
     }
@@ -241,9 +237,9 @@ namespace Cycloside.Plugins.BuiltIn
             }
             else
             {
-                StartLevel();
+                // If we are just continuing after losing a life, don't restart the whole level
+                Message = string.Empty;
             }
-            Message = string.Empty;
         }
         
         public void TryStartWall(Point position, WallOrientation orientation)
@@ -294,6 +290,7 @@ namespace Cycloside.Plugins.BuiltIn
             if (CurrentWall == null) return;
 
             double growAmount = WallSpeed * dt;
+            bool wasHit = false;
 
             if (CurrentWall.IsPart1Active)
             {
@@ -302,6 +299,7 @@ namespace Cycloside.Plugins.BuiltIn
                     ? new Rect(w1.X, w1.Y - growAmount, w1.Width, w1.Height + growAmount)
                     : new Rect(w1.X - growAmount, w1.Y, w1.Width + growAmount, w1.Height);
                 
+                // Check for boundary collision
                 if (CurrentWall.Orientation == WallOrientation.Vertical)
                 {
                     if(w1.Top <= CurrentWall.Area.Top) { w1 = w1.WithY(CurrentWall.Area.Top); CurrentWall.IsPart1Active = false; }
@@ -312,8 +310,12 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 CurrentWall.WallPart1 = w1;
 
+                // Check for ball collision
                 if (_balls.Any(b => b.BoundingBox.Intersects(w1)))
+                {
                     CurrentWall.IsPart1Active = false;
+                    wasHit = true;
+                }
             }
 
             if (CurrentWall.IsPart2Active)
@@ -323,6 +325,7 @@ namespace Cycloside.Plugins.BuiltIn
                     ? new Rect(w2.X, w2.Y, w2.Width, w2.Height + growAmount)
                     : new Rect(w2.X, w2.Y, w2.Width + growAmount, w2.Height);
 
+                // Check for boundary collision
                 if (CurrentWall.Orientation == WallOrientation.Vertical)
                 {
                     if (w2.Bottom >= CurrentWall.Area.Bottom) { w2 = w2.WithHeight(CurrentWall.Area.Bottom - w2.Y); CurrentWall.IsPart2Active = false; }
@@ -333,11 +336,16 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 CurrentWall.WallPart2 = w2;
                 
+                // Check for ball collision
                 if (_balls.Any(b => b.BoundingBox.Intersects(w2)))
+                {
                     CurrentWall.IsPart2Active = false;
+                    wasHit = true;
+                }
             }
             
-            if (CurrentWall.IsDead(_balls))
+            // JEZZBALL FIX: Check for hit *immediately* after updating wall parts.
+            if (wasHit)
             {
                  LoseLife("Wall Broken!");
             }
@@ -350,7 +358,7 @@ namespace Cycloside.Plugins.BuiltIn
         private void LoseLife(string reason)
         {
             Lives--;
-            CurrentWall = null;
+            CurrentWall = null; // Clear the broken wall immediately
             Message = Lives <= 0 ? "Game Over! Click to restart." : reason + " Click to continue.";
         }
 
@@ -431,7 +439,6 @@ namespace Cycloside.Plugins.BuiltIn
         {
             Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
             GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
-            // FINAL FIX: The RadiusX and RadiusY properties now require a RelativeScalar object.
             RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative),
             RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative),
             GradientStops = new GradientStops { new(Colors.DarkSlateBlue, 0), new(Colors.Black, 1) }
@@ -542,6 +549,7 @@ namespace Cycloside.Plugins.BuiltIn
             
             if (_gameState.CurrentWall is { } wall)
             {
+                // Draw the wall parts that are still growing
                 if (wall.IsPart1Active) context.DrawLine(_wallPen, wall.Origin, wall.WallPart1.TopLeft);
                 if (wall.IsPart2Active) context.DrawLine(_wallPen, wall.Origin, wall.WallPart2.BottomRight);
             }
