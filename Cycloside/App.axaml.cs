@@ -26,6 +26,7 @@ public partial class App : Application
     private const string TrayIconBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGElEQVR4nGNkaGAgCTCRpnxUw6iGoaQBALsfAKDg6Y6zAAAAAElFTkSuQmCC";
     private RemoteApiServer? _remoteServer;
     private PluginManager? _pluginManager;
+    private TrayIcon? _trayIcon; // Keep a reference to the tray icon
 
     public override void Initialize()
     {
@@ -65,6 +66,10 @@ public partial class App : Application
     private MainWindow CreateMainWindow(AppSettings settings)
     {
         _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
+        
+        // FIX: Subscribe to the new PluginsReloaded event
+        _pluginManager.PluginsReloaded += OnPluginsReloaded;
+
         var volatileManager = new VolatilePluginManager();
 
         LoadAllPlugins(_pluginManager, settings);
@@ -77,9 +82,24 @@ public partial class App : Application
         };
 
         viewModel.ExitCommand = new RelayCommand(() => Shutdown());
+        
+        // FIX: The StartPluginCommand now correctly toggles the plugin and saves the setting.
         viewModel.StartPluginCommand = new RelayCommand(plugin =>
         {
-            if (plugin is IPlugin p) _pluginManager.EnablePlugin(p);
+            if (plugin is not IPlugin p || _pluginManager is null) return;
+            
+            bool shouldBeEnabled = !_pluginManager.IsEnabled(p);
+            if (shouldBeEnabled)
+            {
+                _pluginManager.EnablePlugin(p);
+            }
+            else
+            {
+                _pluginManager.DisablePlugin(p);
+            }
+
+            SettingsManager.Settings.PluginEnabled[p.Name] = shouldBeEnabled;
+            SettingsManager.Save();
         });
 
         _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
@@ -87,7 +107,7 @@ public partial class App : Application
         WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
         RegisterHotkeys(_pluginManager);
 
-        var trayIcon = new TrayIcon
+        _trayIcon = new TrayIcon
         {
             Icon = CreateTrayIcon(),
             ToolTipText = "Cycloside",
@@ -95,13 +115,34 @@ public partial class App : Application
         };
         var icons = TrayIcon.GetIcons(this) ?? new TrayIcons();
         TrayIcon.SetIcons(this, icons);
-        if (!icons.Contains(trayIcon))
+        if (!icons.Contains(_trayIcon))
         {
-            icons.Add(trayIcon);
+            icons.Add(_trayIcon);
         }
-        trayIcon.IsVisible = true;
+        _trayIcon.IsVisible = true;
 
         return mainWindow;
+    }
+    
+    // FIX: This method handles the PluginsReloaded event to rebuild the UI.
+    private void OnPluginsReloaded()
+    {
+        if (_trayIcon is null || _pluginManager is null) return;
+
+        // Rebuild the tray menu with the new plugin instances
+        var volatileManager = new VolatilePluginManager();
+        _trayIcon.Menu = BuildTrayMenu(_pluginManager, volatileManager, SettingsManager.Settings);
+
+        // Also update the main window's view model
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.MainWindow?.DataContext is MainWindowViewModel vm)
+        {
+            vm.AvailablePlugins.Clear();
+            foreach (var plugin in _pluginManager.Plugins)
+            {
+                vm.AvailablePlugins.Add(plugin);
+            }
+        }
     }
 
     private void LoadAllPlugins(PluginManager manager, AppSettings settings)
@@ -139,10 +180,9 @@ public partial class App : Application
         });
     }
 
-    // SHUTDOWN FIX: The shutdown sequence is now simplified to prevent incorrect state saving.
     private void Shutdown()
     {
-        _pluginManager?.StopAll(); // This now correctly stops plugins without disabling them in settings.
+        _pluginManager?.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
         Logger.Shutdown();
@@ -178,7 +218,6 @@ public partial class App : Application
         inlineItem.Click += (_, _) => new VolatileRunnerWindow(volatileManager).Show();
         volatileMenu.Menu!.Items.Add(inlineItem);
 
-        // MP3 PLAYER FIX: Add a direct menu item to launch the MP3 player as a workaround.
         var mp3Item = new NativeMenuItem("MP3 Player");
         mp3Item.Click += (s, e) =>
         {
@@ -196,7 +235,7 @@ public partial class App : Application
                     new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
                 }}},
                 new NativeMenuItemSeparator(),
-                mp3Item, // Added MP3 Player direct launch
+                mp3Item,
                 new NativeMenuItemSeparator(),
                 pluginsMenu,
                 volatileMenu,
@@ -223,10 +262,9 @@ public partial class App : Application
         var menuItem = new NativeMenuItem(label)
         {
             ToggleType = NativeMenuItemToggleType.CheckBox,
-            IsChecked = settings.PluginEnabled.TryGetValue(plugin.Name, out var isEnabled) && isEnabled
+            IsChecked = manager.IsEnabled(plugin)
         };
 
-        // This command now correctly toggles the plugin's state and saves it.
         menuItem.Command = new RelayCommand(o =>
         {
             if (o is not NativeMenuItem item) return;

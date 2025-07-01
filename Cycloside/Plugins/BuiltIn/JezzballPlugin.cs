@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using Cycloside.Services;
+using System.Threading.Tasks;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -21,30 +22,25 @@ namespace Cycloside.Plugins.BuiltIn
 
         public string Name => "Jezzball";
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
-        public Version Version => new(1, 4, 0); // Version bump for bug fixes
+        public Version Version => new(1, 4, 0);
         public Cycloside.Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
         public void Start()
         {
             _control = new JezzballControl();
-
-            var restartButton = new Button { Content = "Restart", Margin = new Thickness(5) };
-            restartButton.Click += (_, _) => _control.RestartGame();
-
-            var layout = new DockPanel();
-            DockPanel.SetDock(restartButton, Dock.Top);
-            layout.Children.Add(restartButton);
-            layout.Children.Add(_control);
-
+            
+            // FIX: The restart button is now part of the JezzballControl's layout,
+            // preventing it from pushing the game canvas down.
             _window = new Window
             {
                 Title = "Jezzball",
                 Width = 800,
                 Height = 600,
                 CanResize = false,
-                Content = layout
+                Content = _control // The control is now the direct content.
             };
+
             ThemeManager.ApplyFromSettings(_window, nameof(JezzballPlugin));
             _window.KeyDown += OnWindowKeyDown;
             _window.Show();
@@ -77,6 +73,7 @@ namespace Cycloside.Plugins.BuiltIn
 
     public enum WallOrientation { Vertical, Horizontal }
     
+    // UPGRADE: Added new ball types for more variety.
     public enum BallType { Normal, Slow, Fast, Splitting }
 
     public class BuildingWall
@@ -98,9 +95,6 @@ namespace Cycloside.Plugins.BuiltIn
             WallPart1 = new Rect(origin, new Size(thickness, thickness));
             WallPart2 = new Rect(origin, new Size(thickness, thickness));
         }
-        
-        // This check was flawed and has been removed in favor of direct checks in the update loop.
-        // public bool IsDead(IReadOnlyList<Ball> balls) { ... }
 
         public bool IsComplete => !IsPart1Active && !IsPart2Active;
     }
@@ -170,6 +164,7 @@ namespace Cycloside.Plugins.BuiltIn
         public double CapturedPercentage { get; private set; }
         public string Message { get; private set; } = string.Empty;
         public bool IsGameOver => Lives <= 0;
+        public bool FlashEffect { get; set; }
 
         public IReadOnlyList<Ball> Balls => _balls;
         public IReadOnlyList<Rect> ActiveAreas => _activeAreas;
@@ -205,6 +200,7 @@ namespace Cycloside.Plugins.BuiltIn
             CurrentWall = null;
             Message = $"Level {Level}";
 
+            // FIX: The bounds are now correctly calculated to fit within the 800x570 game area.
             var bounds = new Rect(0, 0, 800, 570);
             _totalPlayArea = bounds.Width * bounds.Height;
             _activeAreas.Add(bounds);
@@ -217,10 +213,11 @@ namespace Cycloside.Plugins.BuiltIn
                 var speed = 100 + Level * 10;
                 var velocity = new Vector(Math.Cos(angle) * speed, Math.Sin(angle) * speed);
                 
+                // UPGRADE: Special balls appear earlier.
                 BallType type = BallType.Normal;
-                if (Level > 3 && rand.NextDouble() > 0.8) type = BallType.Slow;
-                if (Level > 5 && rand.NextDouble() > 0.8) type = BallType.Fast;
-                if (Level > 7 && rand.NextDouble() > 0.9) type = BallType.Splitting;
+                if (Level > 2 && rand.NextDouble() > 0.8) type = BallType.Slow;
+                if (Level > 3 && rand.NextDouble() > 0.8) type = BallType.Fast;
+                if (Level > 4 && rand.NextDouble() > 0.9) type = BallType.Splitting;
 
                 _balls.Add(new Ball(bounds.Center, velocity, type));
             }
@@ -237,7 +234,6 @@ namespace Cycloside.Plugins.BuiltIn
             }
             else
             {
-                // If we are just continuing after losing a life, don't restart the whole level
                 Message = string.Empty;
             }
         }
@@ -299,7 +295,6 @@ namespace Cycloside.Plugins.BuiltIn
                     ? new Rect(w1.X, w1.Y - growAmount, w1.Width, w1.Height + growAmount)
                     : new Rect(w1.X - growAmount, w1.Y, w1.Width + growAmount, w1.Height);
                 
-                // Check for boundary collision
                 if (CurrentWall.Orientation == WallOrientation.Vertical)
                 {
                     if(w1.Top <= CurrentWall.Area.Top) { w1 = w1.WithY(CurrentWall.Area.Top); CurrentWall.IsPart1Active = false; }
@@ -310,10 +305,8 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 CurrentWall.WallPart1 = w1;
 
-                // Check for ball collision
                 if (_balls.Any(b => b.BoundingBox.Intersects(w1)))
                 {
-                    CurrentWall.IsPart1Active = false;
                     wasHit = true;
                 }
             }
@@ -325,7 +318,6 @@ namespace Cycloside.Plugins.BuiltIn
                     ? new Rect(w2.X, w2.Y, w2.Width, w2.Height + growAmount)
                     : new Rect(w2.X, w2.Y, w2.Width + growAmount, w2.Height);
 
-                // Check for boundary collision
                 if (CurrentWall.Orientation == WallOrientation.Vertical)
                 {
                     if (w2.Bottom >= CurrentWall.Area.Bottom) { w2 = w2.WithHeight(CurrentWall.Area.Bottom - w2.Y); CurrentWall.IsPart2Active = false; }
@@ -336,15 +328,12 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 CurrentWall.WallPart2 = w2;
                 
-                // Check for ball collision
                 if (_balls.Any(b => b.BoundingBox.Intersects(w2)))
                 {
-                    CurrentWall.IsPart2Active = false;
                     wasHit = true;
                 }
             }
             
-            // JEZZBALL FIX: Check for hit *immediately* after updating wall parts.
             if (wasHit)
             {
                  LoseLife("Wall Broken!");
@@ -358,7 +347,7 @@ namespace Cycloside.Plugins.BuiltIn
         private void LoseLife(string reason)
         {
             Lives--;
-            CurrentWall = null; // Clear the broken wall immediately
+            CurrentWall = null;
             Message = Lives <= 0 ? "Game Over! Click to restart." : reason + " Click to continue.";
         }
 
@@ -376,16 +365,37 @@ namespace Cycloside.Plugins.BuiltIn
             else
             {
                 newArea1 = new Rect(area.Left, area.Top, area.Width, CurrentWall.Origin.Y - area.Top);
-                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y, area.Width, area.Bottom - CurrentWall.Origin.Y);
+                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y, area.Width, area.Bottom - area.Top);
             }
 
             _activeAreas.Remove(area);
             
-            var ballsToSplit = _balls.Where(b => b.Type == BallType.Splitting && (newArea1.Contains(b.Position) || newArea2.Contains(b.Position))).ToList();
+            // UPGRADE: Check for special balls in the captured areas to award bonus points.
+            var ballsInArea1 = _balls.Where(b => newArea1.Intersects(b.BoundingBox)).ToList();
+            var ballsInArea2 = _balls.Where(b => newArea2.Intersects(b.BoundingBox)).ToList();
 
-            if (!_balls.Any(b => newArea1.Intersects(b.BoundingBox))) _filledAreas.Add(newArea1); else _activeAreas.Add(newArea1);
-            if (!_balls.Any(b => newArea2.Intersects(b.BoundingBox))) _filledAreas.Add(newArea2); else _activeAreas.Add(newArea2);
+            if (ballsInArea1.Count == 0)
+            {
+                _filledAreas.Add(newArea1);
+                Score += ballsInArea2.Count(b => b.Type != BallType.Normal) * 500; // Bonus
+            }
+            else
+            {
+                _activeAreas.Add(newArea1);
+            }
+
+            if (ballsInArea2.Count == 0)
+            {
+                _filledAreas.Add(newArea2);
+                Score += ballsInArea1.Count(b => b.Type != BallType.Normal) * 500; // Bonus
+            }
+            else
+            {
+                _activeAreas.Add(newArea2);
+            }
             
+            // Handle splitting balls
+            var ballsToSplit = _balls.Where(b => b.Type == BallType.Splitting && (ballsInArea1.Contains(b) || ballsInArea2.Contains(b))).ToList();
             foreach (var ball in ballsToSplit)
             {
                 _balls.Remove(ball);
@@ -400,6 +410,7 @@ namespace Cycloside.Plugins.BuiltIn
             }
 
             CurrentWall = null;
+            FlashEffect = true; // UPGRADE: Trigger flash effect
             RecalculateCapturedArea();
 
             if (CapturedPercentage >= CaptureRequirement)
@@ -446,6 +457,7 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly Pen _wallPen = new(Brushes.Cyan, 4, lineCap: PenLineCap.Round);
         private readonly Pen _previewPen = new(new SolidColorBrush(Colors.Yellow, 0.7), 2, DashStyle.Dash);
         private readonly IBrush _filledBrush = new SolidColorBrush(Color.FromRgb(0, 50, 70), 0.6);
+        private readonly IBrush _flashBrush = new SolidColorBrush(Colors.White, 0.3);
 
         private readonly TextBlock _levelText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _livesText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
@@ -455,13 +467,18 @@ namespace Cycloside.Plugins.BuiltIn
 
         public JezzballControl()
         {
+            // FIX: The status bar and restart button are now part of this control's layout.
             var statusBar = new DockPanel { Background = Brushes.Black, Height = 30, Opacity = 0.8 };
+            var restartButton = new Button { Content = "Restart", Margin = new Thickness(5), VerticalAlignment = VerticalAlignment.Center };
+            restartButton.Click += (_, _) => RestartGame();
+
             DockPanel.SetDock(_levelText, Dock.Left);
             DockPanel.SetDock(_livesText, Dock.Left);
             DockPanel.SetDock(_scoreText, Dock.Left); 
+            DockPanel.SetDock(restartButton, Dock.Right);
             DockPanel.SetDock(_capturedText, Dock.Right);
             DockPanel.SetDock(_timeText, Dock.Right);
-            statusBar.Children.AddRange(new Control[] { _levelText, _livesText, _scoreText, _capturedText, _timeText });
+            statusBar.Children.AddRange(new Control[] { _levelText, _livesText, _scoreText, restartButton, _capturedText, _timeText });
 
             var layout = new DockPanel();
             DockPanel.SetDock(statusBar, Dock.Bottom);
@@ -529,7 +546,7 @@ namespace Cycloside.Plugins.BuiltIn
             _capturedText.Text = $"Captured: {_gameState.CapturedPercentage:P0}";
         }
 
-        internal void RenderGame(DrawingContext context)
+        internal async void RenderGame(DrawingContext context)
         {
             context.FillRectangle(_backgroundBrush, _gameCanvas.Bounds);
 
@@ -549,7 +566,6 @@ namespace Cycloside.Plugins.BuiltIn
             
             if (_gameState.CurrentWall is { } wall)
             {
-                // Draw the wall parts that are still growing
                 if (wall.IsPart1Active) context.DrawLine(_wallPen, wall.Origin, wall.WallPart1.TopLeft);
                 if (wall.IsPart2Active) context.DrawLine(_wallPen, wall.Origin, wall.WallPart2.BottomRight);
             }
@@ -563,6 +579,14 @@ namespace Cycloside.Plugins.BuiltIn
                     else
                         context.DrawLine(_previewPen, new Point(area.Left, _mousePosition.Y), new Point(area.Right, _mousePosition.Y));
                 }
+            }
+
+            // UPGRADE: Render flash effect
+            if (_gameState.FlashEffect)
+            {
+                context.FillRectangle(_flashBrush, _gameCanvas.Bounds);
+                await Task.Delay(50); // Show flash for 50ms
+                _gameState.FlashEffect = false;
             }
 
             if (_gameState.Message != string.Empty)

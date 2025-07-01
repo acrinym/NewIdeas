@@ -11,15 +11,13 @@ using Cycloside.Services;
 
 namespace Cycloside;
 
-/// <summary>
-/// A completely rebuilt, stable window for editing theme files.
-/// The crashing preview functionality has been removed in favor of stability.
-/// </summary>
 public partial class SkinThemeEditorWindow : Window
 {
     private ComboBox? _fileBox;
     private TextEditor? _editor;
-    private string _themeDir = Path.Combine(AppContext.BaseDirectory, "Themes");
+    
+    // FIX: The path now correctly points to the "Global" subdirectory where themes are stored.
+    private string _themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
 
     public SkinThemeEditorWindow()
     {
@@ -27,7 +25,6 @@ public partial class SkinThemeEditorWindow : Window
         CursorManager.ApplyFromSettings(this, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(SkinThemeEditorWindow));
         
-        // Find controls
         _fileBox = this.FindControl<ComboBox>("FileBox");
         _editor = this.FindControl<TextEditor>("Editor");
         
@@ -51,18 +48,35 @@ public partial class SkinThemeEditorWindow : Window
         _fileBox.Items.Clear();
         if (!Directory.Exists(_themeDir))
         {
-            Directory.CreateDirectory(_themeDir);
-            return;
+            // If the directory doesn't exist, create it. This prevents a crash on first run.
+            try 
+            {
+                Directory.CreateDirectory(_themeDir);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to create theme directory at '{_themeDir}': {ex.Message}");
+                return;
+            }
         }
 
-        foreach (var file in Directory.GetFiles(_themeDir, "*.axaml"))
+        try
         {
-            _fileBox.Items.Add(Path.GetFileName(file));
-        }
+            foreach (var file in Directory.GetFiles(_themeDir, "*.axaml"))
+            {
+                _fileBox.Items.Add(Path.GetFileName(file));
+            }
 
-        if (_fileBox.ItemCount > 0)
+            if (_fileBox.ItemCount > 0)
+            {
+                _fileBox.SelectedIndex = 0;
+                // Automatically load the first file when the window opens.
+                LoadFile(null, null);
+            }
+        }
+        catch (Exception ex)
         {
-            _fileBox.SelectedIndex = 0;
+            Logger.Log($"Failed to list theme files in '{_themeDir}': {ex.Message}");
         }
     }
 
@@ -75,12 +89,20 @@ public partial class SkinThemeEditorWindow : Window
         return Path.Combine(_themeDir, fileName);
     }
 
-    private void LoadFile(object? sender, RoutedEventArgs e)
+    private void LoadFile(object? sender, RoutedEventArgs? e)
     {
         var path = GetSelectedPath();
         if (path != null && File.Exists(path) && _editor != null)
         {
-            _editor.Text = File.ReadAllText(path);
+            try
+            {
+                _editor.Text = File.ReadAllText(path);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to read theme file '{path}': {ex.Message}");
+                if (_editor != null) _editor.Text = $"Error: Could not load file.\n\n{ex.Message}";
+            }
         }
     }
 
@@ -89,7 +111,14 @@ public partial class SkinThemeEditorWindow : Window
         var path = GetSelectedPath();
         if (path != null && _editor != null)
         {
-            File.WriteAllText(path, _editor.Text ?? string.Empty);
+            try
+            {
+                File.WriteAllText(path, _editor.Text ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to save theme file '{path}': {ex.Message}");
+            }
         }
     }
 }
