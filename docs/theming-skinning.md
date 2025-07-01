@@ -23,6 +23,24 @@ it with `CursorManager.ApplyFromSettings`. Values correspond to
 `StandardCursorType` names (e.g. `Arrow`, `Hand`, `Ibeam`). Windows and plugins
 can supply their own cursor via skins or themes as needed.
 
+### Blank Theme/Skin
+
+The repository includes `Blank.axaml` files in both `Cycloside/Themes/Global/`
+and `Cycloside/Skins/`. Copy these as a starting point for your own design.
+Each file is a minimal `<Styles>` block where you can define colors, brushes and
+styles. Example:
+
+```xml
+<Styles xmlns="https://github.com/avaloniaui">
+  <Styles.Resources>
+    <!-- add ThemeBackgroundBrush etc -->
+  </Styles.Resources>
+</Styles>
+```
+
+After saving your theme or skin, select it from **Settings → Theme Settings** or
+apply it in code via `SkinManager.ApplySkin(control, "MySkin")`.
+
 See the [theme example](examples/theme-example.md) and [skin example](examples/skin-example.md) for sample resource files. The [custom cursor example](examples/custom-cursor-example.md) shows how to configure cursors.
 
 ## Skin/Theme Editor
