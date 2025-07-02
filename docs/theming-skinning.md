@@ -5,6 +5,39 @@ Cycloside separates **themes** and **skins**:
 - **Themes** apply a cohesive style across the entire application. They are XAML resource files located in `Cycloside/Themes/` and can be swapped at runtime.
 - **Skins** target individual windows or controls. A skin may replace visuals or backgrounds for a specific component without affecting the rest of the UI. Skin files live in `Cycloside/Skins/`.
 
+## Building a Theme
+
+1. Create a new `.axaml` file inside `Cycloside/Themes/Global/`.
+2. Start with the `<Styles>` root element and provide common resources such as
+   `ThemeBackgroundColor`, `ThemeForegroundColor`, `ThemeBackgroundBrush` and
+   `ThemeForegroundBrush`.
+3. Add style selectors for controls as needed.
+4. Save the file and either set `GlobalTheme` in `settings.json` or call
+   `ThemeManager.LoadGlobalTheme("MyTheme")` from code.
+
+## Building a Skin
+
+1. Place a `.axaml` file in `Cycloside/Skins/`.
+2. Define style overrides for specific controls (for example `<Style Selector="Window">`).
+3. Apply it at runtime with `SkinManager.ApplySkinTo(window, "MySkin")` or list
+   the skin name under `ComponentSkins` in `settings.json`.
+
+## API Functions
+
+- `ThemeManager.LoadGlobalThemeFromSettings()` – applies the global theme stored
+  in `settings.json`.
+- `ThemeManager.LoadGlobalTheme(name)` – loads a specific theme file by name.
+- `ThemeManager.ApplyComponentTheme(element, componentName)` – overrides the
+  theme for a single window or control.
+- `ThemeManager.ApplyFromSettings(window, componentName)` – helper that applies
+  the global theme plus any component theme.
+- `SkinManager.ApplySkinTo(element, skinName)` – layers a skin on top of the
+  current theme for a given UI element.
+- `CursorManager.ApplyCursor(element, cursorName)` – sets a cursor directly by
+  `StandardCursorType` name.
+- `CursorManager.ApplyFromSettings(element, componentName)` – pulls the cursor
+  name from `settings.json` for the specified component.
+
 ## Switching Themes
 
 Use the tray icon menu **Settings → Theme Settings** to choose the global theme. Theme selections are stored in `settings.json` under `GlobalTheme`.

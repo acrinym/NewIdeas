@@ -30,6 +30,9 @@ Cycloside is a small cross‑platform tray application built for tinkerers. It h
    Use the provided `Blank.axaml` theme and skin as starting points in
    `Cycloside/Themes/Global/` and `Cycloside/Skins/`.
 
+Detailed instructions for creating your own look are in
+[`docs/theming-skinning.md`](docs/theming-skinning.md).
+
 For plugin development details see [`docs/plugin-dev.md`](docs/plugin-dev.md).
 Examples live under [`docs/examples/`](docs/examples/).
 

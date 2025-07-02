@@ -35,6 +35,13 @@ Plugins can call into several helper classes shipped with the main application:
 These classes live in the `Cycloside` namespace and are available when you
 reference `Cycloside.dll`.
 
+### Theming from Plugins
+
+Use `ThemeManager.ApplyComponentTheme(element, name)` to override the theme for
+a specific window or control. Combine it with
+`SkinManager.ApplySkinTo(element, skin)` to layer a skin on top. To respect
+user-selected cursors call `CursorManager.ApplyFromSettings(element, name)`.
+
 ## DLL Plugins
 
 Implement `Cycloside.Plugins.IPlugin` and place the compiled assembly in the `Plugins/` directory. Hot reload will load changes automatically.
