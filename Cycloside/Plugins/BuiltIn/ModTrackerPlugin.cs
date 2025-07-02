@@ -39,6 +39,15 @@ namespace Cycloside.Plugins.BuiltIn
             // libopenmpt-sharp provides helpers to read directly into a byte buffer.
             return _module.ReadInterleavedStereo(WaveFormat.SampleRate, count / (2 * 4), buffer, offset);
         }
+        /// <summary>
+        /// Provides unsafe access to the wrapped <see cref="Module"/> instance.
+        /// </summary>
+        /// <remarks>
+        /// Modifying the returned module can interfere with playback; use only
+        /// when necessary.
+        /// </remarks>
+        public Module UnsafeGetModule() => _module;
+
         
         public void Dispose()
         {
