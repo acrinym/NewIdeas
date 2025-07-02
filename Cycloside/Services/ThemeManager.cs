@@ -14,7 +14,11 @@ namespace Cycloside.Services
     /// </summary>
     public static class ThemeManager
     {
-        private static string ThemeDir => Path.Combine(AppContext.BaseDirectory, "Themes");
+        // All themes are stored under the 'Themes/Global' subdirectory. The
+        // editor and setup wizard already point there, but the ThemeManager
+        // previously used the parent directory which caused missing theme
+        // errors at runtime.
+        private static string ThemeDir => Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
 
         /// <summary>
         /// Applies the application-wide global theme from settings.
@@ -52,7 +56,7 @@ namespace Cycloside.Services
 
             // Remove any existing global theme to prevent conflicts
             var existing = Application.Current.Styles.OfType<StyleInclude>()
-                .FirstOrDefault(s => s.Source?.OriginalString.Contains("/Themes/") == true);
+                .FirstOrDefault(s => s.Source?.OriginalString.Contains("/Themes/Global/") == true);
             if (existing != null)
             {
                 Application.Current.Styles.Remove(existing);
