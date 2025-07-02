@@ -5,6 +5,7 @@ using Avalonia.Styling;
 using System;
 using System.IO;
 using System.Linq;
+using Cycloside.Plugins;
 
 namespace Cycloside.Services
 {
@@ -84,6 +85,23 @@ namespace Cycloside.Services
         {
             // The global theme is loaded once at startup, so we just need to apply component themes here.
             ApplyComponentTheme(window, componentName);
+        }
+
+        /// <summary>
+        /// Applies themes for a plugin window. This first applies the generic
+        /// "Plugins" theme, then the plugin specific theme using the plugin's
+        /// <see cref="IPlugin.Name"/>. If <see cref="IPlugin.ForceDefaultTheme"/>
+        /// is true, no component themes are applied.
+        /// </summary>
+        /// <param name="window">The window to theme.</param>
+        /// <param name="plugin">The plugin instance.</param>
+        public static void ApplyForPlugin(Window window, Cycloside.Plugins.IPlugin plugin)
+        {
+            if (plugin.ForceDefaultTheme)
+                return;
+
+            ApplyComponentTheme(window, "Plugins");
+            ApplyComponentTheme(window, plugin.Name);
         }
 
         /// <summary>

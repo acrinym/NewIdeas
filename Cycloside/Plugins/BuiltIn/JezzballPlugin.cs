@@ -39,7 +39,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = _control
             };
 
-            ThemeManager.ApplyFromSettings(_window, nameof(JezzballPlugin));
+            ThemeManager.ApplyForPlugin(_window, this);
             _window.KeyDown += OnWindowKeyDown;
             _window.Show();
         }
