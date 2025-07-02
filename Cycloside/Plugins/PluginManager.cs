@@ -53,6 +53,7 @@ namespace Cycloside.Plugins
         /// The application listens to this to rebuild UI elements such as the
         /// tray menu.
         /// </summary>
+        // Exposed so the UI can rebuild when plugins change.
         public event Action? PluginsReloaded;
 
         public string PluginDirectory { get; }
@@ -158,6 +159,9 @@ namespace Cycloside.Plugins
                 LoadPlugins();
                 StartWatching();
                 _notify?.Invoke("Plugins have been reloaded.");
+
+                // Notify any listeners that plugins have changed so UI can refresh.
+                PluginsReloaded?.Invoke();
 
                 // Re-apply settings to the newly loaded plugins so reloaded
                 // plugins are enabled or disabled based on the active profile.
