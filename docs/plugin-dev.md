@@ -48,6 +48,10 @@ Implement `Cycloside.Plugins.IPlugin` and place the compiled assembly in the `Pl
 When compiled, each plugin resides in its own folder under `Plugins/`.
 Dependencies should be copied alongside the main DLL.
 
+When the plugin folder contents change, `PluginManager` reloads all plugins and
+triggers the `PluginsReloaded` event.  Subscribe to this event if your code
+needs to refresh UI elements after new plugins are detected.
+
 You can generate a boilerplate plugin with:
 ```bash
  dotnet run -- --newplugin MyPlugin

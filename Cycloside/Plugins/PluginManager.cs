@@ -48,6 +48,9 @@ namespace Cycloside.Plugins
         private readonly Action<string>? _notify;
         private Timer? _reloadTimer;
 
+        // Exposed so the UI can rebuild when plugins change.
+        public event Action? PluginsReloaded;
+
         public string PluginDirectory { get; }
         public bool IsolationEnabled { get; set; }
         public bool CrashLoggingEnabled { get; set; }
@@ -151,6 +154,9 @@ namespace Cycloside.Plugins
                 LoadPlugins();
                 StartWatching();
                 _notify?.Invoke("Plugins have been reloaded.");
+
+                // Notify any listeners that plugins have changed so UI can refresh.
+                PluginsReloaded?.Invoke();
 
                 // Re-apply settings to the newly loaded plugins so reloaded
                 // plugins are enabled or disabled based on the active profile.
