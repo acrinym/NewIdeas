@@ -35,6 +35,7 @@ Detailed instructions for creating your own look are in
 
 For plugin development details see [`docs/plugin-dev.md`](docs/plugin-dev.md).
 Examples live under [`docs/examples/`](docs/examples/).
+For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scripting.md).
 
 ## Features
 
