@@ -60,6 +60,7 @@ You can generate a boilerplate plugin with:
 ## Volatile Scripts
 
 Lua (`.lua`) and C# script (`.csx`) files can be executed in memory. Use the tray menu **Settings → Generate New Plugin** and choose a volatile type to create a starter file.
+See [volatile-scripting.md](volatile-scripting.md) for common examples and tips.
 
 ## Metadata
 
