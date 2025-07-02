@@ -25,6 +25,10 @@ implemented by inheriting `IPluginExtended`.
 
 Implement `Cycloside.Plugins.IPlugin` and place the compiled assembly in the `Plugins/` directory. Hot reload will load changes automatically.
 
+When the plugin folder contents change, `PluginManager` reloads all plugins and
+triggers the `PluginsReloaded` event.  Subscribe to this event if your code
+needs to refresh UI elements after new plugins are detected.
+
 You can generate a boilerplate plugin with:
 ```bash
  dotnet run -- --newplugin MyPlugin
