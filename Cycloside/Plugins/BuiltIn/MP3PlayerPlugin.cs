@@ -111,8 +111,7 @@ namespace Cycloside.Plugins.BuiltIn
         private AudioFileReader? _audioReader;
         private float _volumeBeforeMute;
         private SpectrumAnalyzer? _spectrumAnalyzer;
-        // MERGED: Using the explicit `Views` namespace to avoid ambiguity.
-        private Views.MP3PlayerWindow? _window;
+        private Views.MP3PlayerWindow? _window; // Using explicit namespace to avoid ambiguity
 
         // --- IPlugin Properties ---
         public string Name => "MP3 Player";
@@ -145,7 +144,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _window.Activate();
                 return;
             }
-            // MERGED: Using the explicit `Views` namespace here as well.
+            
             _window = new Views.MP3PlayerWindow { DataContext = this };
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
             _window.Closed += (_, _) => _window = null;
@@ -261,11 +260,11 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 _audioReader = new AudioFileReader(filePath);
                 
-                // OPTIMIZED: Use a SampleAggregator to properly handle audio samples for FFT.
+                // Use a SampleAggregator to properly handle audio samples for FFT.
                 var aggregator = new SampleAggregator(_audioReader);
                 _spectrumAnalyzer = new SpectrumAnalyzer(aggregator, 1024);
 
-                // MERGED: Kept the `DesiredLatency` setting for better performance.
+                // Kept the `DesiredLatency` setting for better performance.
                 _wavePlayer = new WaveOutEvent { Volume = Volume, DesiredLatency = 200 };
                 _wavePlayer.Init(aggregator); // Play through the aggregator
                 _wavePlayer.PlaybackStopped += OnPlaybackStopped;
@@ -297,15 +296,14 @@ namespace Cycloside.Plugins.BuiltIn
             if (_audioReader is null || !IsPlaying || _spectrumAnalyzer is null) return;
             CurrentTime = _audioReader.CurrentTime;
 
-            // MERGED: Kept the more descriptive comments from the `hkqxjj-codex` branch.
-            // FIX: Ensure byte arrays are correctly sized for Winamp visualizers (576 samples)
+            // Ensure byte arrays are correctly sized for Winamp visualizers (576 samples)
             var spectrum = new byte[576];
             var waveform = new byte[576];
 
             _spectrumAnalyzer.GetFftData(spectrum);
             _spectrumAnalyzer.GetWaveformData(waveform);
 
-            // NEW: Publish a stereo version of the data for plugins that expect it.
+            // Publish a stereo version of the data for plugins that expect it.
             var stereoSpectrum = new byte[1152];
             var stereoWaveform = new byte[1152];
             Array.Copy(spectrum, 0, stereoSpectrum, 0, 576);

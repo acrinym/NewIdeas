@@ -2,45 +2,46 @@ using Avalonia;
 using Avalonia.Input;
 using System;
 
-namespace Cycloside.Services;
-
-/// <summary>
-/// Manages the application of custom cursors to UI elements.
-/// </summary>
-public static class CursorManager
+namespace Cycloside.Services
 {
     /// <summary>
-    /// Applies a standard cursor to a UI element by its name.
+    /// Manages the application of custom cursors to UI elements.
     /// </summary>
-    public static void ApplyCursor(InputElement element, string cursorName)
+    public static class CursorManager
     {
-        try
+        /// <summary>
+        /// Applies a standard cursor to a UI element by its name.
+        /// </summary>
+        public static void ApplyCursor(InputElement element, string cursorName)
         {
-            if (Enum.TryParse<StandardCursorType>(cursorName, true, out var type))
+            try
             {
-                element.Cursor = new Cursor(type);
+                if (Enum.TryParse<StandardCursorType>(cursorName, true, out var type))
+                {
+                    element.Cursor = new Cursor(type);
+                }
+                else
+                {
+                    Logger.Log($"Warning: Cursor '{cursorName}' not found. Defaulting to Arrow.");
+                    element.Cursor = new Cursor(StandardCursorType.Arrow);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Logger.Log($"Warning: Cursor '{cursorName}' not found. Defaulting to Arrow.");
-                element.Cursor = new Cursor(StandardCursorType.Arrow);
+                Logger.Log($"Error applying cursor '{cursorName}': {ex.Message}");
             }
         }
-        catch (Exception ex)
-        {
-            Logger.Log($"Error applying cursor '{cursorName}': {ex.Message}");
-        }
-    }
 
-    /// <summary>
-    /// Applies a cursor to a UI element based on the component's name from the global settings.
-    /// </summary>
-    public static void ApplyFromSettings(InputElement element, string component)
-    {
-        var map = SettingsManager.Settings.ComponentCursors;
-        if (map != null && map.TryGetValue(component, out var cursorName) && !string.IsNullOrWhiteSpace(cursorName))
+        /// <summary>
+        /// Applies a cursor to a UI element based on the component's name from the global settings.
+        /// </summary>
+        public static void ApplyFromSettings(InputElement element, string component)
         {
-            ApplyCursor(element, cursorName);
+            var map = SettingsManager.Settings.ComponentCursors;
+            if (map != null && map.TryGetValue(component, out var cursorName) && !string.IsNullOrWhiteSpace(cursorName))
+            {
+                ApplyCursor(element, cursorName);
+            }
         }
     }
 }

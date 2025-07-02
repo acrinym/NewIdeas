@@ -62,12 +62,12 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
     }
-
+    
     private MainWindow CreateMainWindow(AppSettings settings)
     {
         _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
         
-        // FIX: Subscribe to the new PluginsReloaded event
+        [cite_start]// This subscription is critical for dynamic UI updates and only exists in the 'main' branch's logic. [cite: 1628]
         _pluginManager.PluginsReloaded += OnPluginsReloaded;
 
         var volatileManager = new VolatilePluginManager();
@@ -83,7 +83,7 @@ public partial class App : Application
 
         viewModel.ExitCommand = new RelayCommand(() => Shutdown());
         
-        // FIX: The StartPluginCommand now correctly toggles the plugin and saves the setting.
+        [cite_start]// This is the complete toggle logic for starting/stopping plugins from the main window. [cite: 1632, 1633, 1634]
         viewModel.StartPluginCommand = new RelayCommand(plugin =>
         {
             if (plugin is not IPlugin p || _pluginManager is null) return;
@@ -106,7 +106,7 @@ public partial class App : Application
         _remoteServer.Start();
         WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
         RegisterHotkeys(_pluginManager);
-
+        
         _trayIcon = new TrayIcon
         {
             Icon = CreateTrayIcon(),
@@ -120,20 +120,20 @@ public partial class App : Application
             icons.Add(_trayIcon);
         }
         _trayIcon.IsVisible = true;
-
+        
         return mainWindow;
     }
     
-    // FIX: This method handles the PluginsReloaded event to rebuild the UI.
+    [cite_start]// This handler for the PluginsReloaded event is essential for updating the UI dynamically. [cite: 1639]
     private void OnPluginsReloaded()
     {
         if (_trayIcon is null || _pluginManager is null) return;
 
-        // Rebuild the tray menu with the new plugin instances
+        [cite_start]// Rebuild the tray menu with the new plugin instances. [cite: 1641]
         var volatileManager = new VolatilePluginManager();
         _trayIcon.Menu = BuildTrayMenu(_pluginManager, volatileManager, SettingsManager.Settings);
 
-        // Also update the main window's view model
+        [cite_start]// Also update the main window's view model. [cite: 1642, 1643]
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
             desktop.MainWindow?.DataContext is MainWindowViewModel vm)
         {
