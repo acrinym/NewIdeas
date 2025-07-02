@@ -33,7 +33,7 @@ namespace Cycloside.Services
         }
 
         /// <summary>
-        /// Applies a cursor to a UI element based on the component's name from the global settings.
+        /// Applies a cursor to a UI element based on the component name from settings.
         /// </summary>
         public static void ApplyFromSettings(InputElement element, string component)
         {
@@ -45,3 +45,4 @@ namespace Cycloside.Services
         }
     }
 }
+

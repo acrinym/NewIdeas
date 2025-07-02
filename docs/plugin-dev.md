@@ -21,9 +21,36 @@ public interface IPlugin
 Additional hooks like `OnSettingsSaved()` and `OnCrash(Exception ex)` can be
 implemented by inheriting `IPluginExtended`.
 
+## Exposed Utilities
+
+Plugins can call into several helper classes shipped with the main application:
+
+- `PluginBus` – simple publish/subscribe message bus for cross-plugin
+  communication.
+- `SkinManager` and `ThemeManager` – apply XAML skins and themes at runtime.
+- `CursorManager` – assign `StandardCursorType` values from settings.
+- `WindowEffectsManager` – enable compositor/physics effects on a window.
+- `PluginMarketplace` – fetch and install plugin packages from remote feeds.
+
+These classes live in the `Cycloside` namespace and are available when you
+reference `Cycloside.dll`.
+
+### Theming from Plugins
+
+Use `ThemeManager.ApplyComponentTheme(element, name)` to override the theme for
+a specific window or control. Combine it with
+`SkinManager.ApplySkinTo(element, skin)` to layer a skin on top. To respect
+user-selected cursors call `CursorManager.ApplyFromSettings(element, name)`.
+
 ## DLL Plugins
 
 Implement `Cycloside.Plugins.IPlugin` and place the compiled assembly in the `Plugins/` directory. Hot reload will load changes automatically.
+When compiled, each plugin resides in its own folder under `Plugins/`.
+Dependencies should be copied alongside the main DLL.
+
+When the plugin folder contents change, `PluginManager` reloads all plugins and
+triggers the `PluginsReloaded` event.  Subscribe to this event if your code
+needs to refresh UI elements after new plugins are detected.
 
 You can generate a boilerplate plugin with:
 ```bash
@@ -37,6 +64,9 @@ Lua (`.lua`) and C# script (`.csx`) files can be executed in memory. Use the tra
 ## Metadata
 
 Each plugin should expose `Name`, `Description` and `Version`. The plugin manager uses these to display information in the GUI.
+If your plugin exposes a dockable widget, return an `IWidget` implementation via
+the `Widget` property. Set `ForceDefaultTheme` to `true` if your UI should always
+use the global theme and ignore component skins.
 
 ## Communication
 

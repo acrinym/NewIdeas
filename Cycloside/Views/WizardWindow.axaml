@@ -10,11 +10,12 @@
 
   <DockPanel Margin="15">
 
+    <!-- Merged Button Bar from 'main' branch -->
     <DockPanel DockPanel.Dock="Bottom" Margin="0,15,0,0">
       <TextBlock Text="{Binding ProgressText}"
-                   DockPanel.Dock="Left"
-                   VerticalAlignment="Center"
-                   Opacity="0.7"/>
+                 DockPanel.Dock="Left"
+                 VerticalAlignment="Center"
+                 Opacity="0.7"/>
       
       <StackPanel Orientation="Horizontal"
                   HorizontalAlignment="Right"
@@ -25,9 +26,11 @@
         <Button Content="{Binding NextButtonText}"
                 Command="{Binding NextCommand}"
                 IsDefault="True"
-                Classes="accent"/> </StackPanel>
+                Classes="accent"/>
+      </StackPanel>
     </DockPanel>
 
+    <!-- Main Wizard Content Area -->
     <TabControl SelectedIndex="{Binding CurrentStep, Mode=OneWay}" IsEnabled="False">
 
       <TabItem Header="Welcome">

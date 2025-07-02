@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Cycloside.ViewModels"
+        x:Class="Cycloside.ControlPanelWindow"
+        x:DataType="vm:ControlPanelViewModel"
+        Width="400" Height="300"
+        Title="Cycloside Control Panel">
+    <TabControl>
+        <TabItem Header="General">
+            <StackPanel Margin="10" Spacing="8">
+                <CheckBox Content="Launch at Startup"
+                          IsChecked="{Binding LaunchAtStartup}"/>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock VerticalAlignment="Center" Text="dotnet Path:"/>
+                    <TextBox Width="200" Text="{Binding DotNetPath}"/>
+                </StackPanel>
+                <Button Content="Save" HorizontalAlignment="Right"
+                        Command="{Binding SaveCommand}"/>
+            </StackPanel>
+        </TabItem>
+        <TabItem Header="Plugins">
+            <StackPanel Margin="10" Spacing="8">
+                <Button Content="Open Plugin Manager..."
+                        Command="{Binding OpenPluginManagerCommand}"/>
+            </StackPanel>
+        </TabItem>
+        <TabItem Header="Appearance">
+            <StackPanel Margin="10" Spacing="8">
+                <Button Content="Theme Settings..."
+                        Command="{Binding OpenThemeSettingsCommand}"/>
+                <Button Content="Skin/Theme Editor..."
+                        Command="{Binding OpenSkinEditorCommand}"/>
+            </StackPanel>
+        </TabItem>
+        <TabItem Header="Runtime">
+            <StackPanel Margin="10" Spacing="8">
+                <Button Content="Runtime Settings..."
+                        Command="{Binding OpenRuntimeSettingsCommand}"/>
+            </StackPanel>
+        </TabItem>
+    </TabControl>
+</Window>

@@ -1,10 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using Avalonia.Markup.Xaml.XamlIl;
-using Avalonia.Media;
-using Avalonia.Styling;
+using AvaloniaEdit;
+using AvaloniaEdit.Highlighting;
 using System;
 using System.IO;
 using System.Linq;
@@ -14,13 +13,27 @@ namespace Cycloside;
 
 public partial class SkinThemeEditorWindow : Window
 {
+    private ComboBox? _fileBox;
+    private TextEditor? _editor;
+    
+    // FIX: The path now correctly points to the "Global" subdirectory where themes are stored.
+    private string _themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
+
     public SkinThemeEditorWindow()
     {
         InitializeComponent();
         CursorManager.ApplyFromSettings(this, "Plugins");
-        // WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(SkinThemeEditorWindow));
+        WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(SkinThemeEditorWindow));
+        
+        _fileBox = this.FindControl<ComboBox>("FileBox");
+        _editor = this.FindControl<TextEditor>("Editor");
+        
+        if (_editor != null)
+        {
+            _editor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("XML");
+        }
+
         BuildFileList();
-        BuildCursorList();
     }
 
     private void InitializeComponent()
@@ -28,117 +41,84 @@ public partial class SkinThemeEditorWindow : Window
         AvaloniaXamlLoader.Load(this);
     }
 
-
     private void BuildFileList()
     {
-        TypeBox.SelectionChanged += (_, _) => RefreshFiles();
-        TypeBox.SelectedIndex = 0;
-        RefreshFiles();
-    }
+        if (_fileBox == null) return;
 
-    private void RefreshFiles()
-    {
-        FileBox.Items.Clear();
-        var isTheme = TypeBox.SelectedIndex == 0;
-        var dir = isTheme ? Path.Combine(AppContext.BaseDirectory, "Themes/Global") : Path.Combine(AppContext.BaseDirectory, "Skins");
-        if (!Directory.Exists(dir))
-            return;
-        foreach (var file in Directory.GetFiles(dir, "*.axaml"))
-            FileBox.Items.Add(Path.GetFileNameWithoutExtension(file));
-        if (FileBox.ItemCount > 0)
-            FileBox.SelectedIndex = 0;
-    }
-
-    private void BuildCursorList()
-    {
-        foreach (var name in Enum.GetNames(typeof(StandardCursorType)))
-            CursorBox.Items.Add(name);
-        CursorBox.SelectionChanged += (_, _) =>
+        _fileBox.Items.Clear();
+        if (!Directory.Exists(_themeDir))
         {
-            if (CursorBox.SelectedItem is string n)
-                CursorManager.ApplyCursor(CursorPreview, n);
-        };
-        CursorBox.SelectedIndex = 0;
+            // If the directory doesn't exist, create it. This prevents a crash on first run.
+            try 
+            {
+                Directory.CreateDirectory(_themeDir);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to create theme directory at '{_themeDir}': {ex.Message}");
+                return;
+            }
+        }
+
+        try
+        {
+            foreach (var file in Directory.GetFiles(_themeDir, "*.axaml"))
+            {
+                _fileBox.Items.Add(Path.GetFileName(file));
+            }
+
+            if (_fileBox.ItemCount > 0)
+            {
+                _fileBox.SelectedIndex = 0;
+                // Automatically load the first file when the window opens.
+                LoadFile(null, null);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"Failed to list theme files in '{_themeDir}': {ex.Message}");
+        }
     }
 
     private string? GetSelectedPath()
     {
-        var isTheme = TypeBox.SelectedIndex == 0;
-        var name = FileBox.SelectedItem?.ToString();
-        if (string.IsNullOrWhiteSpace(name))
+        if (_fileBox?.SelectedItem is not string fileName)
+        {
             return null;
-        var dir = isTheme ? Path.Combine(AppContext.BaseDirectory, "Themes/Global") : Path.Combine(AppContext.BaseDirectory, "Skins");
-        return Path.Combine(dir, name + ".axaml");
-    }
-
-    private void LoadFile(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        var path = GetSelectedPath();
-        if (path != null && File.Exists(path))
-            Editor.Text = File.ReadAllText(path);
-    }
-
-    private void SaveFile(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        var path = GetSelectedPath();
-        if (path != null)
-            File.WriteAllText(path, Editor.Text ?? string.Empty);
-    }
-
-    private void Preview(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        var xaml = Editor.Text ?? string.Empty;
-
-        // Profile memory before creating the preview window
-        var before = GC.GetTotalMemory(forceFullCollection: true);
-
-        var win = new PreviewWindow(xaml);
-
-        // Log the memory consumed by the preview window
-        var after = GC.GetTotalMemory(forceFullCollection: true);
-        Logger.Log($"PreviewWindow allocation: {after - before} bytes");
-
-        win.Show();
-    }
-}
-
-public class PreviewWindow : Window
-{
-    public PreviewWindow(string xaml)
-    {
-        Width = 300;
-        Height = 200;
-        Title = "Preview";
-        try
-        {
-            Content = AvaloniaRuntimeXamlLoader.Parse<Grid>(xaml);
         }
-        catch (Exception ex)
+        return Path.Combine(_themeDir, fileName);
+    }
+
+    private void LoadFile(object? sender, RoutedEventArgs? e)
+    {
+        var path = GetSelectedPath();
+        if (path != null && File.Exists(path) && _editor != null)
         {
-            Content = new ScrollViewer
+            try
             {
-                Margin = new Thickness(10),
-                Content = new TextBlock
-                {
-                    Text = ex.Message,
-                    Foreground = Brushes.Red,
-                    TextWrapping = TextWrapping.Wrap
-                }
-            };
+                _editor.Text = File.ReadAllText(path);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to read theme file '{path}': {ex.Message}");
+                if (_editor != null) _editor.Text = $"Error: Could not load file.\n\n{ex.Message}";
+            }
         }
-        // WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(PreviewWindow));
-
-        // Ensure resources are released when the window closes
-        Closed += OnClosed;
     }
 
-    private void OnClosed(object? sender, EventArgs e)
+    private void SaveFile(object? sender, RoutedEventArgs e)
     {
-        if (Content is IDisposable disposable)
-            disposable.Dispose();
-
-        Content = null;
-        DataContext = null;
-        Closed -= OnClosed;
+        var path = GetSelectedPath();
+        if (path != null && _editor != null)
+        {
+            try
+            {
+                File.WriteAllText(path, _editor.Text ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to save theme file '{path}': {ex.Message}");
+            }
+        }
     }
 }

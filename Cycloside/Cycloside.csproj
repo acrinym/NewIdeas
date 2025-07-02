@@ -16,10 +16,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Includes all .axaml files for Avalonia views -->
+    <AvaloniaResource Include="**\*.axaml">
+      <SubType>Designer</SubType>
+    </AvaloniaResource>
+    <!-- Includes other resources like images or fonts from your Resources folder -->
     <AvaloniaResource Include="Resources\**" />
   </ItemGroup>
   
   <ItemGroup>
+    <!-- Using the newer package versions from your file -->
     <PackageReference Include="Avalonia" Version="11.3.1" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.1" />
@@ -44,6 +50,12 @@
     <PackageReference Include="CliWrap" Version="3.7.0" /> 
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+
+    <!-- 
+      *** PACKAGE ADDED FOR MOD TRACKER PLUGIN ***
+      This is the required library for playing tracker music.
+    -->
+    <PackageReference Include="libopenmpt-sharp" Version="0.4.0" />
   </ItemGroup>
 
 </Project>

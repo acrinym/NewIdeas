@@ -2,13 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using SharpHook.Native; // Required for KeyCode
 
 namespace Cycloside;
+
+/// <summary>
+/// A public class to hold the data for a single recorded keyboard event.
+/// This is now defined here to be shared with MacroPlugin.
+/// </summary>
+public class MacroEvent
+{
+    public bool IsPress { get; set; }
+    public KeyCode Code { get; set; }
+    public int Delay { get; set; } // Delay in milliseconds since the previous event
+}
 
 public class Macro
 {
     public string Name { get; set; } = "";
-    public List<string> Keys { get; set; } = new();
+    // FIXED: This now stores the detailed MacroEvent objects.
+    public List<MacroEvent> Events { get; set; } = new();
 }
 
 public static class MacroManager
@@ -30,7 +43,7 @@ public static class MacroManager
                     return list;
             }
         }
-        catch { }
+        catch { /* Ignore errors during load */ }
         return new List<Macro>();
     }
 
@@ -46,7 +59,7 @@ public static class MacroManager
             var json = JsonSerializer.Serialize(_macros, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(MacroPath, json);
         }
-        catch { }
+        catch { /* Ignore errors during save */ }
     }
 
     public static void Add(Macro macro)

@@ -2,103 +2,122 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Timers;
-using Cycloside.Plugins.BuiltIn; // Needed for the AudioData record
+using Avalonia.Threading;
+using Cycloside.Plugins.BuiltIn; // For AudioData
+using Cycloside.Services;
 
 namespace Cycloside.Visuals
 {
+    /// <summary>
+    /// Manages the loading, selection, and lifecycle of Winamp visualization plugins.
+    /// </summary>
     public class VisPluginManager : IDisposable
     {
-        private const string AudioDataTopic = "audio:data";
-
         private readonly List<WinampVisPluginAdapter> _plugins = new();
-        private WinampVisPluginAdapter? _active;
-        private Timer? _renderTimer;
+        private WinampVisPluginAdapter? _activePlugin;
         private VisHostWindow? _window;
-        private readonly Action<object?> _busHandler;
+        private DispatcherTimer? _renderTimer;
+        private readonly Action<object?> _audioHandler;
 
-        public IReadOnlyList<WinampVisPluginAdapter> Plugins => _plugins;
+        public IReadOnlyList<WinampVisPluginAdapter> Plugins => _plugins.AsReadOnly();
 
         public VisPluginManager()
         {
-            // Create a single handler instance to be able to subscribe and unsubscribe correctly.
-            _busHandler = OnAudioDataReceived;
+            // Subscribe to the audio data stream published by the MP3PlayerPlugin
+            _audioHandler = OnAudioData;
+            PluginBus.Subscribe("audio:data", _audioHandler);
         }
 
+        /// <summary>
+        /// Loads all valid Winamp visualization plugins from a given directory.
+        /// </summary>
         public void Load(string directory)
         {
-            if (!OperatingSystem.IsWindows()) return;
-            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
-            foreach (var dll in Directory.GetFiles(directory, "vis_*.dll"))
+            if (!Directory.Exists(directory)) return;
+
+            foreach (var dll in Directory.GetFiles(directory, "*.dll"))
             {
-                var plugin = new WinampVisPluginAdapter(dll);
-                if (plugin.Load())
+                try
                 {
-                    _plugins.Add(plugin);
+                    var adapter = new WinampVisPluginAdapter(dll);
+                    if (adapter.Load())
+                    {
+                        _plugins.Add(adapter);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"Failed to load Winamp visualization '{Path.GetFileName(dll)}': {ex.Message}");
                 }
             }
         }
 
-        public bool StartFirst()
+        /// <summary>
+        /// Starts a selected visualization plugin, creating a window for it and beginning the render loop.
+        /// </summary>
+        public void StartPlugin(WinampVisPluginAdapter plugin)
         {
-            var plugin = _plugins.FirstOrDefault();
-            return plugin != null && StartPlugin(plugin);
-        }
+            if (_activePlugin != null)
+            {
+                StopPlugin();
+            }
 
-        public bool StartPlugin(WinampVisPluginAdapter plugin)
-        {
-            if (!_plugins.Contains(plugin)) return false;
-            
-            // FIX: Ensure any existing window is closed before creating a new one.
-            _window?.Close();
-            _window = new VisHostWindow();
-            _window.Closed += (_, _) => StopPlugin(); // NEW: Ensure cleanup when window is closed by user.
+            _window = new VisHostWindow { Title = plugin.Description };
             _window.Show();
-            
+            _window.Closed += (s, e) => StopPlugin();
+
             plugin.SetParent(_window.GetHandle());
-
-            if (!plugin.Initialize()) return false;
-            _active = plugin;
-            
-            // Subscribe to the audio data when the plugin starts
-            PluginBus.Subscribe(AudioDataTopic, _busHandler);
-
-            _renderTimer?.Stop();
-            _renderTimer = new Timer(33); // ~30 FPS
-            _renderTimer.Elapsed += (_, _) => _active?.Render();
-            _renderTimer.Start();
-            return true;
+            if (plugin.Initialize())
+            {
+                _activePlugin = plugin;
+                _renderTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(33), DispatcherPriority.Normal, (_, _) =>
+                {
+                    _activePlugin?.Render();
+                });
+                _renderTimer.Start();
+            }
+            else
+            {
+                _window.Close();
+            }
         }
 
-        // NEW: Method to properly stop the active visualization.
-        private void StopPlugin()
+        /// <summary>
+        /// Handles incoming audio data from the PluginBus and passes it to the active visualization.
+        /// </summary>
+        private void OnAudioData(object? payload)
         {
-            PluginBus.Unsubscribe(AudioDataTopic, _busHandler);
+            if (payload is AudioData data && _activePlugin != null)
+            {
+                _activePlugin.UpdateAudioData(data);
+            }
+        }
+
+        /// <summary>
+        /// Stops the currently active visualization plugin and closes its window.
+        /// </summary>
+        public void StopPlugin()
+        {
             _renderTimer?.Stop();
-            _active?.Quit();
-            _active = null;
+            _activePlugin?.Quit();
+            _activePlugin = null;
+            _window?.Close();
             _window = null;
         }
 
         /// <summary>
-        /// This method is called by the PluginBus whenever the MP3 player sends new data.
+        /// Disposes of all resources, quits all loaded plugins, and unsubscribes from the PluginBus.
         /// </summary>
-        private void OnAudioDataReceived(object? payload)
-        {
-            // If we have an active visualization and the data is the correct type, update it.
-            if (_active != null && payload is AudioData audioData)
-            {
-                _active.UpdateAudioData(audioData);
-            }
-        }
-
         public void Dispose()
         {
             StopPlugin();
-            foreach (var p in _plugins)
+            PluginBus.Unsubscribe("audio:data", _audioHandler);
+            foreach (var plugin in _plugins)
             {
-                p.Quit();
+                plugin.Quit();
             }
+            _plugins.Clear();
+            GC.SuppressFinalize(this);
         }
     }
 }

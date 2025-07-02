@@ -37,7 +37,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             // Apply theming and effects (assuming these are valid managers in your project)
             
-            ThemeManager.ApplyFromSettings(_window, "Plugins");
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DiskUsagePlugin));
 
             _window.Show();

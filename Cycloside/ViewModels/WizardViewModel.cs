@@ -19,8 +19,6 @@ namespace Cycloside.ViewModels
 
     public partial class WizardViewModel : ObservableObject
     {
-        // --- Properties for UI Binding ---
-
         [ObservableProperty]
         private int currentStep;
 
@@ -31,7 +29,7 @@ namespace Cycloside.ViewModels
             OnPropertyChanged(nameof(ProgressText));
         }
         
-        private const int TotalSteps = 3; // Number of TabItems in WizardWindow
+        private const int TotalSteps = 3; 
 
         public string ProgressText => $"Step {CurrentStep + 1} of {TotalSteps}";
         public bool CanGoBack => CurrentStep > 0;
@@ -46,14 +44,7 @@ namespace Cycloside.ViewModels
         public ObservableCollection<string> AvailableThemes { get; } = new();
         public ObservableCollection<PluginItem> Plugins { get; } = new();
         
-        // --- NEW: Event to communicate with the View ---
-        
-        /// <summary>
-        /// The View (WizardWindow) will listen for this event to know when to close.
-        /// </summary>
         public event EventHandler? RequestClose;
-
-        // --- Constructor ---
 
         public WizardViewModel()
         {
@@ -61,13 +52,10 @@ namespace Cycloside.ViewModels
             LoadPlugins();
             if (AvailableThemes.Any())
             {
-                // Set the default theme to "Mint" if it exists, otherwise the first in the list.
-                SelectedTheme = AvailableThemes.Contains("Mint") ? "Mint" : AvailableThemes[0];
+                SelectedTheme = AvailableThemes.Contains("MintGreen") ? "MintGreen" : AvailableThemes[0];
             }
         }
         
-        // --- NEW: Commands for the Back/Next Buttons ---
-
         [RelayCommand]
         private void Back()
         {
@@ -80,16 +68,12 @@ namespace Cycloside.ViewModels
         [RelayCommand]
         private void Next()
         {
-            // If we are not on the last step, just advance to the next tab.
             if (CurrentStep < TotalSteps - 1)
             {
                 CurrentStep++;
                 return;
             }
-
-            // --- This is the logic from your original Next_Click on the final step ---
             
-            // 1. Save all the settings gathered from the wizard
             SettingsManager.Settings.GlobalTheme = SelectedTheme;
             foreach (var item in Plugins)
             {
@@ -107,27 +91,29 @@ namespace Cycloside.ViewModels
             SettingsManager.Settings.FirstRun = false;
             SettingsManager.Save();
             
-            // 2. Request the window to close by firing the event
             RequestClose?.Invoke(this, EventArgs.Empty);
         }
         
-        // --- Private Helper Methods ---
-
         private void LoadThemes()
         {
             try
             {
-                var dir = Path.Combine(AppContext.BaseDirectory, "Skins");
-                if (!Directory.Exists(dir)) return;
+                // THEME FIX: The wizard now correctly looks in the Themes/Global directory.
+                var dir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
+                if (!Directory.Exists(dir))
+                {
+                    Logger.Log($"Wizard Error: Theme directory not found at '{dir}'");
+                    return;
+                }
                 
                 foreach (var file in Directory.GetFiles(dir, "*.axaml"))
                 {
                     AvailableThemes.Add(Path.GetFileNameWithoutExtension(file));
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Could fail due to permissions, etc. Silently ignore.
+                Logger.Log($"Wizard Error: Failed to load themes. {ex.Message}");
             }
         }
 
@@ -135,7 +121,7 @@ namespace Cycloside.ViewModels
         {
             string[] names =
             {
-                "Date/Time Overlay", "MP3 Player", "Macro", "Text Editor", "Wallpaper", 
+                "Date/Time Overlay", "MP3 Player", "Macro Engine", "Text Editor", "Wallpaper Changer", 
                 "Clipboard Manager", "File Watcher", "Process Monitor", "Task Scheduler", 
                 "Disk Usage", "Log Viewer", "Environment Editor", "Jezzball", 
                 "Widget Host", "Winamp Vis Host", "QBasic Retro IDE"
@@ -143,7 +129,6 @@ namespace Cycloside.ViewModels
 
             foreach (var n in names)
             {
-                // By default, enable all plugins for the first run.
                 Plugins.Add(new PluginItem { Name = n, IsEnabled = true });
             }
         }

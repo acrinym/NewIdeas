@@ -10,7 +10,6 @@ using AvaloniaEdit.Highlighting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CliWrap;
-using System.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,7 +35,7 @@ namespace Cycloside.Plugins.BuiltIn
 
         public string Name => "QBasic Retro IDE";
         public string Description => "Edit and run .BAS files using QB64 Phoenix";
-        public Version Version => new Version(0, 3, 1);
+        public Version Version => new Version(0, 4, 1); // Version bump for restored code
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
@@ -104,14 +103,12 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = dock
             };
 
-            ThemeManager.ApplyFromSettings(_window, nameof(QBasicRetroIDEPlugin));
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
             _window.Opened += (_, _) => _editor?.Focus();
             _window.Show();
-            LaunchQB64Editor();
             UpdateStatus();
-            LaunchQB64();
         }
 
         public void Stop()
@@ -239,18 +236,11 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (_editor == null) return;
 
-            if (_hasUnsavedChanges && _window != null)
-            {
-                var confirm = new ConfirmationWindow("Unsaved Changes",
-                    "Discard current changes?");
-                var result = await confirm.ShowDialog<bool>(_window);
-                if (!result) return;
-            }
+            if (_hasUnsavedChanges && !await ConfirmDiscard()) return;
 
             _editor.Text = string.Empty;
             _currentFile = null;
             UpdateStatus(false);
-            LaunchQB64Editor();
         }
 
         private async Task OpenProject()
@@ -267,7 +257,7 @@ namespace Cycloside.Plugins.BuiltIn
 
         private async Task OpenFile()
         {
-            if (_window == null) return;
+            if (_window == null || !await ConfirmDiscard()) return;
             var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Open BAS File",
@@ -276,13 +266,6 @@ namespace Cycloside.Plugins.BuiltIn
 
             if (result.FirstOrDefault()?.TryGetLocalPath() is { } path)
             {
-                if (_hasUnsavedChanges)
-                {
-                    var confirm = new ConfirmationWindow("Unsaved Changes", "Discard current changes?");
-                    var cont = await confirm.ShowDialog<bool>(_window);
-                    if (!cont) return;
-                }
-
                 await LoadFile(path);
             }
         }
@@ -298,7 +281,6 @@ namespace Cycloside.Plugins.BuiltIn
                 _hasUnsavedChanges = false;
                 if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
                 UpdateStatus(false);
-                LaunchQB64Editor(path);
             }
             catch (Exception ex)
             {
@@ -365,24 +347,6 @@ namespace Cycloside.Plugins.BuiltIn
                 SetStatus($"Error reading project directory: {ex.Message}");
             }
         }
-
-        private void LaunchQB64Editor(string? file = null)
-        {
-            try
-            {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = _qb64Path,
-                    UseShellExecute = true,
-                    Arguments = string.IsNullOrWhiteSpace(file) ? string.Empty : $"\"{file}\""
-                };
-                _qb64Process = Process.Start(psi);
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"QB64 launch error: {ex.Message}");
-            }
-        }
         #endregion
 
         #region Compilation and Running
@@ -395,36 +359,36 @@ namespace Cycloside.Plugins.BuiltIn
 
             try
             {
-                if (string.IsNullOrEmpty(_currentFile))
-                {
-                    await SaveFileAs(); // Force user to save first
-                    if (string.IsNullOrEmpty(_currentFile)) return; // User cancelled
-                }
-                else
-                {
-                    await SaveFile();
-                }
-
-                // Check again in case saving failed or was cancelled
+                if (string.IsNullOrEmpty(_currentFile)) { await SaveFileAs(); } else { await SaveFile(); }
                 if (string.IsNullOrEmpty(_currentFile)) return;
 
-                await Cli.Wrap(_qb64Path)
-                    .WithArguments($"\"{_currentFile}\"")
+                if (!File.Exists(_qb64Path) && !IsCommandInPath(_qb64Path))
+                {
+                    SetStatus($"Error: QB64 not found at '{_qb64Path}'. Please configure it in Settings.");
+                    return;
+                }
+
+                var result = await Cli.Wrap(_qb64Path)
+                    .WithArguments($"-c \"{_currentFile}\"")
                     .WithValidation(CommandResultValidation.None)
                     .ExecuteAsync();
 
-                SetStatus("Compilation finished. Running...");
+                if (result.ExitCode != 0)
+                {
+                    SetStatus($"Compilation failed. See QB64 output for details.");
+                    return;
+                }
 
+                SetStatus("Compilation finished. Running...");
                 var exePath = Path.ChangeExtension(_currentFile, OperatingSystem.IsWindows() ? "exe" : null);
                 if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
                 {
-                    await Cli.Wrap(exePath).ExecuteAsync();
+                    await Cli.Wrap(exePath).WithStandardOutputPipe(PipeTarget.ToDelegate(l => Dispatcher.UIThread.InvokeAsync(() => SetStatus(l))))
+                                           .WithStandardErrorPipe(PipeTarget.ToDelegate(l => Dispatcher.UIThread.InvokeAsync(() => SetStatus($"ERROR: {l}"))))
+                                           .ExecuteAsync();
                     SetStatus("Execution finished.");
                 }
-                else
-                {
-                    SetStatus("Compilation failed: Executable not found.");
-                }
+                else { SetStatus("Compilation failed: Executable not found."); }
             }
             catch (Exception ex)
             {
@@ -479,7 +443,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             try
             {
-                Process.Start(new ProcessStartInfo
+                _qb64Process = Process.Start(new ProcessStartInfo
                 {
                     FileName = _qb64Path,
                     Arguments = $"\"{_currentFile}\"",
@@ -512,18 +476,14 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void SetStatus(string message)
         {
-            if (_status == null) return;
-            // Use dispatcher to ensure UI update is on the correct thread
-            Dispatcher.UIThread.InvokeAsync(() => _status.Text = message);
+            if (_status != null) Dispatcher.UIThread.InvokeAsync(() => _status.Text = message);
         }
 
         private async void Window_KeyDown(object? sender, KeyEventArgs e)
         {
-            // Use a try-catch block to prevent crashes from unhandled exceptions in async void
             try
             {
-                // Key gestures are now handled by the MenuItems, this is a fallback/override
-                if (e.Key == Key.F5)
+                if (e.Key == Key.F5 && !_isCompiling)
                 {
                     await CompileAndRun();
                     e.Handled = true;
@@ -541,9 +501,8 @@ namespace Cycloside.Plugins.BuiltIn
             var text = await ShowInputDialog("Find", "Text to find:");
             if (!string.IsNullOrEmpty(text))
             {
-                // This is a very basic find, a real implementation would be more complex
                 var index = _editor.Text.IndexOf(text, _editor.SelectionStart + _editor.SelectionLength, StringComparison.OrdinalIgnoreCase);
-                if (index == -1) index = _editor.Text.IndexOf(text, 0, StringComparison.OrdinalIgnoreCase); // Wrap around
+                if (index == -1) index = _editor.Text.IndexOf(text, 0, StringComparison.OrdinalIgnoreCase);
 
                 if (index >= 0)
                 {
@@ -564,7 +523,7 @@ namespace Cycloside.Plugins.BuiltIn
             if (string.IsNullOrEmpty(findText)) return;
 
             var replaceText = await ShowInputDialog("Replace With", "Replace with:");
-            if (replaceText == null) return; // User cancelled
+            if (replaceText == null) return;
 
             _editor.Text = _editor.Text.Replace(findText, replaceText, StringComparison.OrdinalIgnoreCase);
         }
@@ -587,7 +546,6 @@ namespace Cycloside.Plugins.BuiltIn
         private void ShowHelp()
         {
             if (_window == null) return;
-            // A proper about window would be better here
             var aboutWindow = new Window
             {
                 Title = "About QBasic Retro IDE",
@@ -600,11 +558,8 @@ namespace Cycloside.Plugins.BuiltIn
                     VerticalAlignment = VerticalAlignment.Center
                 }
             };
-            ThemeManager.ApplyFromSettings(aboutWindow, nameof(QBasicRetroIDEPlugin));
-            if (_window != null)
-            {
-                aboutWindow.ShowDialog(_window);
-            }
+            ThemeManager.ApplyForPlugin(aboutWindow, this);
+            aboutWindow.ShowDialog(_window);
         }
 
         private void LaunchQB64(string? file = null)
@@ -620,7 +575,7 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     psi.ArgumentList.Add(file);
                 }
-                Process.Start(psi);
+                _qb64Process = Process.Start(psi);
             }
             catch (Exception ex)
             {
@@ -636,6 +591,21 @@ namespace Cycloside.Plugins.BuiltIn
                 return await inputWindow.ShowDialog<string?>(_window);
             }
             return null;
+        }
+
+        private async Task<bool> ConfirmDiscard()
+        {
+            if (_window == null) return false;
+            var confirm = new ConfirmationWindow("Unsaved Changes", "Discard current changes?");
+            return await confirm.ShowDialog<bool>(_window);
+        }
+        
+        private static bool IsCommandInPath(string command)
+        {
+            var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator);
+            if (paths == null) return false;
+            var extensions = OperatingSystem.IsWindows() ? Environment.GetEnvironmentVariable("PATHEXT")?.Split(';') ?? new[] { ".exe" } : new[] { "" };
+            return paths.SelectMany(p => extensions.Select(e => Path.Combine(p, command + e))).Any(File.Exists);
         }
         #endregion
 

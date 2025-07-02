@@ -48,6 +48,14 @@ namespace Cycloside.Plugins
         private readonly Action<string>? _notify;
         private Timer? _reloadTimer;
 
+        /// <summary>
+        /// Raised whenever <see cref="ReloadPlugins"/> completes successfully.
+        /// The application listens to this to rebuild UI elements such as the
+        /// tray menu.
+        /// </summary>
+        // Exposed so the UI can rebuild when plugins change.
+        public event Action? PluginsReloaded;
+
         public string PluginDirectory { get; }
         public bool IsolationEnabled { get; set; }
         public bool CrashLoggingEnabled { get; set; }
@@ -83,6 +91,8 @@ namespace Cycloside.Plugins
             _watcher.Changed += eventHandler;
             _watcher.Deleted += eventHandler;
             _watcher.Renamed += new RenamedEventHandler((s, e) => _reloadTimer.Change(500, Timeout.Infinite));
+
+            ApplyEnabledSettings();
         }
 
         public void LoadPlugins()
@@ -150,9 +160,17 @@ namespace Cycloside.Plugins
                 StartWatching();
                 _notify?.Invoke("Plugins have been reloaded.");
 
+                // Notify any listeners that plugins have changed so UI can refresh.
+                PluginsReloaded?.Invoke();
+
                 // Re-apply settings to the newly loaded plugins so reloaded
                 // plugins are enabled or disabled based on the active profile.
                 WorkspaceProfiles.Apply(SettingsManager.Settings.ActiveProfile, this);
+
+                ApplyEnabledSettings();
+
+                // Notify listeners that the plugin collection has changed.
+                PluginsReloaded?.Invoke();
             }
         }
 
@@ -254,6 +272,17 @@ namespace Cycloside.Plugins
 
         public bool IsEnabled(IPlugin plugin) => GetInfo(plugin)?.IsEnabled ?? false;
         public PluginChangeStatus GetStatus(IPlugin plugin) => GetInfo(plugin)?.Status ?? PluginChangeStatus.None;
-    }
 
+        private void ApplyEnabledSettings()
+        {
+            var enabled = SettingsManager.Settings.PluginEnabled;
+            foreach (var info in _pluginInfos)
+            {
+                if (enabled.TryGetValue(info.Instance.Name, out var shouldEnable) && shouldEnable)
+                {
+                    EnablePlugin(info.Instance);
+                }
+            }
+        }
+    }
 }

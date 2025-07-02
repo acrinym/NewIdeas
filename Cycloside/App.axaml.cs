@@ -6,12 +6,11 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
-// Managers and other helpers live in the base Cycloside namespace
-using Cycloside.ViewModels;    // For MainWindowViewModel
+using Cycloside.ViewModels;
 using Cycloside.Services;
-using Cycloside.Views;          // For WizardWindow and MainWindow
+using Cycloside.Views;
 using System;
-using System.Collections.Generic; // For IReadOnlyList
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -27,6 +26,7 @@ public partial class App : Application
     private const string TrayIconBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGElEQVR4nGNkaGAgCTCRpnxUw6iGoaQBALsfAKDg6Y6zAAAAAElFTkSuQmCC";
     private RemoteApiServer? _remoteServer;
     private PluginManager? _pluginManager;
+    private TrayIcon? _trayIcon; // Keep a reference to the tray icon
 
     public override void Initialize()
     {
@@ -42,12 +42,10 @@ public partial class App : Application
         }
 
         var settings = SettingsManager.Settings;
-
         ThemeManager.LoadGlobalThemeFromSettings();
 
         if (settings.FirstRun)
         {
-            // Show the wizard and set the main window upon its completion.
             var wiz = new WizardWindow();
             wiz.Closed += (_, _) =>
             {
@@ -58,50 +56,58 @@ public partial class App : Application
         }
         else
         {
-            // Directly create and show the main window.
             desktop.MainWindow = CreateMainWindow(settings);
             desktop.MainWindow.Show();
         }
 
         base.OnFrameworkInitializationCompleted();
     }
-
-    /// <summary>
-    /// NEW: Centralized method to create and configure the main application window.
-    /// This is called after the wizard is complete or on a normal startup.
-    /// </summary>
-    /// <returns>The fully configured MainWindow instance.</returns>
+    
     private MainWindow CreateMainWindow(AppSettings settings)
     {
-        // --- Plugin Management ---
         _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
+        
+        [cite_start]// This subscription is critical for dynamic UI updates and only exists in the 'main' branch's logic. [cite: 1628]
+        _pluginManager.PluginsReloaded += OnPluginsReloaded;
+
         var volatileManager = new VolatilePluginManager();
 
         LoadAllPlugins(_pluginManager, settings);
         _pluginManager.StartWatching();
 
-        // --- View & ViewModel Creation ---
         var viewModel = new MainWindowViewModel(_pluginManager.Plugins);
         var mainWindow = new MainWindow(_pluginManager)
         {
             DataContext = viewModel
         };
 
-        // Connect ViewModel commands to application logic
-        viewModel.ExitCommand = new RelayCommand(() => Shutdown(_pluginManager));
-        // THIS IS THE MERGED CHANGE: Using EnablePlugin instead of StartPlugin
-        viewModel.StartPluginCommand = new RelayCommand(plugin => {
-            if(plugin is IPlugin p) _pluginManager.EnablePlugin(p);
+        viewModel.ExitCommand = new RelayCommand(() => Shutdown());
+        
+        [cite_start]// This is the complete toggle logic for starting/stopping plugins from the main window. [cite: 1632, 1633, 1634]
+        viewModel.StartPluginCommand = new RelayCommand(plugin =>
+        {
+            if (plugin is not IPlugin p || _pluginManager is null) return;
+            
+            bool shouldBeEnabled = !_pluginManager.IsEnabled(p);
+            if (shouldBeEnabled)
+            {
+                _pluginManager.EnablePlugin(p);
+            }
+            else
+            {
+                _pluginManager.DisablePlugin(p);
+            }
+
+            SettingsManager.Settings.PluginEnabled[p.Name] = shouldBeEnabled;
+            SettingsManager.Save();
         });
 
-        // --- Server & Hotkey Setup ---
         _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
         _remoteServer.Start();
         WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
         RegisterHotkeys(_pluginManager);
         
-        // --- Tray Icon Setup ---
-        var trayIcon = new TrayIcon
+        _trayIcon = new TrayIcon
         {
             Icon = CreateTrayIcon(),
             ToolTipText = "Cycloside",
@@ -109,19 +115,39 @@ public partial class App : Application
         };
         var icons = TrayIcon.GetIcons(this) ?? new TrayIcons();
         TrayIcon.SetIcons(this, icons);
-        if (!icons.Contains(trayIcon))
+        if (!icons.Contains(_trayIcon))
         {
-            icons.Add(trayIcon);
+            icons.Add(_trayIcon);
         }
-        trayIcon.IsVisible = true;
+        _trayIcon.IsVisible = true;
         
         return mainWindow;
+    }
+    
+    [cite_start]// This handler for the PluginsReloaded event is essential for updating the UI dynamically. [cite: 1639]
+    private void OnPluginsReloaded()
+    {
+        if (_trayIcon is null || _pluginManager is null) return;
+
+        [cite_start]// Rebuild the tray menu with the new plugin instances. [cite: 1641]
+        var volatileManager = new VolatilePluginManager();
+        _trayIcon.Menu = BuildTrayMenu(_pluginManager, volatileManager, SettingsManager.Settings);
+
+        [cite_start]// Also update the main window's view model. [cite: 1642, 1643]
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+            desktop.MainWindow?.DataContext is MainWindowViewModel vm)
+        {
+            vm.AvailablePlugins.Clear();
+            foreach (var plugin in _pluginManager.Plugins)
+            {
+                vm.AvailablePlugins.Add(plugin);
+            }
+        }
     }
 
     private void LoadAllPlugins(PluginManager manager, AppSettings settings)
     {
         if (settings.DisableBuiltInPlugins) return;
-
         manager.AddPlugin(new DateTimeOverlayPlugin());
         manager.AddPlugin(new MP3PlayerPlugin());
         manager.AddPlugin(new MacroPlugin());
@@ -140,7 +166,7 @@ public partial class App : Application
         manager.AddPlugin(new WinampVisHostPlugin());
         manager.AddPlugin(new QBasicRetroIDEPlugin());
     }
-    
+
     private void RegisterHotkeys(PluginManager manager)
     {
         HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
@@ -153,10 +179,10 @@ public partial class App : Application
             }
         });
     }
-    
-    private void Shutdown(PluginManager manager)
+
+    private void Shutdown()
     {
-        manager.StopAll();
+        _pluginManager?.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
         Logger.Shutdown();
@@ -192,35 +218,33 @@ public partial class App : Application
         inlineItem.Click += (_, _) => new VolatileRunnerWindow(volatileManager).Show();
         volatileMenu.Menu!.Items.Add(inlineItem);
 
+        var mp3Item = new NativeMenuItem("MP3 Player");
+        mp3Item.Click += (s, e) =>
+        {
+            var mp3 = manager.Plugins.FirstOrDefault(p => p.Name == "MP3 Player");
+            if (mp3 != null) manager.EnablePlugin(mp3);
+        };
+
         return new NativeMenu
         {
             Items =
             {
                 new NativeMenuItem("Settings") { Menu = new NativeMenu { Items = {
+                    new NativeMenuItem("Control Panel...") { Command = new RelayCommand(() => new ControlPanelWindow(manager).Show()) },
                     new NativeMenuItem("Plugin Manager...") { Command = new RelayCommand(() => new PluginSettingsWindow(manager).Show()) },
-                    new NativeMenuItem("Generate New Plugin...") { Command = new RelayCommand(() => new PluginDevWizard().Show()) },
                     new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
-                    new NativeMenuItem("Skin/Theme Editor...") { Command = new RelayCommand(() => new SkinThemeEditorWindow().Show()) },
-                    new NativeMenuItem("Workspace Profiles...") { Command = new RelayCommand(() => new ProfileEditorWindow(manager).Show()) },
-                    new NativeMenuItem("Runtime Settings...") { Command = new RelayCommand(() => new RuntimeSettingsWindow(manager).Show()) }
                 }}},
                 new NativeMenuItemSeparator(),
-                new NativeMenuItem("Launch at Startup") { IsChecked = settings.LaunchAtStartup, ToggleType = NativeMenuItemToggleType.CheckBox, Command = new RelayCommand(o => {
-                    var item = (NativeMenuItem)o!;
-                    settings.LaunchAtStartup = !settings.LaunchAtStartup;
-                    if (settings.LaunchAtStartup) StartupManager.Enable(); else StartupManager.Disable();
-                    SettingsManager.Save();
-                    item.IsChecked = settings.LaunchAtStartup;
-                })},
+                mp3Item,
                 new NativeMenuItemSeparator(),
                 pluginsMenu,
                 volatileMenu,
                 new NativeMenuItem("Open Plugins Folder") { Command = new RelayCommand(() => {
-                    try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = manager.PluginDirectory, UseShellExecute = true }); } 
+                    try { Process.Start(new ProcessStartInfo { FileName = manager.PluginDirectory, UseShellExecute = true }); } 
                     catch (Exception ex) { Logger.Log($"Failed to open plugin folder: {ex.Message}"); }
                 })},
                 new NativeMenuItemSeparator(),
-                new NativeMenuItem("Exit") { Command = new RelayCommand(() => Shutdown(manager)) }
+                new NativeMenuItem("Exit") { Command = new RelayCommand(() => Shutdown()) }
             }
         };
     }
@@ -238,19 +262,22 @@ public partial class App : Application
         var menuItem = new NativeMenuItem(label)
         {
             ToggleType = NativeMenuItemToggleType.CheckBox,
-            IsChecked = settings.PluginEnabled.TryGetValue(plugin.Name, out var isEnabled) ? isEnabled : true
+            IsChecked = manager.IsEnabled(plugin)
         };
-
-        if (menuItem.IsChecked && !manager.IsEnabled(plugin)) manager.EnablePlugin(plugin);
-        else if (!menuItem.IsChecked && manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
 
         menuItem.Command = new RelayCommand(o =>
         {
             if (o is not NativeMenuItem item) return;
-            if (manager.IsEnabled(plugin))
-                manager.DisablePlugin(plugin);
-            else
+            
+            bool shouldBeEnabled = !manager.IsEnabled(plugin);
+            if (shouldBeEnabled)
+            {
                 manager.EnablePlugin(plugin);
+            }
+            else
+            {
+                manager.DisablePlugin(plugin);
+            }
 
             item.IsChecked = manager.IsEnabled(plugin);
             settings.PluginEnabled[plugin.Name] = item.IsChecked;
@@ -267,6 +294,7 @@ public partial class App : Application
         menuItem.Click += async (_, _) =>
         {
             if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
+
             var files = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
@@ -321,8 +349,7 @@ public partial class App : Application
         if (hIcon == IntPtr.Zero) return null;
         try
         {
-            var icon = (Icon)Icon.FromHandle(hIcon).Clone();
-            return icon;
+            return (Icon)Icon.FromHandle(hIcon).Clone();
         }
         finally
         {
