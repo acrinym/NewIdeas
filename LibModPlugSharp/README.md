@@ -4,8 +4,9 @@ It mirrors a subset of the libopenmpt-sharp NuGet package so the
 Cycloside project can build without external dependencies.
 
 The build.sh and build.ps1 scripts download the official OpenMPT
-sources and compile the native library. The resulting libopenmpt
-binary is placed in the native/ directory and loaded at runtime by
+sources and compile the native library using the CMake project in
+`openmpt/build`. The resulting libopenmpt binary is placed in the
+native/ directory and loaded at runtime by
 Module via P/Invoke.
 
 Building

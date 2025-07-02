@@ -8,7 +8,7 @@ if (-not (Test-Path openmpt)) {
 
 New-Item -ItemType Directory -Force -Path build | Out-Null
 Push-Location build
-cmake ../openmpt -DCMAKE_BUILD_TYPE=Release -DLIBOPENMPT_STATIC=OFF -DLIBOPENMPT_BUILD_TEST=OFF -DLIBOPENMPT_BUILD_EXAMPLES=OFF
+cmake ../openmpt/build -DCMAKE_BUILD_TYPE=Release -DLIBOPENMPT_STATIC=OFF -DLIBOPENMPT_BUILD_TEST=OFF -DLIBOPENMPT_BUILD_EXAMPLES=OFF
 cmake --build . --config Release
 Pop-Location
 
