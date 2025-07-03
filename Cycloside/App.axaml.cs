@@ -67,7 +67,7 @@ public partial class App : Application
     {
         _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
         
-        [cite_start]// This subscription is critical for dynamic UI updates and only exists in the 'main' branch's logic. [cite: 1628]
+        // Subscribe to plugin reloads to update the UI when plugins are refreshed.
         _pluginManager.PluginsReloaded += OnPluginsReloaded;
 
         var volatileManager = new VolatilePluginManager();
@@ -83,7 +83,7 @@ public partial class App : Application
 
         viewModel.ExitCommand = new RelayCommand(() => Shutdown());
         
-        [cite_start]// This is the complete toggle logic for starting/stopping plugins from the main window. [cite: 1632, 1633, 1634]
+        // Toggle plugin enablement from the main window.
         viewModel.StartPluginCommand = new RelayCommand(plugin =>
         {
             if (plugin is not IPlugin p || _pluginManager is null) return;
@@ -124,16 +124,16 @@ public partial class App : Application
         return mainWindow;
     }
     
-    [cite_start]// This handler for the PluginsReloaded event is essential for updating the UI dynamically. [cite: 1639]
+    // Handle the PluginsReloaded event to refresh menus and view models.
     private void OnPluginsReloaded()
     {
         if (_trayIcon is null || _pluginManager is null) return;
 
-        [cite_start]// Rebuild the tray menu with the new plugin instances. [cite: 1641]
+        // Rebuild the tray menu with the new plugin instances.
         var volatileManager = new VolatilePluginManager();
         _trayIcon.Menu = BuildTrayMenu(_pluginManager, volatileManager, SettingsManager.Settings);
 
-        [cite_start]// Also update the main window's view model. [cite: 1642, 1643]
+        // Also update the main window's view model.
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
             desktop.MainWindow?.DataContext is MainWindowViewModel vm)
         {

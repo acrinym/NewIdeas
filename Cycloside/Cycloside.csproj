@@ -16,11 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Includes all .axaml files for Avalonia views -->
-    <AvaloniaResource Include="**\*.axaml">
-      <SubType>Designer</SubType>
-    </AvaloniaResource>
-    <!-- Includes other resources like images or fonts from your Resources folder -->
+    <!-- Include resources like images or fonts from the Resources folder -->
     <AvaloniaResource Include="Resources\**" />
   </ItemGroup>
   
