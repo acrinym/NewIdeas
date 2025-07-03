@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace LibModPlugSharp
+namespace OpenMpt.Sharp
 {
     public class ModPlugModule : IDisposable
     {
@@ -25,7 +25,7 @@ namespace LibModPlugSharp
 
         public int Read(float[] buffer, int sampleRate)
         {
-            return NativeMethods.openmpt_module_read_interleaved_stereo(_handle, sampleRate, (UIntPtr)(buffer.Length / 2), buffer);
+            return (int)NativeMethods.openmpt_module_read_interleaved_float_stereo(_handle, sampleRate, (UIntPtr)(buffer.Length / 2), buffer);
         }
 
         public void Dispose()
