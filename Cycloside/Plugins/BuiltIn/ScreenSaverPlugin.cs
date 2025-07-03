@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -6,10 +10,6 @@ using Avalonia.Media.Text;
 using Avalonia.Threading;
 using Cycloside.Services;
 using SharpHook;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 
 namespace Cycloside.Plugins.BuiltIn
 {
