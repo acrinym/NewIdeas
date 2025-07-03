@@ -79,12 +79,17 @@ namespace Cycloside.Plugins.BuiltIn
             if (_control == null) return;
 
             var menu = _control.MenuBar;
-            menu.Items = new List<MenuItem>();
+            menu.Items.Clear();
 
             var themeMenu = new MenuItem { Header = "Theme" };
             foreach (var name in JezzballThemes.All.Keys)
             {
-                var item = new MenuItem { Header = name, IsCheckable = true, IsChecked = name == currentTheme };
+                var item = new MenuItem
+                {
+                    Header = name,
+                    ToggleType = MenuItemToggleType.CheckBox,
+                    IsChecked = name == currentTheme
+                };
                 item.Click += (_, _) =>
                 {
                     _control.SetTheme(name);
@@ -92,14 +97,18 @@ namespace Cycloside.Plugins.BuiltIn
                     SettingsManager.Save();
                     foreach (var mi in themeMenu.Items!.OfType<MenuItem>()) mi.IsChecked = mi == item;
                 };
-                themeMenu.Items ??= new List<object>();
                 ((IList)themeMenu.Items).Add(item);
             }
 
             var skinMenu = new MenuItem { Header = "Skin" };
             foreach (var skin in GetSkinNames())
             {
-                var item = new MenuItem { Header = skin, IsCheckable = true, IsChecked = skin == currentSkin };
+                var item = new MenuItem
+                {
+                    Header = skin,
+                    ToggleType = MenuItemToggleType.CheckBox,
+                    IsChecked = skin == currentSkin
+                };
                 item.Click += (_, _) =>
                 {
                     if (_window != null)
@@ -108,11 +117,12 @@ namespace Cycloside.Plugins.BuiltIn
                     SettingsManager.Save();
                     foreach (var mi in skinMenu.Items!.OfType<MenuItem>()) mi.IsChecked = mi == item;
                 };
-                skinMenu.Items ??= new List<object>();
                 ((IList)skinMenu.Items).Add(item);
             }
 
-            menu.Items = new List<object> { themeMenu, skinMenu };
+            menu.Items.Clear();
+            ((IList)menu.Items).Add(themeMenu);
+            ((IList)menu.Items).Add(skinMenu);
         }
 
         private static IEnumerable<string> GetSkinNames()
@@ -133,7 +143,7 @@ namespace Cycloside.Plugins.BuiltIn
     public enum PowerUpType { IceWall }
 
     // Theme description for game visuals
-    internal class JezzballTheme
+    public class JezzballTheme
     {
         public IBrush BackgroundBrush { get; init; } = Brushes.Black;
         public Pen WallPen { get; init; } = new Pen(Brushes.Cyan, 4, lineCap: PenLineCap.Round);
@@ -488,10 +498,16 @@ namespace Cycloside.Plugins.BuiltIn
         {
             foreach (var ball in _balls.ToList())
             {
-                var area = _activeAreas.FirstOrDefault(r => r.Intersects(ball.BoundingBox)) 
-                    ?? _activeAreas.OrderBy(a => Math.Abs(a.Center.X - ball.Position.X) + Math.Abs(a.Center.Y - ball.Position.Y)).FirstOrDefault();
-                
-                if (area != default) ball.Update(area, dt);
+                var area = _activeAreas.FirstOrDefault(r => r.Intersects(ball.BoundingBox));
+                if (area == default)
+                {
+                    area = _activeAreas.OrderBy(a => Math.Abs(a.Center.X - ball.Position.X) +
+                                                   Math.Abs(a.Center.Y - ball.Position.Y))
+                                      .FirstOrDefault();
+                }
+
+                if (area != default)
+                    ball.Update(area, dt);
             }
         }
 

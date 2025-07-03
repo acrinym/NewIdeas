@@ -3,6 +3,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cycloside.Services;
@@ -81,7 +82,7 @@ namespace Cycloside.Plugins.BuiltIn
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(PlayCommand))]
         [NotifyCanExecuteChangedFor(nameof(PauseCommand))]
-        [NotifyCanExecuteChangedFor(nameof(StopCommand))]
+        [NotifyCanExecuteChangedFor(nameof(StopPlaybackCommand))]
         private bool _isPlaying;
 
         public ModTrackerPlugin()
@@ -230,7 +231,7 @@ namespace Cycloside.Plugins.BuiltIn
         }
 
         [RelayCommand(CanExecute = nameof(IsPlaying))]
-        private void Stop()
+        private void StopPlayback()
         {
             _wavePlayer?.Stop();
             // Reset position to the beginning
@@ -246,7 +247,7 @@ namespace Cycloside.Plugins.BuiltIn
         private Window BuildTrackerWindow()
         {
             var openButton = new Button { Content = "Open..." };
-            openButton.Bind(Button.CommandProperty, new Binding(nameof(OpenCommand)));
+            openButton.Bind(Button.CommandProperty, new Binding(nameof(OpenFileCommand)));
             
             var playButton = new Button { Content = "Play" };
             playButton.Bind(Button.CommandProperty, new Binding(nameof(PlayCommand)));
@@ -255,7 +256,7 @@ namespace Cycloside.Plugins.BuiltIn
             pauseButton.Bind(Button.CommandProperty, new Binding(nameof(PauseCommand)));
 
             var stopButton = new Button { Content = "Stop" };
-            stopButton.Bind(Button.CommandProperty, new Binding(nameof(StopCommand)));
+            stopButton.Bind(Button.CommandProperty, new Binding(nameof(StopPlaybackCommand)));
 
             var controls = new StackPanel
             {
