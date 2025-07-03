@@ -20,22 +20,28 @@ using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
+    // A simple record to define a command for the new Command Palette
+    public record IdeCommand(string Name, string Description, IAsyncRelayCommand Command);
+
     public partial class QBasicRetroIDEPlugin : ObservableObject, IPlugin
     {
         private Window? _window;
         private TextEditor? _editor;
         private TreeView? _projectTree;
         private TextBlock? _status;
-        private string _qb64Path = "qb64";
+        private string _qb64Path = "qb64pe"; // Updated default
         private Process? _qb64Process;
         private string? _currentFile;
         private string? _projectPath;
         private bool _isCompiling = false;
         private bool _hasUnsavedChanges = false;
+        
+        // List of commands for the Command Palette
+        private List<IdeCommand> _ideCommands = new();
 
         public string Name => "QBasic Retro IDE";
         public string Description => "Edit and run .BAS files using QB64 Phoenix";
-        public Version Version => new Version(0, 4, 1); // Version bump for restored code
+        public Version Version => new Version(0, 5, 0); // Version bump for new features
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
@@ -43,8 +49,8 @@ namespace Cycloside.Plugins.BuiltIn
         {
             _qb64Path = !string.IsNullOrWhiteSpace(SettingsManager.Settings.QB64Path)
                 ? SettingsManager.Settings.QB64Path
-                : "qb64";
-
+                : @"C:\qb64pe\qb64pe.exe"; // A more sensible default
+            
             _editor = new TextEditor
             {
                 ShowLineNumbers = true,
@@ -55,13 +61,16 @@ namespace Cycloside.Plugins.BuiltIn
                 FontSize = 14,
                 IsReadOnly = false
             };
+            
+            // --- FIX: Force focus on click to solve the input issue ---
+            _editor.PointerPressed += (s, e) => _editor?.Focus();
+            
             _editor.TextArea.Caret.PositionChanged += (_, _) => UpdateStatus();
-            _editor.TextChanged += (_, _)
-                =>
-                {
-                    _hasUnsavedChanges = true;
-                    UpdateStatus();
-                };
+            _editor.TextChanged += (_, _) =>
+            {
+                _hasUnsavedChanges = true;
+                UpdateStatus();
+            };
 
             _projectTree = new TreeView { Width = 200, Margin = new Thickness(2) };
             _projectTree.DoubleTapped += async (_, __) =>
@@ -71,14 +80,16 @@ namespace Cycloside.Plugins.BuiltIn
                     await LoadFile(path);
                 }
             };
-
+            
+            // Initialize commands *before* building the menu
+            InitializeCommands();
+            
             _status = new TextBlock { Foreground = Brushes.White, Margin = new Thickness(5, 0), VerticalAlignment = VerticalAlignment.Center };
-
             var menu = BuildMenu();
             var statusBar = new DockPanel { Height = 24, Background = Brushes.DarkSlateBlue };
             DockPanel.SetDock(statusBar, Dock.Bottom);
             statusBar.Children.Add(_status);
-
+            
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
             grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
@@ -95,14 +106,14 @@ namespace Cycloside.Plugins.BuiltIn
             dock.Children.Add(menu);
             dock.Children.Add(statusBar);
             dock.Children.Add(grid);
-
+            
             _window = new Window
             {
                 Title = "QBasic Retro IDE",
                 WindowState = WindowState.Maximized,
-                Content = dock
+                Content = dock,
+                DataContext = this // Set DataContext for command bindings
             };
-
             ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
@@ -135,107 +146,26 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
-        // Commands exposed for UI bindings
-        [RelayCommand]
-        private async Task Save() => await SaveFile();
-
-        [RelayCommand]
-        private async Task Compile() => await CompileAndRun();
-
-        #region UI Construction
-        private Menu BuildMenu()
+        // Initialize all commands for binding and for the palette
+        private void InitializeCommands()
         {
-            var newItem = new MenuItem { Header = "_New", InputGesture = new KeyGesture(Key.N, KeyModifiers.Control) };
-            var openItem = new MenuItem { Header = "_Open...", InputGesture = new KeyGesture(Key.O, KeyModifiers.Control) };
-            var openProjectItem = new MenuItem { Header = "Open _Project..." };
-            var saveItem = new MenuItem
+            _ideCommands = new List<IdeCommand>
             {
-                Header = "_Save",
-                InputGesture = new KeyGesture(Key.S, KeyModifiers.Control),
-                Command = SaveCommand
-            };
-            var saveAsItem = new MenuItem { Header = "Save _As..." };
-            var openInQb64Item = new MenuItem { Header = "Open in _QB64" };
-            var exitItem = new MenuItem { Header = "E_xit" };
-
-            var fileItems = new object[]
-            {
-                newItem, openItem, openProjectItem,
-                new Separator(),
-                saveItem, saveAsItem, openInQb64Item,
-                new Separator(),
-                exitItem
-            };
-
-            newItem.Click += async (s, e) => await NewFile();
-            openItem.Click += async (s, e) => await OpenFile();
-            openProjectItem.Click += async (s, e) => await OpenProject();
-            saveAsItem.Click += async (s, e) => await SaveFileAs();
-            openInQb64Item.Click += async (s, e) => await LaunchQb64Editor();
-            exitItem.Click += (s, e) => _window?.Close();
-
-            var undoItem = new MenuItem { Header = "_Undo" };
-            var redoItem = new MenuItem { Header = "_Redo" };
-            var cutItem = new MenuItem { Header = "Cu_t" };
-            var copyItem = new MenuItem { Header = "_Copy" };
-            var pasteItem = new MenuItem { Header = "_Paste" };
-
-            var editItems = new object[]
-            {
-                undoItem, redoItem, new Separator(),
-                cutItem, copyItem, pasteItem
-            };
-
-            undoItem.Click += (s, e) => _editor?.Undo();
-            redoItem.Click += (s, e) => _editor?.Redo();
-            cutItem.Click += (s, e) => _editor?.Cut();
-            copyItem.Click += (s, e) => _editor?.Copy();
-            pasteItem.Click += (s, e) => _editor?.Paste();
-
-            var searchItems = new[] { new MenuItem { Header = "_Find..." }, new MenuItem { Header = "_Replace..." } };
-            searchItems[0].Click += async (s, e) => await Find();
-            searchItems[1].Click += async (s, e) => await Replace();
-
-            var runItems = new[]
-            {
-                new MenuItem
-                {
-                    Header = "_Compile & Run",
-                    InputGesture = new KeyGesture(Key.F5),
-                    Command = CompileCommand
-                },
-                new MenuItem { Header = "Run _Executable" }
-            };
-            runItems[1].Click += async (s, e) => await RunExecutable();
-
-            var settingsItem = new MenuItem { Header = "_Settings..." };
-            settingsItem.Click += (s, e) => OpenSettings();
-            var launchQb64Item = new MenuItem { Header = "Launch _QB64" };
-            launchQb64Item.Click += (s, e) => LaunchQB64(_currentFile);
-
-            var helpItem = new MenuItem { Header = "_About" };
-            helpItem.Click += (s, e) => ShowHelp();
-
-            return new Menu
-            {
-                ItemsSource = new object[]
-                {
-                    new MenuItem { Header = "_File", ItemsSource = fileItems },
-                    new MenuItem { Header = "_Edit", ItemsSource = editItems },
-                    new MenuItem { Header = "_Search", ItemsSource = searchItems },
-                    new MenuItem { Header = "_Run", ItemsSource = runItems },
-                    new MenuItem { Header = "T_ools", ItemsSource = new [] { settingsItem, launchQb64Item } },
-                    new MenuItem { Header = "_Help", ItemsSource = new [] { helpItem } }
-                }
+                new("New File", "Create a new empty file", NewFileCommand),
+                new("Open File...", "Open a .BAS file from disk", OpenFileCommand),
+                new("Save File", "Save the current file to disk", SaveFileCommand),
+                new("Save File As...", "Save the current file to a new location", SaveFileAsCommand),
+                new("Compile & Run", "Compile and run the current .BAS file using QB64PE", CompileAndRunCommand),
+                new("Open Help", "Show the QBasic IDE help window", ShowHelpCommand),
+                new("Open Command Palette", "Show the command palette", OpenCommandPaletteCommand)
             };
         }
-        #endregion
 
-        #region File Operations
-        private async Task NewFile()
+        #region Commands
+        
+        [RelayCommand] private async Task NewFile()
         {
             if (_editor == null) return;
-
             if (_hasUnsavedChanges && !await ConfirmDiscard()) return;
 
             _editor.Text = string.Empty;
@@ -243,19 +173,7 @@ namespace Cycloside.Plugins.BuiltIn
             UpdateStatus(false);
         }
 
-        private async Task OpenProject()
-        {
-            if (_window == null) return;
-            var result = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Open QBasic Project Folder" });
-            var selectedFolder = result.FirstOrDefault();
-            if (selectedFolder != null && selectedFolder.TryGetLocalPath() is { } path)
-            {
-                _projectPath = path;
-                UpdateProjectTree();
-            }
-        }
-
-        private async Task OpenFile()
+        [RelayCommand] private async Task OpenFile()
         {
             if (_window == null || !await ConfirmDiscard()) return;
             var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -263,54 +181,22 @@ namespace Cycloside.Plugins.BuiltIn
                 Title = "Open BAS File",
                 FileTypeFilter = new[] { new FilePickerFileType("BAS Files") { Patterns = new[] { "*.bas" } } }
             });
-
             if (result.FirstOrDefault()?.TryGetLocalPath() is { } path)
             {
                 await LoadFile(path);
             }
         }
-
-        private async Task LoadFile(string path)
-        {
-            if (_editor == null) return;
-            try
-            {
-                SetStatus($"Loading {Path.GetFileName(path)}...");
-                _currentFile = path;
-                _editor.Text = await File.ReadAllTextAsync(path);
-                _hasUnsavedChanges = false;
-                if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
-                UpdateStatus(false);
-            }
-            catch (Exception ex)
-            {
-                SetStatus($"Error loading file: {ex.Message}");
-            }
-        }
-
-        private async Task SaveFile()
+        
+        [RelayCommand] private Task SaveFile()
         {
             if (string.IsNullOrEmpty(_currentFile))
             {
-                await SaveFileAs();
-                return;
+                return SaveFileAs();
             }
-            if (_editor == null) return;
-
-            try
-            {
-                SetStatus($"Saving {_currentFile}...");
-                await File.WriteAllTextAsync(_currentFile, _editor.Text);
-                UpdateStatus(false); // No longer modified
-                SetStatus($"Saved successfully.");
-            }
-            catch (Exception ex)
-            {
-                SetStatus($"Error saving file: {ex.Message}");
-            }
+            return WriteTextToFileAsync(_currentFile);
         }
 
-        private async Task SaveFileAs()
+        [RelayCommand] private async Task SaveFileAs()
         {
             if (_window == null || _editor == null) return;
             var result = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -318,53 +204,30 @@ namespace Cycloside.Plugins.BuiltIn
                 Title = "Save BAS File As...",
                 FileTypeChoices = new[] { new FilePickerFileType("BAS Files") { Patterns = new[] { "*.bas" } } },
                 SuggestedFileName = Path.GetFileName(_currentFile) ?? "Untitled.bas"
-            });
+             });
 
             if (result?.TryGetLocalPath() is { } path)
             {
                 _currentFile = path;
                 if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
-                await SaveFile();
+                await WriteTextToFileAsync(path);
                 UpdateProjectTree();
             }
         }
-
-        private void UpdateProjectTree()
-        {
-            if (_projectTree == null || string.IsNullOrWhiteSpace(_projectPath)) return;
-
-            var rootNode = new TreeViewItem { Header = Path.GetFileName(_projectPath), IsExpanded = true };
-            try
-            {
-                var items = Directory.GetFiles(_projectPath, "*.bas")
-                    .Select(f => new TreeViewItem { Header = Path.GetFileName(f), Tag = f })
-                    .ToList<object>();
-                rootNode.ItemsSource = items;
-                _projectTree.ItemsSource = new[] { rootNode };
-            }
-            catch (Exception ex)
-            {
-                SetStatus($"Error reading project directory: {ex.Message}");
-            }
-        }
-        #endregion
-
-        #region Compilation and Running
-        private async Task CompileAndRun()
+        
+        [RelayCommand] private async Task CompileAndRun()
         {
             if (_isCompiling) return;
-
             _isCompiling = true;
             SetStatus("Compiling...");
 
             try
             {
-                if (string.IsNullOrEmpty(_currentFile)) { await SaveFileAs(); } else { await SaveFile(); }
+                await SaveFile();
                 if (string.IsNullOrEmpty(_currentFile)) return;
-
                 if (!File.Exists(_qb64Path) && !IsCommandInPath(_qb64Path))
                 {
-                    SetStatus($"Error: QB64 not found at '{_qb64Path}'. Please configure it in Settings.");
+                    SetStatus($"Error: QB64PE not found at '{_qb64Path}'. Please configure it in Tools -> Settings.");
                     return;
                 }
 
@@ -372,10 +235,10 @@ namespace Cycloside.Plugins.BuiltIn
                     .WithArguments($"-c \"{_currentFile}\"")
                     .WithValidation(CommandResultValidation.None)
                     .ExecuteAsync();
-
+                
                 if (result.ExitCode != 0)
                 {
-                    SetStatus($"Compilation failed. See QB64 output for details.");
+                    SetStatus($"Compilation failed. See QB64PE output for details.");
                     return;
                 }
 
@@ -401,59 +264,175 @@ namespace Cycloside.Plugins.BuiltIn
                 UpdateStatus();
             }
         }
-
-        private async Task RunExecutable()
+        
+        [RelayCommand] private Task ShowHelp()
         {
-            if (string.IsNullOrEmpty(_currentFile))
-            {
-                SetStatus("No file is open to run its executable.");
-                return;
-            }
+            if (_window == null) return Task.CompletedTask;
+            const string helpText = 
+@"QBasic Retro IDE Help
 
-            var exePath = Path.ChangeExtension(_currentFile, OperatingSystem.IsWindows() ? "exe" : null);
-            if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
+Common Shortcuts:
+- F5: Compile & Run
+- Ctrl+S: Save
+- Ctrl+O: Open
+- Ctrl+N: New File
+- Ctrl+Shift+P: Open Command Palette
+
+Features:
+- Edit .BAS files with basic syntax highlighting.
+- Use the File menu to manage files and projects.
+- Use the Run menu to compile and execute your code.
+- Set the path to your qb64pe.exe in 'Tools' -> 'Settings...'.
+- The Command Palette gives you quick access to all major actions.
+";
+
+            var helpWindow = new Window
             {
-                SetStatus($"Running {Path.GetFileName(exePath)}...");
-                try
+                Title = "QBasic IDE Help",
+                Width = 450,
+                Height = 350,
+                Content = new TextBox
                 {
-                    await Cli.Wrap(exePath).ExecuteAsync();
-                    SetStatus("Execution finished.");
+                    Text = helpText,
+                    IsReadOnly = true,
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(10)
                 }
-                catch (Exception ex)
-                {
-                    SetStatus($"Error running executable: {ex.Message}");
-                }
-            }
-            else
-            {
-                SetStatus("Executable not found. Compile the file first (F5).");
-            }
+            };
+            ThemeManager.ApplyForPlugin(helpWindow, this);
+            helpWindow.ShowDialog(_window);
+            return Task.CompletedTask;
         }
 
-        private async Task LaunchQb64Editor()
+        [RelayCommand] private async Task OpenCommandPalette()
         {
-            if (string.IsNullOrEmpty(_currentFile))
-            {
-                await SaveFileAs();
-                if (string.IsNullOrEmpty(_currentFile))
-                {
-                    return;
-                }
-            }
+            if (_window == null) return;
+            var paletteWindow = new CommandPaletteWindow(_ideCommands);
+            var selectedCommand = await paletteWindow.ShowDialog<IdeCommand?>(_window);
 
+            if (selectedCommand?.Command.CanExecute(null) ?? false)
+            {
+                await selectedCommand.Command.ExecuteAsync(null);
+            }
+        }
+        
+        #endregion
+
+        #region UI Construction
+        private Menu BuildMenu()
+        {
+            // --- Examples Sub-Menu ---
+            var helloWorldExample = new MenuItem { Header = "Hello World" };
+            helloWorldExample.Click += (s, e) => 
+            {
+                const string exampleCode = 
+@"' Hello World Example for Cycloside QBasic IDE
+PRINT ""Hello, Cycloside World!""
+PRINT ""This is running from an in-app example.""
+
+FOR i = 1 TO 5
+    PRINT ""Loop iteration: ""; i
+NEXT i
+";
+                _editor?.SetCurrentValue(TextBox.TextProperty, exampleCode);
+                _hasUnsavedChanges = true;
+            };
+            var examplesMenu = new MenuItem { Header = "_Examples", ItemsSource = new[] { helloWorldExample } };
+
+            // --- Main Menu ---
+            var fileItems = new object[]
+            {
+                new MenuItem { Header = "_New", InputGesture = new KeyGesture(Key.N, KeyModifiers.Control), Command = NewFileCommand },
+                new MenuItem { Header = "_Open...", InputGesture = new KeyGesture(Key.O, KeyModifiers.Control), Command = OpenFileCommand },
+                new Separator(),
+                new MenuItem { Header = "_Save", InputGesture = new KeyGesture(Key.S, KeyModifiers.Control), Command = SaveFileCommand },
+                new MenuItem { Header = "Save _As...", Command = SaveFileAsCommand },
+                new Separator(),
+                examplesMenu,
+                new Separator(),
+                new MenuItem { Header = "E_xit", Command = new RelayCommand(() => _window?.Close()) }
+            };
+
+            var runItems = new object[]
+            {
+                new MenuItem { Header = "_Compile & Run", InputGesture = new KeyGesture(Key.F5), Command = CompileAndRunCommand },
+            };
+
+            var helpItems = new object[]
+            {
+                new MenuItem { Header = "_QBasic Help", Command = ShowHelpCommand }
+            };
+
+            var toolsItems = new object[]
+            {
+                new MenuItem { Header = "_Command Palette...", InputGesture = new KeyGesture(Key.P, KeyModifiers.Control | KeyModifiers.Shift), Command = OpenCommandPaletteCommand },
+                new MenuItem { Header = "_Settings...", Command = new RelayCommand(OpenSettings) },
+            };
+            
+            return new Menu
+            {
+                ItemsSource = new object[]
+                {
+                    new MenuItem { Header = "_File", ItemsSource = fileItems },
+                    new MenuItem { Header = "_Run", ItemsSource = runItems },
+                    new MenuItem { Header = "_Tools", ItemsSource = toolsItems },
+                    new MenuItem { Header = "_Help", ItemsSource = helpItems }
+                }
+            };
+        }
+        #endregion
+
+        #region File Operations
+        private async Task LoadFile(string path)
+        {
+            if (_editor == null) return;
             try
             {
-                _qb64Process = Process.Start(new ProcessStartInfo
-                {
-                    FileName = _qb64Path,
-                    Arguments = $"\"{_currentFile}\"",
-                    UseShellExecute = false
-                });
-                SetStatus("QB64 launched.");
+                SetStatus($"Loading {Path.GetFileName(path)}...");
+                _currentFile = path;
+                _editor.Text = await File.ReadAllTextAsync(path);
+                _hasUnsavedChanges = false;
+                if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
+                UpdateStatus(false);
             }
             catch (Exception ex)
             {
-                SetStatus($"Error launching QB64: {ex.Message}");
+                SetStatus($"Error loading file: {ex.Message}");
+            }
+        }
+
+        private async Task WriteTextToFileAsync(string path)
+        {
+            if (_editor == null) return;
+            try
+            {
+                SetStatus($"Saving {path}...");
+                await File.WriteAllTextAsync(path, _editor.Text);
+                UpdateStatus(false); // No longer modified
+                SetStatus($"Saved successfully.");
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"Error saving file: {ex.Message}");
+            }
+        }
+        
+        private void UpdateProjectTree()
+        {
+            if (_projectTree == null || string.IsNullOrWhiteSpace(_projectPath)) return;
+            var rootNode = new TreeViewItem { Header = Path.GetFileName(_projectPath), IsExpanded = true };
+            try
+            {
+                var items = Directory.GetFiles(_projectPath, "*.bas")
+                    .Select(f => new TreeViewItem { Header = Path.GetFileName(f), Tag = f })
+                    .ToList<object>();
+                rootNode.ItemsSource = items;
+                _projectTree.ItemsSource = new[] { rootNode };
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"Error reading project directory: {ex.Message}");
             }
         }
         #endregion
@@ -462,10 +441,8 @@ namespace Cycloside.Plugins.BuiltIn
         private void UpdateStatus(bool? modified = null)
         {
             if (_status == null || _editor == null || _isCompiling) return;
-
             if (modified.HasValue)
                 _hasUnsavedChanges = modified.Value;
-
             var line = _editor.TextArea.Caret.Line;
             var col = _editor.TextArea.Caret.Column;
             var file = string.IsNullOrWhiteSpace(_currentFile) ? "Untitled" : Path.GetFileName(_currentFile);
@@ -481,53 +458,22 @@ namespace Cycloside.Plugins.BuiltIn
 
         private async void Window_KeyDown(object? sender, KeyEventArgs e)
         {
-            try
+            // Check for Command Palette hotkey
+            if (e.Key == Key.P && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
             {
-                if (e.Key == Key.F5 && !_isCompiling)
-                {
-                    await CompileAndRun();
-                    e.Handled = true;
-                }
+                await OpenCommandPalette();
+                e.Handled = true;
+                return;
             }
-            catch (Exception ex)
-            {
-                SetStatus($"Critical Error: {ex.Message}");
-            }
-        }
 
-        private async Task Find()
-        {
-            if (_window == null || _editor == null) return;
-            var text = await ShowInputDialog("Find", "Text to find:");
-            if (!string.IsNullOrEmpty(text))
+            // Standard F5 handling
+            if (e.Key == Key.F5 && !_isCompiling)
             {
-                var index = _editor.Text.IndexOf(text, _editor.SelectionStart + _editor.SelectionLength, StringComparison.OrdinalIgnoreCase);
-                if (index == -1) index = _editor.Text.IndexOf(text, 0, StringComparison.OrdinalIgnoreCase);
-
-                if (index >= 0)
-                {
-                    _editor.Select(index, text.Length);
-                    _editor.TextArea.Caret.BringCaretToView();
-                }
-                else
-                {
-                    SetStatus("Text not found.");
-                }
+               await CompileAndRun();
+               e.Handled = true;
             }
         }
-
-        private async Task Replace()
-        {
-            if (_window == null || _editor == null) return;
-            var findText = await ShowInputDialog("Replace", "Text to find:");
-            if (string.IsNullOrEmpty(findText)) return;
-
-            var replaceText = await ShowInputDialog("Replace With", "Replace with:");
-            if (replaceText == null) return;
-
-            _editor.Text = _editor.Text.Replace(findText, replaceText, StringComparison.OrdinalIgnoreCase);
-        }
-
+        
         private void OpenSettings()
         {
             if (_window == null || _editor == null) return;
@@ -541,56 +487,6 @@ namespace Cycloside.Plugins.BuiltIn
                 SettingsManager.Settings.QB64Path = _qb64Path;
                 SettingsManager.Save();
             }
-        }
-
-        private void ShowHelp()
-        {
-            if (_window == null) return;
-            var aboutWindow = new Window
-            {
-                Title = "About QBasic Retro IDE",
-                Width = 400,
-                Height = 200,
-                Content = new TextBlock
-                {
-                    Text = "QBasic Retro IDE Plugin\n\nPowered by QB64 Phoenix Edition\nhttps://github.com/QB64-Phoenix-Edition/QB64pe",
-                    TextAlignment = TextAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                }
-            };
-            ThemeManager.ApplyForPlugin(aboutWindow, this);
-            aboutWindow.ShowDialog(_window);
-        }
-
-        private void LaunchQB64(string? file = null)
-        {
-            try
-            {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = _qb64Path,
-                    UseShellExecute = true
-                };
-                if (!string.IsNullOrWhiteSpace(file))
-                {
-                    psi.ArgumentList.Add(file);
-                }
-                _qb64Process = Process.Start(psi);
-            }
-            catch (Exception ex)
-            {
-                SetStatus($"Error launching QB64: {ex.Message}");
-            }
-        }
-        
-        private async Task<string?> ShowInputDialog(string title, string prompt)
-        {
-            var inputWindow = new InputWindow(title, prompt);
-            if (_window != null)
-            {
-                return await inputWindow.ShowDialog<string?>(_window);
-            }
-            return null;
         }
 
         private async Task<bool> ConfirmDiscard()
@@ -610,41 +506,78 @@ namespace Cycloside.Plugins.BuiltIn
         #endregion
 
         #region Helper Windows
-        private class InputWindow : Window
+        // This is a new helper window for the Command Palette feature
+        private class CommandPaletteWindow : Window
         {
-            private readonly TextBox _box = new();
-            public InputWindow(string title, string prompt)
+            private readonly ListBox _listBox;
+            private readonly TextBox _searchBox;
+            private readonly List<IdeCommand> _allCommands;
+
+            public CommandPaletteWindow(List<IdeCommand> commands)
             {
-                Title = title;
-                Width = 300;
+                _allCommands = commands;
+
+                Title = "Command Palette";
+                Width = 400;
                 SizeToContent = SizeToContent.Height;
-                WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                CanResize = false;
 
-                var panel = new StackPanel { Margin = new Thickness(10), Spacing = 8 };
-                panel.Children.Add(new TextBlock { Text = prompt });
-                panel.Children.Add(_box);
+                var panel = new DockPanel { Margin = new Thickness(5) };
+                
+                _searchBox = new TextBox { Watermark = "Type a command..." };
+                _searchBox.TextChanged += (s, e) => FilterList();
+                _searchBox.KeyDown += (s, e) => 
+                {
+                    if (e.Key == Key.Enter) { SelectAndClose(); e.Handled = true; }
+                    if (e.Key == Key.Escape) { Close(null); e.Handled = true; }
+                };
+                
+                _listBox = new ListBox();
+                _listBox.DoubleTapped += (s, e) => SelectAndClose();
 
-                var ok = new Button { Content = "OK", IsDefault = true };
-                ok.Click += (_, _) => Close(_box.Text);
-                var cancel = new Button { Content = "Cancel", IsCancel = true };
-                cancel.Click += (_, _) => Close(null);
+                DockPanel.SetDock(_searchBox, Dock.Top);
 
-                var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 5 };
-                buttonPanel.Children.Add(ok);
-                buttonPanel.Children.Add(cancel);
-                panel.Children.Add(buttonPanel);
+                panel.Children.Add(_searchBox);
+                panel.Children.Add(_listBox);
+
                 Content = panel;
 
-                _box.AttachedToVisualTree += (s, e) => _box.Focus();
+                FilterList(); // Initial population
+                this.Opened += (s, e) => _searchBox.Focus();
+            }
+
+            private void FilterList()
+            {
+                var searchText = _searchBox.Text ?? "";
+                if (string.IsNullOrWhiteSpace(searchText))
+                {
+                    _listBox.ItemsSource = _allCommands;
+                }
+                else
+                {
+                    _listBox.ItemsSource = _allCommands
+                        .Where(c => c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
+                _listBox.SelectedIndex = 0;
+            }
+
+            private void SelectAndClose()
+            {
+                if (_listBox.SelectedItem is IdeCommand selected)
+                {
+                    Close(selected);
+                }
             }
         }
 
+        // Settings window remains largely the same
         private class IdeSettingsWindow : Window
         {
             private readonly TextBox _pathBox;
             private readonly TextBox _fontSizeBox;
             public bool Result { get; private set; } = false;
-
             public IdeSettingsWindow(string path, double fontSize)
             {
                 Title = "IDE Settings";
@@ -653,7 +586,7 @@ namespace Cycloside.Plugins.BuiltIn
                 WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
                 var panel = new StackPanel { Margin = new Thickness(10), Spacing = 5 };
-                panel.Children.Add(new TextBlock { Text = "QB64 Executable Path:" });
+                panel.Children.Add(new TextBlock { Text = "QB64PE Executable Path:" });
                 var pathPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
                 _pathBox = new TextBox { Text = path, Width = 250 };
                 var browseButton = new Button { Content = "Browse..." };
@@ -661,7 +594,7 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     var result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                     {
-                        Title = "Select QB64 Executable"
+                        Title = "Select QB64PE Executable"
                     });
                     if (result.FirstOrDefault()?.TryGetLocalPath() is { } p)
                     {
@@ -674,12 +607,10 @@ namespace Cycloside.Plugins.BuiltIn
                 panel.Children.Add(new TextBlock { Text = "Font Size:" });
                 _fontSizeBox = new TextBox { Text = fontSize.ToString() };
                 panel.Children.Add(_fontSizeBox);
-
                 var ok = new Button { Content = "Save", IsDefault = true };
                 ok.Click += (_, _) => { Result = true; Close(); };
                 var cancel = new Button { Content = "Cancel", IsCancel = true };
                 cancel.Click += (_, _) => Close();
-
                 var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 5 };
                 buttonPanel.Children.Add(ok);
                 buttonPanel.Children.Add(cancel);
@@ -687,7 +618,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Content = panel;
             }
 
-            public string QB64Path => _pathBox.Text ?? "qb64";
+            public string QB64Path => _pathBox.Text ?? "qb64pe";
             public new double FontSize => double.TryParse(_fontSizeBox.Text, out var f) && f > 0 ? f : 14;
         }
 
@@ -699,31 +630,17 @@ namespace Cycloside.Plugins.BuiltIn
                 Width = 350;
                 SizeToContent = SizeToContent.Height;
                 WindowStartupLocation = WindowStartupLocation.CenterOwner;
-
-                var messageBlock = new TextBlock
-                {
-                    Text = message,
-                    Margin = new Thickness(15),
-                    TextWrapping = TextWrapping.Wrap
-                };
-
+                var messageBlock = new TextBlock { Text = message, Margin = new Thickness(15), TextWrapping = TextWrapping.Wrap };
                 var yesButton = new Button { Content = "Yes", IsDefault = true, Margin = new Thickness(5) };
                 yesButton.Click += (_, _) => Close(true);
                 var noButton = new Button { Content = "No", IsCancel = true, Margin = new Thickness(5) };
                 noButton.Click += (_, _) => Close(false);
-
-                var buttonPanel = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Center
-                };
+                var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
                 buttonPanel.Children.Add(yesButton);
                 buttonPanel.Children.Add(noButton);
-
                 var mainPanel = new StackPanel { Spacing = 10 };
                 mainPanel.Children.Add(messageBlock);
                 mainPanel.Children.Add(buttonPanel);
-
                 Content = mainPanel;
             }
         }

@@ -20,23 +20,22 @@ namespace Cycloside.Plugins.BuiltIn
         private FileSystemWatcher? _watcher;
         private string? _currentFilePath;
         private long _lastReadPosition = 0;
-
         private readonly List<string> _allLines = new List<string>();
         private string _currentFilter = string.Empty;
 
         private readonly SemaphoreSlim _fileReadLock = new SemaphoreSlim(1, 1);
 
+        // --- NEW: A property to hold a filter term on startup ---
+        public string InitialFilter { get; set; } = string.Empty;
+        
         public string Name => "Log Viewer";
         public string Description => "Tail and filter log files in real-time. Now with auto-loading and saving!";
-        public Version Version => new Version(0, 5, 0); // Incremented for new features
+        public Version Version => new Version(0, 6, 0); // Incremented for new features
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
         
-        // --- NEW: Helper to get the application's log directory ---
         private string GetLogDirectory()
         {
-            // Assumes a "logs" directory exists next to the application's executable.
-            // This is a common pattern for log file locations.
             var exePath = AppDomain.CurrentDomain.BaseDirectory;
             return Path.Combine(exePath, "logs");
         }
@@ -44,12 +43,10 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             _window = new LogViewerWindow();
-
-            // --- Create UI Controls ---
+            
             var openButton = new Button { Content = "Open Log File" };
             openButton.Click += async (s, e) => await SelectAndLoadFileAsync();
 
-            // --- NEW: Add a Save button ---
             var saveButton = new Button { Content = "Save Log As...", Margin = new Avalonia.Thickness(5,0) };
             saveButton.Click += async (s, e) => await SaveLogAsync();
 
@@ -62,6 +59,13 @@ namespace Cycloside.Plugins.BuiltIn
                     _currentFilter = filterBox.Text ?? string.Empty;
                     UpdateDisplayedLog();
                 };
+
+                // **MODIFIED: Apply the initial filter when the window starts**
+                if (!string.IsNullOrWhiteSpace(InitialFilter))
+                {
+                    filterBox.Text = InitialFilter;
+                    InitialFilter = string.Empty; // Reset so it only applies once
+                }
             }
 
             var optionsPanel = _window.FindControl<StackPanel>("OptionsPanel") ?? new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(5) };
@@ -92,14 +96,12 @@ namespace Cycloside.Plugins.BuiltIn
                 _logBox.TextChanged += OnLogBoxTextChanged;
             }
 
-            // --- Assemble UI Layout ---
             var topPanel = _window.FindControl<DockPanel>("TopPanel");
             var buttonPanel = _window.FindControl<StackPanel>("ButtonPanel");
             var mainOptions = _window.FindControl<StackPanel>("OptionsPanel");
 
             buttonPanel?.Children.Add(openButton);
             buttonPanel?.Children.Add(saveButton);
-
             if (optionsPanel != null && mainOptions != null)
             {
                 foreach (var child in optionsPanel.Children)
@@ -109,21 +111,17 @@ namespace Cycloside.Plugins.BuiltIn
             }
 
             _window.Show();
-
-            // --- NEW: Automatically load the default Cycloside log on startup ---
             Dispatcher.UIThread.InvokeAsync(AttemptToLoadDefaultLogAsync);
         }
         
         private void OnLogBoxTextChanged(object? sender, TextChangedEventArgs e)
         {
-            // Correct auto-scroll logic for Avalonia
             if (_autoScrollCheck?.IsChecked == true && _logBox != null)
             {
                 _logBox.CaretIndex = _logBox.Text?.Length ?? 0;
             }
         }
         
-        // --- NEW: Logic to find and load the latest log file automatically ---
         private async Task AttemptToLoadDefaultLogAsync()
         {
             var logDir = GetLogDirectory();
@@ -133,12 +131,11 @@ namespace Cycloside.Plugins.BuiltIn
                 return;
             }
 
-            // Find the most recently written log file in the directory
             var latestLogFile = new DirectoryInfo(logDir)
                 .GetFiles("*.log")
                 .OrderByDescending(f => f.LastWriteTime)
                 .FirstOrDefault();
-
+            
             if (latestLogFile != null)
             {
                 await LoadFile(latestLogFile.FullName);
@@ -149,7 +146,6 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
-        // --- NEW: Centralized file loading logic ---
         private async Task LoadFile(string path)
         {
             _watcher?.Dispose();
@@ -161,12 +157,9 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
-        // --- IMPROVED: File picker now starts in the log directory ---
         private async Task SelectAndLoadFileAsync()
         {
             if (_window == null) return;
-
-            // Get the suggested directory
             var logDir = GetLogDirectory();
             var startLocation = await _window.StorageProvider.TryGetFolderFromPathAsync(logDir);
 
@@ -175,9 +168,8 @@ namespace Cycloside.Plugins.BuiltIn
                 Title = "Select a log file to view",
                 AllowMultiple = false,
                 FileTypeFilter = new[] { new FilePickerFileType("Log Files") { Patterns = new[] { "*.log", "*.txt" } }, FilePickerFileTypes.All },
-                SuggestedStartLocation = startLocation // Set the start location!
+                SuggestedStartLocation = startLocation
             });
-
             var file = result.FirstOrDefault();
             if (file?.Path.LocalPath != null)
             {
@@ -185,11 +177,9 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
-        // --- NEW: Save the current log view to a file ---
         private async Task SaveLogAsync()
         {
             if (_window == null || _logBox == null) return;
-
             var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Save Log As...",
@@ -197,7 +187,7 @@ namespace Cycloside.Plugins.BuiltIn
                 DefaultExtension = "txt",
                 FileTypeChoices = new[] { new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } } }
             });
-
+            
             if (file?.Path.LocalPath != null)
             {
                 try
@@ -215,7 +205,6 @@ namespace Cycloside.Plugins.BuiltIn
         private async Task LoadInitialFileAsync()
         {
             if (string.IsNullOrEmpty(_currentFilePath) || _logBox == null) return;
-
             await _fileReadLock.WaitAsync();
             try
             {
@@ -257,7 +246,6 @@ namespace Cycloside.Plugins.BuiltIn
             var directory = Path.GetDirectoryName(_currentFilePath);
             var fileName = Path.GetFileName(_currentFilePath);
             if (directory == null || fileName == null) return;
-
             try
             {
                 _watcher = new FileSystemWatcher(directory, fileName)
@@ -276,7 +264,6 @@ namespace Cycloside.Plugins.BuiltIn
         private async Task OnFileChangedAsync()
         {
             if (string.IsNullOrEmpty(_currentFilePath) || !_fileReadLock.Wait(0)) return;
-
             try
             {
                 List<string> newLines = new List<string>();
@@ -306,7 +293,7 @@ namespace Cycloside.Plugins.BuiltIn
                         newLines.Add($"[ERROR] reading file change: {ex.Message}");
                     }
                 });
-
+                
                 if (newLines.Any())
                 {
                     _allLines.AddRange(newLines);

@@ -217,13 +217,20 @@ public partial class App : Application
         var inlineItem = new NativeMenuItem("Run Inline...");
         inlineItem.Click += (_, _) => new VolatileRunnerWindow(volatileManager).Show();
         volatileMenu.Menu!.Items.Add(inlineItem);
-
-        var mp3Item = new NativeMenuItem("MP3 Player");
-        mp3Item.Click += (s, e) =>
+        
+        // **NEW: A dedicated menu for log actions**
+        var logsMenu = new NativeMenuItem("Logs") { Menu = new NativeMenu() };
+        var viewErrorsItem = new NativeMenuItem("View Errors");
+        viewErrorsItem.Click += (_, _) =>
         {
-            var mp3 = manager.Plugins.FirstOrDefault(p => p.Name == "MP3 Player");
-            if (mp3 != null) manager.EnablePlugin(mp3);
+            var logViewerPlugin = manager.Plugins.FirstOrDefault(p => p.Name == "Log Viewer");
+            if (logViewerPlugin is LogViewerPlugin viewer) // Cast to our specific type
+            {
+                viewer.InitialFilter = "[ERROR]"; // Set the filter before starting
+                manager.EnablePlugin(viewer);
+            }
         };
+        logsMenu.Menu.Add(viewErrorsItem);
 
         return new NativeMenu
         {
@@ -235,7 +242,7 @@ public partial class App : Application
                     new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
                 }}},
                 new NativeMenuItemSeparator(),
-                mp3Item,
+                logsMenu, // **Add the new Logs menu here**
                 new NativeMenuItemSeparator(),
                 pluginsMenu,
                 volatileMenu,
@@ -324,8 +331,8 @@ public partial class App : Application
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
                 var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
-                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
-                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
+                             ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
+                             ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
                     using var stream = new MemoryStream();
