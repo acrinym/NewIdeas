@@ -1,0 +1,6 @@
+<Styles xmlns="https://github.com/avaloniaui">
+  <Style Selector="Window">
+    <Setter Property="Background" Value="#000000" />
+    <Setter Property="Foreground" Value="#FF00FF" />
+  </Style>
+</Styles>

@@ -6,9 +6,11 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.IO;
 using Cycloside.Services;
 using System.Threading.Tasks;
 
@@ -28,8 +30,10 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Start()
         {
-            _control = new JezzballControl();
-            
+            var themeName = SettingsManager.Settings.PluginGameThemes.TryGetValue("Jezzball", out var t) ? t : "Classic";
+            var theme = JezzballThemes.All.TryGetValue(themeName, out var th) ? th : JezzballThemes.All["Classic"];
+            _control = new JezzballControl(theme);
+
             _window = new Window
             {
                 Title = "Jezzball",
@@ -40,6 +44,11 @@ namespace Cycloside.Plugins.BuiltIn
             };
 
             ThemeManager.ApplyForPlugin(_window, this);
+            if (SettingsManager.Settings.PluginSkins.TryGetValue("Jezzball", out var skin))
+            {
+                SkinManager.ApplySkinTo(_window, skin);
+            }
+            BuildMenu(themeName, skin);
             _window.KeyDown += OnWindowKeyDown;
             _window.Show();
         }
@@ -64,6 +73,55 @@ namespace Cycloside.Plugins.BuiltIn
                 e.Handled = true;
             }
         }
+
+        private void BuildMenu(string currentTheme, string? currentSkin)
+        {
+            if (_control == null) return;
+
+            var menu = _control.MenuBar;
+            menu.Items = new List<MenuItem>();
+
+            var themeMenu = new MenuItem { Header = "Theme" };
+            foreach (var name in JezzballThemes.All.Keys)
+            {
+                var item = new MenuItem { Header = name, IsCheckable = true, IsChecked = name == currentTheme };
+                item.Click += (_, _) =>
+                {
+                    _control.SetTheme(name);
+                    SettingsManager.Settings.PluginGameThemes["Jezzball"] = name;
+                    SettingsManager.Save();
+                    foreach (var mi in themeMenu.Items!.OfType<MenuItem>()) mi.IsChecked = mi == item;
+                };
+                themeMenu.Items ??= new List<object>();
+                ((IList)themeMenu.Items).Add(item);
+            }
+
+            var skinMenu = new MenuItem { Header = "Skin" };
+            foreach (var skin in GetSkinNames())
+            {
+                var item = new MenuItem { Header = skin, IsCheckable = true, IsChecked = skin == currentSkin };
+                item.Click += (_, _) =>
+                {
+                    if (_window != null)
+                        SkinManager.ApplySkinTo(_window, skin);
+                    SettingsManager.Settings.PluginSkins["Jezzball"] = skin;
+                    SettingsManager.Save();
+                    foreach (var mi in skinMenu.Items!.OfType<MenuItem>()) mi.IsChecked = mi == item;
+                };
+                skinMenu.Items ??= new List<object>();
+                ((IList)skinMenu.Items).Add(item);
+            }
+
+            menu.Items = new List<object> { themeMenu, skinMenu };
+        }
+
+        private static IEnumerable<string> GetSkinNames()
+        {
+            var dir = Path.Combine(AppContext.BaseDirectory, "Skins");
+            return Directory.Exists(dir)
+                ? Directory.GetFiles(dir, "*.axaml").Select(Path.GetFileNameWithoutExtension)
+                : Array.Empty<string>();
+        }
     }
     #endregion
 
@@ -73,6 +131,108 @@ namespace Cycloside.Plugins.BuiltIn
     public enum BallType { Normal, Slow, Fast, Splitting }
     // UPGRADE: Added PowerUp model
     public enum PowerUpType { IceWall }
+
+    // Theme description for game visuals
+    internal class JezzballTheme
+    {
+        public IBrush BackgroundBrush { get; init; } = Brushes.Black;
+        public Pen WallPen { get; init; } = new Pen(Brushes.Cyan, 4, lineCap: PenLineCap.Round);
+        public Pen PreviewPen { get; init; } = new Pen(new SolidColorBrush(Colors.Yellow, 0.7), 2, DashStyle.Dash);
+        public IBrush FilledBrush { get; init; } = Brushes.Gray;
+        public IBrush FlashBrush { get; init; } = new SolidColorBrush(Colors.White, 0.3);
+        public Pen IceWallPen { get; init; } = new Pen(Brushes.LightCyan, 5, lineCap: PenLineCap.Round);
+        public Pen IcePreviewPen { get; init; } = new Pen(new SolidColorBrush(Colors.LightCyan, 0.8), 2, DashStyle.Dash);
+        public IBrush PowerUpBrush { get; init; } = Brushes.Aqua;
+        public IBrush BallNormalBrush { get; init; } = Brushes.Crimson;
+        public IBrush BallSlowBrush { get; init; } = Brushes.DeepSkyBlue;
+        public IBrush BallFastBrush { get; init; } = Brushes.OrangeRed;
+        public IBrush BallSplittingBrush { get; init; } = Brushes.MediumPurple;
+    }
+
+    internal static class JezzballThemes
+    {
+        public static readonly Dictionary<string, JezzballTheme> All = new()
+        {
+            ["Classic"] = new JezzballTheme
+            {
+                BackgroundBrush = new RadialGradientBrush
+                {
+                    Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                    GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                    RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative),
+                    RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative),
+                    GradientStops = new GradientStops
+                    {
+                        new(Colors.DarkSlateBlue, 0),
+                        new(Colors.Black, 1)
+                    }
+                },
+                WallPen = new Pen(Brushes.Cyan, 4, lineCap: PenLineCap.Round),
+                PreviewPen = new Pen(new SolidColorBrush(Colors.Yellow, 0.7), 2, DashStyle.Dash),
+                FilledBrush = new SolidColorBrush(Color.FromRgb(0, 50, 70), 0.6),
+                FlashBrush = new SolidColorBrush(Colors.White, 0.3),
+                IceWallPen = new Pen(Brushes.LightCyan, 5, lineCap: PenLineCap.Round),
+                IcePreviewPen = new Pen(new SolidColorBrush(Colors.LightCyan, 0.8), 2, DashStyle.Dash),
+                PowerUpBrush = Brushes.Aqua,
+                BallNormalBrush = Brushes.Crimson,
+                BallSlowBrush = Brushes.DeepSkyBlue,
+                BallFastBrush = Brushes.OrangeRed,
+                BallSplittingBrush = Brushes.MediumPurple
+            },
+            ["Neon"] = new JezzballTheme
+            {
+                BackgroundBrush = new RadialGradientBrush
+                {
+                    Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                    GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                    RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative),
+                    RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative),
+                    GradientStops = new GradientStops
+                    {
+                        new(Color.FromRgb(10, 10, 30), 0),
+                        new(Colors.Black, 1)
+                    }
+                },
+                WallPen = new Pen(Brushes.Magenta, 4, lineCap: PenLineCap.Round),
+                PreviewPen = new Pen(new SolidColorBrush(Colors.Lime, 0.7), 2, DashStyle.Dash),
+                FilledBrush = new SolidColorBrush(Color.FromArgb(160, 0, 255, 100)),
+                FlashBrush = new SolidColorBrush(Colors.White, 0.3),
+                IceWallPen = new Pen(Brushes.Cyan, 5, lineCap: PenLineCap.Round),
+                IcePreviewPen = new Pen(new SolidColorBrush(Colors.Cyan, 0.8), 2, DashStyle.Dash),
+                PowerUpBrush = Brushes.Lime,
+                BallNormalBrush = Brushes.HotPink,
+                BallSlowBrush = Brushes.Lime,
+                BallFastBrush = Brushes.Yellow,
+                BallSplittingBrush = Brushes.Cyan
+            },
+            ["Pastel"] = new JezzballTheme
+            {
+                BackgroundBrush = new RadialGradientBrush
+                {
+                    Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                    GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                    RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative),
+                    RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative),
+                    GradientStops = new GradientStops
+                    {
+                        new(Color.FromRgb(250, 240, 255), 0),
+                        new(Color.FromRgb(230, 215, 240), 1)
+                    }
+                },
+                WallPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 182, 193)), 4, lineCap: PenLineCap.Round),
+                PreviewPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 218, 185), 0.7), 2, DashStyle.Dash),
+                FilledBrush = new SolidColorBrush(Color.FromArgb(150, 220, 200, 240)),
+                FlashBrush = new SolidColorBrush(Colors.White, 0.3),
+                IceWallPen = new Pen(new SolidColorBrush(Color.FromRgb(175, 238, 238)), 5, lineCap: PenLineCap.Round),
+                IcePreviewPen = new Pen(new SolidColorBrush(Color.FromRgb(224, 255, 255), 0.8), 2, DashStyle.Dash),
+                PowerUpBrush = new SolidColorBrush(Color.FromRgb(255, 192, 203)),
+                BallNormalBrush = new SolidColorBrush(Color.FromRgb(255, 105, 97)),
+                BallSlowBrush = new SolidColorBrush(Color.FromRgb(135, 206, 235)),
+                BallFastBrush = new SolidColorBrush(Color.FromRgb(255, 160, 122)),
+                BallSplittingBrush = new SolidColorBrush(Color.FromRgb(216, 191, 216))
+            }
+        };
+    }
     
     public class PowerUp
     {
@@ -126,10 +286,10 @@ namespace Cycloside.Plugins.BuiltIn
         public Point Position { get; private set; }
         public Vector Velocity { get; private set; }
         public double Radius { get; }
-        public IBrush Fill { get; }
+        public IBrush Fill { get; private set; }
         public BallType Type { get; }
 
-        public Ball(Point position, Vector velocity, BallType type = BallType.Normal, double radius = 8)
+        public Ball(Point position, Vector velocity, JezzballTheme theme, BallType type = BallType.Normal, double radius = 8)
         {
             Position = position;
             Velocity = velocity;
@@ -138,11 +298,32 @@ namespace Cycloside.Plugins.BuiltIn
 
             switch (Type)
             {
-                case BallType.Slow: Fill = Brushes.DeepSkyBlue; Velocity *= 0.7; break;
-                case BallType.Fast: Fill = Brushes.OrangeRed; Velocity *= 1.3; break;
-                case BallType.Splitting: Fill = Brushes.MediumPurple; break;
-                default: Fill = Brushes.Crimson; break;
+                case BallType.Slow:
+                    Fill = theme.BallSlowBrush;
+                    Velocity *= 0.7;
+                    break;
+                case BallType.Fast:
+                    Fill = theme.BallFastBrush;
+                    Velocity *= 1.3;
+                    break;
+                case BallType.Splitting:
+                    Fill = theme.BallSplittingBrush;
+                    break;
+                default:
+                    Fill = theme.BallNormalBrush;
+                    break;
             }
+        }
+
+        public void ApplyTheme(JezzballTheme theme)
+        {
+            Fill = Type switch
+            {
+                BallType.Slow => theme.BallSlowBrush,
+                BallType.Fast => theme.BallFastBrush,
+                BallType.Splitting => theme.BallSplittingBrush,
+                _ => theme.BallNormalBrush
+            };
         }
 
         public Rect BoundingBox => new(Position.X - Radius, Position.Y - Radius, Radius * 2, Radius * 2);
@@ -199,13 +380,21 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly List<Rect> _filledAreas = new();
         private readonly List<PowerUp> _powerUps = new();
         private double _totalPlayArea;
+        private JezzballTheme _theme;
 
         private const double WallSpeed = 150.0;
         private const double CaptureRequirement = 0.75;
 
-        public JezzballGameState()
+        public JezzballGameState(JezzballTheme theme)
         {
+            _theme = theme;
             StartNewGame();
+        }
+
+        public void ApplyTheme(JezzballTheme theme)
+        {
+            _theme = theme;
+            foreach (var b in _balls) b.ApplyTheme(_theme);
         }
         
         public void StartNewGame()
@@ -245,7 +434,7 @@ namespace Cycloside.Plugins.BuiltIn
                 if (Level > 2 && rand.NextDouble() > 0.7) type = BallType.Fast;
                 if (Level > 3 && rand.NextDouble() > 0.8) type = BallType.Splitting;
 
-                _balls.Add(new Ball(bounds.Center, velocity, type));
+                _balls.Add(new Ball(bounds.Center, velocity, _theme, type));
             }
             RecalculateCapturedArea();
         }
@@ -431,7 +620,7 @@ namespace Cycloside.Plugins.BuiltIn
                     var angle = rand.NextDouble() * 2 * Math.PI;
                     var speed = 100 + Level * 5;
                     var velocity = new Vector(Math.Cos(angle) * speed, Math.Sin(angle) * speed);
-                    _balls.Add(new Ball(ball.Position, velocity, BallType.Normal, ball.Radius * 0.8));
+                    _balls.Add(new Ball(ball.Position, velocity, _theme, BallType.Normal, ball.Radius * 0.8));
                 }
             }
 
@@ -465,23 +654,25 @@ namespace Cycloside.Plugins.BuiltIn
 
     internal class JezzballControl : UserControl, IDisposable
     {
-        private readonly JezzballGameState _gameState = new();
+        private readonly JezzballGameState _gameState;
         private readonly DispatcherTimer _timer;
         private readonly Stopwatch _stopwatch = new();
         private Point _mousePosition;
         private WallOrientation _orientation = WallOrientation.Vertical;
 
         private readonly GameCanvas _gameCanvas;
-        
-        private readonly IBrush _backgroundBrush = new RadialGradientBrush { Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative), GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative), RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative), RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative), GradientStops = new GradientStops { new(Colors.DarkSlateBlue, 0), new(Colors.Black, 1) } };
-        private readonly Pen _wallPen = new(Brushes.Cyan, 4, lineCap: PenLineCap.Round);
-        private readonly Pen _previewPen = new(new SolidColorBrush(Colors.Yellow, 0.7), 2, DashStyle.Dash);
-        private readonly IBrush _filledBrush = new SolidColorBrush(Color.FromRgb(0, 50, 70), 0.6);
-        private readonly IBrush _flashBrush = new SolidColorBrush(Colors.White, 0.3);
+
+        private IBrush _backgroundBrush = null!;
+        private Pen _wallPen = null!;
+        private Pen _previewPen = null!;
+        private IBrush _filledBrush = null!;
+        private IBrush _flashBrush = null!;
         // UPGRADE: New pens and brushes for power-ups
-        private readonly Pen _iceWallPen = new(Brushes.LightCyan, 5, lineCap: PenLineCap.Round);
-        private readonly Pen _icePreviewPen = new(new SolidColorBrush(Colors.LightCyan, 0.8), 2, DashStyle.Dash);
-        private readonly IBrush _powerUpBrush = Brushes.Aqua;
+        private Pen _iceWallPen = null!;
+        private Pen _icePreviewPen = null!;
+        private IBrush _powerUpBrush = null!;
+        private readonly Menu _menu = new();
+        private JezzballTheme _theme;
 
         private readonly TextBlock _levelText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _livesText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
@@ -489,8 +680,12 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly TextBlock _timeText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _capturedText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
 
-        public JezzballControl()
+        public Menu MenuBar => _menu;
+
+        public JezzballControl(JezzballTheme theme)
         {
+            _theme = theme;
+            _gameState = new JezzballGameState(theme);
             var statusBar = new DockPanel { Background = Brushes.Black, Height = 30, Opacity = 0.8 };
             var restartButton = new Button { Content = "Restart", Margin = new Thickness(5), VerticalAlignment = VerticalAlignment.Center };
             restartButton.Click += (_, _) => RestartGame();
@@ -504,6 +699,8 @@ namespace Cycloside.Plugins.BuiltIn
             statusBar.Children.AddRange(new Control[] { _levelText, _livesText, _scoreText, restartButton, _capturedText, _timeText });
 
             var layout = new DockPanel();
+            DockPanel.SetDock(_menu, Dock.Top);
+            layout.Children.Add(_menu);
             DockPanel.SetDock(statusBar, Dock.Bottom);
             layout.Children.Add(statusBar);
             _gameCanvas = new GameCanvas(this);
@@ -515,11 +712,35 @@ namespace Cycloside.Plugins.BuiltIn
 
             _gameCanvas.PointerPressed += OnPointerPressed;
             _gameCanvas.PointerMoved += OnPointerMoved;
-            
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; 
+
+            ApplyTheme(_theme);
+
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
             _timer.Tick += GameTick;
             _timer.Start();
             _stopwatch.Start();
+        }
+
+        public void SetTheme(string name)
+        {
+            if (JezzballThemes.All.TryGetValue(name, out var t))
+            {
+                _theme = t;
+                ApplyTheme(_theme);
+                _gameState.ApplyTheme(_theme);
+            }
+        }
+
+        private void ApplyTheme(JezzballTheme theme)
+        {
+            _backgroundBrush = theme.BackgroundBrush;
+            _wallPen = theme.WallPen;
+            _previewPen = theme.PreviewPen;
+            _filledBrush = theme.FilledBrush;
+            _flashBrush = theme.FlashBrush;
+            _iceWallPen = theme.IceWallPen;
+            _icePreviewPen = theme.IcePreviewPen;
+            _powerUpBrush = theme.PowerUpBrush;
         }
 
         public void RestartGame() => _gameState.StartNewGame();

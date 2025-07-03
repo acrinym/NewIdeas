@@ -26,6 +26,12 @@ public class AppSettings
     // RENAMED: This maps components (like plugin names) to specific skins.
     public Dictionary<string, string> ComponentThemes { get; set; } = new();
 
+    // Theme used by game logic inside plugins such as Jezzball
+    public Dictionary<string, string> PluginGameThemes { get; set; } = new();
+
+    // Optional skin applied to plugin windows
+    public Dictionary<string, string> PluginSkins { get; set; } = new();
+
     public string Cursor { get; set; } = "Arrow";
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
     public Dictionary<string, List<string>> WindowEffects { get; set; } = new();
