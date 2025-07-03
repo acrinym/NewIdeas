@@ -5,14 +5,14 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using System;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.IO;
-using Cycloside.Services;
+using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -24,8 +24,8 @@ namespace Cycloside.Plugins.BuiltIn
 
         public string Name => "Jezzball";
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
-        public Version Version => new(1, 5, 0); // Version bump for power-ups
-        public Cycloside.Widgets.IWidget? Widget => null;
+        public Version Version => new(1, 7, 0); // Version bump for FlowerBox theme
+        public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
         public void Start()
@@ -38,8 +38,10 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 Title = "Jezzball",
                 Width = 800,
-                Height = 600,
-                CanResize = false,
+                Height = 630,
+                CanResize = true,
+                MinWidth = 640,
+                MinHeight = 480,
                 Content = _control
             };
 
@@ -77,7 +79,6 @@ namespace Cycloside.Plugins.BuiltIn
         private void BuildMenu(string currentTheme, string? currentSkin)
         {
             if (_control == null) return;
-
             var menu = _control.MenuBar;
             menu.Items.Clear();
 
@@ -139,10 +140,8 @@ namespace Cycloside.Plugins.BuiltIn
 
     public enum WallOrientation { Vertical, Horizontal }
     public enum BallType { Normal, Slow, Fast, Splitting }
-    // UPGRADE: Added PowerUp model
     public enum PowerUpType { IceWall }
 
-    // Theme description for game visuals
     public class JezzballTheme
     {
         public IBrush BackgroundBrush { get; init; } = Brushes.Black;
@@ -159,10 +158,78 @@ namespace Cycloside.Plugins.BuiltIn
         public IBrush BallSplittingBrush { get; init; } = Brushes.MediumPurple;
     }
 
+    // NEW: A static class to generate the procedural brushes for the FlowerBox theme.
+    internal static class FlowerBoxResources
+    {
+        // Creates a brush that looks like the 3D cube from the screensaver.
+        public static IBrush CreateCubeBrush()
+        {
+            var drawing = new DrawingGroup
+            {
+                Children =
+                {
+                    // Back face (darker)
+                    new GeometryDrawing { Geometry = CreatePath(new Point(0.3, 0), new Point(0.8, 0.2), new Point(0.7, 0.7), new Point(0.2, 0.5)), Brush = new SolidColorBrush(Color.FromRgb(0, 180, 180)) },
+                    // Left face (medium)
+                    new GeometryDrawing { Geometry = CreatePath(new Point(0, 0.2), new Point(0.2, 0.5), new Point(0.2, 1), new Point(0, 0.7)), Brush = new SolidColorBrush(Color.FromRgb(0, 220, 220)) },
+                    // Top face (brightest)
+                    new GeometryDrawing { Geometry = CreatePath(new Point(0.3, 0), new Point(0.2, 0.5), new Point(0, 0.7), new Point(0.1, 0.2)), Brush = new SolidColorBrush(Color.FromRgb(0, 255, 255)) }
+                }
+            };
+            return new DrawingBrush { Drawing = drawing, Stretch = Stretch.Uniform };
+        }
+
+        // Creates a brush that looks like the 3D tetrahedron.
+        public static IBrush CreateTetraBrush()
+        {
+            var drawing = new DrawingGroup
+            {
+                Children =
+                {
+                    new GeometryDrawing { Geometry = CreatePath(new Point(0.5, 0), new Point(1, 0.6), new Point(0.5, 1)), Brush = new SolidColorBrush(Color.FromRgb(255, 0, 0)) },
+                    new GeometryDrawing { Geometry = CreatePath(new Point(0.5, 0), new Point(0, 0.6), new Point(0.5, 1)), Brush = new SolidColorBrush(Color.FromRgb(200, 0, 0)) }
+                }
+            };
+            return new DrawingBrush { Drawing = drawing, Stretch = Stretch.Uniform };
+        }
+        
+        // Creates a brush that looks like the double pyramid.
+        public static IBrush CreatePyramidBrush()
+        {
+             var drawing = new DrawingGroup
+            {
+                Children =
+                {
+                    new GeometryDrawing { Geometry = CreatePath(new Point(0.5, 0), new Point(1, 0.5), new Point(0.5, 1)), Brush = new SolidColorBrush(Color.FromRgb(0, 0, 255)) },
+                    new GeometryDrawing { Geometry = CreatePath(new Point(0.5, 0), new Point(0, 0.5), new Point(0.5, 1)), Brush = new SolidColorBrush(Color.FromRgb(0, 0, 180)) },
+                }
+            };
+            return new DrawingBrush { Drawing = drawing, Stretch = Stretch.Uniform };
+        }
+
+        private static PathGeometry CreatePath(params Point[] points)
+        {
+            var figure = new PathFigure { StartPoint = points[0], IsClosed = true };
+            figure.Segments.Add(new PolyLineSegment(points.Skip(1), true));
+            return new PathGeometry { Figures = { figure } };
+        }
+    }
+
     internal static class JezzballThemes
     {
         public static readonly Dictionary<string, JezzballTheme> All = new()
         {
+            // NEW: Added the FlowerBox theme, which uses the procedural brushes.
+            ["FlowerBox"] = new JezzballTheme
+            {
+                BackgroundBrush = Brushes.Black,
+                WallPen = new Pen(Brushes.White, 2),
+                FilledBrush = new SolidColorBrush(Colors.DarkGray, 0.2),
+                BallNormalBrush = FlowerBoxResources.CreateCubeBrush(),
+                BallSlowBrush = FlowerBoxResources.CreateTetraBrush(),
+                BallFastBrush = FlowerBoxResources.CreatePyramidBrush(),
+                BallSplittingBrush = FlowerBoxResources.CreateCubeBrush(), // Can be another shape
+            },
             ["Classic"] = new JezzballTheme
             {
                 BackgroundBrush = new RadialGradientBrush
@@ -171,11 +238,7 @@ namespace Cycloside.Plugins.BuiltIn
                     GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
                     RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative),
                     RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative),
-                    GradientStops = new GradientStops
-                    {
-                        new(Colors.DarkSlateBlue, 0),
-                        new(Colors.Black, 1)
-                    }
+                    GradientStops = new GradientStops { new(Colors.DarkSlateBlue, 0), new(Colors.Black, 1) }
                 },
                 WallPen = new Pen(Brushes.Cyan, 4, lineCap: PenLineCap.Round),
                 PreviewPen = new Pen(new SolidColorBrush(Colors.Yellow, 0.7), 2, DashStyle.Dash),
@@ -197,11 +260,7 @@ namespace Cycloside.Plugins.BuiltIn
                     GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
                     RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative),
                     RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative),
-                    GradientStops = new GradientStops
-                    {
-                        new(Color.FromRgb(10, 10, 30), 0),
-                        new(Colors.Black, 1)
-                    }
+                    GradientStops = new GradientStops { new(Color.FromRgb(10, 10, 30), 0), new(Colors.Black, 1) }
                 },
                 WallPen = new Pen(Brushes.Magenta, 4, lineCap: PenLineCap.Round),
                 PreviewPen = new Pen(new SolidColorBrush(Colors.Lime, 0.7), 2, DashStyle.Dash),
@@ -223,11 +282,7 @@ namespace Cycloside.Plugins.BuiltIn
                     GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
                     RadiusX = new RelativeScalar(0.8, RelativeUnit.Relative),
                     RadiusY = new RelativeScalar(0.8, RelativeUnit.Relative),
-                    GradientStops = new GradientStops
-                    {
-                        new(Color.FromRgb(250, 240, 255), 0),
-                        new(Color.FromRgb(230, 215, 240), 1)
-                    }
+                    GradientStops = new GradientStops { new(Color.FromRgb(250, 240, 255), 0), new(Color.FromRgb(230, 215, 240), 1) }
                 },
                 WallPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 182, 193)), 4, lineCap: PenLineCap.Round),
                 PreviewPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 218, 185), 0.7), 2, DashStyle.Dash),
@@ -243,7 +298,7 @@ namespace Cycloside.Plugins.BuiltIn
             }
         };
     }
-    
+
     public class PowerUp
     {
         public Point Position { get; }
@@ -267,8 +322,6 @@ namespace Cycloside.Plugins.BuiltIn
         public Rect WallPart2 { get; set; }
         public bool IsPart1Active { get; set; } = true;
         public bool IsPart2Active { get; set; } = true;
-        
-        // UPGRADE: Properties for Ice Wall
         public bool IsPart1Invincible { get; set; }
         public bool IsPart2Invincible { get; set; }
 
@@ -280,7 +333,7 @@ namespace Cycloside.Plugins.BuiltIn
             double thickness = 4;
             WallPart1 = new Rect(origin, new Size(thickness, thickness));
             WallPart2 = new Rect(origin, new Size(thickness, thickness));
-            
+
             if (isIceWall)
             {
                 IsPart1Invincible = true;
@@ -375,8 +428,6 @@ namespace Cycloside.Plugins.BuiltIn
         public string Message { get; private set; } = string.Empty;
         public bool IsGameOver => Lives <= 0;
         public bool FlashEffect { get; set; }
-        
-        // UPGRADE: Power-up state
         public bool HasIceWallPowerUp { get; private set; }
 
         public IReadOnlyList<Ball> Balls => _balls;
@@ -398,7 +449,7 @@ namespace Cycloside.Plugins.BuiltIn
         public JezzballGameState(JezzballTheme theme)
         {
             _theme = theme;
-            StartNewGame();
+            StartLevel(new Size(800, 570));
         }
 
         public void ApplyTheme(JezzballTheme theme)
@@ -406,16 +457,16 @@ namespace Cycloside.Plugins.BuiltIn
             _theme = theme;
             foreach (var b in _balls) b.ApplyTheme(_theme);
         }
-        
-        public void StartNewGame()
+
+        public void StartNewGame(Size gameSize)
         {
             Level = 1;
             Lives = 3;
             Score = 0;
-            StartLevel();
+            StartLevel(gameSize);
         }
 
-        public void StartLevel()
+        public void StartLevel(Size gameSize)
         {
             _activeAreas.Clear();
             _filledAreas.Clear();
@@ -425,20 +476,18 @@ namespace Cycloside.Plugins.BuiltIn
             HasIceWallPowerUp = false;
             Message = $"Level {Level}";
 
-            var bounds = new Rect(0, 0, 800, 570);
+            var bounds = new Rect(0, 0, gameSize.Width, gameSize.Height);
             _totalPlayArea = bounds.Width * bounds.Height;
             _activeAreas.Add(bounds);
             TimeLeft = TimeSpan.FromSeconds(20 + Level * 5);
-            
+
             var rand = new Random();
-            // This logic correctly adds one ball per level.
             for (int i = 0; i < Level; i++)
             {
                 var angle = rand.NextDouble() * 2 * Math.PI;
                 var speed = 100 + Level * 10;
                 var velocity = new Vector(Math.Cos(angle) * speed, Math.Sin(angle) * speed);
-                
-                // UPGRADE: Special balls now appear earlier and more frequently.
+
                 BallType type = BallType.Normal;
                 if (Level > 1 && rand.NextDouble() > 0.7) type = BallType.Slow;
                 if (Level > 2 && rand.NextDouble() > 0.7) type = BallType.Fast;
@@ -448,25 +497,24 @@ namespace Cycloside.Plugins.BuiltIn
             }
             RecalculateCapturedArea();
         }
-        
+
         public void HandleClick(Point clickPosition)
         {
             if (Message != string.Empty)
             {
-                if (IsGameOver) StartNewGame(); else Message = string.Empty;
+                if (IsGameOver) StartNewGame(new Size(800, 570)); else Message = string.Empty;
                 return;
             }
 
-            // UPGRADE: Check for power-up collection
             var clickedPowerUp = _powerUps.FirstOrDefault(p => p.BoundingBox.Contains(clickPosition));
             if (clickedPowerUp != null)
             {
                 if (clickedPowerUp.Type == PowerUpType.IceWall) HasIceWallPowerUp = true;
                 _powerUps.Remove(clickedPowerUp);
-                return; // Don't build a wall on the same click
+                return;
             }
         }
-        
+
         public void TryStartWall(Point position, WallOrientation orientation)
         {
             if (CurrentWall != null || Message != string.Empty) return;
@@ -475,7 +523,7 @@ namespace Cycloside.Plugins.BuiltIn
             if (area != default)
             {
                 CurrentWall = new BuildingWall(area, position, orientation, HasIceWallPowerUp);
-                if (HasIceWallPowerUp) HasIceWallPowerUp = false; // Consume the power-up
+                if (HasIceWallPowerUp) HasIceWallPowerUp = false;
             }
         }
 
@@ -498,16 +546,10 @@ namespace Cycloside.Plugins.BuiltIn
         {
             foreach (var ball in _balls.ToList())
             {
-                var area = _activeAreas.FirstOrDefault(r => r.Intersects(ball.BoundingBox));
-                if (area == default)
-                {
-                    area = _activeAreas.OrderBy(a => Math.Abs(a.Center.X - ball.Position.X) +
-                                                   Math.Abs(a.Center.Y - ball.Position.Y))
-                                      .FirstOrDefault();
-                }
+                var area = _activeAreas.FirstOrDefault(r => r.Intersects(ball.BoundingBox))
+                    ?? _activeAreas.OrderBy(a => Math.Abs(a.Center.X - ball.Position.X) + Math.Abs(a.Center.Y - ball.Position.Y)).FirstOrDefault();
 
-                if (area != default)
-                    ball.Update(area, dt);
+                if (area != default) ball.Update(area, dt);
             }
         }
 
@@ -516,8 +558,7 @@ namespace Cycloside.Plugins.BuiltIn
             if (CurrentWall == null) return;
 
             double growAmount = WallSpeed * dt;
-            
-            // Update Part 1
+
             if (CurrentWall.IsPart1Active)
             {
                 var w1 = CurrentWall.WallPart1;
@@ -525,6 +566,9 @@ namespace Cycloside.Plugins.BuiltIn
                     ? new Rect(w1.X, w1.Y - growAmount, w1.Width, w1.Height + growAmount)
                     : new Rect(w1.X - growAmount, w1.Y, w1.Width + growAmount, w1.Height);
                 
+                if (CurrentWall.Orientation == WallOrientation.Vertical) w1 = w1.WithY(Math.Max(w1.Y, CurrentWall.Area.Y));
+                else w1 = w1.WithX(Math.Max(w1.X, CurrentWall.Area.X));
+
                 if ((CurrentWall.Orientation == WallOrientation.Vertical && w1.Top <= CurrentWall.Area.Top) ||
                     (CurrentWall.Orientation == WallOrientation.Horizontal && w1.Left <= CurrentWall.Area.Left))
                 {
@@ -532,28 +576,22 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 CurrentWall.WallPart1 = w1;
 
-                foreach(var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart1)))
+                foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart1)))
                 {
-                    if (CurrentWall.IsPart1Invincible)
-                    {
-                        ball.Bounce(CurrentWall.Orientation);
-                        CurrentWall.IsPart1Invincible = false;
-                    }
-                    else
-                    {
-                        LoseLife("Wall Broken!");
-                        return;
-                    }
+                    if (CurrentWall.IsPart1Invincible) { ball.Bounce(CurrentWall.Orientation); CurrentWall.IsPart1Invincible = false; }
+                    else { LoseLife("Wall Broken!"); return; }
                 }
             }
 
-            // Update Part 2
             if (CurrentWall.IsPart2Active)
             {
                 var w2 = CurrentWall.WallPart2;
                 w2 = CurrentWall.Orientation == WallOrientation.Vertical
                     ? new Rect(w2.X, w2.Y, w2.Width, w2.Height + growAmount)
                     : new Rect(w2.X, w2.Y, w2.Width + growAmount, w2.Height);
+                
+                if (CurrentWall.Orientation == WallOrientation.Vertical) w2 = w2.WithHeight(Math.Min(w2.Height, CurrentWall.Area.Bottom - w2.Y));
+                else w2 = w2.WithWidth(Math.Min(w2.Width, CurrentWall.Area.Right - w2.X));
 
                 if ((CurrentWall.Orientation == WallOrientation.Vertical && w2.Bottom >= CurrentWall.Area.Bottom) ||
                     (CurrentWall.Orientation == WallOrientation.Horizontal && w2.Right >= CurrentWall.Area.Right))
@@ -562,24 +600,16 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 CurrentWall.WallPart2 = w2;
 
-                foreach(var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart2)))
+                foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart2)))
                 {
-                    if (CurrentWall.IsPart2Invincible)
-                    {
-                        ball.Bounce(CurrentWall.Orientation);
-                        CurrentWall.IsPart2Invincible = false;
-                    }
-                    else
-                    {
-                        LoseLife("Wall Broken!");
-                        return;
-                    }
+                    if (CurrentWall.IsPart2Invincible) { ball.Bounce(CurrentWall.Orientation); CurrentWall.IsPart2Invincible = false; }
+                    else { LoseLife("Wall Broken!"); return; }
                 }
             }
 
             if (CurrentWall.IsComplete) CaptureAreas();
         }
-        
+
         private void LoseLife(string reason)
         {
             Lives--;
@@ -601,19 +631,18 @@ namespace Cycloside.Plugins.BuiltIn
             else
             {
                 newArea1 = new Rect(area.Left, area.Top, area.Width, CurrentWall.Origin.Y - area.Top);
-                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y, area.Width, area.Bottom - area.Top);
+                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y, area.Width, area.Bottom - CurrentWall.Origin.Y);
             }
 
             _activeAreas.Remove(area);
-            
+
             var ballsInArea1 = _balls.Where(b => newArea1.Intersects(b.BoundingBox)).ToList();
             var ballsInArea2 = _balls.Where(b => newArea2.Intersects(b.BoundingBox)).ToList();
 
             if (ballsInArea1.Count == 0)
             {
                 _filledAreas.Add(newArea1);
-                // UPGRADE: Spawn power-up if a special ball was in the other area
-                if(ballsInArea2.Any(b => b.Type != BallType.Normal))
+                if (ballsInArea2.Any(b => b.Type != BallType.Normal))
                     _powerUps.Add(new PowerUp(newArea1.Center, PowerUpType.IceWall));
             }
             else _activeAreas.Add(newArea1);
@@ -621,11 +650,11 @@ namespace Cycloside.Plugins.BuiltIn
             if (ballsInArea2.Count == 0)
             {
                 _filledAreas.Add(newArea2);
-                if(ballsInArea1.Any(b => b.Type != BallType.Normal))
+                if (ballsInArea1.Any(b => b.Type != BallType.Normal))
                     _powerUps.Add(new PowerUp(newArea2.Center, PowerUpType.IceWall));
             }
             else _activeAreas.Add(newArea2);
-            
+
             var ballsToSplit = _balls.Where(b => b.Type == BallType.Splitting && (ballsInArea1.Contains(b) || ballsInArea2.Contains(b))).ToList();
             foreach (var ball in ballsToSplit)
             {
@@ -650,7 +679,6 @@ namespace Cycloside.Plugins.BuiltIn
                 long timeBonus = (long)TimeLeft.TotalSeconds * 100;
                 Score += 1000 + timeBonus;
                 Message = $"Level Complete!\nTime Bonus: {timeBonus}";
-                // Don't start next level immediately, show message first.
             }
         }
 
@@ -683,7 +711,6 @@ namespace Cycloside.Plugins.BuiltIn
         private Pen _previewPen = null!;
         private IBrush _filledBrush = null!;
         private IBrush _flashBrush = null!;
-        // UPGRADE: New pens and brushes for power-ups
         private Pen _iceWallPen = null!;
         private Pen _icePreviewPen = null!;
         private IBrush _powerUpBrush = null!;
@@ -708,7 +735,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             DockPanel.SetDock(_levelText, Dock.Left);
             DockPanel.SetDock(_livesText, Dock.Left);
-            DockPanel.SetDock(_scoreText, Dock.Left); 
+            DockPanel.SetDock(_scoreText, Dock.Left);
             DockPanel.SetDock(restartButton, Dock.Right);
             DockPanel.SetDock(_capturedText, Dock.Right);
             DockPanel.SetDock(_timeText, Dock.Right);
@@ -728,6 +755,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             _gameCanvas.PointerPressed += OnPointerPressed;
             _gameCanvas.PointerMoved += OnPointerMoved;
+            this.SizeChanged += OnControlResized;
 
             ApplyTheme(_theme);
 
@@ -759,13 +787,19 @@ namespace Cycloside.Plugins.BuiltIn
             _powerUpBrush = theme.PowerUpBrush;
         }
 
-        public void RestartGame() => _gameState.StartNewGame();
+        public void RestartGame() => _gameState.StartLevel(this.Bounds.Size);
 
         public void Dispose()
         {
             _timer.Stop();
+            this.SizeChanged -= OnControlResized;
             _gameCanvas.PointerPressed -= OnPointerPressed;
             _gameCanvas.PointerMoved -= OnPointerMoved;
+        }
+
+        private void OnControlResized(object? sender, SizeChangedEventArgs e)
+        {
+            _gameState.StartLevel(e.NewSize);
         }
 
         private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(_gameCanvas);
@@ -784,7 +818,6 @@ namespace Cycloside.Plugins.BuiltIn
                     _gameState.HandleClick(point.Position);
                 else
                 {
-                    // Check for power-up click first
                     var clickedPowerUp = _gameState.PowerUps.FirstOrDefault(p => p.BoundingBox.Contains(point.Position));
                     if (clickedPowerUp != null)
                     {
@@ -822,30 +855,37 @@ namespace Cycloside.Plugins.BuiltIn
             context.FillRectangle(_backgroundBrush, _gameCanvas.Bounds);
 
             foreach (var area in _gameState.FilledAreas) context.FillRectangle(_filledBrush, area);
-            
+
             var gridPen = new Pen(new SolidColorBrush(Colors.White, 0.1), 1);
-            foreach(var area in _gameState.ActiveAreas)
+            foreach (var area in _gameState.ActiveAreas)
             {
                 for (double x = area.Left; x < area.Right; x += 20) context.DrawLine(gridPen, new Point(x, area.Top), new Point(x, area.Bottom));
                 for (double y = area.Top; y < area.Bottom; y += 20) context.DrawLine(gridPen, new Point(area.Left, y), new Point(area.Right, y));
             }
-            
+
             foreach (var ball in _gameState.Balls) context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
-            // UPGRADE: Render power-ups
             foreach (var p in _gameState.PowerUps) context.DrawEllipse(_powerUpBrush, null, p.Position, p.Radius, p.Radius);
-            
+
             if (_gameState.CurrentWall is { } wall)
             {
-                // UPGRADE: Draw Ice Walls with a different pen
-                if (wall.IsPart1Active) context.DrawLine(wall.IsPart1Invincible ? _iceWallPen : _wallPen, wall.Origin, wall.WallPart1.TopLeft);
-                if (wall.IsPart2Active) context.DrawLine(wall.IsPart2Invincible ? _iceWallPen : _wallPen, wall.Origin, wall.WallPart2.BottomRight);
+                var pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? _iceWallPen : _wallPen;
+                
+                if (wall.Orientation == WallOrientation.Vertical)
+                {
+                    if (wall.IsPart1Active) context.DrawLine(pen, new Point(wall.Origin.X, wall.WallPart1.Top), wall.Origin);
+                    if (wall.IsPart2Active) context.DrawLine(pen, wall.Origin, new Point(wall.Origin.X, wall.WallPart2.Bottom));
+                }
+                else // Horizontal
+                {
+                    if (wall.IsPart1Active) context.DrawLine(pen, new Point(wall.WallPart1.Left, wall.Origin.Y), wall.Origin);
+                    if (wall.IsPart2Active) context.DrawLine(pen, wall.Origin, new Point(wall.WallPart2.Right, wall.Origin.Y));
+                }
             }
             else if (_gameState.Message == string.Empty)
             {
                 var area = _gameState.ActiveAreas.FirstOrDefault(r => r.Contains(_mousePosition));
                 if (area != default)
                 {
-                    // UPGRADE: Use ice preview pen if power-up is active
                     var pen = _gameState.HasIceWallPowerUp ? _icePreviewPen : _previewPen;
                     if (_orientation == WallOrientation.Vertical)
                         context.DrawLine(pen, new Point(_mousePosition.X, area.Top), new Point(_mousePosition.X, area.Bottom));
