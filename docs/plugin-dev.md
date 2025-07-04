@@ -52,6 +52,10 @@ When the plugin folder contents change, `PluginManager` reloads all plugins and
 triggers the `PluginsReloaded` event.  Subscribe to this event if your code
 needs to refresh UI elements after new plugins are detected.
 
+Isolation mode runs each plugin in a separate `AssemblyLoadContext`. Enable it
+from the Control Panel to prevent locked DLL files during hot reloads and to
+contain crashes.
+
 You can generate a boilerplate plugin with:
 ```bash
  dotnet run -- --newplugin MyPlugin
@@ -80,7 +84,8 @@ PluginBus.Publish("my:event", payload);
 
 The optional `RemoteApiServer` publishes bus events over HTTP. POST a topic name
 to `http://localhost:4123/trigger` with `X-Api-Token` or a `token` query
-parameter. See `docs/plugin-lifecycle.md` for details.
+parameter. The shared token is stored in `settings.json` under
+`RemoteApiToken`. See `docs/plugin-lifecycle.md` for details.
 
 ## Marketplace
 
