@@ -46,10 +46,12 @@ namespace Cycloside.Plugins.BuiltIn
             if (_window == null) return;
 
             // Use the modern, recommended StorageProvider API to open a folder picker.
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var result = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = "Select a folder to watch",
-                AllowMultiple = false
+                AllowMultiple = false,
+                SuggestedStartLocation = start
             });
 
             var selectedFolder = result.FirstOrDefault();
@@ -119,12 +121,14 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (_window == null || _log == null) return;
 
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Save Log As...",
                 SuggestedFileName = $"watch_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
                 DefaultExtension = "txt",
-                FileTypeChoices = new[] { new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } } }
+                FileTypeChoices = new[] { new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } } },
+                SuggestedStartLocation = start
             });
 
             if (file?.Path.LocalPath != null)

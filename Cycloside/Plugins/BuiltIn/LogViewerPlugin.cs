@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Cycloside.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,8 +37,15 @@ namespace Cycloside.Plugins.BuiltIn
         
         private string GetLogDirectory()
         {
-            var exePath = AppDomain.CurrentDomain.BaseDirectory;
-            return Path.Combine(exePath, "logs");
+            if (OperatingSystem.IsWindows())
+            {
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cycloside", "logs");
+            }
+            if (OperatingSystem.IsMacOS())
+            {
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Logs", "Cycloside");
+            }
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cycloside", "logs");
         }
 
         public void Start()
@@ -180,12 +188,14 @@ namespace Cycloside.Plugins.BuiltIn
         private async Task SaveLogAsync()
         {
             if (_window == null || _logBox == null) return;
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Save Log As...",
                 SuggestedFileName = $"log_snapshot_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
                 DefaultExtension = "txt",
-                FileTypeChoices = new[] { new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } } }
+                FileTypeChoices = new[] { new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } } },
+                SuggestedStartLocation = start
             });
             
             if (file?.Path.LocalPath != null)

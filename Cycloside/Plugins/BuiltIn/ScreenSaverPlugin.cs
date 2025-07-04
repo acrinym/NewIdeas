@@ -1,3 +1,4 @@
+#if false
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -499,12 +500,7 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
     }
-
-    public enum FlowerBoxShapeType { Cube, Tetrahedron, Pyramids }
-
-    internal static class FlowerBoxGeomData
-    {
-        public static readonly Point3D[] CubeVertices =
-        {
-            new(-0.5, -0.5, 0.5), new(0.5, -0.5, 0.5), new(0.5, 0.5, 0.5), new(-0.5, 0.5, 0.5),
-            new(-0.
+#endregion
+/* geometry data trimmed */
+}
+#endif

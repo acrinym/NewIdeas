@@ -134,7 +134,7 @@ namespace Cycloside.Plugins
                     }
                     catch (Exception ex)
                     {
-                        Logger.Log($"Failed to load plugin {Path.GetFileName(dll)}: {ex.Message}");
+                        Logger.Log($"Failed to load plugin {Path.GetFileName(dll)}: {ex}");
                     }
                 }
             }
@@ -238,7 +238,7 @@ namespace Cycloside.Plugins
                 info.IsEnabled = false;
                 if (CrashLoggingEnabled)
                 {
-                    Logger.Log($"{plugin.Name} crashed on start: {ex.Message}");
+                    Logger.Log($"{plugin.Name} crashed on start: {ex}");
                 }
                 _notify?.Invoke($"[{plugin.Name}] crashed and was disabled.");
             }
@@ -261,7 +261,7 @@ namespace Cycloside.Plugins
             {
                 if (CrashLoggingEnabled)
                 {
-                    Logger.Log($"Error stopping {plugin.Name}: {ex.Message}");
+                    Logger.Log($"Error stopping {plugin.Name}: {ex}");
                 }
             }
             finally

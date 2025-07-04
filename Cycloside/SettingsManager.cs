@@ -13,6 +13,7 @@ public class AppSettings
     public bool PluginIsolation { get; set; } = true;
     public bool PluginCrashLogging { get; set; } = true;
     public bool DisableBuiltInPlugins { get; set; } = false;
+    public Dictionary<string, bool> SafeBuiltInPlugins { get; set; } = new();
 
     // RENAMED: This is now the single, application-wide theme.
     public string GlobalTheme { get; set; } = "MintGreen";

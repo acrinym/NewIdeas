@@ -169,11 +169,13 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (_window is null) return;
 
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Open Tracker Module",
                 AllowMultiple = false,
-                FileTypeFilter = new[] { new FilePickerFileType("Tracker Modules") { Patterns = new[] { "*.it", "*.xm", "*.s3m", "*.mod" } }, FilePickerFileTypes.All }
+                FileTypeFilter = new[] { new FilePickerFileType("Tracker Modules") { Patterns = new[] { "*.it", "*.xm", "*.s3m", "*.mod" } }, FilePickerFileTypes.All },
+                SuggestedStartLocation = start
             });
             
             if (result?.FirstOrDefault()?.TryGetLocalPath() is { } path)

@@ -176,10 +176,12 @@ namespace Cycloside.Plugins.BuiltIn
         [RelayCommand] private async Task OpenFile()
         {
             if (_window == null || !await ConfirmDiscard()) return;
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Open BAS File",
-                FileTypeFilter = new[] { new FilePickerFileType("BAS Files") { Patterns = new[] { "*.bas" } } }
+                FileTypeFilter = new[] { new FilePickerFileType("BAS Files") { Patterns = new[] { "*.bas" } } },
+                SuggestedStartLocation = start
             });
             if (result.FirstOrDefault()?.TryGetLocalPath() is { } path)
             {
@@ -199,11 +201,13 @@ namespace Cycloside.Plugins.BuiltIn
         [RelayCommand] private async Task SaveFileAs()
         {
             if (_window == null || _editor == null) return;
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var result = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Save BAS File As...",
                 FileTypeChoices = new[] { new FilePickerFileType("BAS Files") { Patterns = new[] { "*.bas" } } },
-                SuggestedFileName = Path.GetFileName(_currentFile) ?? "Untitled.bas"
+                SuggestedFileName = Path.GetFileName(_currentFile) ?? "Untitled.bas",
+                SuggestedStartLocation = start
              });
 
             if (result?.TryGetLocalPath() is { } path)
@@ -592,9 +596,11 @@ NEXT i
                 var browseButton = new Button { Content = "Browse..." };
                 browseButton.Click += async (_, _) =>
                 {
+                    var start = await DialogHelper.GetDefaultStartLocationAsync(StorageProvider);
                     var result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                     {
-                        Title = "Select QB64PE Executable"
+                        Title = "Select QB64PE Executable",
+                        SuggestedStartLocation = start
                     });
                     if (result.FirstOrDefault()?.TryGetLocalPath() is { } p)
                     {

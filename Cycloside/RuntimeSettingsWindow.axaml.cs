@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using Cycloside.Plugins;
 using System;
 using System.IO;
+using System.Linq;
 using Cycloside.Services;
 
 namespace Cycloside;
@@ -20,6 +21,19 @@ public partial class RuntimeSettingsWindow : Window
         this.FindControl<CheckBox>("IsolationBox")!.IsChecked = _manager.IsolationEnabled;
         this.FindControl<CheckBox>("CrashLogBox")!.IsChecked = _manager.CrashLoggingEnabled;
         this.FindControl<CheckBox>("BuiltInBox")!.IsChecked = SettingsManager.Settings.DisableBuiltInPlugins;
+
+        var panel = this.FindControl<StackPanel>("SafePanel");
+        if (panel != null)
+        {
+            panel.Children.Clear();
+            foreach (var plugin in _manager.Plugins)
+            {
+                if (plugin.GetType().Namespace?.Contains("BuiltIn") != true) continue;
+                var box = new CheckBox { Content = plugin.Name };
+                box.IsChecked = SettingsManager.Settings.SafeBuiltInPlugins.TryGetValue(plugin.Name, out var val) && val;
+                panel.Children.Add(box);
+            }
+        }
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(RuntimeSettingsWindow));
     }
 
@@ -43,6 +57,15 @@ public partial class RuntimeSettingsWindow : Window
         SettingsManager.Settings.PluginIsolation = iso;
         SettingsManager.Settings.PluginCrashLogging = log;
         SettingsManager.Settings.DisableBuiltInPlugins = builtIn;
+
+        var panel = this.FindControl<StackPanel>("SafePanel");
+        if (panel != null)
+        {
+            foreach (var child in panel.Children.OfType<CheckBox>())
+            {
+                SettingsManager.Settings.SafeBuiltInPlugins[child.Content?.ToString() ?? string.Empty] = child.IsChecked ?? false;
+            }
+        }
         SettingsManager.Save();
         Close();
     }
