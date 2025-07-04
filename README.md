@@ -42,14 +42,16 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 <details><summary>Core</summary>
 
 * Built-in plugin system with hot reload. Sample modules include a clock overlay,
-  MP3 player, macro recorder (Windows only), text editor, wallpaper changer, widget host and
-  Winamp visualizer host.
+  MP3 player, macro recorder (Windows only), text editor, wallpaper changer,
+  widget host, Winamp visualizer host, a tracker module player and a simple
+  command shell.
 * Workspace profiles remember your wallpaper and plugin states for quick swaps.
 * Run Lua or C# snippets as volatile scripts straight from the tray menu.
 * Cross-platform auto-start and settings stored in `settings.json`.
 * Rolling log files capture errors and plugin crashes with tray notifications.
 * Generate new plugins via `dotnet run -- --newplugin` or from **Settings → Generate New Plugin**.
-* Plugins communicate through a publish/subscribe bus and an optional HTTP API.
+* Plugins communicate through a publish/subscribe bus and a remote HTTP API for
+  triggering events.
 * Global hotkeys work on Windows, Linux and macOS.
 * Built-in skin/theme engine with a live editor and custom cursors.
 * GUI plugin manager to toggle and reload plugins or open the plugin folder.
@@ -57,6 +59,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 * Skinnable widgets surface plugin features directly on the desktop.
 * Window effects like wobbly windows or drop shadows are plugin friendly.
 * Optional auto-update helper swaps in new versions using a checksum.
+* Dedicated logs menu surfaces recent errors from the tray.
 
 </details>
 
@@ -78,6 +81,9 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `TaskSchedulerPlugin` | Schedules tasks with cron-style expressions. |
 | `TextEditorPlugin` | Notepad-like editor supporting multiple files. |
 | `WallpaperPlugin` | Changes the desktop wallpaper periodically. |
+| `ModTrackerPlugin` | Plays classic tracker music modules using libopenmpt. |
+| `ScreenSaverPlugin` | Runs fullscreen screensavers after a period of inactivity. |
+| `TerminalPlugin` | Simple command shell window. |
 | `WidgetHostPlugin` | Hosts small widgets inside dockable panels. |
 | `WinampVisHostPlugin` | Runs Winamp AVS visualisation presets. |
 
