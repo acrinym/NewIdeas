@@ -71,4 +71,5 @@ public static class Logger
         catch (TaskCanceledException) { }
         catch (AggregateException) { } // Can be thrown if the task faults, ignore on shutdown.
     }
+
 }

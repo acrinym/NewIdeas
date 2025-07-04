@@ -39,6 +39,9 @@ planned features for the Cycloside project.
 | `TaskSchedulerPlugin` | Schedules tasks with cron-style expressions. |
 | `TextEditorPlugin` | Notepad-like editor supporting multiple files. |
 | `WallpaperPlugin` | Changes the desktop wallpaper periodically. |
+| `ModTrackerPlugin` | Plays tracker modules using libopenmpt. |
+| `ScreenSaverPlugin` | Runs fullscreen screensavers after a period of inactivity. |
+| `TerminalPlugin` | Simple command shell window. |
 | `WidgetHostPlugin` | Hosts small widgets inside dockable panels. |
 | `WinampVisHostPlugin` | Runs Winamp AVS visualisation presets. |
 

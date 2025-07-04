@@ -48,6 +48,14 @@ Implement `Cycloside.Plugins.IPlugin` and place the compiled assembly in the `Pl
 When compiled, each plugin resides in its own folder under `Plugins/`.
 Dependencies should be copied alongside the main DLL.
 
+When the plugin folder contents change, `PluginManager` reloads all plugins and
+triggers the `PluginsReloaded` event.  Subscribe to this event if your code
+needs to refresh UI elements after new plugins are detected.
+
+Isolation mode runs each plugin in a separate `AssemblyLoadContext`. Enable it
+from the Control Panel to prevent locked DLL files during hot reloads and to
+contain crashes.
+
 You can generate a boilerplate plugin with:
 ```bash
  dotnet run -- --newplugin MyPlugin
@@ -56,6 +64,7 @@ You can generate a boilerplate plugin with:
 ## Volatile Scripts
 
 Lua (`.lua`) and C# script (`.csx`) files can be executed in memory. Use the tray menu **Settings → Generate New Plugin** and choose a volatile type to create a starter file.
+See [volatile-scripting.md](volatile-scripting.md) for common examples and tips.
 
 ## Metadata
 
@@ -75,7 +84,8 @@ PluginBus.Publish("my:event", payload);
 
 The optional `RemoteApiServer` publishes bus events over HTTP. POST a topic name
 to `http://localhost:4123/trigger` with `X-Api-Token` or a `token` query
-parameter. See `docs/plugin-lifecycle.md` for details.
+parameter. The shared token is stored in `settings.json` under
+`RemoteApiToken`. See `docs/plugin-lifecycle.md` for details.
 
 ## Marketplace
 

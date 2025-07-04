@@ -62,12 +62,12 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
     }
-
+    
     private MainWindow CreateMainWindow(AppSettings settings)
     {
         _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
         
-        // FIX: Subscribe to the new PluginsReloaded event
+        // Subscribe to plugin reloads to update the UI when plugins are refreshed.
         _pluginManager.PluginsReloaded += OnPluginsReloaded;
 
         var volatileManager = new VolatilePluginManager();
@@ -83,7 +83,7 @@ public partial class App : Application
 
         viewModel.ExitCommand = new RelayCommand(() => Shutdown());
         
-        // FIX: The StartPluginCommand now correctly toggles the plugin and saves the setting.
+        // Toggle plugin enablement from the main window.
         viewModel.StartPluginCommand = new RelayCommand(plugin =>
         {
             if (plugin is not IPlugin p || _pluginManager is null) return;
@@ -106,7 +106,7 @@ public partial class App : Application
         _remoteServer.Start();
         WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
         RegisterHotkeys(_pluginManager);
-
+        
         _trayIcon = new TrayIcon
         {
             Icon = CreateTrayIcon(),
@@ -120,20 +120,20 @@ public partial class App : Application
             icons.Add(_trayIcon);
         }
         _trayIcon.IsVisible = true;
-
+        
         return mainWindow;
     }
     
-    // FIX: This method handles the PluginsReloaded event to rebuild the UI.
+    // Handle the PluginsReloaded event to refresh menus and view models.
     private void OnPluginsReloaded()
     {
         if (_trayIcon is null || _pluginManager is null) return;
 
-        // Rebuild the tray menu with the new plugin instances
+        // Rebuild the tray menu with the new plugin instances.
         var volatileManager = new VolatilePluginManager();
         _trayIcon.Menu = BuildTrayMenu(_pluginManager, volatileManager, SettingsManager.Settings);
 
-        // Also update the main window's view model
+        // Also update the main window's view model.
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
             desktop.MainWindow?.DataContext is MainWindowViewModel vm)
         {
@@ -217,13 +217,20 @@ public partial class App : Application
         var inlineItem = new NativeMenuItem("Run Inline...");
         inlineItem.Click += (_, _) => new VolatileRunnerWindow(volatileManager).Show();
         volatileMenu.Menu!.Items.Add(inlineItem);
-
-        var mp3Item = new NativeMenuItem("MP3 Player");
-        mp3Item.Click += (s, e) =>
+        
+        // **NEW: A dedicated menu for log actions**
+        var logsMenu = new NativeMenuItem("Logs") { Menu = new NativeMenu() };
+        var viewErrorsItem = new NativeMenuItem("View Errors");
+        viewErrorsItem.Click += (_, _) =>
         {
-            var mp3 = manager.Plugins.FirstOrDefault(p => p.Name == "MP3 Player");
-            if (mp3 != null) manager.EnablePlugin(mp3);
+            var logViewerPlugin = manager.Plugins.FirstOrDefault(p => p.Name == "Log Viewer");
+            if (logViewerPlugin is LogViewerPlugin viewer) // Cast to our specific type
+            {
+                viewer.InitialFilter = "[ERROR]"; // Set the filter before starting
+                manager.EnablePlugin(viewer);
+            }
         };
+        logsMenu.Menu.Add(viewErrorsItem);
 
         return new NativeMenu
         {
@@ -235,7 +242,7 @@ public partial class App : Application
                     new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
                 }}},
                 new NativeMenuItemSeparator(),
-                mp3Item,
+                logsMenu, // **Add the new Logs menu here**
                 new NativeMenuItemSeparator(),
                 pluginsMenu,
                 volatileMenu,
@@ -324,8 +331,8 @@ public partial class App : Application
             {
                 var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
                 var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
-                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
-                           ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
+                             ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
+                             ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
                 if (icon != null)
                 {
                     using var stream = new MemoryStream();

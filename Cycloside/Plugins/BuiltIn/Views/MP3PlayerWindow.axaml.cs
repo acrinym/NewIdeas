@@ -5,7 +5,7 @@ using System.Globalization;
 using Avalonia.Data.Converters;
 using System.IO;
 
-// MERGED: Chose the more modern file-scoped namespace syntax.
+// Chose the more modern file-scoped namespace syntax.
 namespace Cycloside.Plugins.BuiltIn.Views;
 
 public partial class MP3PlayerWindow : Window
@@ -45,7 +45,7 @@ public class FullPathToFileNameConverter : IValueConverter
             }
             catch
             {
-                // MERGED: Kept the clarifying comment from the 'hkqxjj-codex' branch.
+                // Kept the clarifying comment.
                 return fullPath; // Fallback to full path on error
             }
         }

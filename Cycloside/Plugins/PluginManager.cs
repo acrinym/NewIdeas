@@ -48,6 +48,14 @@ namespace Cycloside.Plugins
         private readonly Action<string>? _notify;
         private Timer? _reloadTimer;
 
+        /// <summary>
+        /// Raised whenever <see cref="ReloadPlugins"/> completes successfully.
+        /// The application listens to this to rebuild UI elements such as the
+        /// tray menu.
+        /// </summary>
+        // Exposed so the UI can rebuild when plugins change.
+        public event Action? PluginsReloaded;
+
         public string PluginDirectory { get; }
         public bool IsolationEnabled { get; set; }
         public bool CrashLoggingEnabled { get; set; }
@@ -152,11 +160,17 @@ namespace Cycloside.Plugins
                 StartWatching();
                 _notify?.Invoke("Plugins have been reloaded.");
 
+                // Notify any listeners that plugins have changed so UI can refresh.
+                PluginsReloaded?.Invoke();
+
                 // Re-apply settings to the newly loaded plugins so reloaded
                 // plugins are enabled or disabled based on the active profile.
                 WorkspaceProfiles.Apply(SettingsManager.Settings.ActiveProfile, this);
 
                 ApplyEnabledSettings();
+
+                // Notify listeners that the plugin collection has changed.
+                PluginsReloaded?.Invoke();
             }
         }
 

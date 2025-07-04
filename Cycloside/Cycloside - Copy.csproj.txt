@@ -16,12 +16,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Include resources like images or fonts from the Resources folder -->
     <AvaloniaResource Include="Resources\**" />
   </ItemGroup>
   
   <ItemGroup>
-    <!-- Using the newer package versions from your file -->
     <PackageReference Include="Avalonia" Version="11.3.1" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.1" />
@@ -46,9 +44,6 @@
     <PackageReference Include="CliWrap" Version="3.7.0" /> 
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
-
-    <!-- Local build of libopenmpt bindings -->
-    <ProjectReference Include="..\LibModPlugSharp\LibModPlugSharp.csproj" />
   </ItemGroup>
 
 </Project>

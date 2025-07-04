@@ -5,6 +5,7 @@ using Avalonia.Styling;
 using System;
 using System.IO;
 using System.Linq;
+using Cycloside.Plugins;
 
 namespace Cycloside.Services
 {
@@ -14,7 +15,11 @@ namespace Cycloside.Services
     /// </summary>
     public static class ThemeManager
     {
-        private static string ThemeDir => Path.Combine(AppContext.BaseDirectory, "Themes");
+        // All themes are stored under the 'Themes/Global' subdirectory. The
+        // editor and setup wizard already point there, but the ThemeManager
+        // previously used the parent directory which caused missing theme
+        // errors at runtime.
+        private static string ThemeDir => Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
 
         /// <summary>
         /// Applies the application-wide global theme from settings.
@@ -52,7 +57,7 @@ namespace Cycloside.Services
 
             // Remove any existing global theme to prevent conflicts
             var existing = Application.Current.Styles.OfType<StyleInclude>()
-                .FirstOrDefault(s => s.Source?.OriginalString.Contains("/Themes/") == true);
+                .FirstOrDefault(s => s.Source?.OriginalString.Contains("/Themes/Global/") == true);
             if (existing != null)
             {
                 Application.Current.Styles.Remove(existing);
@@ -84,6 +89,23 @@ namespace Cycloside.Services
         {
             // The global theme is loaded once at startup, so we just need to apply component themes here.
             ApplyComponentTheme(window, componentName);
+        }
+
+        /// <summary>
+        /// Applies themes for a plugin window. This first applies the generic
+        /// "Plugins" theme, then the plugin specific theme using the plugin's
+        /// <see cref="IPlugin.Name"/>. If <see cref="IPlugin.ForceDefaultTheme"/>
+        /// is true, no component themes are applied.
+        /// </summary>
+        /// <param name="window">The window to theme.</param>
+        /// <param name="plugin">The plugin instance.</param>
+        public static void ApplyForPlugin(Window window, Cycloside.Plugins.IPlugin plugin)
+        {
+            if (plugin.ForceDefaultTheme)
+                return;
+
+            ApplyComponentTheme(window, "Plugins");
+            ApplyComponentTheme(window, plugin.Name);
         }
 
         /// <summary>
