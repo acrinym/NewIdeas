@@ -58,6 +58,7 @@ namespace Cycloside.Plugins.BuiltIn
             if (_window == null) return;
 
             // Use the modern, recommended StorageProvider API to open a file picker.
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Select Wallpaper Image",
@@ -68,7 +69,8 @@ namespace Cycloside.Plugins.BuiltIn
                     {
                         Patterns = new[] { "*.jpg", "*.jpeg", "*.png", "*.bmp" }
                     }
-                }
+                },
+                SuggestedStartLocation = start
             });
 
             var selectedFile = result.FirstOrDefault();

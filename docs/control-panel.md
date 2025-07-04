@@ -9,5 +9,6 @@ the main window's **Settings** menu.
 - Toggle **Launch at Startup** and set the path to the `dotnet` executable.
 - Open the plugin manager, theme settings and skin editor windows.
 - Access runtime settings for plugin isolation and crash logging.
+- Enable Safe Mode per built-in plugin when needed.
 
 Changes are saved back to `settings.json` when you press **Save**.

@@ -14,7 +14,7 @@ public interface IPluginExtended : IPlugin
 }
 ```
 
-The plugin manager catches exceptions thrown during `Start` and `Stop` when isolation mode is enabled. Crashes are logged if crash logging is turned on. Plugins exposing a widget should return an implementation via the `Widget` property.
+The plugin manager catches exceptions thrown during `Start` and `Stop` when isolation mode is enabled. Crashes are logged if crash logging is turned on and stack traces are written to an OS specific log directory. Plugins exposing a widget should return an implementation via the `Widget` property.
 
 When **Plugin Isolation** is enabled in the Control Panel each plugin loads in its own context. This allows hot reloading without file locks and lets Cycloside unload crashing plugins cleanly.
 

@@ -147,24 +147,29 @@ public partial class App : Application
 
     private void LoadAllPlugins(PluginManager manager, AppSettings settings)
     {
-        if (settings.DisableBuiltInPlugins) return;
-        manager.AddPlugin(new DateTimeOverlayPlugin());
-        manager.AddPlugin(new MP3PlayerPlugin());
-        manager.AddPlugin(new MacroPlugin());
-        manager.AddPlugin(new TextEditorPlugin());
-        manager.AddPlugin(new WallpaperPlugin());
-        manager.AddPlugin(new ClipboardManagerPlugin());
-        manager.AddPlugin(new FileWatcherPlugin());
-        manager.AddPlugin(new ProcessMonitorPlugin());
-        manager.AddPlugin(new TaskSchedulerPlugin());
-        manager.AddPlugin(new DiskUsagePlugin());
-        manager.AddPlugin(new TerminalPlugin());
-        manager.AddPlugin(new LogViewerPlugin());
-        manager.AddPlugin(new EnvironmentEditorPlugin());
-        manager.AddPlugin(new JezzballPlugin());
-        manager.AddPlugin(new WidgetHostPlugin(manager));
-        manager.AddPlugin(new WinampVisHostPlugin());
-        manager.AddPlugin(new QBasicRetroIDEPlugin());
+        void TryAdd(IPlugin plugin)
+        {
+            if (!settings.DisableBuiltInPlugins || settings.SafeBuiltInPlugins.GetValueOrDefault(plugin.Name, false))
+                manager.AddPlugin(plugin);
+        }
+
+        TryAdd(new DateTimeOverlayPlugin());
+        TryAdd(new MP3PlayerPlugin());
+        TryAdd(new MacroPlugin());
+        TryAdd(new TextEditorPlugin());
+        TryAdd(new WallpaperPlugin());
+        TryAdd(new ClipboardManagerPlugin());
+        TryAdd(new FileWatcherPlugin());
+        TryAdd(new ProcessMonitorPlugin());
+        TryAdd(new TaskSchedulerPlugin());
+        TryAdd(new DiskUsagePlugin());
+        TryAdd(new TerminalPlugin());
+        TryAdd(new LogViewerPlugin());
+        TryAdd(new EnvironmentEditorPlugin());
+        TryAdd(new JezzballPlugin());
+        TryAdd(new WidgetHostPlugin(manager));
+        TryAdd(new WinampVisHostPlugin());
+        TryAdd(new QBasicRetroIDEPlugin());
     }
 
     private void RegisterHotkeys(PluginManager manager)
@@ -302,10 +307,12 @@ public partial class App : Application
         {
             if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null) return;
 
+            var start = await DialogHelper.GetDefaultStartLocationAsync(desktop.MainWindow.StorageProvider);
             var files = await desktop.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
-                FileTypeFilter = new[] { filter }
+                FileTypeFilter = new[] { filter },
+                SuggestedStartLocation = start
             });
 
             if (files.FirstOrDefault() is { } file)

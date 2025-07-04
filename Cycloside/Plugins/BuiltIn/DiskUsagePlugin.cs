@@ -51,10 +51,12 @@ namespace Cycloside.Plugins.BuiltIn
             if (_window == null || _selectFolderButton == null || _tree == null || _statusText == null) return;
 
             // Use the modern, recommended StorageProvider API to open a folder picker.
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var result = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = "Select a folder to analyze",
-                AllowMultiple = false
+                AllowMultiple = false,
+                SuggestedStartLocation = start
             });
 
             var selectedFolder = result.FirstOrDefault();

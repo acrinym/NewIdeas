@@ -77,11 +77,13 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (_window is null || !await CanProceedWithUnsavedChanges()) return;
             
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var openResult = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Open Text File",
                 AllowMultiple = false,
-                FileTypeFilter = new[] { FilePickerFileTypes.All }
+                FileTypeFilter = new[] { FilePickerFileTypes.All },
+                SuggestedStartLocation = start
             });
 
             if (openResult?.FirstOrDefault()?.TryGetLocalPath() is { } path)
@@ -120,11 +122,13 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (_window is null) return;
             
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var saveResult = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Save Text File As...",
                 SuggestedFileName = Path.GetFileName(_currentFilePath) ?? "Untitled.txt",
-                FileTypeChoices = new[] { FilePickerFileTypes.All }
+                FileTypeChoices = new[] { FilePickerFileTypes.All },
+                SuggestedStartLocation = start
             });
 
             if (saveResult?.TryGetLocalPath() is { } path)

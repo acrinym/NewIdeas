@@ -12,12 +12,15 @@ public static class Logger
 {
     private static readonly string LogDir = Path.Combine(AppContext.BaseDirectory, "logs");
     private static readonly string LogFile = Path.Combine(LogDir, "app.log");
+    private static readonly string OsLogDir = GetOsLogDir();
+    private static readonly string OsLogFile = Path.Combine(OsLogDir, "app.log");
     private static readonly BlockingCollection<string> _queue = new();
     private static readonly Task _logTask;
 
     static Logger()
     {
         Directory.CreateDirectory(LogDir);
+        Directory.CreateDirectory(OsLogDir);
         _logTask = Task.Run(ProcessQueue);
     }
 
@@ -38,6 +41,7 @@ public static class Logger
             try
             {
                 File.AppendAllText(LogFile, msg + Environment.NewLine);
+                File.AppendAllText(OsLogFile, msg + Environment.NewLine);
 
                 // Check file size for rotation
                 var info = new FileInfo(LogFile);
@@ -45,6 +49,13 @@ public static class Logger
                 {
                     var backup = Path.Combine(LogDir, "app.log.1");
                     File.Move(LogFile, backup, overwrite: true);
+                }
+
+                var osInfo = new FileInfo(OsLogFile);
+                if (osInfo.Exists && osInfo.Length > 1_048_576)
+                {
+                    var backup = Path.Combine(OsLogDir, "app.log.1");
+                    File.Move(OsLogFile, backup, overwrite: true);
                 }
             }
             catch
@@ -70,6 +81,19 @@ public static class Logger
         }
         catch (TaskCanceledException) { }
         catch (AggregateException) { } // Can be thrown if the task faults, ignore on shutdown.
+    }
+
+    private static string GetOsLogDir()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cycloside", "logs");
+        }
+        if (OperatingSystem.IsMacOS())
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Logs", "Cycloside");
+        }
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cycloside", "logs");
     }
 
 }

@@ -166,10 +166,12 @@ namespace Cycloside.Plugins.BuiltIn
         {
             var topLevel = _window ?? Application.Current?.GetMainTopLevel();
             if (topLevel is null) return;
+            var start = await DialogHelper.GetDefaultStartLocationAsync(topLevel.StorageProvider);
             var openResult = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Select MP3 Files", AllowMultiple = true,
-                FileTypeFilter = new[] { new FilePickerFileType("MP3 Files") { Patterns = new[] { "*.mp3" } } }
+                FileTypeFilter = new[] { new FilePickerFileType("MP3 Files") { Patterns = new[] { "*.mp3" } } },
+                SuggestedStartLocation = start
             });
             if (openResult is null) return;
             var validFiles = openResult.Select(f => f.TryGetLocalPath()).OfType<string>();
