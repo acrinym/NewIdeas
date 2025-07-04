@@ -73,10 +73,13 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `LogViewerPlugin` | Tails a log file and filters lines on the fly. |
 | `MP3PlayerPlugin` | Basic audio player built on NAudio. |
 | `MacroPlugin` | Records keyboard macros and saves them to disk. Playback is Windows-only. |
+| `ModTrackerPlugin` | Plays and inspects tracker module files (MOD, IT, XM, etc.). |
 | `ProcessMonitorPlugin` | Lists running processes with CPU and memory usage. |
 | `QBasicRetroIDEPlugin` | Minimal IDE for creating QBasic-style programs. Includes an option to launch QB64 for editing. |
+| `ScreenSaverPlugin` | Runs full-screen screensavers after a period of inactivity. |
 | `TaskSchedulerPlugin` | Schedules tasks with cron-style expressions. |
 | `TextEditorPlugin` | Notepad-like editor supporting multiple files. |
+| `TerminalPlugin` | Run shell commands in a simple console window. |
 | `WallpaperPlugin` | Changes the desktop wallpaper periodically. |
 | `WidgetHostPlugin` | Hosts small widgets inside dockable panels. |
 | `WinampVisHostPlugin` | Runs Winamp AVS visualisation presets. |
