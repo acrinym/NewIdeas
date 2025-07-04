@@ -22,6 +22,9 @@ Built-in examples:
 - **Macro Engine** – record and replay simple keyboard macros
 - **Text Editor** – small editor for notes or Markdown
 - **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
+- **ModPlug Tracker** – play `.mod`, `.it`, `.s3m` or `.xm` music modules
+- **ScreenSaver Host** – run vintage 3D text and flower box screensavers
+- **Terminal** – simple shell window for running commands
 - **Widget Host** – surface plugins as dockable widgets
 - **Winamp Visual Host** – run classic Winamp visualizer DLLs
 
