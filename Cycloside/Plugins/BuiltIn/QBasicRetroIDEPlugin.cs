@@ -355,7 +355,7 @@ NEXT i
                 new Separator(),
                 examplesMenu,
                 new Separator(),
-                new MenuItem { Header = "E_xit", Command = new RelayCommand(() => _window?.Close()) }
+                new MenuItem { Header = "E_xit", Command = new Cycloside.Services.RelayCommand(() => _window?.Close()) }
             };
 
             var runItems = new object[]
@@ -371,7 +371,7 @@ NEXT i
             var toolsItems = new object[]
             {
                 new MenuItem { Header = "_Command Palette...", InputGesture = new KeyGesture(Key.P, KeyModifiers.Control | KeyModifiers.Shift), Command = OpenCommandPaletteCommand },
-                new MenuItem { Header = "_Settings...", Command = new RelayCommand(OpenSettings) },
+                new MenuItem { Header = "_Settings...", Command = new Cycloside.Services.RelayCommand(OpenSettings) },
             };
             
             return new Menu

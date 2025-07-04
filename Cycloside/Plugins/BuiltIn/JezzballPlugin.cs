@@ -210,7 +210,7 @@ namespace Cycloside.Plugins.BuiltIn
         private static PathGeometry CreatePath(params Point[] points)
         {
             var figure = new PathFigure { StartPoint = points[0], IsClosed = true };
-            figure.Segments.Add(new PolyLineSegment(points.Skip(1), true));
+            figure.Segments.Add(new PolyLineSegment(points.Skip(1)) { IsStroked = true });
             return new PathGeometry { Figures = { figure } };
         }
     }
@@ -546,8 +546,13 @@ namespace Cycloside.Plugins.BuiltIn
         {
             foreach (var ball in _balls.ToList())
             {
-                var area = _activeAreas.FirstOrDefault(r => r.Intersects(ball.BoundingBox))
-                    ?? _activeAreas.OrderBy(a => Math.Abs(a.Center.X - ball.Position.X) + Math.Abs(a.Center.Y - ball.Position.Y)).FirstOrDefault();
+                var area = _activeAreas.FirstOrDefault(r => r.Intersects(ball.BoundingBox));
+                if (area == default)
+                {
+                    area = _activeAreas
+                        .OrderBy(a => Math.Abs(a.Center.X - ball.Position.X) + Math.Abs(a.Center.Y - ball.Position.Y))
+                        .FirstOrDefault();
+                }
 
                 if (area != default) ball.Update(area, dt);
             }
