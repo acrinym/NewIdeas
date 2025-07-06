@@ -17,6 +17,7 @@ namespace Cycloside.Scripting
         private readonly Dictionary<string, Action<string[]>> _commands;
         private readonly Dictionary<string, object> _vars = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, object> _readonlyVars = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Stack<int> _callStack = new();
 
         public bool Exit { get; private set; }
 
@@ -115,7 +116,22 @@ namespace Cycloside.Scripting
                 }
                 else if (string.Equals(cmd, "GOSUB", StringComparison.OrdinalIgnoreCase))
                 {
-                    // TODO: Add subroutine support if needed
+                    var label = args[0].TrimEnd(':');
+                    var idx = lines.FindIndex(l => l.TrimStart().StartsWith(label + ":", StringComparison.OrdinalIgnoreCase));
+                    if (idx != -1)
+                    {
+                        _callStack.Push(i);
+                        i = idx - 1;
+                    }
+                    continue;
+                }
+                else if (string.Equals(cmd, "RETURN", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (_callStack.Count > 0)
+                    {
+                        i = _callStack.Pop();
+                    }
+                    continue;
                 }
                 else if (_commands.TryGetValue(cmd, out var action))
                 {
