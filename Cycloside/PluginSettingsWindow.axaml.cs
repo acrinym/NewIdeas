@@ -8,6 +8,7 @@ using System.Linq;
 using System;
 using System.Diagnostics;
 using Cycloside.Services;
+using Cycloside;
 
 namespace Cycloside;
 
@@ -91,6 +92,7 @@ public partial class PluginSettingsWindow : Window
 
         SettingsManager.Settings.PluginEnabled[plugin.Name] = cb.IsChecked == true;
         SettingsManager.Save();
+        WorkspaceProfiles.UpdatePlugin(SettingsManager.Settings.ActiveProfile, plugin.Name, cb.IsChecked == true);
     }
 
     private void ReloadButton_Click(object? sender, RoutedEventArgs e)

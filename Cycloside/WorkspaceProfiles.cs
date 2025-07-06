@@ -77,4 +77,13 @@ public static class WorkspaceProfiles
         if(_profiles.Remove(name))
             Save();
     }
+
+    public static void UpdatePlugin(string profileName, string pluginName, bool enabled)
+    {
+        if(!_profiles.TryGetValue(profileName, out var profile))
+            return;
+
+        profile.Plugins[pluginName] = enabled;
+        Save();
+    }
 }
