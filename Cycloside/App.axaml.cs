@@ -100,6 +100,7 @@ public partial class App : Application
 
             SettingsManager.Settings.PluginEnabled[p.Name] = shouldBeEnabled;
             SettingsManager.Save();
+            WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, p.Name, shouldBeEnabled);
         });
 
         _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
@@ -170,6 +171,7 @@ public partial class App : Application
         TryAdd(new WidgetHostPlugin(manager));
         TryAdd(new WinampVisHostPlugin());
         TryAdd(new QBasicRetroIDEPlugin());
+        TryAdd(new ScreenSaverPlugin());
     }
 
     private void RegisterHotkeys(PluginManager manager)
@@ -294,6 +296,7 @@ public partial class App : Application
             item.IsChecked = manager.IsEnabled(plugin);
             settings.PluginEnabled[plugin.Name] = item.IsChecked;
             SettingsManager.Save();
+            WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, plugin.Name, item.IsChecked);
         });
         menuItem.CommandParameter = menuItem;
 

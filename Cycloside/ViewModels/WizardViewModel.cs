@@ -123,8 +123,8 @@ namespace Cycloside.ViewModels
             {
                 "Date/Time Overlay", "MP3 Player", "Macro Engine", "Text Editor", "Wallpaper Changer", 
                 "Clipboard Manager", "File Watcher", "Process Monitor", "Task Scheduler", 
-                "Disk Usage", "Log Viewer", "Environment Editor", "Jezzball", 
-                "Widget Host", "Winamp Vis Host", "QBasic Retro IDE"
+                "Disk Usage", "Log Viewer", "Environment Editor", "Jezzball",
+                "Widget Host", "Winamp Vis Host", "QBasic Retro IDE", "ScreenSaver Host"
             };
 
             foreach (var n in names)
