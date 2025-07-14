@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -100,7 +101,7 @@ namespace Cycloside.Plugins.BuiltIn
     /// <summary>
     /// The final, optimized MP3 Player plugin acting as a ViewModel.
     /// </summary>
-    public partial class MP3PlayerPlugin : ObservableObject, IPlugin, IDisposable
+    public partial class MP3PlayerPlugin : ObservableObject, IPlugin, IDisposable, IWorkspaceItem
     {
         private const string AudioDataTopic = "audio:data";
 
@@ -119,6 +120,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new(1, 7, 0);
         public Widgets.IWidget? Widget => new Widgets.BuiltIn.Mp3Widget(this);
         public bool ForceDefaultTheme => false;
+        public bool UseWorkspace { get; set; }
 
         // --- Observable Properties ---
         public ObservableCollection<string> Playlist { get; } = new();
@@ -139,16 +141,27 @@ namespace Cycloside.Plugins.BuiltIn
         // --- Plugin Lifecycle & Disposal ---
         public void Start()
         {
+            if (UseWorkspace)
+            {
+                // When hosted in the workspace we don't create a window.
+                return;
+            }
+
             if (_window != null)
             {
                 _window.Activate();
                 return;
             }
-            
+
             _window = new Views.MP3PlayerWindow { DataContext = this };
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
             _window.Closed += (_, _) => _window = null;
             _window.Show();
+        }
+
+        public Control BuildWorkspaceView()
+        {
+            return new Views.MP3PlayerView { DataContext = this };
         }
 
         public void Stop() => Dispose();

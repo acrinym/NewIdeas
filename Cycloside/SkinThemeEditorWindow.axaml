@@ -9,6 +9,7 @@
             <ComboBox x:Name="FileBox" Width="250"/>
             <Button Content="Load" Click="LoadFile"/>
             <Button Content="Save" Click="SaveFile"/>
+            <Button Content="Preview" Click="PreviewSkin"/>
         </StackPanel>
         
         <!-- Replaced TextBox with AvaloniaEdit for syntax highlighting -->

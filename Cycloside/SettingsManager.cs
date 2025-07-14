@@ -5,6 +5,9 @@ using System.Text.Json;
 
 namespace Cycloside;
 
+/// <summary>
+/// Application-wide settings persisted to <c>settings.json</c>.
+/// </summary>
 public class AppSettings
 {
     public bool LaunchAtStartup { get; set; }
@@ -37,6 +40,13 @@ public class AppSettings
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
     public Dictionary<string, List<string>> WindowEffects { get; set; } = new();
     public Dictionary<string, ThemeSnapshot> SavedThemes { get; set; } = new();
+    /// <summary>
+    /// Mapping of hotkey action names to gesture strings (e.g. "Ctrl+Alt+W").
+    /// </summary>
+    public Dictionary<string, string> Hotkeys { get; set; } = new()
+    {
+        { "WidgetHost", "Ctrl+Alt+W" }
+    };
     public double WeatherLatitude { get; set; } = 35;
     public double WeatherLongitude { get; set; } = 139;
     public string WeatherCity { get; set; } = "";
@@ -45,6 +55,10 @@ public class AppSettings
     public bool FirstRun { get; set; } = true;
 }
 
+/// <summary>
+/// Helper for loading and saving <see cref="AppSettings"/>. Plugins can read
+/// and update values via <see cref="Settings"/> then call <see cref="Save"/>.
+/// </summary>
 public static class SettingsManager
 {
     private static readonly string SettingsPath = Path.Combine(AppContext.BaseDirectory, "settings.json");
@@ -52,6 +66,9 @@ public static class SettingsManager
 
     public static AppSettings Settings => _settings;
 
+    /// <summary>
+    /// Loads settings from disk or returns defaults when the file is missing.
+    /// </summary>
     private static AppSettings Load()
     {
         try
@@ -67,6 +84,9 @@ public static class SettingsManager
         return new AppSettings();
     }
 
+    /// <summary>
+    /// Persists the current <see cref="Settings"/> to disk.
+    /// </summary>
     public static void Save()
     {
         try
