@@ -74,6 +74,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `FileWatcherPlugin` | Watches a directory and logs file system events. |
 | `JezzballPlugin` | Simple recreation of the classic game. |
 | `LogViewerPlugin` | Tails a log file and filters lines on the fly. |
+| `NotificationCenterPlugin` | Centralizes app and plugin messages. |
 | `MP3PlayerPlugin` | Basic audio player built on NAudio. |
 | `MacroPlugin` | Records keyboard macros and saves them to disk. Playback is Windows-only. |
 | `ModTrackerPlugin` | Plays and inspects tracker module files (MOD, IT, XM, etc.). |
@@ -84,38 +85,11 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `TextEditorPlugin` | Notepad-like editor supporting multiple files. |
 | `TerminalPlugin` | Run shell commands in a simple console window. |
 | `WallpaperPlugin` | Changes the desktop wallpaper periodically. |
-| `ModTrackerPlugin` | Plays classic tracker music modules using libopenmpt. |
-| `ScreenSaverPlugin` | Runs fullscreen screensavers after a period of inactivity. |
-| `TerminalPlugin` | Simple command shell window. |
 | `WidgetHostPlugin` | Hosts small widgets inside dockable panels. |
 | `WinampVisHostPlugin` | Runs Winamp AVS visualisation presets. |
 
 </details>
 
-</details>
-
-<details><summary>Built-in Plugins</summary>
-
-| Plugin | Description |
-| ------ | ----------- |
-| `ClipboardManagerPlugin` | Stores clipboard history in a window and broadcasts changes on `bus:clipboard`. |
-| `DateTimeOverlayPlugin` | Small always-on-top window showing the current time. |
-| `DiskUsagePlugin` | Visualises folder sizes in a tree view. |
-| `EnvironmentEditorPlugin` | Edits environment variables at runtime (Process scope only on Linux/macOS). |
-| `FileWatcherPlugin` | Watches a directory and logs file system events. |
-| `JezzballPlugin` | Simple recreation of the classic game. |
-| `LogViewerPlugin` | Tails a log file and filters lines on the fly. |
-| `MP3PlayerPlugin` | Basic audio player built on NAudio. |
-| `MacroPlugin` | Records keyboard macros and saves them to disk. Playback is Windows-only. |
-| `ProcessMonitorPlugin` | Lists running processes with CPU and memory usage. |
-| `QBasicRetroIDEPlugin` | Minimal IDE for creating QBasic-style programs. Includes an option to launch QB64 for editing. |
-| `TaskSchedulerPlugin` | Schedules tasks with cron-style expressions. |
-| `TextEditorPlugin` | Notepad-like editor supporting multiple files. |
-| `WallpaperPlugin` | Changes the desktop wallpaper periodically. |
-| `WidgetHostPlugin` | Hosts small widgets inside dockable panels. |
-| `WinampVisHostPlugin` | Runs Winamp AVS visualisation presets. |
-
-</details>
 
 ## Building
 
