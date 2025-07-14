@@ -1,15 +1,14 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using Avalonia.Media;
 using System.Collections.Generic;
 using System;
 using System.IO;
 using System.Linq;
 using Cycloside.Plugins;
 using Cycloside.Services;
-using Avalonia.Media;
 using Avalonia.Layout;
+using Avalonia.Media;
 
 namespace Cycloside;
 
