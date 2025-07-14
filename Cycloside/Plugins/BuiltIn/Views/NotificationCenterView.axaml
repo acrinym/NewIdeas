@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Cycloside.Plugins.BuiltIn.Views.NotificationCenterView"
+             x:DataType="local:NotificationCenterPlugin"
+             xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn">
+    <Design.DataContext>
+        <local:NotificationCenterPlugin/>
+    </Design.DataContext>
+    <Border Padding="10" Background="{DynamicResource ThemeBackgroundBrush}">
+        <ListBox ItemsSource="{Binding Messages}"/>
+    </Border>
+</UserControl>
