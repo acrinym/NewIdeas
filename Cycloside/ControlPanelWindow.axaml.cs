@@ -18,7 +18,7 @@ public partial class ControlPanelWindow : Window
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(ControlPanelWindow));
     }
 
-    public ControlPanelWindow() : this(new PluginManager(System.IO.Path.Combine(AppContext.BaseDirectory, "Plugins"), _ => { }))
+    public ControlPanelWindow() : this(new PluginManager(System.IO.Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify))
     {
     }
 

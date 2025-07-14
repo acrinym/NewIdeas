@@ -16,6 +16,15 @@ public interface IPlugin
     /// </summary>
     bool ForceDefaultTheme { get; }
 
+    /// <summary>
+    /// Called by the host when the plugin should create its UI and begin
+    /// processing. Implementations may open windows or attach controls to
+    /// the workspace.
+    /// </summary>
     void Start();
+
+    /// <summary>
+    /// Called when the plugin should clean up resources and close any UI.
+    /// </summary>
     void Stop();
 }
