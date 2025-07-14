@@ -16,6 +16,7 @@ namespace Cycloside.ViewModels
 
         public ICommand? ExitCommand { get; set; }
         public ICommand? StartPluginCommand { get; set; }
+        public ICommand? StartPluginWindowCommand { get; set; }
 
         public MainWindowViewModel(IEnumerable<IPlugin> plugins)
         {

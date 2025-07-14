@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Input; // Added for RelayCommand
 
 namespace Cycloside;
 
@@ -65,7 +66,7 @@ public partial class App : Application
     
     private MainWindow CreateMainWindow(AppSettings settings)
     {
-        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify);
+        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), global::Cycloside.Services.NotificationCenter.Notify);
         
         // Subscribe to plugin reloads to update the UI when plugins are refreshed.
         _pluginManager.PluginsReloaded += OnPluginsReloaded;
@@ -137,6 +138,32 @@ public partial class App : Application
                 SettingsManager.Save();
                 WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, plugin.Name, shouldBeEnabled);
             }
+        });
+
+        // Start or stop a plugin in its own window, even if it supports the workspace.
+        viewModel.StartPluginWindowCommand = new RelayCommand(pluginObj =>
+        {
+            if (pluginObj is not IPlugin plugin || _pluginManager is null) return;
+
+            var existing = viewModel.WorkspaceItems.FirstOrDefault(w => w.Plugin == plugin);
+            bool shouldBeEnabled = !_pluginManager.IsEnabled(plugin);
+
+            if (shouldBeEnabled)
+            {
+                if (plugin is IWorkspaceItem ws) ws.UseWorkspace = false;
+                if (existing != null) viewModel.WorkspaceItems.Remove(existing);
+                _pluginManager.EnablePlugin(plugin);
+            }
+            else
+            {
+                if (plugin is IWorkspaceItem ws) ws.UseWorkspace = false;
+                _pluginManager.DisablePlugin(plugin);
+                if (existing != null) viewModel.WorkspaceItems.Remove(existing);
+            }
+
+            SettingsManager.Settings.PluginEnabled[plugin.Name] = shouldBeEnabled;
+            SettingsManager.Save();
+            WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, plugin.Name, shouldBeEnabled);
         });
 
         _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
