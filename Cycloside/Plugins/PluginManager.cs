@@ -48,8 +48,8 @@ namespace Cycloside.Plugins
         private readonly Action<string>? _notify;
         private Timer? _reloadTimer;
 
-        // Factories for built-in plugins so they can be recreated on reload
-        private readonly List<Func<IPlugin>> _builtInFactories = new();
+        // Factories for built-in plugins keyed by name so duplicates are avoided
+        private readonly Dictionary<string, Func<IPlugin>> _builtInFactories = new();
 
         /// <summary>
         /// Raised whenever <see cref="ReloadPlugins"/> completes successfully.
@@ -228,15 +228,20 @@ namespace Cycloside.Plugins
         {
             lock (_pluginLock)
             {
-                _builtInFactories.Add(factory);
-                AddPlugin(factory());
+                var instance = factory();
+                if (!_builtInFactories.ContainsKey(instance.Name))
+                {
+                    _builtInFactories[instance.Name] = factory;
+                }
+
+                AddPlugin(instance);
             }
         }
 
         // Instantiate all registered built-in plugins. Used during ReloadPlugins().
         private void LoadBuiltInPlugins()
         {
-            foreach (var factory in _builtInFactories)
+            foreach (var factory in _builtInFactories.Values)
             {
                 AddPlugin(factory());
             }
