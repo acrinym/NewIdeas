@@ -10,6 +10,10 @@ namespace Cycloside.ViewModels
     {
         public ObservableCollection<IPlugin> AvailablePlugins { get; }
 
+        public ObservableCollection<WorkspaceItemViewModel> WorkspaceItems { get; } = new();
+        [ObservableProperty]
+        private WorkspaceItemViewModel? _selectedWorkspaceItem;
+
         public ICommand? ExitCommand { get; set; }
         public ICommand? StartPluginCommand { get; set; }
 
