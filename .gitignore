@@ -10,3 +10,8 @@ Cycloside/AvaloniaProjectSource.txt
 Cycloside/output.ps1
 allfiles.txt
 AllFiles.txt
+
+# Ignore build artifacts
+bin/
+obj/
+Cycloside/CombinedCode.txt
