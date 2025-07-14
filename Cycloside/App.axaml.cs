@@ -65,7 +65,7 @@ public partial class App : Application
     
     private MainWindow CreateMainWindow(AppSettings settings)
     {
-        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), msg => Logger.Log(msg));
+        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify);
         
         // Subscribe to plugin reloads to update the UI when plugins are refreshed.
         _pluginManager.PluginsReloaded += OnPluginsReloaded;
@@ -193,6 +193,7 @@ public partial class App : Application
         TryAdd(() => new DiskUsagePlugin());
         TryAdd(() => new TerminalPlugin());
         TryAdd(() => new LogViewerPlugin());
+        TryAdd(() => new NotificationCenterPlugin());
         TryAdd(() => new EnvironmentEditorPlugin());
         TryAdd(() => new JezzballPlugin());
         TryAdd(() => new WidgetHostPlugin(manager));
