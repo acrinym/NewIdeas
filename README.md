@@ -119,7 +119,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 
 ## Building
 
-Ensure the .NET 8 SDK is installed. Compile the main application with:
+Ensure the .NET 8 SDK is installed (download from https://dotnet.microsoft.com/download or `sudo apt-get install dotnet-sdk-8.0`). Compile the main application with:
 
 ```bash
 dotnet build Cycloside/Cycloside.csproj
