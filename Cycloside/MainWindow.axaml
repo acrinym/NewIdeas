@@ -12,18 +12,10 @@
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource ApplicationBackgroundBrush}">
 
-    <!--
-      The main window uses a DockPanel to structure the core UI elements:
-      - A Menu is docked to the top.
-      - A status bar could be docked to the bottom.
-      - The main content area fills the rest of the space.
-    -->
     <DockPanel>
 
-        <!-- === Top Menu Bar === -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <!-- The Exit command will be handled by the ViewModel -->
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
             </MenuItem>
             <MenuItem Header="_Plugins"
@@ -68,7 +60,14 @@
                         SelectedItem="{Binding SelectedWorkspaceItem, Mode=TwoWay}">
                 <TabControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:WorkspaceItemViewModel">
-                        <TextBlock Text="{Binding Header}" Margin="5,2"/>
+                        <DockPanel>
+                            <Button Content="⤢"
+                                    DockPanel.Dock="Right"
+                                    Padding="0"
+                                    Width="18" Height="18"
+                                    Command="{Binding DetachCommand}"/>
+                            <TextBlock Text="{Binding Header}" Margin="5,2"/>
+                        </DockPanel>
                     </DataTemplate>
                 </TabControl.ItemTemplate>
                 <TabControl.ContentTemplate>

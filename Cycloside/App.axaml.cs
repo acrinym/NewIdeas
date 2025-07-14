@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Input; // Added for RelayCommand
 
 namespace Cycloside;
 
@@ -65,7 +66,7 @@ public partial class App : Application
     
     private MainWindow CreateMainWindow(AppSettings settings)
     {
-        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify);
+        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), global::Cycloside.Services.NotificationCenter.Notify);
         
         // Subscribe to plugin reloads to update the UI when plugins are refreshed.
         _pluginManager.PluginsReloaded += OnPluginsReloaded;
@@ -80,6 +81,16 @@ public partial class App : Application
         {
             DataContext = viewModel
         };
+
+        void DetachWorkspaceItem(WorkspaceItemViewModel item)
+        {
+            if (item.Plugin is IWorkspaceItem workspace)
+            {
+                workspace.UseWorkspace = false;
+                item.Plugin.Start();
+            }
+            viewModel.WorkspaceItems.Remove(item);
+        }
 
         viewModel.ExitCommand = new RelayCommand(() => Shutdown());
         
@@ -97,7 +108,7 @@ public partial class App : Application
                     workspace.UseWorkspace = true;
                     _pluginManager.EnablePlugin(plugin);
                     var view = workspace.BuildWorkspaceView();
-                    var vm = new WorkspaceItemViewModel(plugin.Name, view, plugin);
+                    var vm = new WorkspaceItemViewModel(plugin.Name, view, plugin, DetachWorkspaceItem);
                     viewModel.WorkspaceItems.Add(vm);
                     viewModel.SelectedWorkspaceItem = vm;
                 }
