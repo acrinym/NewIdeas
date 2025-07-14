@@ -61,6 +61,16 @@ also POST events to `http://localhost:4123/trigger` to control plugins from
 other tools or scripts. Include your pre‑shared token via the `X-Api-Token`
 header or `?token=` query string or the request will be rejected with a 401.
 
+### Enabling the Remote API
+
+`RemoteApiServer` starts automatically when Cycloside runs. Set your token in
+`settings.json` under `RemoteApiToken` to secure the endpoint. Then you can send
+events over HTTP:
+
+```bash
+curl -X POST -H "X-Api-Token: <token>" http://localhost:4123/trigger -d "my:event"
+```
+
 ## ⌨️ Global Hotkeys
 
 Cycloside registers system-wide shortcuts using Avalonia's hotkey framework.
