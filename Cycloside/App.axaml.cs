@@ -18,7 +18,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.Input; // Added for RelayCommand
+using CommunityToolkit.Mvvm.Input;
 
 namespace Cycloside;
 
@@ -66,7 +66,7 @@ public partial class App : Application
     
     private MainWindow CreateMainWindow(AppSettings settings)
     {
-        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), global::Cycloside.Services.NotificationCenter.Notify);
+        _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify);
         
         // Subscribe to plugin reloads to update the UI when plugins are refreshed.
         _pluginManager.PluginsReloaded += OnPluginsReloaded;
@@ -241,15 +241,25 @@ public partial class App : Application
 
     private void RegisterHotkeys(PluginManager manager)
     {
-        HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
+        foreach (var kv in SettingsManager.Settings.Hotkeys)
         {
-            var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
-            if (plugin != null)
+            KeyGesture gesture;
+            try { gesture = KeyGesture.Parse(kv.Value); }
+            catch { continue; }
+
+            if (kv.Key == "WidgetHost")
             {
-                if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
-                else manager.EnablePlugin(plugin);
+                HotkeyManager.Register(gesture, () =>
+                {
+                    var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
+                    if (plugin != null)
+                    {
+                        if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
+                        else manager.EnablePlugin(plugin);
+                    }
+                });
             }
-        });
+        }
     }
 
     private void Shutdown()
@@ -316,6 +326,8 @@ public partial class App : Application
                 new NativeMenuItemSeparator(),
                 logsMenu, // **Add the new Logs menu here**
                 new NativeMenuItemSeparator(),
+                BuildProfilesMenu(manager),
+                new NativeMenuItemSeparator(),
                 pluginsMenu,
                 volatileMenu,
                 new NativeMenuItem("Open Plugins Folder") { Command = new RelayCommand(() => {
@@ -366,6 +378,18 @@ public partial class App : Application
         menuItem.CommandParameter = menuItem;
 
         return menuItem;
+    }
+
+    private NativeMenuItem BuildProfilesMenu(PluginManager manager)
+    {
+        var menu = new NativeMenuItem("Profiles") { Menu = new NativeMenu() };
+        foreach (var name in WorkspaceProfiles.ProfileNames)
+        {
+            var item = new NativeMenuItem(name);
+            item.Click += (_, _) => WorkspaceProfiles.Apply(name, manager);
+            menu.Menu!.Items.Add(item);
+        }
+        return menu;
     }
 
     private NativeMenuItem BuildVolatileScriptMenuItem(string title, FilePickerFileType filter, Action<string> scriptRunner)

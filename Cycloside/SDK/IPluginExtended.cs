@@ -2,6 +2,10 @@ using System;
 
 namespace Cycloside.Plugins;
 
+/// <summary>
+/// Optional extension interface for plugins that want notifications about
+/// global events such as settings changes or crash handling.
+/// </summary>
 public interface IPluginExtended : IPlugin
 {
     /// <summary>

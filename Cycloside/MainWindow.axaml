@@ -42,11 +42,6 @@
         </Menu>
 
         <!-- === Main Content Area === -->
-        <!-- 
-          This Canvas acts as the "desktop" or "workspace" for your application.
-          Plugins like the Widget Host will add their UI elements here.
-          The background is a subtle radial gradient for visual appeal.
-        -->
         <Grid>
             <Canvas Name="DesktopCanvas">
                 <Canvas.Background>
