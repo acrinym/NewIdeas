@@ -148,30 +148,31 @@ public partial class App : Application
 
     private void LoadAllPlugins(PluginManager manager, AppSettings settings)
     {
-        void TryAdd(IPlugin plugin)
+        void TryAdd(Func<IPlugin> factory)
         {
+            var plugin = factory();
             if (!settings.DisableBuiltInPlugins || settings.SafeBuiltInPlugins.GetValueOrDefault(plugin.Name, false))
-                manager.AddPlugin(plugin);
+                manager.AddBuiltInPlugin(factory);
         }
 
-        TryAdd(new DateTimeOverlayPlugin());
-        TryAdd(new MP3PlayerPlugin());
-        TryAdd(new MacroPlugin());
-        TryAdd(new TextEditorPlugin());
-        TryAdd(new WallpaperPlugin());
-        TryAdd(new ClipboardManagerPlugin());
-        TryAdd(new FileWatcherPlugin());
-        TryAdd(new ProcessMonitorPlugin());
-        TryAdd(new TaskSchedulerPlugin());
-        TryAdd(new DiskUsagePlugin());
-        TryAdd(new TerminalPlugin());
-        TryAdd(new LogViewerPlugin());
-        TryAdd(new EnvironmentEditorPlugin());
-        TryAdd(new JezzballPlugin());
-        TryAdd(new WidgetHostPlugin(manager));
-        TryAdd(new WinampVisHostPlugin());
-        TryAdd(new QBasicRetroIDEPlugin());
-        TryAdd(new ScreenSaverPlugin());
+        TryAdd(() => new DateTimeOverlayPlugin());
+        TryAdd(() => new MP3PlayerPlugin());
+        TryAdd(() => new MacroPlugin());
+        TryAdd(() => new TextEditorPlugin());
+        TryAdd(() => new WallpaperPlugin());
+        TryAdd(() => new ClipboardManagerPlugin());
+        TryAdd(() => new FileWatcherPlugin());
+        TryAdd(() => new ProcessMonitorPlugin());
+        TryAdd(() => new TaskSchedulerPlugin());
+        TryAdd(() => new DiskUsagePlugin());
+        TryAdd(() => new TerminalPlugin());
+        TryAdd(() => new LogViewerPlugin());
+        TryAdd(() => new EnvironmentEditorPlugin());
+        TryAdd(() => new JezzballPlugin());
+        TryAdd(() => new WidgetHostPlugin(manager));
+        TryAdd(() => new WinampVisHostPlugin());
+        TryAdd(() => new QBasicRetroIDEPlugin());
+        TryAdd(() => new ScreenSaverPlugin());
     }
 
     private void RegisterHotkeys(PluginManager manager)

@@ -48,6 +48,9 @@ namespace Cycloside.Plugins
         private readonly Action<string>? _notify;
         private Timer? _reloadTimer;
 
+        // Factories for built-in plugins so they can be recreated on reload
+        private readonly List<Func<IPlugin>> _builtInFactories = new();
+
         /// <summary>
         /// Raised whenever <see cref="ReloadPlugins"/> completes successfully.
         /// The application listens to this to rebuild UI elements such as the
@@ -156,15 +159,12 @@ namespace Cycloside.Plugins
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
+                LoadBuiltInPlugins();
                 LoadPlugins();
                 StartWatching();
                 _notify?.Invoke("Plugins have been reloaded.");
 
-                // Notify any listeners that plugins have changed so UI can refresh.
-                PluginsReloaded?.Invoke();
-
-                // Re-apply settings to the newly loaded plugins so reloaded
-                // plugins are enabled or disabled based on the active profile.
+                // Re-apply settings so the new plugins pick up enabled state
                 WorkspaceProfiles.Apply(SettingsManager.Settings.ActiveProfile, this);
 
                 ApplyEnabledSettings();
@@ -218,6 +218,27 @@ namespace Cycloside.Plugins
                 SettingsManager.Save(); // Consider debouncing this if it's slow
 
                 _pluginInfos.Add(info);
+            }
+        }
+
+        /// <summary>
+        /// Registers a built-in plugin along with a factory so it can be recreated on reload.
+        /// </summary>
+        public void AddBuiltInPlugin(Func<IPlugin> factory)
+        {
+            lock (_pluginLock)
+            {
+                _builtInFactories.Add(factory);
+                AddPlugin(factory());
+            }
+        }
+
+        // Instantiate all registered built-in plugins. Used during ReloadPlugins().
+        private void LoadBuiltInPlugins()
+        {
+            foreach (var factory in _builtInFactories)
+            {
+                AddPlugin(factory());
             }
         }
         
