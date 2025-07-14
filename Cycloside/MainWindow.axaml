@@ -48,7 +48,14 @@
                         SelectedItem="{Binding SelectedWorkspaceItem, Mode=TwoWay}">
                 <TabControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:WorkspaceItemViewModel">
-                        <TextBlock Text="{Binding Header}" Margin="5,2"/>
+                        <DockPanel>
+                            <Button Content="⤢"
+                                    DockPanel.Dock="Right"
+                                    Padding="0"
+                                    Width="18" Height="18"
+                                    Command="{Binding DetachCommand}"/>
+                            <TextBlock Text="{Binding Header}" Margin="5,2"/>
+                        </DockPanel>
                     </DataTemplate>
                 </TabControl.ItemTemplate>
                 <TabControl.ContentTemplate>
