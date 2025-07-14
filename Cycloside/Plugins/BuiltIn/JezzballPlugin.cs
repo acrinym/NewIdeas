@@ -130,7 +130,8 @@ namespace Cycloside.Plugins.BuiltIn
         {
             var dir = Path.Combine(AppContext.BaseDirectory, "Skins");
             return Directory.Exists(dir)
-                ? Directory.GetFiles(dir, "*.axaml").Select(Path.GetFileNameWithoutExtension)
+                ? Directory.GetFiles(dir, "*.axaml")
+                    .Select(f => Path.GetFileNameWithoutExtension(f)!)
                 : Array.Empty<string>();
         }
     }
@@ -209,9 +210,18 @@ namespace Cycloside.Plugins.BuiltIn
 
         private static PathGeometry CreatePath(params Point[] points)
         {
-            var figure = new PathFigure { StartPoint = points[0], IsClosed = true };
+            var figure = new PathFigure
+            {
+                StartPoint = points[0],
+                IsClosed = true,
+                Segments = new PathSegments()
+            };
             figure.Segments.Add(new PolyLineSegment(points.Skip(1)) { IsStroked = true });
-            return new PathGeometry { Figures = { figure } };
+
+            var geometry = new PathGeometry();
+            geometry.Figures ??= new PathFigures();
+            geometry.Figures.Add(figure);
+            return geometry;
         }
     }
 
