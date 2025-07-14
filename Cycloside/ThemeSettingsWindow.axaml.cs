@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using Cycloside.Plugins;
 using Cycloside.Services;
-using Avalonia.Media;
 using Avalonia.Layout;
 
 namespace Cycloside;

@@ -32,7 +32,7 @@ namespace Cycloside.Plugins.BuiltIn
         private string _qb64Path = "qb64pe"; // Updated default
         private Process? _qb64Process;
         private string? _currentFile;
-        private string? _projectPath;
+        private string? _projectPath = string.Empty;
         private bool _isCompiling = false;
         private bool _hasUnsavedChanges = false;
         
