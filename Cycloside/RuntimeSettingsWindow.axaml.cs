@@ -38,7 +38,7 @@ public partial class RuntimeSettingsWindow : Window
     }
 
     // Parameterless constructor for designer support
-    public RuntimeSettingsWindow() : this(new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), _ => Logger.Log("Designer")))
+    public RuntimeSettingsWindow() : this(new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify))
     {
     }
 
