@@ -44,7 +44,7 @@ public partial class VolatileRunnerWindow : Window
         //    This prevents the app from crashing.
         if (langBox == null || codeBox == null)
         {
-            Console.WriteLine("Error: UI controls 'LangBox' or 'CodeBox' could not be found.");
+            Logger.Log("Error: UI controls 'LangBox' or 'CodeBox' could not be found.");
             return;
         }
 
