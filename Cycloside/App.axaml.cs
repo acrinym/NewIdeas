@@ -84,23 +84,49 @@ public partial class App : Application
         viewModel.ExitCommand = new RelayCommand(() => Shutdown());
         
         // Toggle plugin enablement from the main window.
-        viewModel.StartPluginCommand = new RelayCommand(plugin =>
+        viewModel.StartPluginCommand = new RelayCommand(pluginObj =>
         {
-            if (plugin is not IPlugin p || _pluginManager is null) return;
-            
-            bool shouldBeEnabled = !_pluginManager.IsEnabled(p);
-            if (shouldBeEnabled)
+            if (pluginObj is not IPlugin plugin || _pluginManager is null) return;
+
+            if (plugin is IWorkspaceItem workspace)
             {
-                _pluginManager.EnablePlugin(p);
+                var existing = viewModel.WorkspaceItems.FirstOrDefault(w => w.Plugin == plugin);
+                bool enable = existing is null;
+                if (enable)
+                {
+                    workspace.UseWorkspace = true;
+                    _pluginManager.EnablePlugin(plugin);
+                    var view = workspace.BuildWorkspaceView();
+                    var vm = new WorkspaceItemViewModel(plugin.Name, view, plugin);
+                    viewModel.WorkspaceItems.Add(vm);
+                    viewModel.SelectedWorkspaceItem = vm;
+                }
+                else
+                {
+                    workspace.UseWorkspace = false;
+                    _pluginManager.DisablePlugin(plugin);
+                    viewModel.WorkspaceItems.Remove(existing!);
+                }
+                SettingsManager.Settings.PluginEnabled[plugin.Name] = enable;
+                SettingsManager.Save();
+                WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, plugin.Name, enable);
             }
             else
             {
-                _pluginManager.DisablePlugin(p);
-            }
+                bool shouldBeEnabled = !_pluginManager.IsEnabled(plugin);
+                if (shouldBeEnabled)
+                {
+                    _pluginManager.EnablePlugin(plugin);
+                }
+                else
+                {
+                    _pluginManager.DisablePlugin(plugin);
+                }
 
-            SettingsManager.Settings.PluginEnabled[p.Name] = shouldBeEnabled;
-            SettingsManager.Save();
-            WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, p.Name, shouldBeEnabled);
+                SettingsManager.Settings.PluginEnabled[plugin.Name] = shouldBeEnabled;
+                SettingsManager.Save();
+                WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, plugin.Name, shouldBeEnabled);
+            }
         });
 
         _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
