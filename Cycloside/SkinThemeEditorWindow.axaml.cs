@@ -121,4 +121,16 @@ public partial class SkinThemeEditorWindow : Window
             }
         }
     }
+
+    private SkinPreviewWindow? _previewWindow;
+
+    private void PreviewSkin(object? sender, RoutedEventArgs e)
+    {
+        if (_editor == null) return;
+
+        _previewWindow ??= new SkinPreviewWindow();
+        _previewWindow.LoadPreview(_editor.Text ?? string.Empty);
+        _previewWindow.Show();
+        _previewWindow.Activate();
+    }
 }

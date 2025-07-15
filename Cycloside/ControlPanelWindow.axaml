@@ -16,6 +16,8 @@
                 </StackPanel>
                 <Button Content="Save" HorizontalAlignment="Right"
                         Command="{Binding SaveCommand}"/>
+                <Button Content="Hotkey Settings..." Margin="0,10,0,0"
+                        Command="{Binding OpenHotkeySettingsCommand}"/>
             </StackPanel>
         </TabItem>
         <TabItem Header="Plugins">

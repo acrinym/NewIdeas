@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Cycloside.Plugins;
+using Cycloside.Services;
 
 namespace Cycloside;
 
@@ -11,6 +12,7 @@ public class WorkspaceProfile
     public string Name { get; set; } = string.Empty;
     public Dictionary<string,bool> Plugins { get; set; } = new();
     public string Wallpaper { get; set; } = string.Empty;
+    public string Theme { get; set; } = string.Empty;
 }
 
 public static class WorkspaceProfiles
@@ -19,6 +21,8 @@ public static class WorkspaceProfiles
     private static Dictionary<string,WorkspaceProfile> _profiles = Load();
 
     public static IReadOnlyDictionary<string,WorkspaceProfile> Profiles => _profiles;
+
+    public static IEnumerable<string> ProfileNames => _profiles.Keys;
 
     private static Dictionary<string,WorkspaceProfile> Load()
     {
@@ -61,6 +65,9 @@ public static class WorkspaceProfiles
 
         if(!string.IsNullOrWhiteSpace(profile.Wallpaper))
             WallpaperHelper.SetWallpaper(profile.Wallpaper);
+
+        if(!string.IsNullOrWhiteSpace(profile.Theme))
+            ThemeManager.LoadGlobalTheme(profile.Theme);
 
         SettingsManager.Settings.ActiveProfile = name;
         SettingsManager.Save();

@@ -29,6 +29,7 @@ public class PluginDevWizard : Window
         _typeBox = new ComboBox { SelectedIndex = 0 };
         _typeBox.Items.Clear();
         _typeBox.Items.Add("Basic DLL");
+        _typeBox.Items.Add("DLL + Test Project");
         _typeBox.Items.Add("Lua volatile");
         _typeBox.Items.Add("C# volatile");
 
@@ -52,9 +53,12 @@ public class PluginDevWizard : Window
         switch (_typeBox.SelectedIndex)
         {
             case 0:
-                Program.GeneratePluginTemplate(name);
+                Program.GeneratePluginTemplate(name, false);
                 break;
             case 1:
+                Program.GeneratePluginTemplate(name, true);
+                break;
+            case 2:
                 File.WriteAllText(Path.Combine(dir, $"{name}.lua"), "print(\"Lua says hi!\")\nreturn os.date()");
                 break;
             default:

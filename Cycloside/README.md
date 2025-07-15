@@ -23,6 +23,7 @@ Built-in examples:
 - **Text Editor** – small editor for notes or Markdown
 - **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
 - **ModPlug Tracker** – play `.mod`, `.it`, `.s3m` or `.xm` music modules
+- **Notification Center** – view messages from plugins and the core app
 - **ScreenSaver Host** – run vintage 3D text and flower box screensavers
 - **Terminal** – simple shell window for running commands
 - **Widget Host** – surface plugins as dockable widgets
@@ -77,11 +78,12 @@ Cycloside registers system-wide shortcuts using Avalonia's hotkey framework.
 On macOS a small Swift helper hooks into `NSEvent` so hotkeys fire even when
 the application is unfocused. Press **Ctrl+Alt+W** at any time to summon the
 widget host. Profiles and other features can be wired up to custom hotkeys.
+Use **Settings → Hotkey Settings** to remap shortcuts from the GUI.
 The helper source lives in `Hotkeys/HotkeyMonitor.swift` and should be built as
 `libHotkeyMonitor.dylib` placed next to the application binary.
 
 ## 🎨 Theming
-See [docs/theming-skinning.md](../docs/theming-skinning.md) for details on applying themes, skins and custom cursors. Example files live in [docs/examples](../docs/examples).
+See [docs/theming-skinning.md](../docs/theming-skinning.md) for details on applying themes, skins and custom cursors. A Skin Preview window lets you test styles before saving. Example files live in [docs/examples](../docs/examples).
 
 ## 🧪 GUI Plugin Manager
 

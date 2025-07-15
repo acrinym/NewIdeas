@@ -28,15 +28,17 @@
             </MenuItem>
             <MenuItem Header="_Plugins"
                       ItemsSource="{Binding AvailablePlugins}">
-                <!--
-                  Dynamically generate a menu item for each available plugin.
-                  Each item invokes the StartPluginCommand when clicked.
-                -->
                 <MenuItem.ItemTemplate>
                     <DataTemplate x:DataType="p:IPlugin">
-                        <MenuItem Header="{Binding Name}"
-                                  Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
-                                  CommandParameter="{Binding}" />
+                        <MenuItem Header="{Binding Name}">
+                            <MenuItem Header="Open as Tab"
+                                      Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
+                                      CommandParameter="{Binding}"
+                                      IsVisible="{Binding Converter={StaticResource IsWorkspaceItemConverter}}"/>
+                            <MenuItem Header="Open in Window"
+                                      Command="{Binding DataContext.StartPluginWindowCommand, ElementName=RootWindow}"
+                                      CommandParameter="{Binding}" />
+                        </MenuItem>
                     </DataTemplate>
                 </MenuItem.ItemTemplate>
             </MenuItem>
@@ -53,14 +55,29 @@
           Plugins like the Widget Host will add their UI elements here.
           The background is a subtle radial gradient for visual appeal.
         -->
-        <Canvas Name="DesktopCanvas">
-            <Canvas.Background>
-                <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="70%" RadiusY="70%">
-                    <GradientStop Color="{DynamicResource ThemeAccentColor4}" Offset="0" />
-                    <GradientStop Color="{DynamicResource ThemeBackgroundColor}" Offset="1" />
-                </RadialGradientBrush>
-            </Canvas.Background>
-        </Canvas>
+        <Grid>
+            <Canvas Name="DesktopCanvas">
+                <Canvas.Background>
+                    <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="70%" RadiusY="70%">
+                        <GradientStop Color="{DynamicResource ThemeAccentColor4}" Offset="0" />
+                        <GradientStop Color="{DynamicResource ThemeBackgroundColor}" Offset="1" />
+                    </RadialGradientBrush>
+                </Canvas.Background>
+            </Canvas>
+            <TabControl ItemsSource="{Binding WorkspaceItems}"
+                        SelectedItem="{Binding SelectedWorkspaceItem, Mode=TwoWay}">
+                <TabControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:WorkspaceItemViewModel">
+                        <TextBlock Text="{Binding Header}" Margin="5,2"/>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+                <TabControl.ContentTemplate>
+                    <DataTemplate x:DataType="vm:WorkspaceItemViewModel">
+                        <ContentControl Content="{Binding View}" />
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </TabControl>
+        </Grid>
 
     </DockPanel>
 </Window>
