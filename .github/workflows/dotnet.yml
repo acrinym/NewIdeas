@@ -18,12 +18,14 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore Cycloside/Cycloside.csproj
-
+        working-directory: Cycloside
+        run: dotnet restore
 
       - name: Build
-        run: dotnet build Cycloside/Cycloside.csproj --configuration Release --no-restore
+        working-directory: Cycloside
+        run: dotnet build --configuration Release --no-restore
 
       - name: Test
         if: ${{ hashFiles('**/*Tests.csproj') != '' }}
+        working-directory: Cycloside
         run: dotnet test --no-build --verbosity normal
