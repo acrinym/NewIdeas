@@ -16,6 +16,8 @@ public interface IPluginExtended : IPlugin
 
 The plugin manager catches exceptions thrown during `Start` and `Stop` when isolation mode is enabled. Crashes are logged if crash logging is turned on and stack traces are written to an OS specific log directory. Plugins exposing a widget should return an implementation via the `Widget` property.
 
+Plugins that implement `IWorkspaceItem` can render their UI inside the unified workspace rather than a separate window. The host sets `UseWorkspace` to `true` when the item is displayed as a tab or docked panel.
+
 When **Plugin Isolation** is enabled in the Control Panel each plugin loads in its own context. This allows hot reloading without file locks and lets Cycloside unload crashing plugins cleanly.
 
 ## Plugin Bus

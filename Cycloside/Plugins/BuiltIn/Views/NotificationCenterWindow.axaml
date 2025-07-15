@@ -1,0 +1,9 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:view="clr-namespace:Cycloside.Plugins.BuiltIn.Views"
+        x:Class="Cycloside.Plugins.BuiltIn.Views.NotificationCenterWindow"
+        x:DataType="local:NotificationCenterPlugin"
+        xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn"
+        Title="Notifications" Width="400" Height="300">
+    <view:NotificationCenterView />
+</Window>
