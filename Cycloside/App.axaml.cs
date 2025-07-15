@@ -18,7 +18,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.Input;
 
 namespace Cycloside;
 
@@ -224,6 +223,7 @@ public partial class App : Application
         TryAdd(() => new TextEditorPlugin());
         TryAdd(() => new WallpaperPlugin());
         TryAdd(() => new ClipboardManagerPlugin());
+        TryAdd(() => new CharacterMapPlugin());
         TryAdd(() => new FileWatcherPlugin());
         TryAdd(() => new ProcessMonitorPlugin());
         TryAdd(() => new TaskSchedulerPlugin());
