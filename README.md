@@ -100,8 +100,3 @@ Ensure the .NET 8 SDK is installed (download from https://dotnet.microsoft.com/d
 
 ```bash
 dotnet build Cycloside/Cycloside.csproj
-```
-
-GitHub Actions automatically build the project using
-[`dotnet.yml`](.github/workflows/dotnet.yml). Unit tests will run when they are
-added.
