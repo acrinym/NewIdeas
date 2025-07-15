@@ -8,10 +8,8 @@
             <TextBox x:Name="InputBox" Width="600" />
             <Button x:Name="RunButton" Content="Run" />
         </StackPanel>
-        <TextBox x:Name="OutputBox"
-                 AcceptsReturn="True"
-                 IsReadOnly="True"
-                 FontFamily="monospace"
-                 Margin="5" />
+        <ScrollViewer x:Name="OutputScroll" Margin="5" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="OutputPanel" />
+        </ScrollViewer>
     </DockPanel>
 </Window>

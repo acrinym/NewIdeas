@@ -29,7 +29,7 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 - [~] **Terminal Emulator Plugin**
     - [x] Shell command execution
     - [x] Command history (arrow keys)
-    - [ ] Styled output (color text, scrollback)
+    - [x] Styled output (color text, scrollback)
 - [ ] **Network Tools Plugin**
     - [ ] Ping, traceroute utilities
     - [ ] Port scanner
