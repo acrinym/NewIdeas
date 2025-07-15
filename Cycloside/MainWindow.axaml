@@ -41,7 +41,6 @@
             </MenuItem>
         </Menu>
 
-        <!-- === Main Content Area === -->
         <Grid>
             <Canvas Name="DesktopCanvas">
                 <Canvas.Background>
