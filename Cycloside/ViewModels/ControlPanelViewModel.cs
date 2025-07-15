@@ -46,4 +46,7 @@ public partial class ControlPanelViewModel : ObservableObject
 
     [RelayCommand]
     private void OpenRuntimeSettings() => new RuntimeSettingsWindow(_manager).Show();
+
+    [RelayCommand]
+    private void OpenHotkeySettings() => new HotkeySettingsWindow().Show();
 }

@@ -31,6 +31,7 @@ Plugins can call into several helper classes shipped with the main application:
 - `CursorManager` – assign `StandardCursorType` values from settings.
 - `WindowEffectsManager` – enable compositor/physics effects on a window.
 - `PluginMarketplace` – fetch and install plugin packages from remote feeds.
+- `NotificationCenter` – broadcast messages that the Notification Center plugin can display.
 
 These classes live in the `Cycloside` namespace and are available when you
 reference `Cycloside.dll`.
@@ -60,6 +61,9 @@ You can generate a boilerplate plugin with:
 ```bash
  dotnet run -- --newplugin MyPlugin
 ```
+Passing `--with-tests` creates a nested test project.
+Alternatively use **Settings → Generate New Plugin** inside the app to pick from
+"Basic DLL", "DLL + Test Project", or volatile script templates.
 
 ## Volatile Scripts
 
@@ -72,6 +76,22 @@ Each plugin should expose `Name`, `Description` and `Version`. The plugin manage
 If your plugin exposes a dockable widget, return an `IWidget` implementation via
 the `Widget` property. Set `ForceDefaultTheme` to `true` if your UI should always
 use the global theme and ignore component skins.
+
+## Workspace Integration
+
+Plugins can opt into the unified workspace by implementing `IWorkspaceItem`:
+
+```csharp
+public interface IWorkspaceItem
+{
+    Control BuildWorkspaceView();
+    bool UseWorkspace { get; set; }
+}
+```
+
+When `UseWorkspace` is `true` the host adds the returned view as a tab or docked
+panel. Plugins that also show their own window should hide it when running in
+workspace mode.
 
 ## Communication
 

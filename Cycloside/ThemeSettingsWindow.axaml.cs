@@ -22,7 +22,7 @@ public partial class ThemeSettingsWindow : Window
 
     // FIX: Add a parameterless constructor for XAML designer support.
     // This resolves the AVLN3001 build warning.
-    public ThemeSettingsWindow() : this(new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), _ => {}))
+    public ThemeSettingsWindow() : this(new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify))
     {
         // This constructor is used by the Avalonia designer and XAML loader.
         // It calls the main constructor with a temporary PluginManager instance.

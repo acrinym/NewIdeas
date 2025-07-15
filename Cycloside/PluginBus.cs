@@ -3,10 +3,20 @@ using System.Collections.Generic;
 
 namespace Cycloside;
 
+/// <summary>
+/// Lightweight publish/subscribe message bus used by plugins to communicate
+/// without taking hard dependencies on each other. Topics are arbitrary
+/// strings and payloads are passed as <see cref="object"/>.
+/// </summary>
 public static class PluginBus
 {
     private static readonly Dictionary<string,List<Action<object?>>> _subs = new();
 
+    /// <summary>
+    /// Subscribe to a specific topic.
+    /// </summary>
+    /// <param name="topic">Topic name.</param>
+    /// <param name="handler">Callback invoked with the published payload.</param>
     public static void Subscribe(string topic, Action<object?> handler)
     {
         lock(_subs)
@@ -20,6 +30,9 @@ public static class PluginBus
         }
     }
 
+    /// <summary>
+    /// Remove a previously registered handler.
+    /// </summary>
     public static void Unsubscribe(string topic, Action<object?> handler)
     {
         lock(_subs)
@@ -33,6 +46,9 @@ public static class PluginBus
         }
     }
 
+    /// <summary>
+    /// Publish an event on a topic. Any subscriber receives the payload.
+    /// </summary>
     public static void Publish(string topic, object? payload = null)
     {
         List<Action<object?>>? list = null;

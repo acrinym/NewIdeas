@@ -49,17 +49,21 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 * Run Lua or C# snippets as volatile scripts straight from the tray menu.
 * Cross-platform auto-start and settings stored in `settings.json`.
 * Rolling log files capture errors and plugin crashes with tray notifications.
-* Generate new plugins via `dotnet run -- --newplugin` or from **Settings → Generate New Plugin**.
+* Generate new plugins via `dotnet run -- --newplugin` or from **Settings → Generate New Plugin**. Add `--with-tests` to scaffold a test project.
 * Plugins communicate through a publish/subscribe bus and a remote HTTP API for
-  triggering events.
+  triggering events, switching profiles or applying themes programmatically.
 * Global hotkeys work on Windows, Linux and macOS.
+* Hotkeys can be edited from the new Hotkey Settings window.
 * Built-in skin/theme engine with a live editor and custom cursors.
+* Preview skins before applying them thanks to the Skin Preview window. A sample
+  `SolarizedDark` skin is included.
 * GUI plugin manager to toggle and reload plugins or open the plugin folder.
 * Plugin marketplace downloads and verifies modules from remote feeds.
 * Skinnable widgets surface plugin features directly on the desktop.
 * Window effects like wobbly windows or drop shadows are plugin friendly.
 * Optional auto-update helper swaps in new versions using a checksum.
 * Dedicated logs menu surfaces recent errors from the tray.
+* A unified workspace shows compatible plugins as tabs or docked panels.
 
 </details>
 
@@ -74,6 +78,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `FileWatcherPlugin` | Watches a directory and logs file system events. |
 | `JezzballPlugin` | Simple recreation of the classic game. |
 | `LogViewerPlugin` | Tails a log file and filters lines on the fly. |
+| `NotificationCenterPlugin` | Aggregates messages broadcast via `NotificationCenter`. |
 | `MP3PlayerPlugin` | Basic audio player built on NAudio. |
 | `MacroPlugin` | Records keyboard macros and saves them to disk. Playback is Windows-only. |
 | `ModTrackerPlugin` | Plays and inspects tracker module files (MOD, IT, XM, etc.). |
@@ -105,6 +110,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `FileWatcherPlugin` | Watches a directory and logs file system events. |
 | `JezzballPlugin` | Simple recreation of the classic game. |
 | `LogViewerPlugin` | Tails a log file and filters lines on the fly. |
+| `NotificationCenterPlugin` | Aggregates messages broadcast via `NotificationCenter`. |
 | `MP3PlayerPlugin` | Basic audio player built on NAudio. |
 | `MacroPlugin` | Records keyboard macros and saves them to disk. Playback is Windows-only. |
 | `ProcessMonitorPlugin` | Lists running processes with CPU and memory usage. |
