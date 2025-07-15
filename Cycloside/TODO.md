@@ -12,10 +12,10 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 ---
 
 ## Core Plugin System
-- [ ] Implement `IPlugin` interface (`string Name`, `UserControl GetUI()`, `void Initialize()`)
-- [ ] Dynamic plugin loading from `/Plugins/*.dll` (reflection)
-- [ ] Register & display loaded plugins in main UI (tab or dockable panel)
-- [ ] Error handling: Safe fallback if a plugin fails to load
+- [x] Implement `IPlugin` interface (`string Name`, `UserControl GetUI()`, `void Initialize()`)
+- [x] Dynamic plugin loading from `/Plugins/*.dll` (reflection)
+- [x] Register & display loaded plugins in main UI (tab or dockable panel)
+- [x] Error handling: Safe fallback if a plugin fails to load
 
 ## Default Plugins
 - [ ] **Code Editor Plugin** (AvaloniaEdit)

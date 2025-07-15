@@ -20,6 +20,7 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore Cycloside/Cycloside.csproj
 
+
       - name: Build
         run: dotnet build Cycloside/Cycloside.csproj --configuration Release --no-restore
 
