@@ -42,3 +42,14 @@ Example:
 curl -X POST -H "X-Api-Token: <token>" http://localhost:4123/trigger -d "my:event"
 ```
 
+Additional endpoints are available for headless automation:
+
+* `POST /profile` – body contains the profile name to load.
+* `POST /theme` – body contains the theme name to apply.
+
+Example switching profile:
+
+```bash
+curl -X POST -H "X-Api-Token: <token>" http://localhost:4123/profile -d "Work"
+```
+

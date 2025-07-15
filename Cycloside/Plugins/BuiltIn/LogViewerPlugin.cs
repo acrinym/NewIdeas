@@ -23,6 +23,9 @@ namespace Cycloside.Plugins.BuiltIn
         private long _lastReadPosition = 0;
         private readonly List<string> _allLines = new List<string>();
         private string _currentFilter = string.Empty;
+        private string _severityFilter = "All";
+        private ComboBox? _severityBox;
+        private readonly Dictionary<string,long> _filePositions = new();
 
         private readonly SemaphoreSlim _fileReadLock = new SemaphoreSlim(1, 1);
 
@@ -74,6 +77,16 @@ namespace Cycloside.Plugins.BuiltIn
                     filterBox.Text = InitialFilter;
                     InitialFilter = string.Empty; // Reset so it only applies once
                 }
+            }
+
+            _severityBox = _window.FindControl<ComboBox>("SeverityBox");
+            if (_severityBox != null)
+            {
+                _severityBox.SelectionChanged += (_, _) =>
+                {
+                    _severityFilter = _severityBox.SelectedItem?.ToString() ?? "All";
+                    UpdateDisplayedLog();
+                };
             }
 
             var optionsPanel = _window.FindControl<StackPanel>("OptionsPanel") ?? new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Margin = new Avalonia.Thickness(5) };
@@ -135,23 +148,11 @@ namespace Cycloside.Plugins.BuiltIn
             var logDir = GetLogDirectory();
             if (!Directory.Exists(logDir))
             {
-                LogOnUIThread($"[INFO] Log directory not found at '{logDir}'. Please open a file manually.");
+                LogOnUIThread($"[INFO] Log directory not found at '{logDir}'.");
                 return;
             }
 
-            var latestLogFile = new DirectoryInfo(logDir)
-                .GetFiles("*.log")
-                .OrderByDescending(f => f.LastWriteTime)
-                .FirstOrDefault();
-            
-            if (latestLogFile != null)
-            {
-                await LoadFile(latestLogFile.FullName);
-            }
-            else
-            {
-                LogOnUIThread($"[INFO] No .log files found in '{logDir}'. Please open a file manually.");
-            }
+            await LoadAllLogsAsync(logDir);
         }
 
         private async Task LoadFile(string path)
@@ -161,7 +162,6 @@ namespace Cycloside.Plugins.BuiltIn
             if (!string.IsNullOrWhiteSpace(_currentFilePath) && File.Exists(_currentFilePath))
             {
                 await LoadInitialFileAsync();
-                StartWatching();
             }
         }
 
@@ -212,6 +212,24 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
+        private async Task LoadAllLogsAsync(string dir)
+        {
+            _allLines.Clear();
+            foreach (var file in Directory.GetFiles(dir, "*.log"))
+            {
+                try
+                {
+                    var lines = await File.ReadAllLinesAsync(file);
+                    _allLines.AddRange(lines);
+                }
+                catch (Exception ex)
+                {
+                    LogOnUIThread($"[ERROR] reading '{file}': {ex.Message}");
+                }
+            }
+            UpdateDisplayedLog();
+        }
+
         private async Task LoadInitialFileAsync()
         {
             if (string.IsNullOrEmpty(_currentFilePath) || _logBox == null) return;
@@ -248,73 +266,6 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
-        private void StartWatching()
-        {
-            _watcher?.Dispose();
-            if (string.IsNullOrEmpty(_currentFilePath)) return;
-
-            var directory = Path.GetDirectoryName(_currentFilePath);
-            var fileName = Path.GetFileName(_currentFilePath);
-            if (directory == null || fileName == null) return;
-            try
-            {
-                _watcher = new FileSystemWatcher(directory, fileName)
-                {
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
-                    EnableRaisingEvents = true
-                };
-                _watcher.Changed += async (s, e) => await OnFileChangedAsync();
-            }
-            catch (Exception ex)
-            {
-                LogOnUIThread($"[ERROR] Could not start watcher. Reason: {ex.Message}");
-            }
-        }
-
-        private async Task OnFileChangedAsync()
-        {
-            if (string.IsNullOrEmpty(_currentFilePath) || !_fileReadLock.Wait(0)) return;
-            try
-            {
-                List<string> newLines = new List<string>();
-                await Task.Run(() =>
-                {
-                    try
-                    {
-                        using var fs = new FileStream(_currentFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                        if (fs.Length < _lastReadPosition)
-                        {
-                            _allLines.Clear();
-                            _lastReadPosition = 0;
-                        }
-
-                        fs.Seek(_lastReadPosition, SeekOrigin.Begin);
-                        using var sr = new StreamReader(fs, Encoding.UTF8);
-                        string? line;
-                        while ((line = sr.ReadLine()) != null)
-                        {
-                            newLines.Add(line);
-                        }
-                        _lastReadPosition = fs.Position;
-                    }
-                    catch (IOException) { /* Ignore read errors */ }
-                    catch (Exception ex)
-                    {
-                        newLines.Add($"[ERROR] reading file change: {ex.Message}");
-                    }
-                });
-                
-                if (newLines.Any())
-                {
-                    _allLines.AddRange(newLines);
-                    UpdateDisplayedLog();
-                }
-            }
-            finally
-            {
-                _fileReadLock.Release();
-            }
-        }
 
         private void UpdateDisplayedLog()
         {
@@ -324,6 +275,11 @@ namespace Cycloside.Plugins.BuiltIn
             if (!string.IsNullOrWhiteSpace(_currentFilter))
             {
                 filteredLines = _allLines.Where(l => l.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.Equals(_severityFilter, "All", StringComparison.OrdinalIgnoreCase))
+            {
+                filteredLines = filteredLines.Where(l => l.Contains($"[{_severityFilter.ToUpper()}]"));
             }
 
             foreach (var line in filteredLines)

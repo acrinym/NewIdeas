@@ -61,6 +61,9 @@ You can generate a boilerplate plugin with:
 ```bash
  dotnet run -- --newplugin MyPlugin
 ```
+Passing `--with-tests` creates a nested test project.
+Alternatively use **Settings → Generate New Plugin** inside the app to pick from
+"Basic DLL", "DLL + Test Project", or volatile script templates.
 
 ## Volatile Scripts
 
