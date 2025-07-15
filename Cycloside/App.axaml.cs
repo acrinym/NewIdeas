@@ -247,18 +247,20 @@ public partial class App : Application
             try { gesture = KeyGesture.Parse(kv.Value); }
             catch { continue; }
 
-            if (kv.Key == "WidgetHost")
+            // Look for a plugin whose name matches the hotkey key (ignoring spaces)
+            var plugin = manager.Plugins.FirstOrDefault(p =>
+                string.Equals(p.Name.Replace(" ", string.Empty), kv.Key,
+                    StringComparison.OrdinalIgnoreCase));
+
+            if (plugin != null)
             {
                 HotkeyManager.Register(gesture, () =>
                 {
-                    var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
-                    if (plugin != null)
-                    {
-                        if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
-                        else manager.EnablePlugin(plugin);
-                    }
+                    if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
+                    else manager.EnablePlugin(plugin);
                 });
             }
+            // Additional actions can be handled here in the future
         }
     }
 
