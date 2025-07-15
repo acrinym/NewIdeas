@@ -1,16 +1,25 @@
-# QBasic Music Studio
+# QBasic Music Studio - FL Studio Inspired
 
-QBasic Music Studio is a small example application written for QB64 Phoenix Edition. It demonstrates how to compose simple melodies using the `PLAY`, `SOUND`, and `BEEP` commands while supporting basic mouse interaction.
+QBasic Music Studio is an enhanced music creation application for QB64 Phoenix Edition, inspired by FL Studio’s pattern-based sequencer and piano roll.
 
 Features include:
-
-- Mouse driven interface for entering notes.
-- Right-click any note to edit its pitch, octave and duration.
-- Press **N** to select what note or rest will be placed on a click.
-- Press **T** to change the current time signature.
-- Saving compositions to `.qms` files.
-- Loading and editing previously saved files.
+- **Pattern-Based Sequencer**: Create and switch between up to 16 patterns per track (key 'R' to add, 'A' to select).
+- **Multi-Track Support**: Up to 4 tracks (e.g., melody, bass) with key 'K' to switch.
+- **Graphical Piano Roll**: Click to place notes in a visual piano roll; right-click to edit.
+- **Volume Automation**: Set per-note volume (0 to 1) for dynamic control.
+- **Basic Delay Effect**: Adjustable delay (0 to 1) for playback.
+- **WAV Export Placeholder**: Key 'W' to export (currently a stub).
+- Mouse-driven interface for note entry and editing.
+- Right-click to edit pitch, octave, duration, and volume.
+- Press **N** to select note/rest for placement.
+- Press **T** to change time signature.
+- Press **M** to set tempo (60-240 BPM).
+- Press **C** to clear the song.
+- Press **U** to undo the last action.
+- Notes grouped by measures in the UI.
+- Save/load compositions to `.qms` files with error handling.
+- Immediate note playback for preview.
 - Reference sheet with octave/frequency chart.
 - Experimental MIDI to QMS converter stub.
 
-This directory only contains a minimal implementation intended as a starting point. See `QMusicStudio.bas` for the main program.
+This is a starting point for a simplified DAW in QB64-PE. See `QMusicStudio.bas` for the main program.
