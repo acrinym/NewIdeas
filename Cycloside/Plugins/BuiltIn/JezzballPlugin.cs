@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.Platform.Storage;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -121,9 +122,29 @@ namespace Cycloside.Plugins.BuiltIn
                 ((IList)skinMenu.Items).Add(item);
             }
 
+            var soundMenu = new MenuItem { Header = "Sounds" };
+            foreach (JezzballSoundEvent ev in Enum.GetValues(typeof(JezzballSoundEvent)))
+            {
+                var item = new MenuItem { Header = $"Set {ev}..." };
+                item.Click += async (_, _) =>
+                {
+                    if (_window == null) return;
+                    var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                    {
+                        Title = $"Select sound for {ev}",
+                        AllowMultiple = false,
+                        FileTypeFilter = new[] { new FilePickerFileType("Audio") { Patterns = new[] { "*.wav", "*.ogg" } } }
+                    });
+                    var file = result.FirstOrDefault();
+                    if (file?.Path.LocalPath != null) _control?.SetSound(ev, file.Path.LocalPath);
+                };
+                ((IList)soundMenu.Items).Add(item);
+            }
+
             menu.Items.Clear();
             ((IList)menu.Items).Add(themeMenu);
             ((IList)menu.Items).Add(skinMenu);
+            ((IList)menu.Items).Add(soundMenu);
         }
 
         private static IEnumerable<string> GetSkinNames()
@@ -140,8 +161,18 @@ namespace Cycloside.Plugins.BuiltIn
     #region Game Model (State and Logic)
 
     public enum WallOrientation { Vertical, Horizontal }
-    public enum BallType { Normal, Slow, Fast, Splitting }
-    public enum PowerUpType { IceWall }
+    public enum BallType { Normal, Slow, Fast, Splitting, Teleporting }
+    public enum PowerUpType { IceWall, ExtraLife, Freeze, DoubleScore }
+
+    public enum JezzballSoundEvent
+    {
+        Click,
+        WallBuild,
+        WallHit,
+        WallBreak,
+        BallBounce,
+        LevelComplete
+    }
 
     public class JezzballTheme
     {
@@ -153,10 +184,14 @@ namespace Cycloside.Plugins.BuiltIn
         public Pen IceWallPen { get; init; } = new Pen(Brushes.LightCyan, 5, lineCap: PenLineCap.Round);
         public Pen IcePreviewPen { get; init; } = new Pen(new SolidColorBrush(Colors.LightCyan, 0.8), 2, DashStyle.Dash);
         public IBrush PowerUpBrush { get; init; } = Brushes.Aqua;
+        public IBrush ExtraLifeBrush { get; init; } = Brushes.LimeGreen;
+        public IBrush FreezeBrush { get; init; } = Brushes.LightBlue;
+        public IBrush DoubleScoreBrush { get; init; } = Brushes.Gold;
         public IBrush BallNormalBrush { get; init; } = Brushes.Crimson;
         public IBrush BallSlowBrush { get; init; } = Brushes.DeepSkyBlue;
         public IBrush BallFastBrush { get; init; } = Brushes.OrangeRed;
         public IBrush BallSplittingBrush { get; init; } = Brushes.MediumPurple;
+        public IBrush BallTeleportBrush { get; init; } = Brushes.Gold;
     }
 
     // NEW: A static class to generate the procedural brushes for the FlowerBox theme.
@@ -240,6 +275,10 @@ namespace Cycloside.Plugins.BuiltIn
                 BallSlowBrush = FlowerBoxResources.CreateTetraBrush(),
                 BallFastBrush = FlowerBoxResources.CreatePyramidBrush(),
                 BallSplittingBrush = FlowerBoxResources.CreateCubeBrush(), // Can be another shape
+                BallTeleportBrush = Brushes.Gold,
+                ExtraLifeBrush = Brushes.LimeGreen,
+                FreezeBrush = Brushes.LightBlue,
+                DoubleScoreBrush = Brushes.Gold,
             },
             ["Classic"] = new JezzballTheme
             {
@@ -261,7 +300,11 @@ namespace Cycloside.Plugins.BuiltIn
                 BallNormalBrush = Brushes.Crimson,
                 BallSlowBrush = Brushes.DeepSkyBlue,
                 BallFastBrush = Brushes.OrangeRed,
-                BallSplittingBrush = Brushes.MediumPurple
+                BallSplittingBrush = Brushes.MediumPurple,
+                BallTeleportBrush = Brushes.Gold,
+                ExtraLifeBrush = Brushes.LimeGreen,
+                FreezeBrush = Brushes.LightBlue,
+                DoubleScoreBrush = Brushes.Gold
             },
             ["Neon"] = new JezzballTheme
             {
@@ -283,7 +326,11 @@ namespace Cycloside.Plugins.BuiltIn
                 BallNormalBrush = Brushes.HotPink,
                 BallSlowBrush = Brushes.Lime,
                 BallFastBrush = Brushes.Yellow,
-                BallSplittingBrush = Brushes.Cyan
+                BallSplittingBrush = Brushes.Cyan,
+                BallTeleportBrush = Brushes.Gold,
+                ExtraLifeBrush = Brushes.LimeGreen,
+                FreezeBrush = Brushes.LightBlue,
+                DoubleScoreBrush = Brushes.Gold
             },
             ["Pastel"] = new JezzballTheme
             {
@@ -305,7 +352,30 @@ namespace Cycloside.Plugins.BuiltIn
                 BallNormalBrush = new SolidColorBrush(Color.FromRgb(255, 105, 97)),
                 BallSlowBrush = new SolidColorBrush(Color.FromRgb(135, 206, 235)),
                 BallFastBrush = new SolidColorBrush(Color.FromRgb(255, 160, 122)),
-                BallSplittingBrush = new SolidColorBrush(Color.FromRgb(216, 191, 216))
+                BallSplittingBrush = new SolidColorBrush(Color.FromRgb(216, 191, 216)),
+                BallTeleportBrush = Brushes.Gold,
+                ExtraLifeBrush = Brushes.LimeGreen,
+                FreezeBrush = Brushes.LightBlue,
+                DoubleScoreBrush = Brushes.Gold
+            },
+            ["Retro"] = new JezzballTheme
+            {
+                BackgroundBrush = Brushes.Black,
+                WallPen = new Pen(Brushes.Gray, 3, lineCap: PenLineCap.Square),
+                PreviewPen = new Pen(Brushes.White, 1, DashStyle.Dot),
+                FilledBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30), 0.6),
+                FlashBrush = new SolidColorBrush(Colors.White, 0.3),
+                IceWallPen = new Pen(Brushes.Silver, 5),
+                IcePreviewPen = new Pen(Brushes.Silver, 1, DashStyle.Dash),
+                PowerUpBrush = Brushes.Yellow,
+                BallNormalBrush = Brushes.White,
+                BallSlowBrush = Brushes.LightGray,
+                BallFastBrush = Brushes.Silver,
+                BallSplittingBrush = Brushes.Gray,
+                BallTeleportBrush = Brushes.Gold,
+                ExtraLifeBrush = Brushes.LimeGreen,
+                FreezeBrush = Brushes.LightBlue,
+                DoubleScoreBrush = Brushes.Gold
             }
         };
     }
@@ -362,6 +432,7 @@ namespace Cycloside.Plugins.BuiltIn
         public double Radius { get; }
         public IBrush Fill { get; private set; }
         public BallType Type { get; }
+        private double _teleportTimer;
 
         public Ball(Point position, Vector velocity, JezzballTheme theme, BallType type = BallType.Normal, double radius = 8)
         {
@@ -383,6 +454,10 @@ namespace Cycloside.Plugins.BuiltIn
                 case BallType.Splitting:
                     Fill = theme.BallSplittingBrush;
                     break;
+                case BallType.Teleporting:
+                    Fill = theme.BallTeleportBrush;
+                    _teleportTimer = 2.0;
+                    break;
                 default:
                     Fill = theme.BallNormalBrush;
                     break;
@@ -396,6 +471,7 @@ namespace Cycloside.Plugins.BuiltIn
                 BallType.Slow => theme.BallSlowBrush,
                 BallType.Fast => theme.BallFastBrush,
                 BallType.Splitting => theme.BallSplittingBrush,
+                BallType.Teleporting => theme.BallTeleportBrush,
                 _ => theme.BallNormalBrush
             };
         }
@@ -404,6 +480,19 @@ namespace Cycloside.Plugins.BuiltIn
 
         public void Update(Rect bounds, double dt)
         {
+            if (Type == BallType.Teleporting)
+            {
+                _teleportTimer -= dt;
+                if (_teleportTimer <= 0)
+                {
+                    var rand = new Random();
+                    Position = new Point(
+                        rand.NextDouble() * (bounds.Width - Radius * 2) + bounds.Left + Radius,
+                        rand.NextDouble() * (bounds.Height - Radius * 2) + bounds.Top + Radius);
+                    _teleportTimer = 2.0;
+                }
+            }
+
             Position += Velocity * dt;
 
             if ((Position.X - Radius < bounds.Left && Velocity.X < 0) || (Position.X + Radius > bounds.Right && Velocity.X > 0))
@@ -426,6 +515,7 @@ namespace Cycloside.Plugins.BuiltIn
             Velocity = wallOrientation == WallOrientation.Vertical
                 ? Velocity.WithX(-Velocity.X)
                 : Velocity.WithY(-Velocity.Y);
+            JezzballSound.Play(JezzballSoundEvent.BallBounce);
         }
     }
 
@@ -440,6 +530,8 @@ namespace Cycloside.Plugins.BuiltIn
         public bool IsGameOver => Lives <= 0;
         public bool FlashEffect { get; set; }
         public bool HasIceWallPowerUp { get; private set; }
+        public bool FreezeActive { get; private set; }
+        public bool DoubleScoreActive { get; private set; }
 
         public IReadOnlyList<Ball> Balls => _balls;
         public IReadOnlyList<Rect> ActiveAreas => _activeAreas;
@@ -453,6 +545,8 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly List<PowerUp> _powerUps = new();
         private double _totalPlayArea;
         private JezzballTheme _theme;
+        private double _freezeTimer;
+        private double _doubleScoreTimer;
 
         private const double WallSpeed = 150.0;
         private const double CaptureRequirement = 0.75;
@@ -485,6 +579,10 @@ namespace Cycloside.Plugins.BuiltIn
             _powerUps.Clear();
             CurrentWall = null;
             HasIceWallPowerUp = false;
+            FreezeActive = false;
+            DoubleScoreActive = false;
+            _freezeTimer = 0;
+            _doubleScoreTimer = 0;
             Message = $"Level {Level}";
 
             var bounds = new Rect(0, 0, gameSize.Width, gameSize.Height);
@@ -503,6 +601,7 @@ namespace Cycloside.Plugins.BuiltIn
                 if (Level > 1 && rand.NextDouble() > 0.7) type = BallType.Slow;
                 if (Level > 2 && rand.NextDouble() > 0.7) type = BallType.Fast;
                 if (Level > 3 && rand.NextDouble() > 0.8) type = BallType.Splitting;
+                if (Level > 4 && rand.NextDouble() > 0.85) type = BallType.Teleporting;
 
                 _balls.Add(new Ball(bounds.Center, velocity, _theme, type));
             }
@@ -513,29 +612,48 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (Message != string.Empty)
             {
-                if (IsGameOver) StartNewGame(new Size(800, 570)); else Message = string.Empty;
+                if (IsGameOver) StartNewGame(new Size(800, 570));
+                else StartLevel(new Size(800, 570));
                 return;
             }
 
             var clickedPowerUp = _powerUps.FirstOrDefault(p => p.BoundingBox.Contains(clickPosition));
             if (clickedPowerUp != null)
             {
-                if (clickedPowerUp.Type == PowerUpType.IceWall) HasIceWallPowerUp = true;
+                switch (clickedPowerUp.Type)
+                {
+                    case PowerUpType.IceWall:
+                        HasIceWallPowerUp = true;
+                        break;
+                    case PowerUpType.ExtraLife:
+                        Lives++;
+                        break;
+                    case PowerUpType.Freeze:
+                        FreezeActive = true;
+                        _freezeTimer = 5.0;
+                        break;
+                    case PowerUpType.DoubleScore:
+                        DoubleScoreActive = true;
+                        _doubleScoreTimer = 10.0;
+                        break;
+                }
                 _powerUps.Remove(clickedPowerUp);
                 return;
             }
         }
 
-        public void TryStartWall(Point position, WallOrientation orientation)
+        public bool TryStartWall(Point position, WallOrientation orientation)
         {
-            if (CurrentWall != null || Message != string.Empty) return;
+            if (CurrentWall != null || Message != string.Empty) return false;
 
             var area = _activeAreas.FirstOrDefault(r => r.Contains(position));
             if (area != default)
             {
                 CurrentWall = new BuildingWall(area, position, orientation, HasIceWallPowerUp);
                 if (HasIceWallPowerUp) HasIceWallPowerUp = false;
+                return true;
             }
+            return false;
         }
 
         public void Update(double dt)
@@ -549,12 +667,34 @@ namespace Cycloside.Plugins.BuiltIn
                 return;
             }
 
+            if (FreezeActive)
+            {
+                _freezeTimer -= dt;
+                if (_freezeTimer <= 0)
+                {
+                    FreezeActive = false;
+                }
+            }
+
+            if (DoubleScoreActive)
+            {
+                _doubleScoreTimer -= dt;
+                if (_doubleScoreTimer <= 0)
+                {
+                    DoubleScoreActive = false;
+                }
+            }
+
             UpdateBalls(dt);
             UpdateWall(dt);
         }
 
         private void UpdateBalls(double dt)
         {
+            if (FreezeActive)
+            {
+                return;
+            }
             foreach (var ball in _balls.ToList())
             {
                 var area = _activeAreas.FirstOrDefault(r => r.Intersects(ball.BoundingBox));
@@ -594,7 +734,12 @@ namespace Cycloside.Plugins.BuiltIn
 
                 foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart1)))
                 {
-                    if (CurrentWall.IsPart1Invincible) { ball.Bounce(CurrentWall.Orientation); CurrentWall.IsPart1Invincible = false; }
+                    if (CurrentWall.IsPart1Invincible)
+                    {
+                        ball.Bounce(CurrentWall.Orientation);
+                        JezzballSound.Play(JezzballSoundEvent.WallHit);
+                        CurrentWall.IsPart1Invincible = false;
+                    }
                     else { LoseLife("Wall Broken!"); return; }
                 }
             }
@@ -618,7 +763,12 @@ namespace Cycloside.Plugins.BuiltIn
 
                 foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart2)))
                 {
-                    if (CurrentWall.IsPart2Invincible) { ball.Bounce(CurrentWall.Orientation); CurrentWall.IsPart2Invincible = false; }
+                    if (CurrentWall.IsPart2Invincible)
+                    {
+                        ball.Bounce(CurrentWall.Orientation);
+                        JezzballSound.Play(JezzballSoundEvent.WallHit);
+                        CurrentWall.IsPart2Invincible = false;
+                    }
                     else { LoseLife("Wall Broken!"); return; }
                 }
             }
@@ -630,6 +780,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             Lives--;
             CurrentWall = null;
+            JezzballSound.Play(JezzballSoundEvent.WallBreak);
             Message = Lives <= 0 ? "Game Over! Click to restart." : reason + " Click to continue.";
         }
 
@@ -658,16 +809,14 @@ namespace Cycloside.Plugins.BuiltIn
             if (ballsInArea1.Count == 0)
             {
                 _filledAreas.Add(newArea1);
-                if (ballsInArea2.Any(b => b.Type != BallType.Normal))
-                    _powerUps.Add(new PowerUp(newArea1.Center, PowerUpType.IceWall));
+                MaybeSpawnPowerUp(newArea1.Center);
             }
             else _activeAreas.Add(newArea1);
 
             if (ballsInArea2.Count == 0)
             {
                 _filledAreas.Add(newArea2);
-                if (ballsInArea1.Any(b => b.Type != BallType.Normal))
-                    _powerUps.Add(new PowerUp(newArea2.Center, PowerUpType.IceWall));
+                MaybeSpawnPowerUp(newArea2.Center);
             }
             else _activeAreas.Add(newArea2);
 
@@ -694,7 +843,25 @@ namespace Cycloside.Plugins.BuiltIn
                 Level++;
                 long timeBonus = (long)TimeLeft.TotalSeconds * 100;
                 Score += 1000 + timeBonus;
+                JezzballSound.Play(JezzballSoundEvent.LevelComplete);
                 Message = $"Level Complete!\nTime Bonus: {timeBonus}";
+            }
+        }
+
+        private void MaybeSpawnPowerUp(Point location)
+        {
+            var rand = new Random();
+            if (rand.NextDouble() < 0.3)
+            {
+                var typeRoll = rand.Next(4);
+                var type = typeRoll switch
+                {
+                    0 => PowerUpType.IceWall,
+                    1 => PowerUpType.ExtraLife,
+                    2 => PowerUpType.Freeze,
+                    _ => PowerUpType.DoubleScore
+                };
+                _powerUps.Add(new PowerUp(location, type));
             }
         }
 
@@ -703,7 +870,9 @@ namespace Cycloside.Plugins.BuiltIn
             double filledAreaSum = _filledAreas.Sum(r => r.Width * r.Height);
             if (filledAreaSum > 0)
             {
-                Score += (long)filledAreaSum / 100;
+                var added = (long)filledAreaSum / 100;
+                if (DoubleScoreActive) added *= 2;
+                Score += added;
             }
             CapturedPercentage = _totalPlayArea > 0 ? filledAreaSum / _totalPlayArea : 0;
         }
@@ -730,6 +899,10 @@ namespace Cycloside.Plugins.BuiltIn
         private Pen _iceWallPen = null!;
         private Pen _icePreviewPen = null!;
         private IBrush _powerUpBrush = null!;
+        private IBrush _powerUpExtraLifeBrush = null!;
+        private IBrush _powerUpFreezeBrush = null!;
+        private IBrush _powerUpDoubleScoreBrush = null!;
+        private readonly Dictionary<JezzballSoundEvent, string> _soundPaths = new();
         private readonly Menu _menu = new();
         private JezzballTheme _theme;
 
@@ -738,6 +911,7 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly TextBlock _scoreText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _timeText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _capturedText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
+        private readonly TextBlock _effectText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.LightGreen };
 
         public Menu MenuBar => _menu;
 
@@ -745,6 +919,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             _theme = theme;
             _gameState = new JezzballGameState(theme);
+            LoadSoundSettings();
             var statusBar = new DockPanel { Background = Brushes.Black, Height = 30, Opacity = 0.8 };
             var restartButton = new Button { Content = "Restart", Margin = new Thickness(5), VerticalAlignment = VerticalAlignment.Center };
             restartButton.Click += (_, _) => RestartGame();
@@ -755,7 +930,7 @@ namespace Cycloside.Plugins.BuiltIn
             DockPanel.SetDock(restartButton, Dock.Right);
             DockPanel.SetDock(_capturedText, Dock.Right);
             DockPanel.SetDock(_timeText, Dock.Right);
-            statusBar.Children.AddRange(new Control[] { _levelText, _livesText, _scoreText, restartButton, _capturedText, _timeText });
+            statusBar.Children.AddRange(new Control[] { _levelText, _livesText, _scoreText, restartButton, _capturedText, _timeText, _effectText });
 
             var layout = new DockPanel();
             DockPanel.SetDock(_menu, Dock.Top);
@@ -781,6 +956,34 @@ namespace Cycloside.Plugins.BuiltIn
             _stopwatch.Start();
         }
 
+        internal void SetSound(JezzballSoundEvent ev, string path)
+        {
+            _soundPaths[ev] = path;
+            if (!SettingsManager.Settings.PluginSoundEffects.TryGetValue("Jezzball", out var map))
+            {
+                map = new Dictionary<string, string>();
+                SettingsManager.Settings.PluginSoundEffects["Jezzball"] = map;
+            }
+            map[ev.ToString()] = path;
+            SettingsManager.Save();
+            JezzballSound.Paths[ev] = path;
+        }
+
+        private void LoadSoundSettings()
+        {
+            if (SettingsManager.Settings.PluginSoundEffects.TryGetValue("Jezzball", out var map))
+            {
+                foreach (var kv in map)
+                {
+                    if (Enum.TryParse<JezzballSoundEvent>(kv.Key, out var ev))
+                        _soundPaths[ev] = kv.Value;
+                }
+            }
+            JezzballSound.Paths.Clear();
+            foreach (var kv in _soundPaths)
+                JezzballSound.Paths[kv.Key] = kv.Value;
+        }
+
         public void SetTheme(string name)
         {
             if (JezzballThemes.All.TryGetValue(name, out var t))
@@ -801,6 +1004,9 @@ namespace Cycloside.Plugins.BuiltIn
             _iceWallPen = theme.IceWallPen;
             _icePreviewPen = theme.IcePreviewPen;
             _powerUpBrush = theme.PowerUpBrush;
+            _powerUpExtraLifeBrush = theme.ExtraLifeBrush;
+            _powerUpFreezeBrush = theme.FreezeBrush;
+            _powerUpDoubleScoreBrush = theme.DoubleScoreBrush;
         }
 
         public void RestartGame() => _gameState.StartLevel(this.Bounds.Size);
@@ -831,17 +1037,24 @@ namespace Cycloside.Plugins.BuiltIn
             if (point.Properties.IsLeftButtonPressed)
             {
                 if (_gameState.Message != string.Empty)
+                {
+                    JezzballSound.Play(JezzballSoundEvent.Click);
                     _gameState.HandleClick(point.Position);
+                }
                 else
                 {
                     var clickedPowerUp = _gameState.PowerUps.FirstOrDefault(p => p.BoundingBox.Contains(point.Position));
                     if (clickedPowerUp != null)
                     {
+                        JezzballSound.Play(JezzballSoundEvent.Click);
                         _gameState.HandleClick(point.Position);
                     }
                     else
                     {
-                        _gameState.TryStartWall(_mousePosition, _orientation);
+                        if (_gameState.TryStartWall(_mousePosition, _orientation))
+                        {
+                            JezzballSound.Play(JezzballSoundEvent.WallBuild);
+                        }
                     }
                 }
             }
@@ -864,6 +1077,10 @@ namespace Cycloside.Plugins.BuiltIn
             _scoreText.Text = $"Score: {_gameState.Score}";
             _timeText.Text = $"Time: {Math.Max(0, (int)_gameState.TimeLeft.TotalSeconds)}";
             _capturedText.Text = $"Captured: {_gameState.CapturedPercentage:P0}";
+            var effects = new List<string>();
+            if (_gameState.FreezeActive) effects.Add("Freeze");
+            if (_gameState.DoubleScoreActive) effects.Add("2x Score");
+            _effectText.Text = effects.Count > 0 ? $"Effects: {string.Join(", ", effects)}" : string.Empty;
         }
 
         internal async void RenderGame(DrawingContext context)
@@ -880,7 +1097,17 @@ namespace Cycloside.Plugins.BuiltIn
             }
 
             foreach (var ball in _gameState.Balls) context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
-            foreach (var p in _gameState.PowerUps) context.DrawEllipse(_powerUpBrush, null, p.Position, p.Radius, p.Radius);
+            foreach (var p in _gameState.PowerUps)
+            {
+                var brush = p.Type switch
+                {
+                    PowerUpType.ExtraLife => _powerUpExtraLifeBrush,
+                    PowerUpType.Freeze => _powerUpFreezeBrush,
+                    PowerUpType.DoubleScore => _powerUpDoubleScoreBrush,
+                    _ => _powerUpBrush
+                };
+                context.DrawEllipse(brush, null, p.Position, p.Radius, p.Radius);
+            }
 
             if (_gameState.CurrentWall is { } wall)
             {
