@@ -1,0 +1,20 @@
+QBasic Music Studio - Reference
+
+Pitch Format (PLAY statement):
+  Use notes A-G followed by optional # for sharp and octave number.
+  Example: C4, D#5, A3
+
+Approximate Frequencies (Hz):
+Octave 3: C=130.81, D=146.83, E=164.81, F=174.61, G=196.00, A=220.00, B=246.94
+Octave 4: C=261.63, D=293.66, E=329.63, F=349.23, G=392.00, A=440.00, B=493.88
+Octave 5: C=523.25, D=587.33, E=659.26, F=698.46, G=783.99, A=880.00, B=987.77
+
+Duration Symbols:
+  W = whole note, H = half note, Q = quarter note, E = eighth
+
+Example PLAY sequence:
+  PLAY "T120 O4 CDEFGAB > C"
+
+MIDI to QMS
+  A simple converter could read a MIDI file and map events to PLAY
+  notation. The included stub `MidiToQms.bas` outlines the approach.
