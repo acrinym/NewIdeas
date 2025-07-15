@@ -76,12 +76,15 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     // Build a simple model on a background thread to avoid creating
                     // UI elements off the UI thread.
+                    // Build the plain directory model on a background thread.
                     var rootModel = await Task.Run(() => BuildDirectoryModel(new DirectoryInfo(path)));
 
-                    // Once done, create TreeViewItems on the UI thread from the model.
+                    // Convert the model to UI elements on the UI thread to avoid
+                    // cross-thread exceptions when constructing TreeViewItem instances.
                     await Dispatcher.UIThread.InvokeAsync(() =>
                     {
-                        _tree.ItemsSource = new[] { ConvertToTreeViewItem(rootModel) };
+                        var rootItem = ConvertToTreeViewItem(rootModel);
+                        _tree.ItemsSource = new[] { rootItem };
                         _statusText.Text = $"Analysis complete for '{path}'.";
                     });
                 }
