@@ -5,6 +5,7 @@ QBasic Music Studio is a small example application written for QB64 Phoenix Edit
 Features include:
 
 - Mouse driven interface for entering notes.
+- Right-click any note to edit its pitch, octave and duration.
 - Saving compositions to `.qms` files.
 - Loading and editing previously saved files.
 - Reference sheet with octave/frequency chart.

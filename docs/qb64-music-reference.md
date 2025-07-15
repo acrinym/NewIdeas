@@ -18,6 +18,9 @@ REPEAT noteCount TIMES
 ## Note Input
 
 Click the left mouse button in the application window to add a
+`C4` quarter note. Right-click on a listed note to choose a new
+pitch, octave and duration. Press **S** to save, **L** to load, and
+**P** to play.
 `C4` quarter note. Press **S** to save, **L** to load, and **P** to play.
 
 ## Frequencies
