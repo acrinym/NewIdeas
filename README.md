@@ -49,9 +49,9 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 * Run Lua or C# snippets as volatile scripts straight from the tray menu.
 * Cross-platform auto-start and settings stored in `settings.json`.
 * Rolling log files capture errors and plugin crashes with tray notifications.
-* Generate new plugins via `dotnet run -- --newplugin` or from **Settings → Generate New Plugin**.
+* Generate new plugins via `dotnet run -- --newplugin` or from **Settings → Generate New Plugin**. Add `--with-tests` to scaffold a test project.
 * Plugins communicate through a publish/subscribe bus and a remote HTTP API for
-    triggering events.
+    triggering events, switching profiles or applying themes programmatically.
 * Global hotkeys work on Windows, Linux and macOS.
 * Hotkeys can be edited from the new Hotkey Settings window.
 * Built-in skin/theme engine with a live editor and custom cursors.

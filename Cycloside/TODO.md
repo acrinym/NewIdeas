@@ -12,10 +12,10 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 ---
 
 ## Core Plugin System
-- [ ] Implement `IPlugin` interface (`string Name`, `UserControl GetUI()`, `void Initialize()`)
-- [ ] Dynamic plugin loading from `/Plugins/*.dll` (reflection)
-- [ ] Register & display loaded plugins in main UI (tab or dockable panel)
-- [ ] Error handling: Safe fallback if a plugin fails to load
+- [x] Implement `IPlugin` interface (`string Name`, `UserControl GetUI()`, `void Initialize()`)
+- [x] Dynamic plugin loading from `/Plugins/*.dll` (reflection)
+- [x] Register & display loaded plugins in main UI (tab or dockable panel)
+- [x] Error handling: Safe fallback if a plugin fails to load
 
 ## Default Plugins
 - [ ] **Code Editor Plugin** (AvaloniaEdit)
@@ -80,6 +80,12 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 - [ ] Clipboard manager
 - [ ] Clipboard encryption/scrubber
 - [ ] Screenshot tool / quick image editor
+- [ ] Terminal cheat sheet plugin (Linux commands)
+    - Source: https://cheatography.com/davechild/cheat-sheets/linux-command-line/
+- [ ] Penetration testing toolkit (Nmap, wordlist generator)
+- [ ] Rootkit detection and process monitor
+- [ ] Exploit database search plugin
+- [ ] VPN/Proxy switcher
 
 ---
 

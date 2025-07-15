@@ -7,6 +7,12 @@
         <DockPanel DockPanel.Dock="Top" Margin="5" x:Name="TopPanel">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" x:Name="ButtonPanel" />
             <TextBox x:Name="FilterBox" Width="200" Margin="5,0" />
+            <ComboBox x:Name="SeverityBox" Width="120" Margin="5,0">
+                <ComboBoxItem Content="All" />
+                <ComboBoxItem Content="Info" />
+                <ComboBoxItem Content="Warning" />
+                <ComboBoxItem Content="Error" />
+            </ComboBox>
         </DockPanel>
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" x:Name="OptionsPanel" Margin="5" />
         <TextBox x:Name="LogBox" AcceptsReturn="True" FontFamily="Cascadia Code,Consolas,Menlo,monospace" Margin="5" />

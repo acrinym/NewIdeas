@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Cycloside.Plugins;
+using Cycloside.Services;
 
 namespace Cycloside;
 
@@ -71,12 +72,38 @@ public class RemoteApiServer
             }
 
             var path = ctx.Request.Url?.AbsolutePath?.Trim('/');
-            if (path == "trigger" && ctx.Request.HttpMethod == "POST")
+            if (ctx.Request.HttpMethod == "POST")
             {
-                using var sr = new StreamReader(ctx.Request.InputStream);
-                var body = sr.ReadToEnd();
-                PluginBus.Publish(body);
-                ctx.Response.StatusCode = 200;
+                switch (path)
+                {
+                    case "trigger":
+                        using (var sr = new StreamReader(ctx.Request.InputStream))
+                        {
+                            var body = sr.ReadToEnd();
+                            PluginBus.Publish(body);
+                        }
+                        ctx.Response.StatusCode = 200;
+                        break;
+                    case "profile":
+                        using (var sr = new StreamReader(ctx.Request.InputStream))
+                        {
+                            var name = sr.ReadToEnd();
+                            WorkspaceProfiles.Apply(name, _manager);
+                        }
+                        ctx.Response.StatusCode = 200;
+                        break;
+                    case "theme":
+                        using (var sr = new StreamReader(ctx.Request.InputStream))
+                        {
+                            var theme = sr.ReadToEnd();
+                            ThemeManager.LoadGlobalTheme(theme);
+                        }
+                        ctx.Response.StatusCode = 200;
+                        break;
+                    default:
+                        ctx.Response.StatusCode = 404;
+                        break;
+                }
             }
             else
             {
