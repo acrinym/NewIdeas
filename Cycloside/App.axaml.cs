@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Cycloside;
 
@@ -81,6 +82,16 @@ public partial class App : Application
             DataContext = viewModel
         };
 
+        void DetachWorkspaceItem(WorkspaceItemViewModel item)
+        {
+            if (item.Plugin is IWorkspaceItem workspace)
+            {
+                workspace.UseWorkspace = false;
+                item.Plugin.Start();
+            }
+            viewModel.WorkspaceItems.Remove(item);
+        }
+
         viewModel.ExitCommand = new RelayCommand(() => Shutdown());
         
         // Toggle plugin enablement from the main window.
@@ -97,7 +108,7 @@ public partial class App : Application
                     workspace.UseWorkspace = true;
                     _pluginManager.EnablePlugin(plugin);
                     var view = workspace.BuildWorkspaceView();
-                    var vm = new WorkspaceItemViewModel(plugin.Name, view, plugin);
+                    var vm = new WorkspaceItemViewModel(plugin.Name, view, plugin, DetachWorkspaceItem);
                     viewModel.WorkspaceItems.Add(vm);
                     viewModel.SelectedWorkspaceItem = vm;
                 }
@@ -127,6 +138,32 @@ public partial class App : Application
                 SettingsManager.Save();
                 WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, plugin.Name, shouldBeEnabled);
             }
+        });
+
+        // Start or stop a plugin in its own window, even if it supports the workspace.
+        viewModel.StartPluginWindowCommand = new RelayCommand(pluginObj =>
+        {
+            if (pluginObj is not IPlugin plugin || _pluginManager is null) return;
+
+            var existing = viewModel.WorkspaceItems.FirstOrDefault(w => w.Plugin == plugin);
+            bool shouldBeEnabled = !_pluginManager.IsEnabled(plugin);
+
+            if (shouldBeEnabled)
+            {
+                if (plugin is IWorkspaceItem ws) ws.UseWorkspace = false;
+                if (existing != null) viewModel.WorkspaceItems.Remove(existing);
+                _pluginManager.EnablePlugin(plugin);
+            }
+            else
+            {
+                if (plugin is IWorkspaceItem ws) ws.UseWorkspace = false;
+                _pluginManager.DisablePlugin(plugin);
+                if (existing != null) viewModel.WorkspaceItems.Remove(existing);
+            }
+
+            SettingsManager.Settings.PluginEnabled[plugin.Name] = shouldBeEnabled;
+            SettingsManager.Save();
+            WorkspaceProfiles.UpdatePlugin(settings.ActiveProfile, plugin.Name, shouldBeEnabled);
         });
 
         _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
@@ -187,6 +224,7 @@ public partial class App : Application
         TryAdd(() => new TextEditorPlugin());
         TryAdd(() => new WallpaperPlugin());
         TryAdd(() => new ClipboardManagerPlugin());
+        TryAdd(() => new CharacterMapPlugin());
         TryAdd(() => new FileWatcherPlugin());
         TryAdd(() => new ProcessMonitorPlugin());
         TryAdd(() => new TaskSchedulerPlugin());
@@ -204,15 +242,25 @@ public partial class App : Application
 
     private void RegisterHotkeys(PluginManager manager)
     {
-        HotkeyManager.Register(new KeyGesture(Key.W, KeyModifiers.Control | KeyModifiers.Alt), () =>
+        foreach (var kv in SettingsManager.Settings.Hotkeys)
         {
-            var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
-            if (plugin != null)
+            KeyGesture gesture;
+            try { gesture = KeyGesture.Parse(kv.Value); }
+            catch { continue; }
+
+            if (kv.Key == "WidgetHost")
             {
-                if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
-                else manager.EnablePlugin(plugin);
+                HotkeyManager.Register(gesture, () =>
+                {
+                    var plugin = manager.Plugins.FirstOrDefault(p => p.Name == "Widget Host");
+                    if (plugin != null)
+                    {
+                        if (manager.IsEnabled(plugin)) manager.DisablePlugin(plugin);
+                        else manager.EnablePlugin(plugin);
+                    }
+                });
             }
-        });
+        }
     }
 
     private void Shutdown()
@@ -279,6 +327,8 @@ public partial class App : Application
                 new NativeMenuItemSeparator(),
                 logsMenu, // **Add the new Logs menu here**
                 new NativeMenuItemSeparator(),
+                BuildProfilesMenu(manager),
+                new NativeMenuItemSeparator(),
                 pluginsMenu,
                 volatileMenu,
                 new NativeMenuItem("Open Plugins Folder") { Command = new RelayCommand(() => {
@@ -329,6 +379,18 @@ public partial class App : Application
         menuItem.CommandParameter = menuItem;
 
         return menuItem;
+    }
+
+    private NativeMenuItem BuildProfilesMenu(PluginManager manager)
+    {
+        var menu = new NativeMenuItem("Profiles") { Menu = new NativeMenu() };
+        foreach (var name in WorkspaceProfiles.ProfileNames)
+        {
+            var item = new NativeMenuItem(name);
+            item.Click += (_, _) => WorkspaceProfiles.Apply(name, manager);
+            menu.Menu!.Items.Add(item);
+        }
+        return menu;
     }
 
     private NativeMenuItem BuildVolatileScriptMenuItem(string title, FilePickerFileType filter, Action<string> scriptRunner)

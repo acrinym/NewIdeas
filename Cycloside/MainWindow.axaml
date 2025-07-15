@@ -12,31 +12,25 @@
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource ApplicationBackgroundBrush}">
 
-    <!--
-      The main window uses a DockPanel to structure the core UI elements:
-      - A Menu is docked to the top.
-      - A status bar could be docked to the bottom.
-      - The main content area fills the rest of the space.
-    -->
     <DockPanel>
 
-        <!-- === Top Menu Bar === -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <!-- The Exit command will be handled by the ViewModel -->
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
             </MenuItem>
             <MenuItem Header="_Plugins"
                       ItemsSource="{Binding AvailablePlugins}">
-                <!--
-                  Dynamically generate a menu item for each available plugin.
-                  Each item invokes the StartPluginCommand when clicked.
-                -->
                 <MenuItem.ItemTemplate>
                     <DataTemplate x:DataType="p:IPlugin">
-                        <MenuItem Header="{Binding Name}"
-                                  Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
-                                  CommandParameter="{Binding}" />
+                        <MenuItem Header="{Binding Name}">
+                            <MenuItem Header="Open as Tab"
+                                      Command="{Binding DataContext.StartPluginCommand, ElementName=RootWindow}"
+                                      CommandParameter="{Binding}"
+                                      IsVisible="{Binding Converter={StaticResource IsWorkspaceItemConverter}}"/>
+                            <MenuItem Header="Open in Window"
+                                      Command="{Binding DataContext.StartPluginWindowCommand, ElementName=RootWindow}"
+                                      CommandParameter="{Binding}" />
+                        </MenuItem>
                     </DataTemplate>
                 </MenuItem.ItemTemplate>
             </MenuItem>
@@ -48,11 +42,6 @@
         </Menu>
 
         <!-- === Main Content Area === -->
-        <!-- 
-          This Canvas acts as the "desktop" or "workspace" for your application.
-          Plugins like the Widget Host will add their UI elements here.
-          The background is a subtle radial gradient for visual appeal.
-        -->
         <Grid>
             <Canvas Name="DesktopCanvas">
                 <Canvas.Background>
@@ -66,7 +55,14 @@
                         SelectedItem="{Binding SelectedWorkspaceItem, Mode=TwoWay}">
                 <TabControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:WorkspaceItemViewModel">
-                        <TextBlock Text="{Binding Header}" Margin="5,2"/>
+                        <DockPanel>
+                            <Button Content="⤢"
+                                    DockPanel.Dock="Right"
+                                    Padding="0"
+                                    Width="18" Height="18"
+                                    Command="{Binding DetachCommand}"/>
+                            <TextBlock Text="{Binding Header}" Margin="5,2"/>
+                        </DockPanel>
                     </DataTemplate>
                 </TabControl.ItemTemplate>
                 <TabControl.ContentTemplate>
