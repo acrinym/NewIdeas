@@ -18,7 +18,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.Input;
 
 namespace Cycloside;
 
