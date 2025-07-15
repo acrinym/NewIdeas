@@ -100,3 +100,24 @@ Ensure the .NET 8 SDK is installed (download from https://dotnet.microsoft.com/d
 
 ```bash
 dotnet build Cycloside/Cycloside.csproj
+```
+
+The build targets both `net8.0` and `net8.0-windows` and should finish with no warnings.
+
+---
+
+## FUTURE TODO
+
+* Package the editor as a standalone tool for theme creators.
+* Expand the plugin marketplace for one‑click installs.
+* Portable build scripts for Windows, Linux, and macOS.
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit guidelines.
+
+---
+
+### ✨ Cycloside is an evolving project—contributions and plugin ideas are always welcome!
