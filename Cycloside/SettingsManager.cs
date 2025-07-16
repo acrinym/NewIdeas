@@ -36,6 +36,9 @@ public class AppSettings
     // Optional skin applied to plugin windows
     public Dictionary<string, string> PluginSkins { get; set; } = new();
 
+    // Sound effect files mapped by plugin name then event key
+    public Dictionary<string, Dictionary<string, string>> PluginSoundEffects { get; set; } = new();
+
     public string Cursor { get; set; } = "Arrow";
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
     public Dictionary<string, List<string>> WindowEffects { get; set; } = new();

@@ -19,6 +19,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using ServicesRelayCommand = Cycloside.Services.RelayCommand;
 
 namespace Cycloside;
 
@@ -92,10 +93,10 @@ public partial class App : Application
             viewModel.WorkspaceItems.Remove(item);
         }
 
-        viewModel.ExitCommand = new RelayCommand(() => Shutdown());
+        viewModel.ExitCommand = new ServicesRelayCommand(() => Shutdown());
         
         // Toggle plugin enablement from the main window.
-        viewModel.StartPluginCommand = new RelayCommand(pluginObj =>
+        viewModel.StartPluginCommand = new ServicesRelayCommand(pluginObj =>
         {
             if (pluginObj is not IPlugin plugin || _pluginManager is null) return;
 
@@ -141,7 +142,7 @@ public partial class App : Application
         });
 
         // Start or stop a plugin in its own window, even if it supports the workspace.
-        viewModel.StartPluginWindowCommand = new RelayCommand(pluginObj =>
+        viewModel.StartPluginWindowCommand = new ServicesRelayCommand(pluginObj =>
         {
             if (pluginObj is not IPlugin plugin || _pluginManager is null) return;
 
@@ -322,9 +323,9 @@ public partial class App : Application
             Items =
             {
                 new NativeMenuItem("Settings") { Menu = new NativeMenu { Items = {
-                    new NativeMenuItem("Control Panel...") { Command = new RelayCommand(() => new ControlPanelWindow(manager).Show()) },
-                    new NativeMenuItem("Plugin Manager...") { Command = new RelayCommand(() => new PluginSettingsWindow(manager).Show()) },
-                    new NativeMenuItem("Theme Settings...") { Command = new RelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
+                    new NativeMenuItem("Control Panel...") { Command = new ServicesRelayCommand(() => new ControlPanelWindow(manager).Show()) },
+                    new NativeMenuItem("Plugin Manager...") { Command = new ServicesRelayCommand(() => new PluginSettingsWindow(manager).Show()) },
+                    new NativeMenuItem("Theme Settings...") { Command = new ServicesRelayCommand(() => new ThemeSettingsWindow(manager).Show()) },
                 }}},
                 new NativeMenuItemSeparator(),
                 logsMenu, // **Add the new Logs menu here**
@@ -333,12 +334,12 @@ public partial class App : Application
                 new NativeMenuItemSeparator(),
                 pluginsMenu,
                 volatileMenu,
-                new NativeMenuItem("Open Plugins Folder") { Command = new RelayCommand(() => {
+                new NativeMenuItem("Open Plugins Folder") { Command = new ServicesRelayCommand(() => {
                     try { Process.Start(new ProcessStartInfo { FileName = manager.PluginDirectory, UseShellExecute = true }); } 
                     catch (Exception ex) { Logger.Log($"Failed to open plugin folder: {ex.Message}"); }
                 })},
                 new NativeMenuItemSeparator(),
-                new NativeMenuItem("Exit") { Command = new RelayCommand(() => Shutdown()) }
+                new NativeMenuItem("Exit") { Command = new ServicesRelayCommand(() => Shutdown()) }
             }
         };
     }
@@ -359,7 +360,7 @@ public partial class App : Application
             IsChecked = manager.IsEnabled(plugin)
         };
 
-        menuItem.Command = new RelayCommand(o =>
+        menuItem.Command = new ServicesRelayCommand(o =>
         {
             if (o is not NativeMenuItem item) return;
             

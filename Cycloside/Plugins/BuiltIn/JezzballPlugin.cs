@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.Platform.Storage;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -121,9 +122,29 @@ namespace Cycloside.Plugins.BuiltIn
                 ((IList)skinMenu.Items).Add(item);
             }
 
+            var soundMenu = new MenuItem { Header = "Sounds" };
+            foreach (JezzballSoundEvent ev in Enum.GetValues(typeof(JezzballSoundEvent)))
+            {
+                var item = new MenuItem { Header = $"Set {ev}..." };
+                item.Click += async (_, _) =>
+                {
+                    if (_window == null) return;
+                    var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                    {
+                        Title = $"Select sound for {ev}",
+                        AllowMultiple = false,
+                        FileTypeFilter = new[] { new FilePickerFileType("Audio") { Patterns = new[] { "*.wav", "*.ogg" } } }
+                    });
+                    var file = result.FirstOrDefault();
+                    if (file?.Path.LocalPath != null) _control?.SetSound(ev, file.Path.LocalPath);
+                };
+                ((IList)soundMenu.Items).Add(item);
+            }
+
             menu.Items.Clear();
             ((IList)menu.Items).Add(themeMenu);
             ((IList)menu.Items).Add(skinMenu);
+            ((IList)menu.Items).Add(soundMenu);
         }
 
         private static IEnumerable<string> GetSkinNames()
@@ -142,6 +163,16 @@ namespace Cycloside.Plugins.BuiltIn
     public enum WallOrientation { Vertical, Horizontal }
     public enum BallType { Normal, Slow, Fast, Splitting, Teleporting }
     public enum PowerUpType { IceWall, ExtraLife, Freeze, DoubleScore }
+
+    public enum JezzballSoundEvent
+    {
+        Click,
+        WallBuild,
+        WallHit,
+        WallBreak,
+        BallBounce,
+        LevelComplete
+    }
 
     public class JezzballTheme
     {
@@ -484,6 +515,7 @@ namespace Cycloside.Plugins.BuiltIn
             Velocity = wallOrientation == WallOrientation.Vertical
                 ? Velocity.WithX(-Velocity.X)
                 : Velocity.WithY(-Velocity.Y);
+            JezzballSound.Play(JezzballSoundEvent.BallBounce);
         }
     }
 
@@ -580,7 +612,8 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (Message != string.Empty)
             {
-                if (IsGameOver) StartNewGame(new Size(800, 570)); else Message = string.Empty;
+                if (IsGameOver) StartNewGame(new Size(800, 570));
+                else StartLevel(new Size(800, 570));
                 return;
             }
 
@@ -609,16 +642,18 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
-        public void TryStartWall(Point position, WallOrientation orientation)
+        public bool TryStartWall(Point position, WallOrientation orientation)
         {
-            if (CurrentWall != null || Message != string.Empty) return;
+            if (CurrentWall != null || Message != string.Empty) return false;
 
             var area = _activeAreas.FirstOrDefault(r => r.Contains(position));
             if (area != default)
             {
                 CurrentWall = new BuildingWall(area, position, orientation, HasIceWallPowerUp);
                 if (HasIceWallPowerUp) HasIceWallPowerUp = false;
+                return true;
             }
+            return false;
         }
 
         public void Update(double dt)
@@ -699,7 +734,12 @@ namespace Cycloside.Plugins.BuiltIn
 
                 foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart1)))
                 {
-                    if (CurrentWall.IsPart1Invincible) { ball.Bounce(CurrentWall.Orientation); CurrentWall.IsPart1Invincible = false; }
+                    if (CurrentWall.IsPart1Invincible)
+                    {
+                        ball.Bounce(CurrentWall.Orientation);
+                        JezzballSound.Play(JezzballSoundEvent.WallHit);
+                        CurrentWall.IsPart1Invincible = false;
+                    }
                     else { LoseLife("Wall Broken!"); return; }
                 }
             }
@@ -723,7 +763,12 @@ namespace Cycloside.Plugins.BuiltIn
 
                 foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart2)))
                 {
-                    if (CurrentWall.IsPart2Invincible) { ball.Bounce(CurrentWall.Orientation); CurrentWall.IsPart2Invincible = false; }
+                    if (CurrentWall.IsPart2Invincible)
+                    {
+                        ball.Bounce(CurrentWall.Orientation);
+                        JezzballSound.Play(JezzballSoundEvent.WallHit);
+                        CurrentWall.IsPart2Invincible = false;
+                    }
                     else { LoseLife("Wall Broken!"); return; }
                 }
             }
@@ -735,6 +780,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             Lives--;
             CurrentWall = null;
+            JezzballSound.Play(JezzballSoundEvent.WallBreak);
             Message = Lives <= 0 ? "Game Over! Click to restart." : reason + " Click to continue.";
         }
 
@@ -797,6 +843,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Level++;
                 long timeBonus = (long)TimeLeft.TotalSeconds * 100;
                 Score += 1000 + timeBonus;
+                JezzballSound.Play(JezzballSoundEvent.LevelComplete);
                 Message = $"Level Complete!\nTime Bonus: {timeBonus}";
             }
         }
@@ -855,6 +902,7 @@ namespace Cycloside.Plugins.BuiltIn
         private IBrush _powerUpExtraLifeBrush = null!;
         private IBrush _powerUpFreezeBrush = null!;
         private IBrush _powerUpDoubleScoreBrush = null!;
+        private readonly Dictionary<JezzballSoundEvent, string> _soundPaths = new();
         private readonly Menu _menu = new();
         private JezzballTheme _theme;
 
@@ -871,6 +919,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             _theme = theme;
             _gameState = new JezzballGameState(theme);
+            LoadSoundSettings();
             var statusBar = new DockPanel { Background = Brushes.Black, Height = 30, Opacity = 0.8 };
             var restartButton = new Button { Content = "Restart", Margin = new Thickness(5), VerticalAlignment = VerticalAlignment.Center };
             restartButton.Click += (_, _) => RestartGame();
@@ -905,6 +954,34 @@ namespace Cycloside.Plugins.BuiltIn
             _timer.Tick += GameTick;
             _timer.Start();
             _stopwatch.Start();
+        }
+
+        internal void SetSound(JezzballSoundEvent ev, string path)
+        {
+            _soundPaths[ev] = path;
+            if (!SettingsManager.Settings.PluginSoundEffects.TryGetValue("Jezzball", out var map))
+            {
+                map = new Dictionary<string, string>();
+                SettingsManager.Settings.PluginSoundEffects["Jezzball"] = map;
+            }
+            map[ev.ToString()] = path;
+            SettingsManager.Save();
+            JezzballSound.Paths[ev] = path;
+        }
+
+        private void LoadSoundSettings()
+        {
+            if (SettingsManager.Settings.PluginSoundEffects.TryGetValue("Jezzball", out var map))
+            {
+                foreach (var kv in map)
+                {
+                    if (Enum.TryParse<JezzballSoundEvent>(kv.Key, out var ev))
+                        _soundPaths[ev] = kv.Value;
+                }
+            }
+            JezzballSound.Paths.Clear();
+            foreach (var kv in _soundPaths)
+                JezzballSound.Paths[kv.Key] = kv.Value;
         }
 
         public void SetTheme(string name)
@@ -960,17 +1037,24 @@ namespace Cycloside.Plugins.BuiltIn
             if (point.Properties.IsLeftButtonPressed)
             {
                 if (_gameState.Message != string.Empty)
+                {
+                    JezzballSound.Play(JezzballSoundEvent.Click);
                     _gameState.HandleClick(point.Position);
+                }
                 else
                 {
                     var clickedPowerUp = _gameState.PowerUps.FirstOrDefault(p => p.BoundingBox.Contains(point.Position));
                     if (clickedPowerUp != null)
                     {
+                        JezzballSound.Play(JezzballSoundEvent.Click);
                         _gameState.HandleClick(point.Position);
                     }
                     else
                     {
-                        _gameState.TryStartWall(_mousePosition, _orientation);
+                        if (_gameState.TryStartWall(_mousePosition, _orientation))
+                        {
+                            JezzballSound.Play(JezzballSoundEvent.WallBuild);
+                        }
                     }
                 }
             }
