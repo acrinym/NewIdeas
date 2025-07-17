@@ -113,6 +113,7 @@ namespace Cycloside.Plugins.BuiltIn
         private float _volumeBeforeMute;
         private SpectrumAnalyzer? _spectrumAnalyzer;
         private Views.MP3PlayerWindow? _window; // Using explicit namespace to avoid ambiguity
+        private WinampVisHostPlugin? _visHost;
 
         // --- IPlugin Properties ---
         public string Name => "MP3 Player";
@@ -132,6 +133,7 @@ namespace Cycloside.Plugins.BuiltIn
         [ObservableProperty] private string? _errorMessage;
         [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(ToggleMuteCommand))] private float _volume = 1.0f;
         [ObservableProperty] private bool _isMuted;
+        [ObservableProperty] private string _visualizationStatus = "Disabled";
 
         public MP3PlayerPlugin()
         {
@@ -157,6 +159,9 @@ namespace Cycloside.Plugins.BuiltIn
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
             _window.Closed += (_, _) => _window = null;
             _window.Show();
+
+            // Try to find the Winamp visualization host plugin
+            TryFindVisHost();
         }
 
         public Control BuildWorkspaceView()
@@ -171,6 +176,94 @@ namespace Cycloside.Plugins.BuiltIn
             CleanupPlayback();
             _window?.Close();
             GC.SuppressFinalize(this);
+        }
+
+        // --- Visualization Control Commands ---
+        [RelayCommand]
+        private void ToggleVisualization()
+        {
+            if (_visHost == null)
+            {
+                TryFindVisHost();
+                if (_visHost == null)
+                {
+                    ErrorMessage = "Winamp Visual Host plugin not found";
+                    return;
+                }
+            }
+
+            _visHost.ToggleVisualization();
+            UpdateVisualizationStatus();
+        }
+
+        [RelayCommand]
+        private void EnableVisualization()
+        {
+            if (_visHost == null)
+            {
+                TryFindVisHost();
+                if (_visHost == null)
+                {
+                    ErrorMessage = "Winamp Visual Host plugin not found";
+                    return;
+                }
+            }
+
+            _visHost.EnableVisualization();
+            UpdateVisualizationStatus();
+        }
+
+        [RelayCommand]
+        private void DisableVisualization()
+        {
+            if (_visHost == null)
+            {
+                TryFindVisHost();
+                if (_visHost == null)
+                {
+                    ErrorMessage = "Winamp Visual Host plugin not found";
+                    return;
+                }
+            }
+
+            _visHost.DisableVisualization();
+            UpdateVisualizationStatus();
+        }
+
+        // --- Private Methods ---
+        private void TryFindVisHost()
+        {
+            try
+            {
+                // Try to find the WinampVisHostPlugin through the applications plugin manager
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+                    desktop.MainWindow?.DataContext is ViewModels.MainWindowViewModel vm)
+                {
+                    var visPlugin = vm.AvailablePlugins.FirstOrDefault(p => p.Name == "Winamp Visual Host");
+                    if (visPlugin is WinampVisHostPlugin visHost)
+                    {
+                        _visHost = visHost;
+                        UpdateVisualizationStatus();
+                        Logger.Log("Found Winamp Visual Host plugin");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to find Winamp Visual Host: {ex.Message}");
+            }
+        }
+
+        private void UpdateVisualizationStatus()
+        {
+            if (_visHost != null)
+            {
+                VisualizationStatus = _visHost.GetStatus();
+            }
+            else
+            {
+                VisualizationStatus = "Plugin not found";
+            }
         }
 
         // --- Commands for UI Binding ---

@@ -6,7 +6,7 @@
         x:DataType="local:MP3PlayerPlugin"
         Title="MP3 Player"
         Width="400" MinWidth="350"
-        Height="180" MinHeight="180"
+        Height="220" MinHeight="220"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen">
     <Design.DataContext>
@@ -56,6 +56,17 @@
             <DockPanel DockPanel.Dock="Top">
                 <Button Content="&#x1F507;" Command="{Binding ToggleMuteCommand}" DockPanel.Dock="Left"/>
                 <Slider Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1.0" Margin="8,0"/>
+            </DockPanel>
+
+            <!-- Visualization Controls -->
+            <DockPanel DockPanel.Dock="Top" Margin="0,8,0,5">
+                <TextBlock Text="Visualization:" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Text="{Binding VisualizationStatus}" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="Gray"/>
+                <StackPanel Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right">
+                    <Button Content="Enable" Command="{Binding EnableVisualizationCommand}" Padding="5"/>
+                    <Button Content="Disable" Command="{Binding DisableVisualizationCommand}" Padding="5"/>
+                    <Button Content="Toggle" Command="{Binding ToggleVisualizationCommand}" Padding="5"/>
+                </StackPanel>
             </DockPanel>
 
             <ListBox ItemsSource="{Binding Playlist}"

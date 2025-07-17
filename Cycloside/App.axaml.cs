@@ -238,7 +238,7 @@ public partial class App : Application
         TryAdd(() => new WidgetHostPlugin(manager));
         TryAdd(() => new WinampVisHostPlugin());
         TryAdd(() => new QBasicRetroIDEPlugin());
-        TryAdd(() => new ScreenSaverPlugin());
+        // TryAdd(() => new ScreenSaverPlugin()); // Disabled for stability
     }
 
     private void RegisterHotkeys(PluginManager manager)
