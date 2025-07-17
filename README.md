@@ -72,6 +72,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | Plugin                   | Description                                                                              |
 | ------------------------ | ---------------------------------------------------------------------------------------- |
 | `ClipboardManagerPlugin` | Stores clipboard history in a window and broadcasts changes on `bus:clipboard`.          |
+| `CodeEditorPlugin` | Multi-language code editor with syntax highlighting and run support. |
 | `DateTimeOverlayPlugin`  | Small always-on-top window showing the current time.                                     |
 | `DiskUsagePlugin`        | Visualises folder sizes in a tree view.                                                  |
 | `EnvironmentEditorPlugin`| Edits environment variables at runtime (Process scope only on Linux/macOS).              |
