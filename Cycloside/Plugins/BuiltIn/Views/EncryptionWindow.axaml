@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.EncryptionWindow"
+        Title="Encryption"
+        Width="600" Height="500">
+    <StackPanel Margin="5" Spacing="5">
+        <ComboBox x:Name="AlgorithmBox" SelectedIndex="0">
+            <ComboBoxItem Content="AES"/>
+            <ComboBoxItem Content="RSA"/>
+        </ComboBox>
+        <TextBox x:Name="KeyBox" Watermark="Key or PEM/XML" AcceptsReturn="True" Height="60"/>
+        <TextBox x:Name="InputBox" AcceptsReturn="True" Height="120" Watermark="Input"/>
+        <StackPanel Orientation="Horizontal" Spacing="5">
+            <Button x:Name="EncryptButton" Content="Encrypt"/>
+            <Button x:Name="DecryptButton" Content="Decrypt"/>
+        </StackPanel>
+        <TextBox x:Name="OutputBox" AcceptsReturn="True" Height="120" IsReadOnly="True" Watermark="Output"/>
+    </StackPanel>
+</Window>

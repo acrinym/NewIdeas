@@ -130,6 +130,7 @@ namespace Cycloside.Plugins.BuiltIn
                         _outputBox.Text = csWriter.ToString() + (csResult != null ? csResult.ToString() : string.Empty);
                         break;
                     case "Python":
+                    {
                         var engine = Python.CreateEngine();
                         using var stream = new MemoryStream();
                         engine.Runtime.IO.SetOutput(stream, Encoding.UTF8);
@@ -141,6 +142,7 @@ namespace Cycloside.Plugins.BuiltIn
                         var output = new StreamReader(stream).ReadToEnd();
                         _outputBox.Text = output + (pyResult != null ? pyResult.ToString() : string.Empty);
                         break;
+                    }
                     case "JavaScript":
                         var sb = new StringBuilder();
                         var jsEngine = new Engine();
