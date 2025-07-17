@@ -166,15 +166,27 @@
   </Style>
 
   <!-- Error and Warning Styles -->
-  <Style Selector=":is(Control).error">
+  <Style Selector="TextBox.error">
     <Setter Property="BorderBrush" Value="{StaticResource ThemeErrorBrush}"/>
   </Style>
 
-  <Style Selector=":is(Control).warning">
+  <Style Selector="ComboBox.error">
+    <Setter Property="BorderBrush" Value="{StaticResource ThemeErrorBrush}"/>
+  </Style>
+
+  <Style Selector="TextBox.warning">
     <Setter Property="BorderBrush" Value="{StaticResource ThemeWarningBrush}"/>
   </Style>
 
-  <Style Selector=":is(Control).success">
+  <Style Selector="ComboBox.warning">
+    <Setter Property="BorderBrush" Value="{StaticResource ThemeWarningBrush}"/>
+  </Style>
+
+  <Style Selector="TextBox.success">
+    <Setter Property="BorderBrush" Value="{StaticResource ThemeSuccessBrush}"/>
+  </Style>
+
+  <Style Selector="ComboBox.success">
     <Setter Property="BorderBrush" Value="{StaticResource ThemeSuccessBrush}"/>
   </Style>
 </Styles>
