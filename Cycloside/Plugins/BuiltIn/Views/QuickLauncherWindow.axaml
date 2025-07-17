@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.Views.QuickLauncherWindow"
+        Width="400" Height="80" CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Title="Quick Launcher">
+    <ScrollViewer HorizontalScrollBarVisibility="Auto">
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="8"
+                    Name="ButtonsPanel" />
+    </ScrollViewer>
+</Window>

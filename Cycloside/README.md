@@ -22,6 +22,7 @@ Built-in examples:
 - **Macro Engine** – record and replay simple keyboard macros
 - **Text Editor** – small editor for notes or Markdown
 - **File Explorer** – browse directories with basic operations
+- **Quick Launcher** – one-click bar to open built-in tools
 - **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
 - **ModPlug Tracker** – play `.mod`, `.it`, `.s3m` or `.xm` music modules
 - **Notification Center** – view messages from plugins and the core app
