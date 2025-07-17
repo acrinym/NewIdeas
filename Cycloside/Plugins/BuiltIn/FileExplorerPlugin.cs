@@ -168,6 +168,26 @@ public class FileExplorerPlugin : IPlugin, IDisposable
         }
     }
 
+    private void EncryptSelected()
+    {
+        if (_list?.SelectedItem is not string item) return;
+        var path = Path.Combine(_currentPath, item);
+        if (File.Exists(path))
+        {
+            PluginBus.Publish("encryption:encryptFile", path);
+        }
+    }
+
+    private void DecryptSelected()
+    {
+        if (_list?.SelectedItem is not string item) return;
+        var path = Path.Combine(_currentPath, item);
+        if (File.Exists(path))
+        {
+            PluginBus.Publish("encryption:decryptFile", path);
+        }
+    }
+
     private async Task<string?> PromptAsync(string title, string initial)
     {
         if (_window == null) return null;
@@ -209,7 +229,9 @@ public class FileExplorerPlugin : IPlugin, IDisposable
                 new MenuItem { Header = "Open", Command = ReactiveCommand.Create(OpenSelected) },
                 new MenuItem { Header = "Rename", Command = ReactiveCommand.Create(RenameSelected) },
                 new MenuItem { Header = "Delete", Command = ReactiveCommand.Create(DeleteSelected) },
-                new MenuItem { Header = "Open in Code Editor", Command = ReactiveCommand.Create(OpenInEditor) }
+                new MenuItem { Header = "Open in Code Editor", Command = ReactiveCommand.Create(OpenInEditor) },
+                new MenuItem { Header = "Encrypt File", Command = ReactiveCommand.Create(EncryptSelected) },
+                new MenuItem { Header = "Decrypt File", Command = ReactiveCommand.Create(DecryptSelected) }
             }
         };
     }
