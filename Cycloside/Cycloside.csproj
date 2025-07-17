@@ -49,6 +49,10 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.9.2" />
+    <PackageReference Include="IronPython" Version="2.7.11" />
+    <PackageReference Include="IronPython.StdLib" Version="2.7.11" />
+    <PackageReference Include="Jint" Version="3.0.0-beta-2031" />
     <PackageReference Include="SharpHook" Version="5.0.0" />
     <PackageReference Include="CliWrap" Version="3.7.0" /> 
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
