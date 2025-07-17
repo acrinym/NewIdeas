@@ -11,7 +11,13 @@ namespace Cycloside.Widgets.BuiltIn
 {
     public class Mp3Widget : IWidget
     {
-        private readonly MP3PlayerPlugin _plugin;
+        private readonly MP3PlayerPlugin? _plugin;
+
+        public Mp3Widget()
+        {
+            // Parameterless constructor for Widget Host
+            _plugin = null;
+        }
 
         public Mp3Widget(MP3PlayerPlugin plugin)
         {
@@ -22,6 +28,10 @@ namespace Cycloside.Widgets.BuiltIn
 
         public Control BuildView()
         {
+            if (_plugin == null)
+            {
+                return new TextBlock { Text = "MP3 Player not available", Foreground = Brushes.Red };
+            }
             // --- Create Controls ---
 
             var trackDisplay = new TextBlock

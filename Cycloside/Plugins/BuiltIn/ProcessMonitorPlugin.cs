@@ -41,6 +41,9 @@ namespace Cycloside.Plugins.BuiltIn
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ProcessMonitorPlugin));
             _window.Show();
 
+            // Add initial process list update
+            UpdateProcessList(null, EventArgs.Empty);
+
             _timer = new DispatcherTimer(TimeSpan.FromSeconds(2), DispatcherPriority.Background, UpdateProcessList);
             _timer.Start();
         }

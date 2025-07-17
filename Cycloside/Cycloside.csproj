@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-    <TargetFrameworks>net8.0;net8.0-windows</TargetFrameworks>
+    <TargetFrameworks>net8.0-windows</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
@@ -19,6 +19,12 @@
   <ItemGroup>
     <!-- Include resources like images or fonts from the Resources folder -->
     <AvaloniaResource Include="Resources\**" />
+    <AvaloniaResource Include="Themes\Global\*.axaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Themes\Global\*.axaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   
   <ItemGroup>

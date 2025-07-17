@@ -4,7 +4,6 @@
         xmlns:view="clr-namespace:Cycloside.Plugins.BuiltIn.Views"
         x:Class="Cycloside.Plugins.BuiltIn.Views.MP3PlayerWindow"
         x:DataType="local:MP3PlayerPlugin"
-        Icon="/Assets/avalonia-logo.ico"
         Title="MP3 Player"
         Width="400" MinWidth="350"
         Height="180" MinHeight="180"
