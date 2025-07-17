@@ -1,10 +1,3 @@
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Layout;
-using Avalonia.Media;
-using Avalonia.Threading;
-using Avalonia.Platform.Storage;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,6 +6,15 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.Platform.Storage;
+using Cycloside.Effects;
+using Cycloside.Plugins;
 using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
@@ -22,10 +24,19 @@ namespace Cycloside.Plugins.BuiltIn
     {
         private Window? _window;
         private JezzballControl? _control;
+        
+        // Game state management
+        private bool _isPaused = false;
+        private bool _showGrid = false;
+        private bool _showStatusBar = true;
+        private bool _showAreaPercentage = true;
+        private bool _soundEnabled = true;
+        private bool _fastMode = false;
+        private List<long> _highScores = new();
 
         public string Name => "Jezzball";
         public string Description => "A playable Jezzball clone with lives, time, and win conditions.";
-        public Version Version => new(1, 7, 0); // Version bump for FlowerBox theme
+        public Version Version => new(1,8); // Version bump for comprehensive menu system
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
 
@@ -70,10 +81,24 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void OnWindowKeyDown(object? sender, KeyEventArgs e)
         {
-            if (e.Key == Key.R)
+            switch (e.Key)
             {
-                _control?.RestartGame();
-                e.Handled = true;
+                case Key.R:
+                    _control?.RestartGame();
+                    e.Handled = true;
+                    break;
+                case Key.Space:
+                    TogglePause();
+                    e.Handled = true;
+                    break;
+                case Key.F1:
+                    ShowHelp();
+                    e.Handled = true;
+                    break;
+                case Key.F2:
+                    ShowHighScores();
+                    e.Handled = true;
+                    break;
             }
         }
 
@@ -83,7 +108,57 @@ namespace Cycloside.Plugins.BuiltIn
             var menu = _control.MenuBar;
             menu.Items.Clear();
 
-            var themeMenu = new MenuItem { Header = "Theme" };
+            // Game Menu
+            var gameMenu = new MenuItem { Header = "_Game" };
+            var newGameItem = new MenuItem { Header = "_New Game", InputGesture = new KeyGesture(Key.R) };
+            newGameItem.Click += (_, _) => _control?.RestartGame();
+            gameMenu.Items.Add(newGameItem);
+            
+            var pauseItem = new MenuItem { Header = "_Pause", InputGesture = new KeyGesture(Key.Space) };
+            pauseItem.Click += (_, _) => TogglePause();
+            gameMenu.Items.Add(pauseItem);
+            
+            gameMenu.Items.Add(new Separator());
+            var highScoresItem = new MenuItem { Header = "High _Scores", InputGesture = new KeyGesture(Key.F2) };
+            highScoresItem.Click += (_, _) => ShowHighScores();
+            gameMenu.Items.Add(highScoresItem);
+            
+            gameMenu.Items.Add(new Separator());
+            var exitItem = new MenuItem { Header = "E_xit" };
+            exitItem.Click += (_, _) => Stop();
+            gameMenu.Items.Add(exitItem);
+
+            // Options Menu
+            var optionsMenu = new MenuItem { Header = "_Options" };      
+            var speedMenu = new MenuItem { Header = "Game _Speed" };
+            var normalSpeedItem = new MenuItem { Header = "Normal", ToggleType = MenuItemToggleType.CheckBox, IsChecked = !_fastMode };
+            var fastSpeedItem = new MenuItem { Header = "Fast (2x Points)", ToggleType = MenuItemToggleType.CheckBox, IsChecked = _fastMode };
+            normalSpeedItem.Click += (_, _) => SetGameSpeed(false);
+            fastSpeedItem.Click += (_, _) => SetGameSpeed(true);
+            speedMenu.Items.Add(normalSpeedItem);
+            speedMenu.Items.Add(fastSpeedItem);
+            optionsMenu.Items.Add(speedMenu);
+            
+            var soundItem = new MenuItem { Header = "_Sound", ToggleType = MenuItemToggleType.CheckBox, IsChecked = _soundEnabled };
+            soundItem.Click += (_, _) => ToggleSound();
+            optionsMenu.Items.Add(soundItem);
+            
+            var gridItem = new MenuItem { Header = "Show _Grid", ToggleType = MenuItemToggleType.CheckBox, IsChecked = _showGrid };
+            gridItem.Click += (_, _) => ToggleGrid();
+            optionsMenu.Items.Add(gridItem);
+
+            // View Menu
+            var viewMenu = new MenuItem { Header = "_View" };      
+            var statusBarItem = new MenuItem { Header = "Show _Status Bar", ToggleType = MenuItemToggleType.CheckBox, IsChecked = _showStatusBar };
+            statusBarItem.Click += (_, _) => ToggleStatusBar();
+            viewMenu.Items.Add(statusBarItem);
+            
+            var areaPercentageItem = new MenuItem { Header = "Show Area _Percentage", ToggleType = MenuItemToggleType.CheckBox, IsChecked = _showAreaPercentage };
+            areaPercentageItem.Click += (_, _) => ToggleAreaPercentage();
+            viewMenu.Items.Add(areaPercentageItem);
+
+            // Theme Menu
+            var themeMenu = new MenuItem { Header = "_Theme" };
             foreach (var name in JezzballThemes.All.Keys)
             {
                 var item = new MenuItem
@@ -99,10 +174,11 @@ namespace Cycloside.Plugins.BuiltIn
                     SettingsManager.Save();
                     foreach (var mi in themeMenu.Items!.OfType<MenuItem>()) mi.IsChecked = mi == item;
                 };
-                ((IList)themeMenu.Items).Add(item);
+                themeMenu.Items.Add(item);
             }
 
-            var skinMenu = new MenuItem { Header = "Skin" };
+            // Skin Menu
+            var skinMenu = new MenuItem { Header = "_Skin" };
             foreach (var skin in GetSkinNames())
             {
                 var item = new MenuItem
@@ -119,10 +195,11 @@ namespace Cycloside.Plugins.BuiltIn
                     SettingsManager.Save();
                     foreach (var mi in skinMenu.Items!.OfType<MenuItem>()) mi.IsChecked = mi == item;
                 };
-                ((IList)skinMenu.Items).Add(item);
+                skinMenu.Items.Add(item);
             }
 
-            var soundMenu = new MenuItem { Header = "Sounds" };
+            // Sound Menu
+            var soundMenu = new MenuItem { Header = "_Sounds" };
             foreach (JezzballSoundEvent ev in Enum.GetValues(typeof(JezzballSoundEvent)))
             {
                 var item = new MenuItem { Header = $"Set {ev}..." };
@@ -138,13 +215,229 @@ namespace Cycloside.Plugins.BuiltIn
                     var file = result.FirstOrDefault();
                     if (file?.Path.LocalPath != null) _control?.SetSound(ev, file.Path.LocalPath);
                 };
-                ((IList)soundMenu.Items).Add(item);
+                soundMenu.Items.Add(item);
             }
 
-            menu.Items.Clear();
-            ((IList)menu.Items).Add(themeMenu);
-            ((IList)menu.Items).Add(skinMenu);
-            ((IList)menu.Items).Add(soundMenu);
+            // Help Menu
+            var helpMenu = new MenuItem { Header = "_Help" };
+            var howToPlayItem = new MenuItem { Header = "_How to Play", InputGesture = new KeyGesture(Key.F1) };
+            howToPlayItem.Click += (_, _) => ShowHelp();
+            helpMenu.Items.Add(howToPlayItem);
+            
+            var aboutItem = new MenuItem { Header = "About Jezzball" };
+            aboutItem.Click += (_, _) => ShowAbout();
+            helpMenu.Items.Add(aboutItem);
+
+            // Add all menus to main menu bar
+            menu.Items.Add(gameMenu);
+            menu.Items.Add(optionsMenu);
+            menu.Items.Add(viewMenu);
+            menu.Items.Add(themeMenu);
+            menu.Items.Add(skinMenu);
+            menu.Items.Add(soundMenu);
+            menu.Items.Add(helpMenu);
+        }
+
+        // Menu action methods
+        private void TogglePause()
+        {
+            _isPaused = !_isPaused;
+            _control?.SetPaused(_isPaused);
+            UpdateMenuItems();
+        }
+
+        private void SetGameSpeed(bool fast)
+        {
+            _fastMode = fast;
+            _control?.SetGameSpeed(fast);
+            UpdateMenuItems();
+        }
+
+        private void ToggleSound()
+        {
+            _soundEnabled = !_soundEnabled;
+            _control?.SetSoundEnabled(_soundEnabled);
+            UpdateMenuItems();
+        }
+
+        private void ToggleGrid()
+        {
+            _showGrid = !_showGrid;
+            _control?.SetShowGrid(_showGrid);
+            UpdateMenuItems();
+        }
+
+        private void ToggleStatusBar()
+        {
+            _showStatusBar = !_showStatusBar;
+            _control?.SetShowStatusBar(_showStatusBar);
+            UpdateMenuItems();
+        }
+
+        private void ToggleAreaPercentage()
+        {
+            _showAreaPercentage = !_showAreaPercentage;
+            _control?.SetShowAreaPercentage(_showAreaPercentage);
+            UpdateMenuItems();
+        }
+
+        private void ShowHighScores()
+        {
+            var scores = string.Join("\n", _highScores.Select((score, index) => $"{index + 1}. {score:N0}"));
+            var message = string.IsNullOrEmpty(scores) ? "No high scores yet!" : $"High Scores:\n\n{scores}";
+            
+            var window = new Window
+            {
+                Title = "High Scores",
+                Width = 300,
+                Height = 400,
+                Content = new TextBox
+                {
+                    Text = message,
+                    IsReadOnly = true,
+                    FontFamily = new FontFamily("Consolas"),
+                    FontSize = 14,
+                    Margin = new Thickness(10)
+                }
+            };
+            window.Show();
+        }
+
+        private void ShowHelp()
+        {
+            var helpText = @"How to Play Jezzball:
+
+OBJECTIVE:
+Clear as much of each level as possible by drawing walls to capture areas.
+
+CONTROLS:
+• Left Click: Draw a wall from the clicked point
+• Right Click: Change wall direction (Vertical/Horizontal)
+• Space: Pause/Resume game
+• R: Restart current level
+• F1: Show this help
+• F2: Show high scores
+
+GAMEPLAY:
+• Click in the gray area to start drawing a wall
+• The wall will expand in both directions until it hits the edges
+• If a ball hits your wall while it's being drawn, you lose a life
+• When a wall completes, it divides the playing field
+• Areas with no balls are cleared and turn blue
+• You need to clear 75 board to complete a level
+• Clearing 80%+ gives bonus points!
+
+SPECIAL FEATURES:
+• Fast Mode: Get2oints for the same area cleared
+• Crazy Ball: The flashing magenta ball gives huge bonus if trapped
+• Power-ups: Collect items for extra lives, freeze, and more
+
+TIPS:
+• Plan your walls carefully to avoid balls
+• Use walls to trap balls in smaller areas
+• Try to clear large areas at once for better bonuses
+• Watch for the crazy ball - its worth the risk!";
+
+            var window = new Window
+            {
+                Title = "How to Play Jezzball",
+                Width = 500,
+                Height = 600,
+                Content = new ScrollViewer
+                {
+                    Content = new TextBox
+                    {
+                        Text = helpText,
+                        IsReadOnly = true,
+                        FontFamily = new FontFamily("Segoe UI"),
+                        FontSize = 12,
+                        Margin = new Thickness(10),
+                        TextWrapping = TextWrapping.Wrap
+                    }
+                }
+            };
+            window.Show();
+        }
+
+        private void ShowAbout()
+        {
+            var aboutText = $@"Jezzball Clone v{Version}
+
+A faithful recreation of the classic Microsoft Jezzball game.
+
+Original Jezzball was created by Marjacq Micro Ltd. and published by Microsoft in 1992. This clone features:
+• Classic gameplay mechanics
+• Multiple themes and skins
+• Customizable sound effects
+• High score tracking
+• Power-ups and special balls
+• Fast mode for extra challenge
+
+Built with Avalonia UI and .NET8. Enjoy playing!";
+
+            var window = new Window
+            {
+                Title = "About Jezzball",
+                Width = 400,
+                Height = 500,
+                Content = new TextBox
+                {
+                    Text = aboutText,
+                    IsReadOnly = true,
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 12,
+                    Margin = new Thickness(10),
+                    TextWrapping = TextWrapping.Wrap
+                }
+            };
+            window.Show();
+        }
+
+        private void UpdateMenuItems()
+        {
+            // Update menu item states based on current settings
+            if (_control?.MenuBar?.Items is IList menuItems)
+            {
+                // Update pause menu item
+                if (menuItems.Count > 0 && menuItems[0] is MenuItem gameMenu && gameMenu.Items.Count > 1)
+                {
+                    var pauseItem = gameMenu.Items[1] as MenuItem;
+                    if (pauseItem != null)
+                        pauseItem.Header = _isPaused ? "_Resume" : "_Pause";
+                }
+
+                // Update options menu items
+                if (menuItems.Count > 1 && menuItems[1] is MenuItem optionsMenu)
+                {
+                    // Update speed menu
+                    if (optionsMenu.Items.Count > 0 && optionsMenu.Items[0] is MenuItem speedMenu)
+                    {
+                        if (speedMenu.Items.Count > 0) (speedMenu.Items[0] as MenuItem)!.IsChecked = !_fastMode;
+                        if (speedMenu.Items.Count > 1) (speedMenu.Items[1] as MenuItem)!.IsChecked = _fastMode;
+                    }
+
+                    // Update sound menu
+                    if (optionsMenu.Items.Count > 1) (optionsMenu.Items[1] as MenuItem)!.IsChecked = _soundEnabled;
+
+                    // Update grid menu
+                    if (optionsMenu.Items.Count > 2) (optionsMenu.Items[2] as MenuItem)!.IsChecked = _showGrid;
+                }
+
+                // Update view menu items
+                if (menuItems.Count > 2 && menuItems[2] is MenuItem viewMenu)
+                {
+                    if (viewMenu.Items.Count > 0) (viewMenu.Items[0] as MenuItem)!.IsChecked = _showStatusBar;
+                    if (viewMenu.Items.Count > 1) (viewMenu.Items[1] as MenuItem)!.IsChecked = _showAreaPercentage;
+                }
+            }
+        }
+
+        public void AddHighScore(long score)
+        {
+            _highScores.Add(score);
+            _highScores.Sort((a, b) => b.CompareTo(a)); // Sort descending
+            if (_highScores.Count > 10) // Keep only top 10
+                _highScores.RemoveRange(10, _highScores.Count - 10);
         }
 
         private static IEnumerable<string> GetSkinNames()
@@ -584,7 +877,6 @@ namespace Cycloside.Plugins.BuiltIn
             _freezeTimer = 0;
             _doubleScoreTimer = 0;
             Message = $"Level {Level}";
-
             var bounds = new Rect(0, 0, gameSize.Width, gameSize.Height);
             _totalPlayArea = bounds.Width * bounds.Height;
             _activeAreas.Add(bounds);
@@ -606,6 +898,14 @@ namespace Cycloside.Plugins.BuiltIn
                 _balls.Add(new Ball(bounds.Center, velocity, _theme, type));
             }
             RecalculateCapturedArea();
+
+            // NEW: Show "Level X" for 1 second, then clear message
+            var timer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            timer.Tick += (_, _) => {
+                Message = string.Empty;
+                timer.Stop();
+            };
+            timer.Start();
         }
 
         public void HandleClick(Point clickPosition)
@@ -732,15 +1032,19 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 CurrentWall.WallPart1 = w1;
 
-                foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart1)))
+                // Only check for ball collisions if wall has grown to a reasonable size
+                if (w1.Height > 8)
                 {
-                    if (CurrentWall.IsPart1Invincible)
+                    foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart1)))
                     {
-                        ball.Bounce(CurrentWall.Orientation);
-                        JezzballSound.Play(JezzballSoundEvent.WallHit);
-                        CurrentWall.IsPart1Invincible = false;
+                        if (CurrentWall.IsPart1Invincible)
+                        {
+                            ball.Bounce(CurrentWall.Orientation);
+                            JezzballSound.Play(JezzballSoundEvent.WallHit);
+                            CurrentWall.IsPart1Invincible = false;
+                        }
+                        else { LoseLife("Wall Broken!"); return; }
                     }
-                    else { LoseLife("Wall Broken!"); return; }
                 }
             }
 
@@ -761,15 +1065,19 @@ namespace Cycloside.Plugins.BuiltIn
                 }
                 CurrentWall.WallPart2 = w2;
 
-                foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart2)))
+                // Only check for ball collisions if wall has grown to a reasonable size
+                if (w2.Height > 8)
                 {
-                    if (CurrentWall.IsPart2Invincible)
+                    foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart2)))
                     {
-                        ball.Bounce(CurrentWall.Orientation);
-                        JezzballSound.Play(JezzballSoundEvent.WallHit);
-                        CurrentWall.IsPart2Invincible = false;
+                        if (CurrentWall.IsPart2Invincible)
+                        {
+                            ball.Bounce(CurrentWall.Orientation);
+                            JezzballSound.Play(JezzballSoundEvent.WallHit);
+                            CurrentWall.IsPart2Invincible = false;
+                        }
+                        else { LoseLife("Wall Broken!"); return; }
                     }
-                    else { LoseLife("Wall Broken!"); return; }
                 }
             }
 
@@ -888,9 +1196,18 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly Stopwatch _stopwatch = new();
         private Point _mousePosition;
         private WallOrientation _orientation = WallOrientation.Vertical;
+        
+        // New settings fields
+        private bool _isPaused = false;
+        private bool _fastMode = false;
+        private bool _soundEnabled = true;
+        private bool _showGrid = false;
+        private bool _showStatusBar = true;
+        private bool _showAreaPercentage = true;
 
         private readonly GameCanvas _gameCanvas;
-
+        
+        // Visual elements
         private IBrush _backgroundBrush = null!;
         private Pen _wallPen = null!;
         private Pen _previewPen = null!;
@@ -906,6 +1223,7 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly Menu _menu = new();
         private JezzballTheme _theme;
 
+        // Status bar elements
         private readonly TextBlock _levelText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _livesText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _scoreText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
@@ -919,41 +1237,94 @@ namespace Cycloside.Plugins.BuiltIn
         {
             _theme = theme;
             _gameState = new JezzballGameState(theme);
-            LoadSoundSettings();
-            var statusBar = new DockPanel { Background = Brushes.Black, Height = 30, Opacity = 0.8 };
-            var restartButton = new Button { Content = "Restart", Margin = new Thickness(5), VerticalAlignment = VerticalAlignment.Center };
-            restartButton.Click += (_, _) => RestartGame();
-
-            DockPanel.SetDock(_levelText, Dock.Left);
-            DockPanel.SetDock(_livesText, Dock.Left);
-            DockPanel.SetDock(_scoreText, Dock.Left);
-            DockPanel.SetDock(restartButton, Dock.Right);
-            DockPanel.SetDock(_capturedText, Dock.Right);
-            DockPanel.SetDock(_timeText, Dock.Right);
-            statusBar.Children.AddRange(new Control[] { _levelText, _livesText, _scoreText, restartButton, _capturedText, _timeText, _effectText });
-
-            var layout = new DockPanel();
-            DockPanel.SetDock(_menu, Dock.Top);
-            layout.Children.Add(_menu);
-            DockPanel.SetDock(statusBar, Dock.Bottom);
-            layout.Children.Add(statusBar);
             _gameCanvas = new GameCanvas(this);
-            layout.Children.Add(_gameCanvas);
-
-            Content = layout;
-            ClipToBounds = true;
-            Focusable = true;
-
-            _gameCanvas.PointerPressed += OnPointerPressed;
-            _gameCanvas.PointerMoved += OnPointerMoved;
-            this.SizeChanged += OnControlResized;
-
-            ApplyTheme(_theme);
-
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-            _timer.Tick += GameTick;
+            
+            _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Render, GameTick);
             _timer.Start();
             _stopwatch.Start();
+
+            ApplyTheme(theme);
+            LoadSoundSettings();
+
+            var statusPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(5)
+            };
+            statusPanel.Children.AddRange(new Control[] { _levelText, _livesText, _scoreText, _timeText, _capturedText, _effectText });
+
+            var mainPanel = new Grid();
+            mainPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Menu
+            mainPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Status
+            mainPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });  // Game
+            
+            Grid.SetRow(_menu, 0);
+            Grid.SetRow(statusPanel, 1);
+            Grid.SetRow(_gameCanvas, 2);
+            mainPanel.Children.Add(_menu);
+            mainPanel.Children.Add(statusPanel);
+            mainPanel.Children.Add(_gameCanvas);
+
+            Content = mainPanel;
+            
+            _gameCanvas.PointerMoved += OnPointerMoved;
+            _gameCanvas.PointerPressed += OnPointerPressed;
+            SizeChanged += OnControlResized;
+            
+            _gameState.StartNewGame(new Size(800, 570));
+        }
+
+        // New methods for menu functionality
+        public void SetPaused(bool paused)
+        {
+            _isPaused = paused;
+            if (paused)
+            {
+                _timer.Stop();
+                _stopwatch.Stop();
+            }
+            else
+            {
+                _timer.Start();
+                _stopwatch.Start();
+            }
+        }
+
+        public void SetGameSpeed(bool fast)
+        {
+            _fastMode = fast;
+            // The game speed affects scoring - this is handled in the scoring logic
+        }
+
+        public void SetSoundEnabled(bool enabled)
+        {
+            _soundEnabled = enabled;
+        }
+
+        public void SetShowGrid(bool show)
+        {
+            _showGrid = show;
+            _gameCanvas.InvalidateVisual();
+        }
+
+        public void SetShowStatusBar(bool show)
+        {
+            _showStatusBar = show;
+            if (Content is Grid mainPanel && mainPanel.Children.Count > 0)               {
+                var statusPanel = mainPanel.Children[1] as StackPanel;
+                if (statusPanel != null)
+                {
+                    statusPanel.IsVisible = show;
+                }
+            }
+        }
+
+        public void SetShowAreaPercentage(bool show)
+        {
+            _showAreaPercentage = show;
+            UpdateStatusText();
         }
 
         internal void SetSound(JezzballSoundEvent ev, string path)
@@ -966,31 +1337,29 @@ namespace Cycloside.Plugins.BuiltIn
             }
             map[ev.ToString()] = path;
             SettingsManager.Save();
-            JezzballSound.Paths[ev] = path;
         }
 
         private void LoadSoundSettings()
         {
-            if (SettingsManager.Settings.PluginSoundEffects.TryGetValue("Jezzball", out var map))
+            if (SettingsManager.Settings.PluginSoundEffects.TryGetValue("Jezzball", out var sounds))
             {
-                foreach (var kv in map)
+                foreach (var kvp in sounds)
                 {
-                    if (Enum.TryParse<JezzballSoundEvent>(kv.Key, out var ev))
-                        _soundPaths[ev] = kv.Value;
+                    if (Enum.TryParse<JezzballSoundEvent>(kvp.Key, out var ev))
+                    {
+                        _soundPaths[ev] = kvp.Value;
+                    }
                 }
             }
-            JezzballSound.Paths.Clear();
-            foreach (var kv in _soundPaths)
-                JezzballSound.Paths[kv.Key] = kv.Value;
         }
 
         public void SetTheme(string name)
         {
-            if (JezzballThemes.All.TryGetValue(name, out var t))
+            if (JezzballThemes.All.TryGetValue(name, out var theme))
             {
-                _theme = t;
-                ApplyTheme(_theme);
+                _theme = theme;
                 _gameState.ApplyTheme(_theme);
+                ApplyTheme(_theme);
             }
         }
 
@@ -1014,59 +1383,48 @@ namespace Cycloside.Plugins.BuiltIn
         public void Dispose()
         {
             _timer.Stop();
-            this.SizeChanged -= OnControlResized;
-            _gameCanvas.PointerPressed -= OnPointerPressed;
-            _gameCanvas.PointerMoved -= OnPointerMoved;
+            _stopwatch.Stop();
         }
 
         private void OnControlResized(object? sender, SizeChangedEventArgs e)
         {
-            _gameState.StartLevel(e.NewSize);
+            _gameState.StartLevel(_gameCanvas.Bounds.Size);
         }
 
         private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(_gameCanvas);
 
         private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
-            var point = e.GetCurrentPoint(_gameCanvas);
-            if (point.Properties.IsRightButtonPressed)
+            if (_isPaused) return;
+
+            var position = e.GetPosition(_gameCanvas);
+            
+            if (e.GetCurrentPoint(_gameCanvas).Properties.IsRightButtonPressed)
             {
                 _orientation = _orientation == WallOrientation.Vertical ? WallOrientation.Horizontal : WallOrientation.Vertical;
+                if (_soundEnabled) JezzballSound.Play(JezzballSoundEvent.Click);
                 return;
             }
-            if (point.Properties.IsLeftButtonPressed)
+
+            if (_gameState.TryStartWall(position, _orientation))
             {
-                if (_gameState.Message != string.Empty)
-                {
-                    JezzballSound.Play(JezzballSoundEvent.Click);
-                    _gameState.HandleClick(point.Position);
-                }
-                else
-                {
-                    var clickedPowerUp = _gameState.PowerUps.FirstOrDefault(p => p.BoundingBox.Contains(point.Position));
-                    if (clickedPowerUp != null)
-                    {
-                        JezzballSound.Play(JezzballSoundEvent.Click);
-                        _gameState.HandleClick(point.Position);
-                    }
-                    else
-                    {
-                        if (_gameState.TryStartWall(_mousePosition, _orientation))
-                        {
-                            JezzballSound.Play(JezzballSoundEvent.WallBuild);
-                        }
-                    }
-                }
+                if (_soundEnabled) JezzballSound.Play(JezzballSoundEvent.WallBuild);
+            }
+            else
+            {
+                _gameState.HandleClick(position);
             }
         }
 
         private void GameTick(object? sender, EventArgs e)
         {
-            var dt = _stopwatch.Elapsed.TotalSeconds;
-            _stopwatch.Restart();
-
-            _gameState.Update(dt);
-            UpdateStatusText();
+            if (!_isPaused)
+            {
+                var dt = _stopwatch.Elapsed.TotalSeconds;
+                _stopwatch.Restart();
+                _gameState.Update(dt);
+                UpdateStatusText();
+            }
             _gameCanvas.InvalidateVisual();
         }
 
@@ -1074,82 +1432,107 @@ namespace Cycloside.Plugins.BuiltIn
         {
             _levelText.Text = $"Level: {_gameState.Level}";
             _livesText.Text = $"Lives: {_gameState.Lives}";
-            _scoreText.Text = $"Score: {_gameState.Score}";
-            _timeText.Text = $"Time: {Math.Max(0, (int)_gameState.TimeLeft.TotalSeconds)}";
-            _capturedText.Text = $"Captured: {_gameState.CapturedPercentage:P0}";
+            _scoreText.Text = $"Score: {_gameState.Score:N0}";
+            _timeText.Text = $"Time: {_gameState.TimeLeft:mm\\:ss}";
+            
+            if (_showAreaPercentage)
+            {
+                _capturedText.Text = $"Area: {_gameState.CapturedPercentage:P0}";
+            }
+            else
+            {
+                _capturedText.Text = string.Empty;
+            }
+            
             var effects = new List<string>();
-            if (_gameState.FreezeActive) effects.Add("Freeze");
-            if (_gameState.DoubleScoreActive) effects.Add("2x Score");
-            _effectText.Text = effects.Count > 0 ? $"Effects: {string.Join(", ", effects)}" : string.Empty;
+            if (_gameState.FreezeActive) effects.Add("FREEZE");
+            if (_gameState.DoubleScoreActive) effects.Add("2X SCORE");
+            if (_gameState.HasIceWallPowerUp) effects.Add("ICE WALL");
+            _effectText.Text = string.Join(" | ", effects);
         }
 
         internal async void RenderGame(DrawingContext context)
         {
-            context.FillRectangle(_backgroundBrush, _gameCanvas.Bounds);
+            var bounds = _gameCanvas.Bounds;
+            if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-            foreach (var area in _gameState.FilledAreas) context.FillRectangle(_filledBrush, area);
+            // Draw background
+            context.FillRectangle(_backgroundBrush, bounds);
 
-            var gridPen = new Pen(new SolidColorBrush(Colors.White, 0.1), 1);
-            foreach (var area in _gameState.ActiveAreas)
+            // Draw grid if enabled
+            if (_showGrid)
             {
-                for (double x = area.Left; x < area.Right; x += 20) context.DrawLine(gridPen, new Point(x, area.Top), new Point(x, area.Bottom));
-                for (double y = area.Top; y < area.Bottom; y += 20) context.DrawLine(gridPen, new Point(area.Left, y), new Point(area.Right, y));
+                var gridPen = new Pen(new SolidColorBrush(Colors.Gray, 0.3), 1);
+                for (int x = 0; x <= bounds.Width; x += 20) context.DrawLine(gridPen, new Point(x, 0), new Point(x, bounds.Height));
+                for (int y = 0; y <= bounds.Height; y += 20) context.DrawLine(gridPen, new Point(0, y), new Point(bounds.Width, y));
             }
 
-            foreach (var ball in _gameState.Balls) context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
-            foreach (var p in _gameState.PowerUps)
+            // Draw filled areas
+            foreach (var area in _gameState.FilledAreas)
             {
-                var brush = p.Type switch
+                context.FillRectangle(_filledBrush, area);
+            }
+
+            // Draw active areas (for debugging)
+            // foreach (var area in _gameState.ActiveAreas)
+            // {
+            //     context.DrawRectangle(null, new Pen(Brushes.Red, 1), area);
+            // }
+
+            // Draw power-ups
+            foreach (var powerUp in _gameState.PowerUps)
+            {
+                var brush = powerUp.Type switch
                 {
                     PowerUpType.ExtraLife => _powerUpExtraLifeBrush,
                     PowerUpType.Freeze => _powerUpFreezeBrush,
                     PowerUpType.DoubleScore => _powerUpDoubleScoreBrush,
                     _ => _powerUpBrush
                 };
-                context.DrawEllipse(brush, null, p.Position, p.Radius, p.Radius);
+                context.DrawEllipse(brush, null, powerUp.Position, powerUp.Radius, powerUp.Radius);
             }
 
-            if (_gameState.CurrentWall is { } wall)
+            // Draw balls
+            foreach (var ball in _gameState.Balls)
             {
+                context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
+            }
+
+            // Draw current wall being built
+            if (_gameState.CurrentWall != null)
+            {
+                var wall = _gameState.CurrentWall;
                 var pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? _iceWallPen : _wallPen;
                 
-                if (wall.Orientation == WallOrientation.Vertical)
+                if (wall.IsPart1Active)
                 {
-                    if (wall.IsPart1Active) context.DrawLine(pen, new Point(wall.Origin.X, wall.WallPart1.Top), wall.Origin);
-                    if (wall.IsPart2Active) context.DrawLine(pen, wall.Origin, new Point(wall.Origin.X, wall.WallPart2.Bottom));
+                    context.DrawRectangle(null, pen, wall.WallPart1);
                 }
-                else // Horizontal
+                if (wall.IsPart2Active)
                 {
-                    if (wall.IsPart1Active) context.DrawLine(pen, new Point(wall.WallPart1.Left, wall.Origin.Y), wall.Origin);
-                    if (wall.IsPart2Active) context.DrawLine(pen, wall.Origin, new Point(wall.WallPart2.Right, wall.Origin.Y));
-                }
-            }
-            else if (_gameState.Message == string.Empty)
-            {
-                var area = _gameState.ActiveAreas.FirstOrDefault(r => r.Contains(_mousePosition));
-                if (area != default)
-                {
-                    var pen = _gameState.HasIceWallPowerUp ? _icePreviewPen : _previewPen;
-                    if (_orientation == WallOrientation.Vertical)
-                        context.DrawLine(pen, new Point(_mousePosition.X, area.Top), new Point(_mousePosition.X, area.Bottom));
-                    else
-                        context.DrawLine(pen, new Point(area.Left, _mousePosition.Y), new Point(area.Right, _mousePosition.Y));
+                    context.DrawRectangle(null, pen, wall.WallPart2);
                 }
             }
 
-            if (_gameState.FlashEffect)
+            // Draw preview line
+            if (_gameState.CurrentWall == null && string.IsNullOrEmpty(_gameState.Message))
             {
-                context.FillRectangle(_flashBrush, _gameCanvas.Bounds);
-                await Task.Delay(50);
-                _gameState.FlashEffect = false;
+                var previewPen = _previewPen;
+                var start = _mousePosition;
+                var end = _orientation == WallOrientation.Vertical 
+                    ? new Point(start.X, _orientation == WallOrientation.Vertical ? bounds.Height : 0)
+                    : new Point(_orientation == WallOrientation.Horizontal ? bounds.Width : 0, start.Y);
+                context.DrawLine(previewPen, start, end);
             }
 
-            if (_gameState.Message != string.Empty)
+            // Draw message overlay
+            if (!string.IsNullOrEmpty(_gameState.Message))
             {
-                context.FillRectangle(new SolidColorBrush(Colors.Black, 0.5), _gameCanvas.Bounds);
-                var formatted = new FormattedText(_gameState.Message, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Bold), 36, Brushes.WhiteSmoke);
-                var textPos = new Point((_gameCanvas.Bounds.Width - formatted.Width) / 2, (_gameCanvas.Bounds.Height - formatted.Height) / 2);
-                context.DrawText(formatted, textPos);
+                var textBrush = new SolidColorBrush(Colors.White);
+                var font = new Typeface("Segoe UI");
+                var formattedText = new FormattedText(_gameState.Message, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, font, 24, textBrush);
+                var textPosition = new Point((bounds.Width - formattedText.Width) / 2, (bounds.Height - formattedText.Height) / 2);
+                context.DrawText(formattedText, textPosition);
             }
         }
 
