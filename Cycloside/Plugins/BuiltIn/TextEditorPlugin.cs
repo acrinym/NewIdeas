@@ -19,6 +19,7 @@ namespace Cycloside.Plugins.BuiltIn
         private TextEditorWindow? _window;
         private string? _currentFilePath;
         private string _lastSavedText = string.Empty;
+        private Action<object?>? _openHandler;
 
         // --- IPlugin Properties ---
         public string Name => "Text Editor";
@@ -50,12 +51,24 @@ namespace Cycloside.Plugins.BuiltIn
             };
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TextEditorPlugin));
             _window.Show();
+
+            _openHandler = async payload =>
+            {
+                if (payload is string p)
+                    await LoadFileExternal(p);
+            };
+            PluginBus.Subscribe("texteditor:open", _openHandler);
         }
 
         public void Stop()
         {
             _window?.Close();
             _window = null;
+            if (_openHandler != null)
+            {
+                PluginBus.Unsubscribe("texteditor:open", _openHandler);
+                _openHandler = null;
+            }
         }
 
         // --- Commands for UI Binding ---
@@ -169,6 +182,26 @@ namespace Cycloside.Plugins.BuiltIn
             WindowTitle = string.IsNullOrEmpty(fileName)
                 ? "Cycloside Editor - Untitled"
                 : $"Cycloside Editor - {fileName}";
+        }
+
+        private async Task LoadFileExternal(string path)
+        {
+            if (_window == null) return;
+            if (!await CanProceedWithUnsavedChanges()) return;
+            if (!File.Exists(path)) return;
+
+            try
+            {
+                EditorContent = await File.ReadAllTextAsync(path);
+                _currentFilePath = path;
+                _lastSavedText = EditorContent;
+                UpdateWindowTitle(Path.GetFileName(path));
+                StatusText = $"Opened {Path.GetFileName(path)}";
+            }
+            catch (Exception ex)
+            {
+                StatusText = $"Error opening file: {ex.Message}";
+            }
         }
     }
 }
