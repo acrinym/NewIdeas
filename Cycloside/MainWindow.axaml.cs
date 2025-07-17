@@ -28,6 +28,9 @@ public partial class MainWindow : Window
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(MainWindow));
     }
 
+    // Public property to access the plugin manager
+    public PluginManager PluginManager => _manager;
+
     private void OpenThemeSettings(object? sender, RoutedEventArgs e) =>
         new ThemeSettingsWindow(_manager).Show();
 

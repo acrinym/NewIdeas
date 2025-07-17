@@ -237,15 +237,24 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 // Try to find the WinampVisHostPlugin through the applications plugin manager
                 if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
-                    desktop.MainWindow?.DataContext is ViewModels.MainWindowViewModel vm)
+                    desktop.MainWindow is MainWindow mainWindow &&
+                    mainWindow.PluginManager != null)
                 {
-                    var visPlugin = vm.AvailablePlugins.FirstOrDefault(p => p.Name == "Winamp Visual Host");
+                    var visPlugin = mainWindow.PluginManager.Plugins.FirstOrDefault(p => p.Name == "Winamp Visual Host");
                     if (visPlugin is WinampVisHostPlugin visHost)
                     {
                         _visHost = visHost;
                         UpdateVisualizationStatus();
                         Logger.Log("Found Winamp Visual Host plugin");
                     }
+                    else
+                    {
+                        Logger.Log("Winamp Visual Host plugin not found in plugin manager");
+                    }
+                }
+                else
+                {
+                    Logger.Log("Could not access plugin manager to find Winamp Visual Host");
                 }
             }
             catch (Exception ex)

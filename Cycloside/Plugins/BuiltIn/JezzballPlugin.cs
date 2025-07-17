@@ -147,6 +147,10 @@ namespace Cycloside.Plugins.BuiltIn
             gridItem.Click += (_, _) => ToggleGrid();
             optionsMenu.Items.Add(gridItem);
 
+            var originalModeItem = new MenuItem { Header = "_Original Mode", ToggleType = MenuItemToggleType.CheckBox, IsChecked = false };
+            originalModeItem.Click += (_, _) => ToggleOriginalMode();
+            optionsMenu.Items.Add(originalModeItem);
+
             // View Menu
             var viewMenu = new MenuItem { Header = "_View" };      
             var statusBarItem = new MenuItem { Header = "Show _Status Bar", ToggleType = MenuItemToggleType.CheckBox, IsChecked = _showStatusBar };
@@ -278,6 +282,17 @@ namespace Cycloside.Plugins.BuiltIn
         {
             _showAreaPercentage = !_showAreaPercentage;
             _control?.SetShowAreaPercentage(_showAreaPercentage);
+            UpdateMenuItems();
+        }
+
+        private void ToggleOriginalMode()
+        {
+            var originalMode = !_control?.MenuBar?.Items?.OfType<MenuItem>()
+                ?.FirstOrDefault(m => m.Header?.ToString()?.Contains("Original Mode") == true)
+                ?.Items?.OfType<MenuItem>()
+                ?.FirstOrDefault()?.IsChecked ?? false;
+            
+            _control?.SetOriginalMode(originalMode);
             UpdateMenuItems();
         }
 
@@ -454,7 +469,7 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
     #region Game Model (State and Logic)
 
     public enum WallOrientation { Vertical, Horizontal }
-    public enum BallType { Normal, Slow, Fast, Splitting, Teleporting }
+    public enum BallType { Normal, Slow, Fast, Splitting, Teleporting, RedWhite }
     public enum PowerUpType { IceWall, ExtraLife, Freeze, DoubleScore }
 
     public enum JezzballSoundEvent
@@ -485,6 +500,7 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
         public IBrush BallFastBrush { get; init; } = Brushes.OrangeRed;
         public IBrush BallSplittingBrush { get; init; } = Brushes.MediumPurple;
         public IBrush BallTeleportBrush { get; init; } = Brushes.Gold;
+        public IBrush BallRedWhiteBrush { get; init; } = Brushes.White; // Will be rendered specially
     }
 
     // NEW: A static class to generate the procedural brushes for the FlowerBox theme.
@@ -726,6 +742,9 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
         public IBrush Fill { get; private set; }
         public BallType Type { get; }
         private double _teleportTimer;
+        private double _pulseTimer = 0;
+        private readonly Queue<Point> _trail = new();
+        private const int TrailLength = 5;
 
         public Ball(Point position, Vector velocity, JezzballTheme theme, BallType type = BallType.Normal, double radius = 8)
         {
@@ -751,6 +770,9 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                     Fill = theme.BallTeleportBrush;
                     _teleportTimer = 2.0;
                     break;
+                case BallType.RedWhite:
+                    Fill = theme.BallRedWhiteBrush;
+                    break;
                 default:
                     Fill = theme.BallNormalBrush;
                     break;
@@ -765,6 +787,7 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 BallType.Fast => theme.BallFastBrush,
                 BallType.Splitting => theme.BallSplittingBrush,
                 BallType.Teleporting => theme.BallTeleportBrush,
+                BallType.RedWhite => theme.BallRedWhiteBrush,
                 _ => theme.BallNormalBrush
             };
         }
@@ -773,6 +796,13 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
 
         public void Update(Rect bounds, double dt)
         {
+            _pulseTimer += dt * 33;
+            
+            // Update trail
+            _trail.Enqueue(Position);
+            if (_trail.Count > TrailLength)
+                _trail.Dequeue();
+
             if (Type == BallType.Teleporting)
             {
                 _teleportTimer -= dt;
@@ -783,6 +813,7 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                         rand.NextDouble() * (bounds.Width - Radius * 2) + bounds.Left + Radius,
                         rand.NextDouble() * (bounds.Height - Radius * 2) + bounds.Top + Radius);
                     _teleportTimer = 2.0;
+                    _trail.Clear(); // Clear trail on teleport
                 }
             }
 
@@ -810,6 +841,40 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 : Velocity.WithY(-Velocity.Y);
             JezzballSound.Play(JezzballSoundEvent.BallBounce);
         }
+
+        public double GetPulseScale() => 1 + Math.Sin(_pulseTimer) * 0.1; // 10% size variation
+        
+        public IReadOnlyList<Point> Trail => _trail.ToList();
+    }
+
+    public class Particle
+    {
+        public Point Position { get; private set; }
+        public Vector Velocity { get; private set; }
+        public double Life { get; private set; }
+        public double MaxLife { get; }
+        public IBrush Color { get; }
+        public double Size { get; }
+
+        public Particle(Point position, Vector velocity, IBrush color, double life = 1.0, double size = 3.0)
+        {
+            Position = position;
+            Velocity = velocity;
+            MaxLife = life;
+            Life = life;
+            Color = color;
+            Size = size;
+        }
+
+        public void Update(double dt)
+        {
+            Position += Velocity * dt;
+            Velocity *= 0.95; // Slow down over time
+            Life -= dt;
+        }
+
+        public bool IsDead => Life <= 0;
+        public double Alpha => Life / MaxLife;
     }
 
     public class JezzballGameState
@@ -825,21 +890,28 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
         public bool HasIceWallPowerUp { get; private set; }
         public bool FreezeActive { get; private set; }
         public bool DoubleScoreActive { get; private set; }
+        public bool ScreenShake { get; set; }
+        public bool OriginalMode { get; set; }
 
         public IReadOnlyList<Ball> Balls => _balls;
         public IReadOnlyList<Rect> ActiveAreas => _activeAreas;
         public IReadOnlyList<Rect> FilledAreas => _filledAreas;
         public IReadOnlyList<PowerUp> PowerUps => _powerUps;
+        public IReadOnlyList<Particle> Particles => _particles;
         public BuildingWall? CurrentWall { get; private set; }
 
         private readonly List<Ball> _balls = new();
         private readonly List<Rect> _activeAreas = new();
         private readonly List<Rect> _filledAreas = new();
         private readonly List<PowerUp> _powerUps = new();
+        private readonly List<Particle> _particles = new();
         private double _totalPlayArea;
         private JezzballTheme _theme;
         private double _freezeTimer;
         private double _doubleScoreTimer;
+        private double _screenShakeTimer;
+        private double _lastCaptureTime;
+        private int _comboCount;
 
         private const double WallSpeed = 150.0;
         private const double CaptureRequirement = 0.75;
@@ -870,12 +942,16 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             _filledAreas.Clear();
             _balls.Clear();
             _powerUps.Clear();
+            _particles.Clear();
             CurrentWall = null;
             HasIceWallPowerUp = false;
             FreezeActive = false;
             DoubleScoreActive = false;
             _freezeTimer = 0;
             _doubleScoreTimer = 0;
+            _screenShakeTimer = 0;
+            _lastCaptureTime = 0;
+            _comboCount = 0;
             Message = $"Level {Level}";
             var bounds = new Rect(0, 0, gameSize.Width, gameSize.Height);
             _totalPlayArea = bounds.Width * bounds.Height;
@@ -883,10 +959,11 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             TimeLeft = TimeSpan.FromSeconds(20 + Level * 5);
 
             var rand = new Random();
-            for (int i = 0; i < Level; i++)
+            int ballCount = Level + 1;
+            for (int i = 0; i < ballCount; i++)
             {
                 var angle = rand.NextDouble() * 2 * Math.PI;
-                var speed = 100 + Level * 10;
+                var speed = 10 + Level * 15; // Balls get faster with level
                 var velocity = new Vector(Math.Cos(angle) * speed, Math.Sin(angle) * speed);
 
                 BallType type = BallType.Normal;
@@ -894,8 +971,18 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 if (Level > 2 && rand.NextDouble() > 0.7) type = BallType.Fast;
                 if (Level > 3 && rand.NextDouble() > 0.8) type = BallType.Splitting;
                 if (Level > 4 && rand.NextDouble() > 0.85) type = BallType.Teleporting;
-
-                _balls.Add(new Ball(bounds.Center, velocity, _theme, type));
+                if (Level > 2 && rand.NextDouble() > 0.8) type = BallType.RedWhite;
+                
+                // Add crazy ball (golden ball) with 5% chance
+                if (rand.NextDouble() > 0.95)
+                {
+                    type = BallType.Teleporting; // Use teleporting as crazy ball
+                    _balls.Add(new Ball(bounds.Center, velocity, _theme, type, 12)); // Bigger radius
+                }
+                else
+                {
+                    _balls.Add(new Ball(bounds.Center, velocity, _theme, type));
+                }
             }
             RecalculateCapturedArea();
 
@@ -920,6 +1007,23 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             var clickedPowerUp = _powerUps.FirstOrDefault(p => p.BoundingBox.Contains(clickPosition));
             if (clickedPowerUp != null)
             {
+                // Create collection particles
+                var rand = new Random();
+                for (int i = 0; i < 8; i++)
+                {
+                    var angle = rand.NextDouble() * 2 * Math.PI;
+                    var speed = 30 + rand.NextDouble() * 50;
+                    var velocity = new Vector(Math.Cos(angle) * speed, Math.Sin(angle) * speed);
+                    var color = clickedPowerUp.Type switch
+                    {
+                        PowerUpType.ExtraLife => Brushes.LimeGreen,
+                        PowerUpType.Freeze => Brushes.LightBlue,
+                        PowerUpType.DoubleScore => Brushes.Gold,
+                        _ => Brushes.Aqua
+                    };
+                    _particles.Add(new Particle(clickedPowerUp.Position, velocity, color, 1.0, 3.0));
+                }
+
                 switch (clickedPowerUp.Type)
                 {
                     case PowerUpType.IceWall:
@@ -985,8 +1089,29 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 }
             }
 
+            // Update screen shake
+            if (_screenShakeTimer > 0)
+            {
+                _screenShakeTimer -= dt;
+                if (_screenShakeTimer <= 0)
+                {
+                    ScreenShake = false;
+                }
+            }
+
             UpdateBalls(dt);
             UpdateWall(dt);
+            UpdateParticles(dt);
+        }
+
+        private void UpdateParticles(double dt)
+        {
+            for (int i = _particles.Count - 1; i >= 0; i--)
+            {
+                _particles[i].Update(dt);
+                if (_particles[i].IsDead)
+                    _particles.RemoveAt(i);
+            }
         }
 
         private void UpdateBalls(double dt)
@@ -997,6 +1122,7 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             }
             foreach (var ball in _balls.ToList())
             {
+                // Find the area the ball is in
                 var area = _activeAreas.FirstOrDefault(r => r.Intersects(ball.BoundingBox));
                 if (area == default)
                 {
@@ -1005,7 +1131,18 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                         .FirstOrDefault();
                 }
 
-                if (area != default) ball.Update(area, dt);
+                if (area != default)
+                {
+                    // Subdivide the movement into small steps to avoid phasing through walls
+                    double step = 1.0 / 120.0; // 120Hz substeps
+                    double t = 0;
+                    while (t < dt)
+                    {
+                        double subdt = Math.Min(step, dt - t);
+                        ball.Update(area, subdt);
+                        t += subdt;
+                    }
+                }
             }
         }
 
@@ -1021,19 +1158,16 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 w1 = CurrentWall.Orientation == WallOrientation.Vertical
                     ? new Rect(w1.X, w1.Y - growAmount, w1.Width, w1.Height + growAmount)
                     : new Rect(w1.X - growAmount, w1.Y, w1.Width + growAmount, w1.Height);
-                
                 if (CurrentWall.Orientation == WallOrientation.Vertical) w1 = w1.WithY(Math.Max(w1.Y, CurrentWall.Area.Y));
                 else w1 = w1.WithX(Math.Max(w1.X, CurrentWall.Area.X));
-
                 if ((CurrentWall.Orientation == WallOrientation.Vertical && w1.Top <= CurrentWall.Area.Top) ||
                     (CurrentWall.Orientation == WallOrientation.Horizontal && w1.Left <= CurrentWall.Area.Left))
                 {
                     CurrentWall.IsPart1Active = false;
                 }
                 CurrentWall.WallPart1 = w1;
-
-                // Only check for ball collisions if wall has grown to a reasonable size
-                if (w1.Height > 8)
+                // Check for ball collisions at every substep
+                if (w1.Height > 2 && w1.Width > 2)
                 {
                     foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart1)))
                     {
@@ -1054,19 +1188,16 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 w2 = CurrentWall.Orientation == WallOrientation.Vertical
                     ? new Rect(w2.X, w2.Y, w2.Width, w2.Height + growAmount)
                     : new Rect(w2.X, w2.Y, w2.Width + growAmount, w2.Height);
-                
                 if (CurrentWall.Orientation == WallOrientation.Vertical) w2 = w2.WithHeight(Math.Min(w2.Height, CurrentWall.Area.Bottom - w2.Y));
                 else w2 = w2.WithWidth(Math.Min(w2.Width, CurrentWall.Area.Right - w2.X));
-
                 if ((CurrentWall.Orientation == WallOrientation.Vertical && w2.Bottom >= CurrentWall.Area.Bottom) ||
                     (CurrentWall.Orientation == WallOrientation.Horizontal && w2.Right >= CurrentWall.Area.Right))
                 {
                     CurrentWall.IsPart2Active = false;
                 }
                 CurrentWall.WallPart2 = w2;
-
-                // Only check for ball collisions if wall has grown to a reasonable size
-                if (w2.Height > 8)
+                // Check for ball collisions at every substep
+                if (w2.Height > 2 && w2.Width > 2)
                 {
                     foreach (var ball in _balls.Where(b => b.BoundingBox.Intersects(CurrentWall.WallPart2)))
                     {
@@ -1089,6 +1220,18 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             Lives--;
             CurrentWall = null;
             JezzballSound.Play(JezzballSoundEvent.WallBreak);
+            
+            // Create explosion particles
+            var rand = new Random();
+            for (int i = 0; i < 15; i++)
+            {
+                var angle = rand.NextDouble() * 2 * Math.PI;
+                var speed = 50 + rand.NextDouble() * 100;
+                var velocity = new Vector(Math.Cos(angle) * speed, Math.Sin(angle) * speed);
+                var position = new Point(400 + rand.NextDouble() * 200, 300 + rand.NextDouble() * 200); // Center of screen
+                _particles.Add(new Particle(position, velocity, Brushes.Red, 1.5, 4));
+            }
+            
             Message = Lives <= 0 ? "Game Over! Click to restart." : reason + " Click to continue.";
         }
 
@@ -1098,37 +1241,45 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             var area = CurrentWall.Area;
             Rect newArea1, newArea2;
 
+            // Clamp split to area bounds
             if (CurrentWall.Orientation == WallOrientation.Vertical)
             {
-                newArea1 = new Rect(area.Left, area.Top, CurrentWall.Origin.X - area.Left, area.Height);
-                newArea2 = new Rect(CurrentWall.Origin.X, area.Top, area.Right - CurrentWall.Origin.X, area.Height);
+                double splitX = Math.Clamp(CurrentWall.Origin.X, area.Left + 1, area.Right - 1);
+                newArea1 = new Rect(area.Left, area.Top, splitX - area.Left, area.Height);
+                newArea2 = new Rect(splitX, area.Top, area.Right - splitX, area.Height);
             }
             else
             {
-                newArea1 = new Rect(area.Left, area.Top, area.Width, CurrentWall.Origin.Y - area.Top);
-                newArea2 = new Rect(area.Left, CurrentWall.Origin.Y, area.Width, area.Bottom - CurrentWall.Origin.Y);
+                double splitY = Math.Clamp(CurrentWall.Origin.Y, area.Top + 1, area.Bottom - 1);
+                newArea1 = new Rect(area.Left, area.Top, area.Width, splitY - area.Top);
+                newArea2 = new Rect(area.Left, splitY, area.Width, area.Bottom - splitY);
             }
+
+            // Only add valid (non-empty) areas
+            List<Rect> newAreas = new();
+            if (newArea1.Width > 2 && newArea1.Height > 2) newAreas.Add(newArea1);
+            if (newArea2.Width > 2 && newArea2.Height > 2) newAreas.Add(newArea2);
 
             _activeAreas.Remove(area);
 
-            var ballsInArea1 = _balls.Where(b => newArea1.Intersects(b.BoundingBox)).ToList();
-            var ballsInArea2 = _balls.Where(b => newArea2.Intersects(b.BoundingBox)).ToList();
-
-            if (ballsInArea1.Count == 0)
+            int capturedAreas = 0;
+            foreach (var newArea in newAreas)
             {
-                _filledAreas.Add(newArea1);
-                MaybeSpawnPowerUp(newArea1.Center);
+                var ballsInArea = _balls.Where(b => newArea.Intersects(b.BoundingBox)).ToList();
+                if (ballsInArea.Count == 0)
+                {
+                    _filledAreas.Add(newArea);
+                    capturedAreas++;
+                    MaybeSpawnPowerUp(newArea.Center);
+                }
+                else
+                {
+                    _activeAreas.Add(newArea);
+                }
             }
-            else _activeAreas.Add(newArea1);
 
-            if (ballsInArea2.Count == 0)
-            {
-                _filledAreas.Add(newArea2);
-                MaybeSpawnPowerUp(newArea2.Center);
-            }
-            else _activeAreas.Add(newArea2);
-
-            var ballsToSplit = _balls.Where(b => b.Type == BallType.Splitting && (ballsInArea1.Contains(b) || ballsInArea2.Contains(b))).ToList();
+            // Handle splitting balls
+            var ballsToSplit = _balls.Where(b => b.Type == BallType.Splitting && newAreas.Any(a => a.Intersects(b.BoundingBox))).ToList();
             foreach (var ball in ballsToSplit)
             {
                 _balls.Remove(ball);
@@ -1144,15 +1295,32 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
 
             CurrentWall = null;
             FlashEffect = true;
+            
+            // Screen shake effect
+            ScreenShake = true;
+            _screenShakeTimer = 0.2;
             RecalculateCapturedArea();
+
+            // Combo system
+            double currentTime = Environment.TickCount / 100;
+            if (currentTime - _lastCaptureTime < 2.0) // Within 2 seconds
+            {
+                _comboCount++;
+            }
+            else
+            {
+                _comboCount = 1;
+            }
+            _lastCaptureTime = currentTime;
 
             if (CapturedPercentage >= CaptureRequirement)
             {
                 Level++;
                 long timeBonus = (long)TimeLeft.TotalSeconds * 100;
-                Score += 1000 + timeBonus;
+                long comboBonus = _comboCount * 500;
+                Score += 1000 + timeBonus + comboBonus;
                 JezzballSound.Play(JezzballSoundEvent.LevelComplete);
-                Message = $"Level Complete!\nTime Bonus: {timeBonus}";
+                Message = $"Level Complete!\nTime Bonus: {timeBonus}\nCombo Bonus: {comboBonus}";
             }
         }
 
@@ -1180,9 +1348,22 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             {
                 var added = (long)filledAreaSum / 100;
                 if (DoubleScoreActive) added *= 2;
+                
+                // Bonus for crazy balls captured
+                var crazyBalls = _balls.Where(b => b.Type == BallType.Teleporting && b.Radius > 10).Count();
+                if (crazyBalls > 0)
+                {
+                    added += crazyBalls * 10; // Huge bonus for crazy balls
+                }
+                
                 Score += added;
             }
             CapturedPercentage = _totalPlayArea > 0 ? filledAreaSum / _totalPlayArea : 0;
+        }
+
+        public void SetOriginalMode(bool originalMode)
+        {
+            OriginalMode = originalMode;
         }
     }
     #endregion
@@ -1295,7 +1476,9 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
         public void SetGameSpeed(bool fast)
         {
             _fastMode = fast;
-            // The game speed affects scoring - this is handled in the scoring logic
+            // Actually change the timer interval for fast mode
+            if (_timer != null)
+                _timer.Interval = fast ? TimeSpan.FromMilliseconds(8) : TimeSpan.FromMilliseconds(16);
         }
 
         public void SetSoundEnabled(bool enabled)
@@ -1325,6 +1508,11 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
         {
             _showAreaPercentage = show;
             UpdateStatusText();
+        }
+
+        public void SetOriginalMode(bool originalMode)
+        {
+            _gameState.SetOriginalMode(originalMode);
         }
 
         internal void SetSound(JezzballSoundEvent ev, string path)
@@ -1423,6 +1611,17 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 var dt = _stopwatch.Elapsed.TotalSeconds;
                 _stopwatch.Restart();
                 _gameState.Update(dt);
+                // Handle flash effect
+                if (_gameState.FlashEffect)
+                {
+                    _flashTimer = 0.3;
+                    _gameState.FlashEffect = false;
+                }
+                if (_flashTimer > 0)
+                {
+                    _flashTimer -= dt;
+                    if (_flashTimer < 0) _flashTimer = 0;
+                }
                 UpdateStatusText();
             }
             _gameCanvas.InvalidateVisual();
@@ -1456,8 +1655,43 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             var bounds = _gameCanvas.Bounds;
             if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-            // Draw background
-            context.FillRectangle(_backgroundBrush, bounds);
+            // Apply screen shake effect
+            var shakeOffset = new Point(0, 0);
+            if (_gameState.ScreenShake)
+            {
+                var rand = new Random();
+                shakeOffset = new Point(
+                    (rand.NextDouble() - 0.5) * 4,
+                    (rand.NextDouble() - 0.5) * 4
+                );
+            }
+            
+            // Apply shake transform
+            if (shakeOffset.X != 0 || shakeOffset.Y != 0)
+            {
+                context.PushTransform(Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y));
+            }
+
+            // Draw background - use solid black in original mode
+            if (_gameState.OriginalMode)
+            {
+                context.FillRectangle(Brushes.Black, bounds);
+            }
+            else
+            {
+                // Draw background with subtle gradient
+                var backgroundBrush = new LinearGradientBrush
+                {
+                    StartPoint = new RelativePoint(0, RelativeUnit.Relative),
+                    EndPoint = new RelativePoint(1, RelativeUnit.Relative),
+                    GradientStops = new GradientStops
+                    {
+                        new GradientStop(0, Color.FromRgb(20, 20, 30)),
+                        new GradientStop(1, Color.FromRgb(10, 10, 20))
+                    }
+                };
+                context.FillRectangle(backgroundBrush, bounds);
+            }
 
             // Draw grid if enabled
             if (_showGrid)
@@ -1473,12 +1707,6 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 context.FillRectangle(_filledBrush, area);
             }
 
-            // Draw active areas (for debugging)
-            // foreach (var area in _gameState.ActiveAreas)
-            // {
-            //     context.DrawRectangle(null, new Pen(Brushes.Red, 1), area);
-            // }
-
             // Draw power-ups
             foreach (var powerUp in _gameState.PowerUps)
             {
@@ -1489,20 +1717,117 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                     PowerUpType.DoubleScore => _powerUpDoubleScoreBrush,
                     _ => _powerUpBrush
                 };
+                // Add glow effect to power-ups (only in modern mode)
+                if (!_gameState.OriginalMode)
+                {
+                    var glowBrush = new SolidColorBrush(Color.FromArgb((byte)(brush.Color.A * 0.5), brush.Color.R, brush.Color.G, brush.Color.B));
+                    context.DrawEllipse(glowBrush, null, powerUp.Position, powerUp.Radius * 1.5, powerUp.Radius * 1.5);
+                }
                 context.DrawEllipse(brush, null, powerUp.Position, powerUp.Radius, powerUp.Radius);
             }
 
-            // Draw balls
+            // Draw ball trails (only in modern mode)
+            if (!_gameState.OriginalMode)
+            {
+                foreach (var ball in _gameState.Balls)
+                {
+                    var trail = ball.Trail.ToList();
+                    for (int i = 0; i < trail.Count; i++)
+                    {
+                        double alpha = (double)i / trail.Count * 0.3;
+                        var trailBrush = new SolidColorBrush(Color.FromArgb((byte)(ball.Fill.Color.A * alpha), ball.Fill.Color.R, ball.Fill.Color.G, ball.Fill.Color.B));
+                        context.DrawEllipse(trailBrush, null, trail[i], ball.Radius * 0.8, ball.Radius * 0.8);
+                    }
+                }
+            }
+
+            // Draw balls with glow and pulse effects
             foreach (var ball in _gameState.Balls)
             {
-                context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
+                var pulseScale = ball.GetPulseScale();
+                
+                // Add glow effect (only in modern mode)
+                if (!_gameState.OriginalMode)
+                {
+                    var glowBrush = new SolidColorBrush(Color.FromArgb((byte)(ball.Fill.Color.A * 0.7), ball.Fill.Color.R, ball.Fill.Color.G, ball.Fill.Color.B));
+                    context.DrawEllipse(glowBrush, null, ball.Position, ball.Radius * pulseScale, ball.Radius * pulseScale);
+                }
+                
+                // Special rendering for different ball types
+                if (ball.Type == BallType.Normal)
+                {
+                    var radius = ball.Radius;
+                    var center = ball.Position;
+                    
+                    // Create semicircle geometries
+                    var leftHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
+                    var rightHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
+                    
+                    // Clip to left half (red)
+                    var leftClip = new RectangleGeometry(new Rect(center.X - radius, center.Y - radius, radius, radius * 2));
+                    var leftCombined = new CombinedGeometry(GeometryCombineMode.Intersect, leftHalf, leftClip);
+                    context.DrawGeometry(Brushes.Red, null, leftCombined);
+                    
+                    // Clip to right half (blue)
+                    var rightClip = new RectangleGeometry(new Rect(center.X, center.Y - radius, radius, radius * 2));
+                    var rightCombined = new CombinedGeometry(GeometryCombineMode.Intersect, rightHalf, rightClip);
+                    context.DrawGeometry(Brushes.Blue, null, rightCombined);
+                }
+                else if (ball.Type == BallType.RedWhite)
+                {
+                    var radius = ball.Radius;
+                    var center = ball.Position;
+                    
+                    // Create semicircle geometries for red/white ball
+                    var leftHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
+                    var rightHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
+                    
+                    // Clip to left half (red)
+                    var leftClip = new RectangleGeometry(new Rect(center.X - radius, center.Y - radius, radius, radius * 2));
+                    var leftCombined = new CombinedGeometry(GeometryCombineMode.Intersect, leftHalf, leftClip);
+                    context.DrawGeometry(Brushes.Red, null, leftCombined);
+                    
+                    // Clip to right half (white)
+                    var rightClip = new RectangleGeometry(new Rect(center.X, center.Y - radius, radius, radius * 2));
+                    var rightCombined = new CombinedGeometry(GeometryCombineMode.Intersect, rightHalf, rightClip);
+                    context.DrawGeometry(Brushes.White, null, rightCombined);
+                }
+                else
+                {
+                    // Regular rendering for other ball types
+                    context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
+                }
             }
 
             // Draw current wall being built
             if (_gameState.CurrentWall != null)
             {
                 var wall = _gameState.CurrentWall;
-                var pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? _iceWallPen : _wallPen;
+                Pen pen;
+                
+                if (_gameState.OriginalMode)
+                {
+                    // In original mode, walls are blue and red while building
+                    pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? 
+                        new Pen(Brushes.Red, 3) : new Pen(Brushes.Blue, 3);
+                }
+                else
+                {
+                    // Modern mode with glow effects
+                    pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? _iceWallPen : _wallPen;
+                    
+                    // Add glow effect to walls being built
+                    var glowPen = new Pen(new SolidColorBrush(Color.FromArgb((byte)(pen.Brush.Color.A * 0.5), pen.Brush.Color.R, pen.Brush.Color.G, pen.Brush.Color.B)), pen.Thickness + 2);
+                    
+                    if (wall.IsPart1Active)
+                    {
+                        context.DrawRectangle(null, glowPen, wall.WallPart1);
+                    }
+                    if (wall.IsPart2Active)
+                    {
+                        context.DrawRectangle(null, glowPen, wall.WallPart2);
+                    }
+                }
                 
                 if (wall.IsPart1Active)
                 {
@@ -1517,11 +1842,21 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             // Draw preview line
             if (_gameState.CurrentWall == null && string.IsNullOrEmpty(_gameState.Message))
             {
-                var previewPen = _previewPen;
+                Pen previewPen;
+                if (_gameState.OriginalMode)
+                {
+                    previewPen = new Pen(Brushes.Blue, 2, DashStyle.Dash);
+                }
+                else
+                {
+                    previewPen = _previewPen;
+                }
+                var glowPreviewPen = new Pen(new SolidColorBrush(Color.FromArgb((byte)(previewPen.Brush.Color.A * 0.5), previewPen.Brush.Color.R, previewPen.Brush.Color.G, previewPen.Brush.Color.B)), previewPen.Thickness + 1);
                 var start = _mousePosition;
                 var end = _orientation == WallOrientation.Vertical 
                     ? new Point(start.X, _orientation == WallOrientation.Vertical ? bounds.Height : 0)
                     : new Point(_orientation == WallOrientation.Horizontal ? bounds.Width : 0, start.Y);
+                context.DrawLine(glowPreviewPen, start, end);
                 context.DrawLine(previewPen, start, end);
             }
 
@@ -1533,6 +1868,31 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 var formattedText = new FormattedText(_gameState.Message, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, font, 24, textBrush);
                 var textPosition = new Point((bounds.Width - formattedText.Width) / 2, (bounds.Height - formattedText.Height) / 2);
                 context.DrawText(formattedText, textPosition);
+            }
+
+            // Flash effect overlay (only in modern mode)
+            if (_flashTimer > 0 && !_gameState.OriginalMode)
+            {
+                double alpha = Math.Min(1.0, _flashTimer / 0.3) * 0.7;
+                var flashBrush = new SolidColorBrush(Color.FromArgb((byte)(alpha * 255), 255, 255, 255));
+                context.FillRectangle(flashBrush, bounds);
+            }
+
+            // Draw particles (only in modern mode)
+            if (!_gameState.OriginalMode)
+            {
+                foreach (var particle in _gameState.Particles)
+                {
+                    var alpha = particle.Alpha;
+                    var color = new SolidColorBrush(Color.FromArgb((byte)(particle.Color.Color.A * alpha), particle.Color.Color.R, particle.Color.Color.G, particle.Color.Color.B));
+                    context.DrawEllipse(color, null, particle.Position, particle.Size, particle.Size);
+                }
+            }
+            
+            // Pop shake transform
+            if (shakeOffset.X != 0 || shakeOffset.Y != 0)
+            {
+                context.PopTransform();
             }
         }
 
