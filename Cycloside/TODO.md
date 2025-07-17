@@ -26,10 +26,12 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
     - [ ] TreeView/ListView for file system
     - [ ] Context menu (Open, Rename, Delete, etc.)
     - [ ] “Open in Code Editor” action
-- [~] **Terminal Emulator Plugin**
+- [x] **Terminal Emulator Plugin**
     - [x] Shell command execution
     - [x] Command history (arrow keys)
     - [x] Styled output (color text, scrollback)
+- [x] Jezzball plugin powerups, visual effects & Original Mode
+- [x] Winamp visualizer integration with MP3 player
 - [ ] **Network Tools Plugin**
     - [ ] Ping, traceroute utilities
     - [ ] Port scanner
