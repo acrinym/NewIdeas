@@ -76,7 +76,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `DiskUsagePlugin`        | Visualises folder sizes in a tree view.                                                  |
 | `EnvironmentEditorPlugin`| Edits environment variables at runtime (Process scope only on Linux/macOS).              |
 | `FileWatcherPlugin`      | Watches a directory and logs file system events.                                         |
-| `JezzballPlugin`         | Simple recreation of the classic game.                                                   |
+| `JezzballPlugin`         | Arcade game with powerups, visual effects and Original mode.|
 | `LogViewerPlugin`        | Tails a log file and filters lines on the fly.                                           |
 | `NotificationCenterPlugin`| Aggregates messages broadcast via `NotificationCenter`.                                  |
 | `MP3PlayerPlugin`        | Basic audio player built on NAudio.                                                      |
@@ -87,10 +87,10 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `ScreenSaverPlugin`      | Runs full-screen screensavers after a period of inactivity.                              |
 | `TaskSchedulerPlugin`    | Schedules tasks with cron-style expressions.                                             |
 | `TextEditorPlugin`       | Notepad-like editor supporting multiple files.                                           |
-| `TerminalPlugin`         | Run shell commands in a simple console window.                                           |
+| `TerminalPlugin`         | Console with ANSI colour and scrollback.|
 | `WallpaperPlugin`        | Changes the desktop wallpaper periodically.                                              |
 | `WidgetHostPlugin`       | Hosts small widgets inside dockable panels.                                              |
-| `WinampVisHostPlugin`    | Runs Winamp AVS visualisation presets.                                                   |
+| `WinampVisHostPlugin`    | Winamp visualisations integrated with the MP3 player.|
 
 </details>
 
@@ -100,3 +100,4 @@ Ensure the .NET 8 SDK is installed (download from https://dotnet.microsoft.com/d
 
 ```bash
 dotnet build Cycloside/Cycloside.csproj
+```

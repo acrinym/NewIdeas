@@ -24,10 +24,11 @@ Built-in examples:
 - **Wallpaper Changer** – set wallpapers on Windows, Linux or macOS
 - **ModPlug Tracker** – play `.mod`, `.it`, `.s3m` or `.xm` music modules
 - **Notification Center** – view messages from plugins and the core app
+- **Jezzball** – arcade game with powerups and Original Mode
 - **ScreenSaver Host** – run vintage 3D text and flower box screensavers
-- **Terminal** – simple shell window for running commands
+- **Terminal** - console with ANSI colour and scrollback
 - **Widget Host** – surface plugins as dockable widgets
-- **Winamp Visual Host** – run classic Winamp visualizer DLLs
+- **Winamp Visual Host** – run classic Winamp visualizer DLLs with MP3 integration
 
 ## 🗂️ Workspace Profiles
 
