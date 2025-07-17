@@ -29,6 +29,8 @@ public partial class App : Application
     private RemoteApiServer? _remoteServer;
     private PluginManager? _pluginManager;
     private TrayIcon? _trayIcon; // Keep a reference to the tray icon
+    private MainWindow? _mainWindow;
+    private MainWindowViewModel? _mainViewModel;
 
     public override void Initialize()
     {
@@ -51,16 +53,20 @@ public partial class App : Application
             var wiz = new WizardWindow();
             wiz.Closed += (_, _) =>
             {
-                desktop.MainWindow = CreateMainWindow(SettingsManager.Settings);
-                desktop.MainWindow.Show();
+                _mainWindow = CreateMainWindow(SettingsManager.Settings);
+                desktop.MainWindow = _mainWindow;
+                _mainWindow.Show();
             };
             wiz.Show();
         }
         else
         {
-            desktop.MainWindow = CreateMainWindow(settings);
-            desktop.MainWindow.Show();
+            _mainWindow = CreateMainWindow(settings);
+            desktop.MainWindow = _mainWindow;
+            _mainWindow.Show();
         }
+
+        desktop.Exit += (_, _) => SaveSessionState();
 
         base.OnFrameworkInitializationCompleted();
     }
@@ -78,20 +84,13 @@ public partial class App : Application
         _pluginManager.StartWatching();
 
         var viewModel = new MainWindowViewModel(_pluginManager.Plugins);
+        _mainViewModel = viewModel;
         var mainWindow = new MainWindow(_pluginManager)
         {
             DataContext = viewModel
         };
+        _mainWindow = mainWindow;
 
-        void DetachWorkspaceItem(WorkspaceItemViewModel item)
-        {
-            if (item.Plugin is IWorkspaceItem workspace)
-            {
-                workspace.UseWorkspace = false;
-                item.Plugin.Start();
-            }
-            viewModel.WorkspaceItems.Remove(item);
-        }
 
         viewModel.ExitCommand = new ServicesRelayCommand(() => Shutdown());
         
@@ -170,6 +169,7 @@ public partial class App : Application
         _remoteServer = new RemoteApiServer(_pluginManager, settings.RemoteApiToken);
         _remoteServer.Start();
         WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
+        RestoreSessionState(viewModel);
         RegisterHotkeys(_pluginManager);
         
         _trayIcon = new TrayIcon
@@ -236,6 +236,7 @@ public partial class App : Application
         TryAdd(() => new NotificationCenterPlugin());
         TryAdd(() => new EnvironmentEditorPlugin());
         TryAdd(() => new JezzballPlugin());
+        TryAdd(() => new QuickLauncherPlugin(manager));
         TryAdd(() => new WidgetHostPlugin(manager));
         TryAdd(() => new WinampVisHostPlugin());
         TryAdd(() => new QBasicRetroIDEPlugin());
@@ -269,6 +270,7 @@ public partial class App : Application
 
     private void Shutdown()
     {
+        SaveSessionState();
         _pluginManager?.StopAll();
         _remoteServer?.Stop();
         HotkeyManager.UnregisterAll();
@@ -276,6 +278,47 @@ public partial class App : Application
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime appLifetime)
         {
             appLifetime.Shutdown();
+        }
+    }
+
+    private void DetachWorkspaceItem(WorkspaceItemViewModel item)
+    {
+        if (_mainViewModel == null) return;
+        if (item.Plugin is IWorkspaceItem workspace)
+        {
+            workspace.UseWorkspace = false;
+            item.Plugin.Start();
+        }
+        _mainViewModel.WorkspaceItems.Remove(item);
+    }
+
+    private void SaveSessionState()
+    {
+        if (_mainViewModel == null) return;
+        var names = string.Join(';', _mainViewModel.WorkspaceItems.Select(w => w.Plugin.Name));
+        StateManager.Set("LastWorkspace", names);
+    }
+
+    private void RestoreSessionState(MainWindowViewModel vm)
+    {
+        if (_pluginManager == null) return;
+        var data = StateManager.Get("LastWorkspace");
+        if (string.IsNullOrWhiteSpace(data)) return;
+        foreach (var name in data.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var plugin = _pluginManager.Plugins.FirstOrDefault(p => p.Name == name);
+            if (plugin is IWorkspaceItem ws)
+            {
+                ws.UseWorkspace = true;
+                _pluginManager.EnablePlugin(plugin);
+                var view = ws.BuildWorkspaceView();
+                var vmItem = new WorkspaceItemViewModel(plugin.Name, view, plugin, DetachWorkspaceItem);
+                vm.WorkspaceItems.Add(vmItem);
+            }
+            else if (plugin != null)
+            {
+                _pluginManager.EnablePlugin(plugin);
+            }
         }
     }
 

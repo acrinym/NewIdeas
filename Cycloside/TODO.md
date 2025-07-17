@@ -48,13 +48,13 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 - [ ] User-uploaded plugin directory (marketplace backend)
 
 ## Core App UX
-- [ ] Tabbed/dockable panel for plugins
-- [ ] Customizable themes (dark/light/hacker green, etc.)
-- [ ] Quick launcher bar for built-in tools
-- [ ] Settings dialog (plugin mgmt, color themes, keybindings)
-- [ ] Widget system (weather, notepad, calendar, etc.)
-- [ ] Welcome/Onboarding screen (first-run experience)
-- [ ] Save and restore last session state
+- [x] Tabbed/dockable panel for plugins
+- [x] Customizable themes (dark/light/hacker green, etc.)
+- [x] Quick launcher bar for built-in tools
+- [x] Settings dialog (plugin mgmt, color themes, keybindings)
+- [x] Widget system (weather, notepad, calendar, etc.)
+- [x] Welcome/Onboarding screen (first-run experience)
+- [x] Save and restore last session state
 
 ## System Integration
 - [ ] Hotkey support for quick access (e.g., Ctrl+T for Terminal)

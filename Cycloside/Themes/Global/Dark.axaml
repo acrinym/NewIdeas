@@ -1,0 +1,18 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <Color x:Key="ThemeBackgroundColor">#202225</Color>
+    <Color x:Key="ThemeForegroundColor">#e0e0e0</Color>
+    <Color x:Key="ThemeAccentColor">#0099ff</Color>
+    <Color x:Key="ThemeHighlightColor">#00aeef</Color>
+    <Color x:Key="ThemeErrorColor">#ff5a5a</Color>
+    <Color x:Key="ThemeWarningColor">#ffc840</Color>
+    <Color x:Key="ThemeSuccessColor">#67ff67</Color>
+    <SolidColorBrush x:Key="ThemeBackgroundBrush" Color="{StaticResource ThemeBackgroundColor}"/>
+    <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{StaticResource ThemeForegroundColor}"/>
+    <SolidColorBrush x:Key="ThemeAccentBrush" Color="{StaticResource ThemeAccentColor}"/>
+    <SolidColorBrush x:Key="ThemeHighlightBrush" Color="{StaticResource ThemeHighlightColor}"/>
+    <SolidColorBrush x:Key="ThemeErrorBrush" Color="{StaticResource ThemeErrorColor}"/>
+    <SolidColorBrush x:Key="ThemeWarningBrush" Color="{StaticResource ThemeWarningColor}"/>
+    <SolidColorBrush x:Key="ThemeSuccessBrush" Color="{StaticResource ThemeSuccessColor}"/>
+  </Styles.Resources>
+</Styles>
