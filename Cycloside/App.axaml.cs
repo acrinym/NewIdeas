@@ -223,6 +223,7 @@ public partial class App : Application
         TryAdd(() => new MP3PlayerPlugin());
         TryAdd(() => new MacroPlugin());
         TryAdd(() => new TextEditorPlugin());
+        TryAdd(() => new FileExplorerPlugin());
         TryAdd(() => new WallpaperPlugin());
         TryAdd(() => new ClipboardManagerPlugin());
         TryAdd(() => new CharacterMapPlugin());
