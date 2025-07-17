@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Plugins.BuiltIn.NetworkToolsWindow"
+        Width="700" Height="600"
+        Title="Network Tools">
+    <DockPanel Margin="5">
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="5" Margin="0,0,0,5">
+            <TextBox x:Name="InputBox" Width="200" Watermark="Host/Domain" />
+            <ComboBox x:Name="IpconfigArgsBox" Width="120">
+                <ComboBoxItem Content="/all"/>
+                <ComboBoxItem Content="/flushdns"/>
+                <ComboBoxItem Content="/release"/>
+                <ComboBoxItem Content="/renew"/>
+            </ComboBox>
+            <Button x:Name="PingButton" Content="Ping" />
+            <Button x:Name="TraceButton" Content="Traceroute" />
+            <Button x:Name="IpconfigButton" Content="Ipconfig" />
+            <Button x:Name="PortScanButton" Content="Port Scan" />
+            <Button x:Name="WhoisButton" Content="Whois" />
+            <Button x:Name="IpViewButton" Content="IP View" />
+            <Button x:Name="MacButton" Content="MAC" />
+            <Button x:Name="ExportButton" Content="Export" />
+        </StackPanel>
+        <TextBox x:Name="OutputBox" AcceptsReturn="True" IsReadOnly="True" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+    </DockPanel>
+</Window>
