@@ -1424,9 +1424,22 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             _theme = theme;
             _gameState = new JezzballGameState(theme);
             _gameCanvas = new GameCanvas(this);
-            _flashUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-            _flashUpdateTimer.Tick += (s, e) => _flashTimer += 0.016;
-            _flashUpdateTimer.Start();
+            _flashUpdateTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(16), // ~60fps
+                IsEnabled = false
+            };
+            _flashUpdateTimer.Tick += (s, e) =>
+            {
+                _flashTimer += 0.1;
+                if (_flashTimer >= 1.0)
+                {
+                    _flashTimer = 0;
+                    _gameState.FlashEffect = false;
+                    _flashUpdateTimer.IsEnabled = false;
+                }
+                InvalidateVisual();
+            };
             
             _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Render, GameTick);
             _timer.Start();
@@ -1625,16 +1638,19 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
 
         private void GameTick(object? sender, EventArgs e)
         {
+            var elapsed = _stopwatch.Elapsed;
+            _stopwatch.Restart();
+            
             if (!_isPaused)
             {
-                var dt = _stopwatch.Elapsed.TotalSeconds;
-                _stopwatch.Restart();
+                var dt = elapsed.TotalSeconds;
+                if (_fastMode) dt *= 2;
+                
                 _gameState.Update(dt);
-                // Handle flash effect
-                if (_gameState.FlashEffect)
+                
+                if (_gameState.FlashEffect && _flashTimer <= 0)
                 {
-                    _flashTimer = 0.3;
-                    _gameState.FlashEffect = false;
+                    _flashTimer = 0.2; // Flash for 0.2 seconds
                 }
                 if (_flashTimer > 0)
                 {
@@ -1676,6 +1692,7 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
 
             // Apply screen shake effect
             var shakeOffset = new Point(0, 0);
+            var transform = Matrix.Identity;
             if (_gameState.ScreenShake)
             {
                 var rand = new Random();
@@ -1683,259 +1700,269 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                     (rand.NextDouble() - 0.5) * 4,
                     (rand.NextDouble() - 0.5) * 4
                 );
-            }
-            
-            // Apply shake transform
-            if (shakeOffset.X != 0 || shakeOffset.Y != 0)
-            {
-                context.PushTransform(Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y));
+                transform = Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y);
+                context.PushTransform(transform);
             }
 
-            // Draw background - use solid black in original mode
-            if (_gameState.OriginalMode)
+            try
             {
-                context.FillRectangle(Brushes.Black, bounds);
-            }
-            else
-            {
-                // Draw background with subtle gradient
-                var backgroundBrush = new LinearGradientBrush
+                // Draw background - use solid black in original mode
+                if (_gameState.OriginalMode)
                 {
-                    StartPoint = new RelativePoint(0, RelativeUnit.Relative),
-                    EndPoint = new RelativePoint(1, RelativeUnit.Relative),
-                    GradientStops = new GradientStops
+                    context.FillRectangle(Brushes.Black, bounds);
+                }
+                else
+                {
+                    // Draw background with subtle gradient
+                    var backgroundBrush = new LinearGradientBrush
                     {
-                        new GradientStop(Color.FromRgb(20, 20, 30), 0),
-                        new GradientStop(Color.FromRgb(10, 10, 20), 1)
+                        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                        EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                        GradientStops = new GradientStops
+                        {
+                            new GradientStop(Color.FromRgb(20, 20, 30), 0),
+                            new GradientStop(Color.FromRgb(10, 10, 20), 1)
+                        }
+                    };
+                    context.FillRectangle(backgroundBrush, bounds);
+                }
+
+                // Draw grid if enabled
+                if (_showGrid)
+                {
+                    var gridPen = new Pen(new SolidColorBrush(Colors.Gray, 0.3), 1);
+                    for (double x = 0.0; x <= bounds.Width; x += 20.0)
+                    {
+                        var startPoint = new Point(x, 0.0);
+                        var endPoint = new Point(x, bounds.Height);
+                        context.DrawLine(gridPen, startPoint, endPoint);
                     }
-                };
-                context.FillRectangle(backgroundBrush, bounds);
-            }
-
-            // Draw grid if enabled
-            if (_showGrid)
-            {
-                var gridPen = new Pen(new SolidColorBrush(Colors.Gray, 0.3), 1);
-                for (double x = 0.0; x <= bounds.Width; x += 20.0)
-                {
-                    var startPoint = new Point(x, 0.0);
-                    var endPoint = new Point(x, bounds.Height);
-                    context.DrawLine(gridPen, startPoint, endPoint);
-                }
-                for (double y = 0.0; y <= bounds.Height; y += 20.0)
-                {
-                    var startPoint = new Point(0.0, y);
-                    var endPoint = new Point(bounds.Width, y);
-                    context.DrawLine(gridPen, startPoint, endPoint);
-                }
-            }
-
-            // Draw filled areas
-            foreach (var area in _gameState.FilledAreas)
-            {
-                context.FillRectangle(_filledBrush, area);
-            }
-
-            // Draw power-ups
-            foreach (var powerUp in _gameState.PowerUps)
-            {
-                var brush = powerUp.Type switch
-                {
-                    PowerUpType.ExtraLife => _powerUpExtraLifeBrush,
-                    PowerUpType.Freeze => _powerUpFreezeBrush,
-                    PowerUpType.DoubleScore => _powerUpDoubleScoreBrush,
-                    _ => _powerUpBrush
-                };
-                // Add glow effect to power-ups (only in modern mode)
-                if (!_gameState.OriginalMode)
-                {
-                    if (brush is SolidColorBrush solidBrush)
+                    for (double y = 0.0; y <= bounds.Height; y += 20.0)
                     {
-                        var glowBrush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * 0.5), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B));
+                        var startPoint = new Point(0.0, y);
+                        var endPoint = new Point(bounds.Width, y);
+                        context.DrawLine(gridPen, startPoint, endPoint);
+                    }
+                }
+
+                // Draw filled areas
+                foreach (var area in _gameState.FilledAreas)
+                {
+                    context.FillRectangle(_filledBrush, area);
+                }
+
+                // Draw power-ups
+                foreach (var powerUp in _gameState.PowerUps)
+                {
+                    var brush = powerUp.Type switch
+                    {
+                        PowerUpType.ExtraLife => _powerUpExtraLifeBrush,
+                        PowerUpType.Freeze => _powerUpFreezeBrush,
+                        PowerUpType.DoubleScore => _powerUpDoubleScoreBrush,
+                        _ => _powerUpBrush
+                    };
+
+                    // Add glow effect to power-ups (only in modern mode)
+                    if (!_gameState.OriginalMode && brush is SolidColorBrush solidBrush)
+                    {
+                        var glowBrush = new SolidColorBrush(Color.FromArgb(
+                            (byte)Math.Round(solidBrush.Color.A * 0.5),
+                            solidBrush.Color.R,
+                            solidBrush.Color.G,
+                            solidBrush.Color.B));
                         context.DrawEllipse(glowBrush, null, powerUp.Position, powerUp.Radius * 1.5, powerUp.Radius * 1.5);
                     }
+                    context.DrawEllipse(brush, null, powerUp.Position, powerUp.Radius, powerUp.Radius);
                 }
-                context.DrawEllipse(brush, null, powerUp.Position, powerUp.Radius, powerUp.Radius);
-            }
 
-            // Draw ball trails (only in modern mode)
-            if (!_gameState.OriginalMode)
-            {
-                foreach (var ball in _gameState.Balls)
-                {
-                    var trail = ball.Trail.ToList();
-                    for (int i = 0; i < trail.Count; i++)
-                    {
-                        double alpha = (double)i / trail.Count * 0.3;
-                        if (ball.Fill is SolidColorBrush solidBrush)
-                        {
-                            var trailBrush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * alpha), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B));
-                            context.DrawEllipse(trailBrush, null, trail[i], ball.Radius * 0.8, ball.Radius * 0.8);
-                        }
-                    }
-                }
-            }
-
-            // Draw balls with glow and pulse effects
-            foreach (var ball in _gameState.Balls)
-            {
-                var pulseScale = ball.GetPulseScale();
-                
-                // Add glow effect (only in modern mode)
+                // Draw ball trails (only in modern mode)
                 if (!_gameState.OriginalMode)
                 {
-                    if (ball.Fill is SolidColorBrush solidBrush)
+                    foreach (var ball in _gameState.Balls)
                     {
-                        var glowBrush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * 0.7), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B));
+                        if (ball.Fill is SolidColorBrush solidBrush)
+                        {
+                            var trail = ball.Trail.ToList();
+                            for (int i = 0; i < trail.Count; i++)
+                            {
+                                double alpha = (double)i / trail.Count * 0.3;
+                                var trailBrush = new SolidColorBrush(Color.FromArgb(
+                                    (byte)Math.Round(solidBrush.Color.A * alpha),
+                                    solidBrush.Color.R,
+                                    solidBrush.Color.G,
+                                    solidBrush.Color.B));
+                                context.DrawEllipse(trailBrush, null, trail[i], ball.Radius * 0.8, ball.Radius * 0.8);
+                            }
+                        }
+                    }
+                }
+
+                // Draw balls with glow and pulse effects
+                foreach (var ball in _gameState.Balls)
+                {
+                    var pulseScale = ball.GetPulseScale();
+                    
+                    // Add glow effect (only in modern mode)
+                    if (!_gameState.OriginalMode && ball.Fill is SolidColorBrush solidBrush)
+                    {
+                        var glowBrush = new SolidColorBrush(Color.FromArgb(
+                            (byte)Math.Round(solidBrush.Color.A * 0.7),
+                            solidBrush.Color.R,
+                            solidBrush.Color.G,
+                            solidBrush.Color.B));
                         context.DrawEllipse(glowBrush, null, ball.Position, ball.Radius * pulseScale, ball.Radius * pulseScale);
                     }
-                }
-                
-                // Special rendering for different ball types
-                if (ball.Type == BallType.Normal)
-                {
-                    var radius = ball.Radius;
-                    var center = ball.Position;
                     
-                    // Create semicircle geometries
-                    var leftHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
-                    var rightHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
-                    
-                    // Clip to left half (red)
-                    var leftClip = new RectangleGeometry(new Rect(center.X - radius, center.Y - radius, radius, radius * 2));
-                    var leftCombined = new CombinedGeometry(GeometryCombineMode.Intersect, leftHalf, leftClip);
-                    context.DrawGeometry(Brushes.Red, null, leftCombined);
-                    
-                    // Clip to right half (blue)
-                    var rightClip = new RectangleGeometry(new Rect(center.X, center.Y - radius, radius, radius * 2));
-                    var rightCombined = new CombinedGeometry(GeometryCombineMode.Intersect, rightHalf, rightClip);
-                    context.DrawGeometry(Brushes.Blue, null, rightCombined);
-                }
-                else if (ball.Type == BallType.RedWhite)
-                {
-                    var radius = ball.Radius;
-                    var center = ball.Position;
-                    
-                    // Create semicircle geometries for red/white ball
-                    var leftHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
-                    var rightHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
-                    
-                    // Clip to left half (red)
-                    var leftClip = new RectangleGeometry(new Rect(center.X - radius, center.Y - radius, radius, radius * 2));
-                    var leftCombined = new CombinedGeometry(GeometryCombineMode.Intersect, leftHalf, leftClip);
-                    context.DrawGeometry(Brushes.Red, null, leftCombined);
-                    
-                    // Clip to right half (white)
-                    var rightClip = new RectangleGeometry(new Rect(center.X, center.Y - radius, radius, radius * 2));
-                    var rightCombined = new CombinedGeometry(GeometryCombineMode.Intersect, rightHalf, rightClip);
-                    context.DrawGeometry(Brushes.White, null, rightCombined);
-                }
-                else
-                {
-                    // Regular rendering for other ball types
-                    context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
-                }
-            }
-
-            // Draw current wall being built
-            if (_gameState.CurrentWall != null)
-            {
-                var wall = _gameState.CurrentWall;
-                Pen pen;
-                
-                if (_gameState.OriginalMode)
-                {
-                    // In original mode, walls are blue and red while building
-                    pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? 
-                        new Pen(Brushes.Red, 3) : new Pen(Brushes.Blue, 3);
-                }
-                else
-                {
-                    // Modern mode with glow effects
-                    pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? _iceWallPen : _wallPen;
-                    
-                    // Add glow effect to walls being built
-                    if (pen.Brush is SolidColorBrush solidBrush)
+                    // Special rendering for different ball types
+                    if (ball.Type == BallType.Normal)
                     {
-                        var glowPen = new Pen(new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * 0.5), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B)), pen.Thickness + 2);
-                        if (wall.IsPart1Active)
-                        {
-                            context.DrawRectangle(null, glowPen, wall.WallPart1);
-                        }
-                        if (wall.IsPart2Active)
-                        {
-                            context.DrawRectangle(null, glowPen, wall.WallPart2);
-                        }
+                        var radius = ball.Radius;
+                        var center = ball.Position;
+                        
+                        // Create semicircle geometries
+                        var leftHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
+                        var rightHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
+                        
+                        // Clip to left half (red)
+                        var leftClip = new RectangleGeometry(new Rect(center.X - radius, center.Y - radius, radius, radius * 2));
+                        var leftCombined = new CombinedGeometry(GeometryCombineMode.Intersect, leftHalf, leftClip);
+                        context.DrawGeometry(new SolidColorBrush(Colors.Red), null, leftCombined);
+                        
+                        // Clip to right half (blue)
+                        var rightClip = new RectangleGeometry(new Rect(center.X, center.Y - radius, radius, radius * 2));
+                        var rightCombined = new CombinedGeometry(GeometryCombineMode.Intersect, rightHalf, rightClip);
+                        context.DrawGeometry(new SolidColorBrush(Colors.Blue), null, rightCombined);
+                    }
+                    else if (ball.Type == BallType.RedWhite)
+                    {
+                        var radius = ball.Radius;
+                        var center = ball.Position;
+                        
+                        // Create semicircle geometries for red/white ball
+                        var leftHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
+                        var rightHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
+                        
+                        // Clip to left half (red)
+                        var leftClip = new RectangleGeometry(new Rect(center.X - radius, center.Y - radius, radius, radius * 2));
+                        var leftCombined = new CombinedGeometry(GeometryCombineMode.Intersect, leftHalf, leftClip);
+                        context.DrawGeometry(new SolidColorBrush(Colors.Red), null, leftCombined);
+                        
+                        // Clip to right half (white)
+                        var rightClip = new RectangleGeometry(new Rect(center.X, center.Y - radius, radius, radius * 2));
+                        var rightCombined = new CombinedGeometry(GeometryCombineMode.Intersect, rightHalf, rightClip);
+                        context.DrawGeometry(new SolidColorBrush(Colors.White), null, rightCombined);
+                    }
+                    else
+                    {
+                        // Regular rendering for other ball types
+                        context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
                     }
                 }
-                
-                if (wall.IsPart1Active)
+
+                // Draw current wall being built
+                if (_gameState.CurrentWall != null)
                 {
-                    context.DrawRectangle(null, pen, wall.WallPart1);
+                    var wall = _gameState.CurrentWall;
+                    Pen pen;
+                    
+                    if (_gameState.OriginalMode)
+                    {
+                        pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? 
+                            new Pen(new SolidColorBrush(Colors.Red), 3) : new Pen(new SolidColorBrush(Colors.Blue), 3);
+                    }
+                    else
+                    {
+                        pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? _iceWallPen : _wallPen;
+                        
+                        // Add glow effect to walls being built
+                        if (pen.Brush is SolidColorBrush solidBrush)
+                        {
+                            var glowPen = new Pen(new SolidColorBrush(Color.FromArgb(
+                                (byte)Math.Round(solidBrush.Color.A * 0.5),
+                                solidBrush.Color.R,
+                                solidBrush.Color.G,
+                                solidBrush.Color.B)), pen.Thickness + 2);
+                            if (wall.IsPart1Active)
+                            {
+                                context.DrawRectangle(null, glowPen, wall.WallPart1);
+                            }
+                            if (wall.IsPart2Active)
+                            {
+                                context.DrawRectangle(null, glowPen, wall.WallPart2);
+                            }
+                        }
+                    }
+                    
+                    if (wall.IsPart1Active)
+                    {
+                        context.DrawRectangle(null, pen, wall.WallPart1);
+                    }
+                    if (wall.IsPart2Active)
+                    {
+                        context.DrawRectangle(null, pen, wall.WallPart2);
+                    }
                 }
-                if (wall.IsPart2Active)
+
+                // Draw preview line
+                if (_gameState.CurrentWall == null && string.IsNullOrEmpty(_gameState.Message))
                 {
-                    context.DrawRectangle(null, pen, wall.WallPart2);
+                    Pen previewPen = _gameState.OriginalMode ?
+                        new Pen(new SolidColorBrush(Colors.Blue), 2, DashStyle.Dash) :
+                        _previewPen;
+
+                    if (previewPen.Brush is SolidColorBrush solidBrush)
+                    {
+                        var glowPreviewPen = new Pen(new SolidColorBrush(Color.FromArgb(
+                            (byte)Math.Round(solidBrush.Color.A * 0.5),
+                            solidBrush.Color.R,
+                            solidBrush.Color.G,
+                            solidBrush.Color.B)), previewPen.Thickness + 1);
+
+                        var start = _mousePosition;
+                        var end = _orientation == WallOrientation.Vertical
+                            ? new Point(start.X, bounds.Height)
+                            : new Point(bounds.Width, start.Y);
+
+                        context.DrawLine(glowPreviewPen, start, end);
+                        context.DrawLine(previewPen, start, end);
+                    }
+                }
+
+                // Draw flash effect
+                if (_gameState.FlashEffect)
+                {
+                    var flashOpacity = Math.Sin(_flashTimer * Math.PI * 2) * 0.5 + 0.5;
+                    var flashBrush = new SolidColorBrush(Colors.White, flashOpacity * 0.3);
+                    context.FillRectangle(flashBrush, bounds);
+                }
+
+                // Draw message text
+                if (!string.IsNullOrEmpty(_gameState.Message))
+                {
+                    var formattedText = new FormattedText(
+                        _gameState.Message,
+                        CultureInfo.CurrentCulture,
+                        FlowDirection.LeftToRight,
+                        Typeface.Default,
+                        36.0,
+                        new SolidColorBrush(Colors.White)
+                    );
+
+                    var textPosition = new Point(
+                        (bounds.Width - formattedText.Width) / 2.0,
+                        (bounds.Height - formattedText.Height) / 2.0
+                    );
+
+                    context.DrawText(formattedText, textPosition);
                 }
             }
-
-            // Draw preview line
-            if (_gameState.CurrentWall == null && string.IsNullOrEmpty(_gameState.Message))
+            finally
             {
-                Pen previewPen;
-                if (_gameState.OriginalMode)
+                // Clean up any remaining transforms
+                if (_gameState.ScreenShake)
                 {
-                    previewPen = new Pen(Brushes.Blue, 2, DashStyle.Dash);
+                    context.PushTransform(Matrix.CreateTranslation(-transform.M31, -transform.M32));
                 }
-                else
-                {
-                    previewPen = _previewPen;
-                }
-                if (previewPen.Brush is SolidColorBrush solidBrush)
-                {
-                    var glowPreviewPen = new Pen(new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * 0.5), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B)), previewPen.Thickness + 1);
-                    var start = _mousePosition;
-                    var end = _orientation == WallOrientation.Vertical 
-                        ? new Point(start.X, bounds.Height)
-                        : new Point(bounds.Width, start.Y);
-                    context.DrawLine(glowPreviewPen, start, end);
-                    context.DrawLine(previewPen, start, end);
-                }
-            }
-
-            // Draw flash effect
-            if (_gameState.FlashEffect)
-            {
-                var flashOpacity = Math.Sin(_flashTimer * Math.PI * 2) * 0.5 + 0.5;
-                var flashBrush = new SolidColorBrush(Colors.White, flashOpacity * 0.3);
-                context.FillRectangle(flashBrush, bounds);
-            }
-
-            // Draw message text
-            if (!string.IsNullOrEmpty(_gameState.Message))
-            {
-                var formattedText = new FormattedText(
-                    _gameState.Message,
-                    CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    Typeface.Default,
-                    36.0,
-                    Brushes.White
-                );
-
-                var textPosition = new Point(
-                    (bounds.Width - formattedText.Width) / 2.0,
-                    (bounds.Height - formattedText.Height) / 2.0
-                );
-
-                context.DrawText(formattedText, textPosition);
-            }
-
-            // Restore transform if we applied screen shake
-            if (_gameState.ScreenShake)
-            {
-                // Since we can't pop transforms in Avalonia, we'll just skip it
-                // The transform will be reset on the next frame
             }
         }
 
