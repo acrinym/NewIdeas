@@ -42,7 +42,8 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 <details><summary>Core</summary>
 
 * Built-in plugin system with hot reload. Sample modules include a clock overlay,
-    MP3 player, macro recorder (Windows only), text editor, wallpaper changer,
+    MP3 player, macro recorder (Windows only), text editor, **code editor**,
+    wallpaper changer, **file explorer**, **network tools**, **encryption helper**,
     widget host, Winamp visualizer host, a tracker module player and a simple
     command shell.
 * Workspace profiles remember your wallpaper and plugin states for quick swaps.
@@ -77,6 +78,9 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `DiskUsagePlugin`        | Visualises folder sizes in a tree view.                                                  |
 | `EnvironmentEditorPlugin`| Edits environment variables at runtime (Process scope only on Linux/macOS).              |
 | `FileWatcherPlugin`      | Watches a directory and logs file system events.                                         |
+| `FileExplorerPlugin`     | Browse directories with tree and list views, context menu actions. |
+| `NetworkToolsPlugin`     | Ping, traceroute and port scan utilities with export. |
+| `EncryptionPlugin`       | Encrypt text or files using AES/RSA. Accessible from File Explorer. |
 | `JezzballPlugin`         | Arcade game with powerups, visual effects and Original mode.|
 | `LogViewerPlugin`        | Tails a log file and filters lines on the fly.                                           |
 | `NotificationCenterPlugin`| Aggregates messages broadcast via `NotificationCenter`.                                  |

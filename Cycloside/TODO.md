@@ -32,14 +32,14 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
     - [x] Styled output (color text, scrollback)
 - [x] Jezzball plugin powerups, visual effects & Original Mode
 - [x] Winamp visualizer integration with MP3 player
-- [ ] **Network Tools Plugin**
-    - [ ] Ping, traceroute utilities
-    - [ ] Port scanner
-    - [ ] Export/save results to file
-- [ ] **Encryption Plugin**
-    - [ ] AES/RSA text and file encryption
-    - [ ] UI for entering data, key, selecting algorithm
-    - [ ] Integrate with File Explorer for file encryption
+- [x] **Network Tools Plugin**
+    - [x] Ping, traceroute utilities
+    - [x] Port scanner
+    - [x] Export/save results to file
+- [x] **Encryption Plugin**
+    - [x] AES/RSA text and file encryption
+    - [x] UI for entering data, key, selecting algorithm
+    - [x] Integrate with File Explorer for file encryption
 
 ## Marketplace & Extensibility
 - [ ] Design plugin marketplace UI (browse, install, update, remove plugins)
