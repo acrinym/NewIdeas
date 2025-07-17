@@ -15,179 +15,178 @@ using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using Cycloside.Services;
 
-namespace Cycloside.Plugins.BuiltIn;
-
-public partial class CodeEditorPlugin : ObservableObject, IPlugin
+namespace Cycloside.Plugins.BuiltIn
 {
-    private CodeEditorWindow? _window;
-    private TextEditor? _editor;
-    private ComboBox? _languageBox;
-    private TextBox? _outputBox;
-    private string? _currentFile;
-
-    public string Name => "Code Editor";
-    public string Description => "Edit and run C#, Python, or JS";
-    public Version Version => new(0, 1, 0);
-    public Widgets.IWidget? Widget => null;
-    public bool ForceDefaultTheme => false;
-
-    public void Start()
+    public partial class CodeEditorPlugin : ObservableObject, IPlugin
     {
-        _window = new CodeEditorWindow { DataContext = this };
-        _editor = _window.FindControl<TextEditor>("Editor");
-        _languageBox = _window.FindControl<ComboBox>("LanguageBox");
-        _outputBox = _window.FindControl<TextBox>("OutputBox");
-        _languageBox!.SelectedIndex = 0; // default C#
-        _languageBox.SelectionChanged += (_, _) => UpdateHighlighting();
-        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(CodeEditorPlugin));
-        _window.Show();
-        UpdateHighlighting();
-    }
+        private CodeEditorWindow? _window;
+        private TextEditor? _editor;
+        private ComboBox? _languageBox;
+        private TextBox? _outputBox;
+        private string? _currentFile;
 
-    public void Stop()
-    {
-        _window?.Close();
-        _window = null;
-        _editor = null;
-        _languageBox = null;
-        _outputBox = null;
-    }
+        public string Name => "Code Editor";
+        public string Description => "Edit and run C#, Python, or JS";
+        public Version Version => new(0, 1, 0);
+        public Widgets.IWidget? Widget => null;
+        public bool ForceDefaultTheme => false;
 
-    [RelayCommand]
-    private async Task OpenFile()
-    {
-        if (_window == null) return;
-        var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
-        var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        public void Start()
         {
-            Title = "Open Code File",
-            AllowMultiple = false,
-            FileTypeFilter = new[] { FilePickerFileTypes.All },
-            SuggestedStartLocation = start
-        });
-        if (result.FirstOrDefault()?.TryGetLocalPath() is { } path && File.Exists(path))
-        {
-            _currentFile = path;
-            _editor!.Text = await File.ReadAllTextAsync(path);
-            DetectLanguageFromExtension(path);
+            _window = new CodeEditorWindow { DataContext = this };
+            _editor = _window.FindControl<TextEditor>("Editor");
+            _languageBox = _window.FindControl<ComboBox>("LanguageBox");
+            _outputBox = _window.FindControl<TextBox>("OutputBox");
+            _languageBox!.SelectedIndex = 0; // default C#
+            _languageBox.SelectionChanged += (_, _) => UpdateHighlighting();
+            WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(CodeEditorPlugin));
+            _window.Show();
+            UpdateHighlighting();
         }
-    }
 
-    [RelayCommand]
-    private async Task SaveFile()
-    {
-        if (string.IsNullOrEmpty(_currentFile))
+        public void Stop()
         {
-            await SaveFileAs();
-            return;
+            _window?.Close();
+            _window = null;
+            _editor = null;
+            _languageBox = null;
+            _outputBox = null;
         }
-        await File.WriteAllTextAsync(_currentFile, _editor?.Text ?? string.Empty);
-    }
 
-    [RelayCommand]
-    private async Task SaveFileAs()
-    {
-        if (_window == null) return;
-        var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
-        var result = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        [RelayCommand]
+        private async Task OpenFile()
         {
-            Title = "Save Code File As...",
-            SuggestedFileName = Path.GetFileName(_currentFile) ?? "script",
-            SuggestedStartLocation = start
-        });
-        if (result?.TryGetLocalPath() is { } path)
-        {
-            _currentFile = path;
-            await File.WriteAllTextAsync(path, _editor?.Text ?? string.Empty);
-            DetectLanguageFromExtension(path);
-        }
-    }
-
-    [RelayCommand]
-    private async Task RunCode()
-    {
-        if (_editor == null || _outputBox == null) return;
-        var code = _editor.Text ?? string.Empty;
-        var lang = GetSelectedLanguage();
-        try
-        {
-            _outputBox.Text = string.Empty;
-            switch (lang)
+            if (_window == null) return;
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
+            var result = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                case "C#":
-                    var csWriter = new StringWriter();
-                    var originalOut = Console.Out;
-                    Console.SetOut(csWriter);
-                    object? csResult = null;
-                    try
-                    {
-                        csResult = await CSharpScript.EvaluateAsync<object?>(code, ScriptOptions.Default.WithImports("System"));
-                    }
-                    finally
-                    {
-                        Console.SetOut(originalOut);
-                    }
-                    _outputBox.Text = csWriter + (csResult != null ? csResult.ToString() : string.Empty);
-                    break;
-                case "Python":
-                    var engine = Python.CreateEngine();
-                    using (var stream = new MemoryStream())
-                    {
-                        engine.Runtime.IO.SetOutput(stream, System.Text.Encoding.UTF8);
-                        engine.Runtime.IO.SetErrorOutput(stream, System.Text.Encoding.UTF8);
+                Title = "Open Code File",
+                AllowMultiple = false,
+                FileTypeFilter = new[] { FilePickerFileTypes.All },
+                SuggestedStartLocation = start
+            });
+            if (result.FirstOrDefault()?.TryGetLocalPath() is { } path && File.Exists(path))
+            {
+                _currentFile = path;
+                _editor!.Text = await File.ReadAllTextAsync(path);
+                DetectLanguageFromExtension(path);
+            }
+        }
+
+        [RelayCommand]
+        private async Task SaveFile()
+        {
+            if (string.IsNullOrEmpty(_currentFile))
+            {
+                await SaveFileAs();
+                return;
+            }
+            await File.WriteAllTextAsync(_currentFile, _editor?.Text ?? string.Empty);
+        }
+
+        [RelayCommand]
+        private async Task SaveFileAs()
+        {
+            if (_window == null) return;
+            var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
+            var result = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save Code File As...",
+                SuggestedFileName = Path.GetFileName(_currentFile) ?? "script",
+                SuggestedStartLocation = start
+            });
+            if (result?.TryGetLocalPath() is { } path)
+            {
+                _currentFile = path;
+                await File.WriteAllTextAsync(path, _editor?.Text ?? string.Empty);
+                DetectLanguageFromExtension(path);
+            }
+        }
+
+        [RelayCommand]
+        private async Task RunCode()
+        {
+            if (_editor == null || _outputBox == null) return;
+            var code = _editor.Text ?? string.Empty;
+            var lang = GetSelectedLanguage();
+            try
+            {
+                _outputBox.Text = string.Empty;
+                switch (lang)
+                {
+                    case "C#":
+                        var csWriter = new StringWriter();
+                        var originalOut = Console.Out;
+                        Console.SetOut(csWriter);
+                        object? csResult = null;
+                        try
+                        {
+                            csResult = await CSharpScript.EvaluateAsync<object?>(code, ScriptOptions.Default.WithImports("System"));
+                        }
+                        finally
+                        {
+                            Console.SetOut(originalOut);
+                        }
+                        _outputBox.Text = csWriter.ToString() + (csResult != null ? csResult.ToString() : string.Empty);
+                        break;
+                    case "Python":
+                        var engine = Python.CreateEngine();
+                        using var stream = new MemoryStream();
+                        engine.Runtime.IO.SetOutput(stream, Encoding.UTF8);
+                        engine.Runtime.IO.SetErrorOutput(stream, Encoding.UTF8);
                         var scope = engine.CreateScope();
                         var source = engine.CreateScriptSourceFromString(code);
                         var pyResult = source.Execute(scope);
                         stream.Position = 0;
                         var output = new StreamReader(stream).ReadToEnd();
                         _outputBox.Text = output + (pyResult != null ? pyResult.ToString() : string.Empty);
-                    }
-                    break;
-                case "JavaScript":
-                    var sb = new System.Text.StringBuilder();
-                    var jsEngine = new Engine();
-                    jsEngine.SetValue("console", new
-                    {
-                        log = new Action<object?>(o => sb.AppendLine(o?.ToString()))
-                    });
-                    var jsValue = jsEngine.Execute(code).GetCompletionValue();
-                    sb.Append(jsValue.ToObject()?.ToString());
-                    _outputBox.Text = sb.ToString();
-                    break;
+                        break;
+                    case "JavaScript":
+                        var sb = new StringBuilder();
+                        var jsEngine = new Engine();
+                        jsEngine.SetValue("console", new
+                        {
+                            log = new Action<object?>(o => sb.AppendLine(o?.ToString()))
+                        });
+                        var jsValue = jsEngine.Execute(code).GetCompletionValue();
+                        sb.Append(jsValue.ToObject()?.ToString());
+                        _outputBox.Text = sb.ToString();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _outputBox.Text = $"Error: {ex.Message}";
             }
         }
-        catch (Exception ex)
+
+        private string GetSelectedLanguage() => _languageBox?.SelectedItem switch
         {
-            _outputBox.Text = $"Error: {ex.Message}";
-        }
-    }
-
-    private string GetSelectedLanguage() => _languageBox?.SelectedItem switch
-    {
-        ComboBoxItem item => item.Content?.ToString() ?? "C#",
-        string s => s,
-        _ => "C#"
-    };
-
-    private void DetectLanguageFromExtension(string path)
-    {
-        var ext = Path.GetExtension(path).ToLowerInvariant();
-        if (ext == ".cs") _languageBox!.SelectedIndex = 0;
-        else if (ext == ".py") _languageBox!.SelectedIndex = 1;
-        else if (ext == ".js") _languageBox!.SelectedIndex = 2;
-        UpdateHighlighting();
-    }
-
-    private void UpdateHighlighting()
-    {
-        if (_editor == null) return;
-        var lang = GetSelectedLanguage();
-        _editor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition(lang switch
-        {
-            "C#" => "C#",
-            "Python" => "Python",
-            "JavaScript" => "JavaScript",
+            ComboBoxItem item => item.Content?.ToString() ?? "C#",
+            string s => s,
             _ => "C#"
-        });
+        };
+
+        private void DetectLanguageFromExtension(string path)
+        {
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+            if (ext == ".cs") _languageBox!.SelectedIndex = 0;
+            else if (ext == ".py") _languageBox!.SelectedIndex = 1;
+            else if (ext == ".js") _languageBox!.SelectedIndex = 2;
+            UpdateHighlighting();
+        }
+
+        private void UpdateHighlighting()
+        {
+            if (_editor == null) return;
+            var lang = GetSelectedLanguage();
+            _editor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition(lang switch
+            {
+                "C#" => "C#",
+                "Python" => "Python",
+                "JavaScript" => "JavaScript",
+                _ => "C#"
+            });
+        }
     }
 }

@@ -22,10 +22,10 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
     - [ ] Syntax highlighting (C#, Python, JS, etc.)
     - [ ] Auto-complete support
     - [ ] “Run” button (Roslyn, IronPython, JS engine)
-- [ ] **File Explorer Plugin**
-    - [ ] TreeView/ListView for file system
-    - [ ] Context menu (Open, Rename, Delete, etc.)
-    - [ ] “Open in Code Editor” action
+ - [x] **File Explorer Plugin**
+    - [x] TreeView/ListView for file system
+    - [x] Context menu (Open, Rename, Delete, etc.)
+    - [x] “Open in Code Editor” action
 - [x] **Terminal Emulator Plugin**
     - [x] Shell command execution
     - [x] Command history (arrow keys)
