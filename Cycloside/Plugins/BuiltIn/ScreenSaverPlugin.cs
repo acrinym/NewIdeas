@@ -7,8 +7,10 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.Interactivity;
 using Cycloside.Services;
 using SharpHook;
+using Microsoft.Win32;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -21,42 +23,97 @@ namespace Cycloside.Plugins.BuiltIn
         private DispatcherTimer? _idleTimer;
         private DateTime _lastInputTime;
         private TimeSpan _idleTimeout;
+        private bool _isDisposed;
+        private bool _isSystemSleeping;
 
         // Configuration (will be moved to settings later)
         private ScreenSaverType _activeSaver = ScreenSaverType.Text;
         
         public string Name => "ScreenSaver Host";
         public string Description => "Runs full-screen screensavers after a period of inactivity.";
-        public Version Version => new(1, 3, 0); // Version bump for 3D Text
+        public Version Version => new(1, 4, 0); // Version bump for stability improvements
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => true;
 
         public void Start()
         {
-            _idleTimeout = TimeSpan.FromSeconds(60);
-            _lastInputTime = DateTime.Now;
-            
-            _hook = new TaskPoolGlobalHook();
-            _hook.MouseMoved += (s, e) => ResetIdleTimer();
-            _hook.KeyPressed += (s, e) => ResetIdleTimer();
-            _hook.RunAsync();
+            try
+            {
+                _idleTimeout = TimeSpan.FromSeconds(60);
+                _lastInputTime = DateTime.Now;
+                
+                _hook = new TaskPoolGlobalHook();
+                _hook.MouseMoved += OnMouseMoved;
+                _hook.KeyPressed += OnKeyPressed;
+                _hook.RunAsync();
 
-            _idleTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background, CheckIdleTime);
-            _idleTimer.Start();
+                _idleTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background, CheckIdleTime);
+                _idleTimer.Start();
+
+                // Register for system power events
+                if (OperatingSystem.IsWindows())
+                {
+                    SystemEvents.PowerModeChanged += OnPowerModeChanged;
+                }
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Failed to start ScreenSaver: {ex.Message}");
+                Stop();
+            }
+        }
+
+        private void OnMouseMoved(object? sender, MouseHookEventArgs e)
+        {
+            if (!_isSystemSleeping)
+            {
+                Dispatcher.UIThread.Post(() => ResetIdleTimer());
+            }
+        }
+
+        private void OnKeyPressed(object? sender, KeyboardHookEventArgs e)
+        {
+            if (!_isSystemSleeping)
+            {
+                Dispatcher.UIThread.Post(() => ResetIdleTimer());
+            }
+        }
+
+        private void OnPowerModeChanged(object? sender, PowerModeChangedEventArgs e)
+        {
+            switch (e.Mode)
+            {
+                case PowerModes.Suspend:
+                    _isSystemSleeping = true;
+                    HideSaver();
+                    break;
+                case PowerModes.Resume:
+                    _isSystemSleeping = false;
+                    _lastInputTime = DateTime.Now;
+                    break;
+            }
         }
 
         private void CheckIdleTime(object? sender, EventArgs e)
         {
-            if (_window != null) return;
+            if (_isDisposed || _isSystemSleeping || _window != null) return;
 
-            if (DateTime.Now - _lastInputTime > _idleTimeout)
+            try
             {
-                ShowSaver();
+                if (DateTime.Now - _lastInputTime > _idleTimeout)
+                {
+                    ShowSaver();
+                }
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Error checking idle time: {ex.Message}");
             }
         }
 
         private void ResetIdleTimer()
         {
+            if (_isDisposed) return;
             _lastInputTime = DateTime.Now;
             if (_window != null)
             {
@@ -66,21 +123,65 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void ShowSaver()
         {
-            if (_window != null) return;
+            if (_isDisposed || _window != null) return;
             
-            _window = new ScreenSaverWindow(_activeSaver);
-            _window.Closed += (s, e) => _window = null;
-            _window.Show();
+            try
+            {
+                _window = new ScreenSaverWindow(_activeSaver);
+                _window.Closed += (s, e) => _window = null;
+                _window.Show();
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Failed to show screensaver: {ex.Message}");
+                _window = null;
+            }
         }
 
-        private void HideSaver() => _window?.Close();
+        private void HideSaver()
+        {
+            try
+            {
+                if (_window != null)
+                {
+                    var window = _window;
+                    _window = null;
+                    window.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Error hiding screensaver: {ex.Message}");
+                _window = null;
+            }
+        }
+
         public void Stop() => Dispose();
 
         public void Dispose()
         {
-            _idleTimer?.Stop();
-            _hook?.Dispose();
-            _window?.Close();
+            if (_isDisposed) return;
+            _isDisposed = true;
+
+            try
+            {
+                _idleTimer?.Stop();
+                if (_hook != null)
+                {
+                    _hook.MouseMoved -= OnMouseMoved;
+                    _hook.KeyPressed -= OnKeyPressed;
+                    _hook.Dispose();
+                }
+                if (OperatingSystem.IsWindows())
+                {
+                    SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+                }
+                HideSaver();
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Error disposing ScreenSaver: {ex.Message}");
+            }
             GC.SuppressFinalize(this);
         }
     }
@@ -111,30 +212,88 @@ namespace Cycloside.Plugins.BuiltIn
     {
         private readonly DispatcherTimer _renderTimer;
         private readonly IScreenSaverAnimation _animation;
+        private bool _isDisposed;
+        private int _errorCount;
+        private const int MaxErrors = 3;
 
         public ScreenSaverControl(ScreenSaverType type)
         {
-            _animation = type switch
+            try
             {
-                ScreenSaverType.WindowsLogo => new WindowsLogoAnimation(),
-                ScreenSaverType.Twist => new LemniscateAnimation(),
-                ScreenSaverType.Text => new TextAnimation(),
-                _ => new FlowerBoxAnimation()
-            };
+                _animation = type switch
+                {
+                    ScreenSaverType.WindowsLogo => new WindowsLogoAnimation(),
+                    ScreenSaverType.Twist => new LemniscateAnimation(),
+                    ScreenSaverType.Text => new TextAnimation(),
+                    _ => new FlowerBoxAnimation()
+                };
 
-            _renderTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Normal, OnTick);
-            _renderTimer.Start();
+                _renderTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Normal, OnTick);
+                _renderTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Failed to initialize screensaver animation: {ex.Message}");
+                throw;
+            }
         }
 
         private void OnTick(object? sender, EventArgs e)
         {
-            _animation.Update();
-            InvalidateVisual();
+            if (_isDisposed) return;
+
+            try
+            {
+                _animation.Update();
+                InvalidateVisual();
+                _errorCount = 0; // Reset error count on successful update
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Error updating animation: {ex.Message}");
+                _errorCount++;
+                
+                if (_errorCount >= MaxErrors)
+                {
+                    Cycloside.Services.Logger.Error("Too many animation errors, stopping screensaver");
+                    if (Parent is Window window)
+                    {
+                        window.Close();
+                    }
+                }
+            }
         }
 
         public override void Render(DrawingContext context)
         {
-            _animation.Render(context, Bounds);
+            if (_isDisposed) return;
+
+            try
+            {
+                _animation.Render(context, Bounds);
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Error rendering animation: {ex.Message}");
+                _errorCount++;
+                
+                if (_errorCount >= MaxErrors)
+                {
+                    Cycloside.Services.Logger.Error("Too many rendering errors, stopping screensaver");
+                    if (Parent is Window window)
+                    {
+                        window.Close();
+                    }
+                }
+            }
+        }
+
+        protected override void OnUnloaded(RoutedEventArgs e)
+        {
+            base.OnUnloaded(e);
+            _isDisposed = true;
+            _renderTimer.Stop();
+            (_animation as IDisposable)?.Dispose();
         }
     }
 
@@ -152,21 +311,47 @@ namespace Cycloside.Plugins.BuiltIn
     {
         public List<Point3D> Vertices { get; } = new();
         public List<Face> Faces { get; } = new();
+        private const int MaxVertices = 10000; // Safety limit
+        private const int MaxFaces = 10000;
 
         public void Draw(DrawingContext context, IBrush[] materials, Pen? wireframePen = null)
         {
-            foreach (var face in Faces)
+            try
             {
-                var geometry = new StreamGeometry();
-                using (var gc = geometry.Open())
+                if (Vertices.Count > MaxVertices || Faces.Count > MaxFaces)
                 {
-                    gc.BeginFigure(Vertices[face.P0].ToPoint(), true);
-                    gc.LineTo(Vertices[face.P1].ToPoint());
-                    gc.LineTo(Vertices[face.P2].ToPoint());
-                    gc.LineTo(Vertices[face.P3].ToPoint());
+                    Cycloside.Services.Logger.Warning($"Mesh exceeds safety limits: {Vertices.Count} vertices, {Faces.Count} faces");
+                    return;
                 }
-                var brush = materials[face.MaterialId % materials.Length];
-                context.DrawGeometry(brush, wireframePen, geometry);
+
+                foreach (var face in Faces)
+                {
+                    if (face.P0 >= Vertices.Count || face.P1 >= Vertices.Count || 
+                        face.P2 >= Vertices.Count || face.P3 >= Vertices.Count)
+                    {
+                        Cycloside.Services.Logger.Error("Invalid face vertex indices");
+                        continue;
+                    }
+
+                    var geometry = new StreamGeometry();
+                    using (var gc = geometry.Open())
+                    {
+                        gc.BeginFigure(Vertices[face.P0].ToPoint(), true);
+                        gc.LineTo(Vertices[face.P1].ToPoint());
+                        gc.LineTo(Vertices[face.P2].ToPoint());
+                        gc.LineTo(Vertices[face.P3].ToPoint());
+                    }
+                    var brush = materials[face.MaterialId % materials.Length];
+                    context.DrawGeometry(brush, wireframePen, geometry);
+                }
+            }
+            catch (OutOfMemoryException ex)
+            {
+                Cycloside.Services.Logger.Error($"Out of memory while rendering mesh: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"Error rendering mesh: {ex.Message}");
             }
         }
     }

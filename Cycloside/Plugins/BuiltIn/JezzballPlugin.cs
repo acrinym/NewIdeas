@@ -11,6 +11,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Avalonia.Platform.Storage;
 using Cycloside.Effects;
@@ -1411,7 +1412,11 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
         private readonly TextBlock _timeText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _capturedText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _effectText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.LightGreen };
-
+        
+        // Flash effect timer for area capture
+        private double _flashTimer = 0;
+        private readonly DispatcherTimer _flashUpdateTimer;
+        
         public Menu MenuBar => _menu;
 
         public JezzballControl(JezzballTheme theme)
@@ -1419,6 +1424,9 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             _theme = theme;
             _gameState = new JezzballGameState(theme);
             _gameCanvas = new GameCanvas(this);
+            _flashUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            _flashUpdateTimer.Tick += (s, e) => _flashTimer += 0.016;
+            _flashUpdateTimer.Start();
             
             _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Render, GameTick);
             _timer.Start();
@@ -1572,6 +1580,9 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
         {
             _timer.Stop();
             _stopwatch.Stop();
+            _flashUpdateTimer.Stop();
+            _timer.Tick -= GameTick;
+            _flashUpdateTimer.Tick -= (s, e) => _flashTimer += 0.016;
         }
 
         private void OnControlResized(object? sender, SizeChangedEventArgs e)
@@ -1579,28 +1590,36 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             _gameState.StartLevel(_gameCanvas.Bounds.Size);
         }
 
-        private void OnPointerMoved(object? sender, PointerEventArgs e) => _mousePosition = e.GetPosition(_gameCanvas);
+        private void OnPointerMoved(object? sender, PointerEventArgs e)
+        {
+            var position = e.GetPosition(_gameCanvas);
+            _mousePosition = new Point(position.X, position.Y);
+        }
 
         private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
-            if (_isPaused) return;
+            if (_gameState.IsGameOver || _isPaused) return;
 
             var position = e.GetPosition(_gameCanvas);
-            
-            if (e.GetCurrentPoint(_gameCanvas).Properties.IsRightButtonPressed)
-            {
-                _orientation = _orientation == WallOrientation.Vertical ? WallOrientation.Horizontal : WallOrientation.Vertical;
-                if (_soundEnabled) JezzballSound.Play(JezzballSoundEvent.Click);
-                return;
-            }
+            var point = new Point(position.X, position.Y);
 
-            if (_gameState.TryStartWall(position, _orientation))
+            if (e.GetCurrentPoint(_gameCanvas).Properties.IsLeftButtonPressed)
             {
-                if (_soundEnabled) JezzballSound.Play(JezzballSoundEvent.WallBuild);
+                if (_gameState.TryStartWall(point, _orientation))
+                {
+                    if (_soundEnabled) JezzballSound.Play(JezzballSoundEvent.WallBuild);
+                }
+                else
+                {
+                    _gameState.HandleClick(point);
+                }
             }
-            else
+            else if (e.GetCurrentPoint(_gameCanvas).Properties.IsRightButtonPressed)
             {
-                _gameState.HandleClick(position);
+                _orientation = _orientation == WallOrientation.Vertical
+                    ? WallOrientation.Horizontal
+                    : WallOrientation.Vertical;
+                if (_soundEnabled) JezzballSound.Play(JezzballSoundEvent.Click);
             }
         }
 
@@ -1650,7 +1669,7 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             _effectText.Text = string.Join(" | ", effects);
         }
 
-        internal async void RenderGame(DrawingContext context)
+        internal void RenderGame(DrawingContext context)
         {
             var bounds = _gameCanvas.Bounds;
             if (bounds.Width <= 0 || bounds.Height <= 0) return;
@@ -1686,8 +1705,8 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                     EndPoint = new RelativePoint(1, RelativeUnit.Relative),
                     GradientStops = new GradientStops
                     {
-                        new GradientStop(0, Color.FromRgb(20, 20, 30)),
-                        new GradientStop(1, Color.FromRgb(10, 10, 20))
+                        new GradientStop(Color.FromRgb(20, 20, 30), 0),
+                        new GradientStop(Color.FromRgb(10, 10, 20), 1)
                     }
                 };
                 context.FillRectangle(backgroundBrush, bounds);
@@ -1697,8 +1716,18 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
             if (_showGrid)
             {
                 var gridPen = new Pen(new SolidColorBrush(Colors.Gray, 0.3), 1);
-                for (int x = 0; x <= bounds.Width; x += 20) context.DrawLine(gridPen, new Point(x, 0), new Point(x, bounds.Height));
-                for (int y = 0; y <= bounds.Height; y += 20) context.DrawLine(gridPen, new Point(0, y), new Point(bounds.Width, y));
+                for (double x = 0.0; x <= bounds.Width; x += 20.0)
+                {
+                    var startPoint = new Point(x, 0.0);
+                    var endPoint = new Point(x, bounds.Height);
+                    context.DrawLine(gridPen, startPoint, endPoint);
+                }
+                for (double y = 0.0; y <= bounds.Height; y += 20.0)
+                {
+                    var startPoint = new Point(0.0, y);
+                    var endPoint = new Point(bounds.Width, y);
+                    context.DrawLine(gridPen, startPoint, endPoint);
+                }
             }
 
             // Draw filled areas
@@ -1720,8 +1749,11 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 // Add glow effect to power-ups (only in modern mode)
                 if (!_gameState.OriginalMode)
                 {
-                    var glowBrush = new SolidColorBrush(Color.FromArgb((byte)(brush.Color.A * 0.5), brush.Color.R, brush.Color.G, brush.Color.B));
-                    context.DrawEllipse(glowBrush, null, powerUp.Position, powerUp.Radius * 1.5, powerUp.Radius * 1.5);
+                    if (brush is SolidColorBrush solidBrush)
+                    {
+                        var glowBrush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * 0.5), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B));
+                        context.DrawEllipse(glowBrush, null, powerUp.Position, powerUp.Radius * 1.5, powerUp.Radius * 1.5);
+                    }
                 }
                 context.DrawEllipse(brush, null, powerUp.Position, powerUp.Radius, powerUp.Radius);
             }
@@ -1735,8 +1767,11 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                     for (int i = 0; i < trail.Count; i++)
                     {
                         double alpha = (double)i / trail.Count * 0.3;
-                        var trailBrush = new SolidColorBrush(Color.FromArgb((byte)(ball.Fill.Color.A * alpha), ball.Fill.Color.R, ball.Fill.Color.G, ball.Fill.Color.B));
-                        context.DrawEllipse(trailBrush, null, trail[i], ball.Radius * 0.8, ball.Radius * 0.8);
+                        if (ball.Fill is SolidColorBrush solidBrush)
+                        {
+                            var trailBrush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * alpha), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B));
+                            context.DrawEllipse(trailBrush, null, trail[i], ball.Radius * 0.8, ball.Radius * 0.8);
+                        }
                     }
                 }
             }
@@ -1749,8 +1784,11 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 // Add glow effect (only in modern mode)
                 if (!_gameState.OriginalMode)
                 {
-                    var glowBrush = new SolidColorBrush(Color.FromArgb((byte)(ball.Fill.Color.A * 0.7), ball.Fill.Color.R, ball.Fill.Color.G, ball.Fill.Color.B));
-                    context.DrawEllipse(glowBrush, null, ball.Position, ball.Radius * pulseScale, ball.Radius * pulseScale);
+                    if (ball.Fill is SolidColorBrush solidBrush)
+                    {
+                        var glowBrush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * 0.7), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B));
+                        context.DrawEllipse(glowBrush, null, ball.Position, ball.Radius * pulseScale, ball.Radius * pulseScale);
+                    }
                 }
                 
                 // Special rendering for different ball types
@@ -1817,15 +1855,17 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                     pen = wall.IsPart1Invincible || wall.IsPart2Invincible ? _iceWallPen : _wallPen;
                     
                     // Add glow effect to walls being built
-                    var glowPen = new Pen(new SolidColorBrush(Color.FromArgb((byte)(pen.Brush.Color.A * 0.5), pen.Brush.Color.R, pen.Brush.Color.G, pen.Brush.Color.B)), pen.Thickness + 2);
-                    
-                    if (wall.IsPart1Active)
+                    if (pen.Brush is SolidColorBrush solidBrush)
                     {
-                        context.DrawRectangle(null, glowPen, wall.WallPart1);
-                    }
-                    if (wall.IsPart2Active)
-                    {
-                        context.DrawRectangle(null, glowPen, wall.WallPart2);
+                        var glowPen = new Pen(new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * 0.5), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B)), pen.Thickness + 2);
+                        if (wall.IsPart1Active)
+                        {
+                            context.DrawRectangle(null, glowPen, wall.WallPart1);
+                        }
+                        if (wall.IsPart2Active)
+                        {
+                            context.DrawRectangle(null, glowPen, wall.WallPart2);
+                        }
                     }
                 }
                 
@@ -1851,48 +1891,51 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 {
                     previewPen = _previewPen;
                 }
-                var glowPreviewPen = new Pen(new SolidColorBrush(Color.FromArgb((byte)(previewPen.Brush.Color.A * 0.5), previewPen.Brush.Color.R, previewPen.Brush.Color.G, previewPen.Brush.Color.B)), previewPen.Thickness + 1);
-                var start = _mousePosition;
-                var end = _orientation == WallOrientation.Vertical 
-                    ? new Point(start.X, _orientation == WallOrientation.Vertical ? bounds.Height : 0)
-                    : new Point(_orientation == WallOrientation.Horizontal ? bounds.Width : 0, start.Y);
-                context.DrawLine(glowPreviewPen, start, end);
-                context.DrawLine(previewPen, start, end);
+                if (previewPen.Brush is SolidColorBrush solidBrush)
+                {
+                    var glowPreviewPen = new Pen(new SolidColorBrush(Color.FromArgb((byte)Math.Round(solidBrush.Color.A * 0.5), solidBrush.Color.R, solidBrush.Color.G, solidBrush.Color.B)), previewPen.Thickness + 1);
+                    var start = _mousePosition;
+                    var end = _orientation == WallOrientation.Vertical 
+                        ? new Point(start.X, bounds.Height)
+                        : new Point(bounds.Width, start.Y);
+                    context.DrawLine(glowPreviewPen, start, end);
+                    context.DrawLine(previewPen, start, end);
+                }
             }
 
-            // Draw message overlay
-            if (!string.IsNullOrEmpty(_gameState.Message))
+            // Draw flash effect
+            if (_gameState.FlashEffect)
             {
-                var textBrush = new SolidColorBrush(Colors.White);
-                var font = new Typeface("Segoe UI");
-                var formattedText = new FormattedText(_gameState.Message, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, font, 24, textBrush);
-                var textPosition = new Point((bounds.Width - formattedText.Width) / 2, (bounds.Height - formattedText.Height) / 2);
-                context.DrawText(formattedText, textPosition);
-            }
-
-            // Flash effect overlay (only in modern mode)
-            if (_flashTimer > 0 && !_gameState.OriginalMode)
-            {
-                double alpha = Math.Min(1.0, _flashTimer / 0.3) * 0.7;
-                var flashBrush = new SolidColorBrush(Color.FromArgb((byte)(alpha * 255), 255, 255, 255));
+                var flashOpacity = Math.Sin(_flashTimer * Math.PI * 2) * 0.5 + 0.5;
+                var flashBrush = new SolidColorBrush(Colors.White, flashOpacity * 0.3);
                 context.FillRectangle(flashBrush, bounds);
             }
 
-            // Draw particles (only in modern mode)
-            if (!_gameState.OriginalMode)
+            // Draw message text
+            if (!string.IsNullOrEmpty(_gameState.Message))
             {
-                foreach (var particle in _gameState.Particles)
-                {
-                    var alpha = particle.Alpha;
-                    var color = new SolidColorBrush(Color.FromArgb((byte)(particle.Color.Color.A * alpha), particle.Color.Color.R, particle.Color.Color.G, particle.Color.Color.B));
-                    context.DrawEllipse(color, null, particle.Position, particle.Size, particle.Size);
-                }
+                var formattedText = new FormattedText(
+                    _gameState.Message,
+                    CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    Typeface.Default,
+                    36.0,
+                    Brushes.White
+                );
+
+                var textPosition = new Point(
+                    (bounds.Width - formattedText.Width) / 2.0,
+                    (bounds.Height - formattedText.Height) / 2.0
+                );
+
+                context.DrawText(formattedText, textPosition);
             }
-            
-            // Pop shake transform
-            if (shakeOffset.X != 0 || shakeOffset.Y != 0)
+
+            // Restore transform if we applied screen shake
+            if (_gameState.ScreenShake)
             {
-                context.PopTransform();
+                // Since we can't pop transforms in Avalonia, we'll just skip it
+                // The transform will be reset on the next frame
             }
         }
 
