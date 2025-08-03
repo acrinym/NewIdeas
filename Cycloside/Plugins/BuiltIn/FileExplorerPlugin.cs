@@ -16,6 +16,8 @@ namespace Cycloside.Plugins.BuiltIn;
 
 public class FileExplorerPlugin : IPlugin, IDisposable
 {
+    private const string ParentEntry = ".."; // Handy shortcut to climb up the tree 🌳
+
     private FileExplorerWindow? _window;
     private TreeView? _tree;
     private ListBox? _list;
@@ -83,6 +85,9 @@ public class FileExplorerPlugin : IPlugin, IDisposable
         _items.Clear();
         try
         {
+            if (Directory.GetParent(_currentPath) != null)
+                _items.Add(ParentEntry);
+
             foreach (var dir in Directory.GetDirectories(_currentPath))
                 _items.Add(Path.GetFileName(dir) + Path.DirectorySeparatorChar);
             foreach (var file in Directory.GetFiles(_currentPath))
@@ -97,6 +102,17 @@ public class FileExplorerPlugin : IPlugin, IDisposable
     private void OpenSelected()
     {
         if (_list?.SelectedItem is not string item) return;
+        if (item == ParentEntry)
+        {
+            var parent = Directory.GetParent(_currentPath);
+            if (parent != null)
+            {
+                _currentPath = parent.FullName;
+                RefreshList();
+            }
+            return;
+        }
+
         var path = Path.Combine(_currentPath, item.TrimEnd(Path.DirectorySeparatorChar));
         if (Directory.Exists(path))
         {
@@ -122,7 +138,7 @@ public class FileExplorerPlugin : IPlugin, IDisposable
 
     private async void RenameSelected()
     {
-        if (_list?.SelectedItem is not string item) return;
+        if (_list?.SelectedItem is not string item || item == ParentEntry) return;
         var path = Path.Combine(_currentPath, item.TrimEnd(Path.DirectorySeparatorChar));
         if (!File.Exists(path) && !Directory.Exists(path)) return;
 
@@ -144,7 +160,7 @@ public class FileExplorerPlugin : IPlugin, IDisposable
 
     private void DeleteSelected()
     {
-        if (_list?.SelectedItem is not string item) return;
+        if (_list?.SelectedItem is not string item || item == ParentEntry) return;
         var path = Path.Combine(_currentPath, item.TrimEnd(Path.DirectorySeparatorChar));
         try
         {
@@ -160,7 +176,7 @@ public class FileExplorerPlugin : IPlugin, IDisposable
 
     private void OpenInEditor()
     {
-        if (_list?.SelectedItem is not string item) return;
+        if (_list?.SelectedItem is not string item || item == ParentEntry) return;
         var path = Path.Combine(_currentPath, item);
         if (File.Exists(path))
         {
@@ -170,7 +186,7 @@ public class FileExplorerPlugin : IPlugin, IDisposable
 
     private void EncryptSelected()
     {
-        if (_list?.SelectedItem is not string item) return;
+        if (_list?.SelectedItem is not string item || item == ParentEntry) return;
         var path = Path.Combine(_currentPath, item);
         if (File.Exists(path))
         {
@@ -180,12 +196,19 @@ public class FileExplorerPlugin : IPlugin, IDisposable
 
     private void DecryptSelected()
     {
-        if (_list?.SelectedItem is not string item) return;
+        if (_list?.SelectedItem is not string item || item == ParentEntry) return;
         var path = Path.Combine(_currentPath, item);
         if (File.Exists(path))
         {
             PluginBus.Publish("encryption:decryptFile", path);
         }
+    }
+
+    private void CopySelectedPath()
+    {
+        if (_list?.SelectedItem is not string item || item == ParentEntry) return;
+        var path = Path.Combine(_currentPath, item.TrimEnd(Path.DirectorySeparatorChar));
+        _window?.Clipboard?.SetTextAsync(path); // Fire and forget 📋
     }
 
     private async Task<string?> PromptAsync(string title, string initial)
@@ -230,6 +253,7 @@ public class FileExplorerPlugin : IPlugin, IDisposable
                 new MenuItem { Header = "Rename", Command = ReactiveCommand.Create(RenameSelected) },
                 new MenuItem { Header = "Delete", Command = ReactiveCommand.Create(DeleteSelected) },
                 new MenuItem { Header = "Open in Code Editor", Command = ReactiveCommand.Create(OpenInEditor) },
+                new MenuItem { Header = "Copy Path", Command = ReactiveCommand.Create(CopySelectedPath) },
                 new MenuItem { Header = "Encrypt File", Command = ReactiveCommand.Create(EncryptSelected) },
                 new MenuItem { Header = "Decrypt File", Command = ReactiveCommand.Create(DecryptSelected) }
             }
