@@ -49,7 +49,11 @@ public class AppSettings
     public Dictionary<string, string> Hotkeys { get; set; } = new()
     {
         { "WidgetHost", "Ctrl+Alt+W" },
-        { "Terminal", "Ctrl+Alt+T" }
+        { "Terminal", "Ctrl+Alt+T" },
+        { "FileExplorer", "Ctrl+Alt+E" },
+        { "TextEditor", "Ctrl+Alt+N" },
+        { "QuickLauncher", "Ctrl+Alt+Q" }
+
     };
     public double WeatherLatitude { get; set; } = 35;
     public double WeatherLongitude { get; set; } = 139;

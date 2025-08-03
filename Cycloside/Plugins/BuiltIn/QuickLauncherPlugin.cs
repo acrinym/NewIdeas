@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia;
+using Avalonia.Media;
 using Cycloside;
 using Cycloside.Services;
 using System;
@@ -38,13 +39,25 @@ public class QuickLauncherPlugin : IPlugin
         foreach (var plugin in _manager.Plugins.Where(p => p != this))
         {
             var button = new Button { Content = plugin.Name, Margin = new Thickness(0, 0, 4, 0) };
+
+            void UpdateState()
+            {
+                button.Background = _manager.IsEnabled(plugin)
+                    ? Brushes.LimeGreen
+                    : Brushes.Gray;
+            }
+
+            UpdateState();
+
             button.Click += (_, _) =>
             {
                 if (_manager.IsEnabled(plugin))
                     _manager.DisablePlugin(plugin);
                 else
                     _manager.EnablePlugin(plugin);
+                UpdateState();
             };
+
             panel.Children.Add(button);
         }
         _window.Show();
