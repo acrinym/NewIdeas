@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia;
+using Cycloside;
 using Cycloside.Services;
 using System;
 using System.Linq;
@@ -28,6 +29,12 @@ public class QuickLauncherPlugin : IPlugin
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QuickLauncherPlugin));
 
         var panel = _window.FindControl<StackPanel>("ButtonsPanel");
+        if (panel is null)
+        {
+            Logger.Log("QuickLauncher: ButtonsPanel not found.");
+            return;
+        }
+
         foreach (var plugin in _manager.Plugins.Where(p => p != this))
         {
             var button = new Button { Content = plugin.Name, Margin = new Thickness(0, 0, 4, 0) };
