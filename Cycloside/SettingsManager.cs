@@ -53,6 +53,7 @@ public class AppSettings
         { "FileExplorer", "Ctrl+Alt+E" },
         { "TextEditor", "Ctrl+Alt+N" },
         { "QuickLauncher", "Ctrl+Alt+Q" }
+
     };
     public double WeatherLatitude { get; set; } = 35;
     public double WeatherLongitude { get; set; } = 139;
