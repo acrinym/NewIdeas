@@ -83,6 +83,7 @@ the application is unfocused. Press **Ctrl+Alt+W** to summon the
 widget host, **Ctrl+Alt+T** to pop open a terminal, **Ctrl+Alt+E**
 to bring up the file explorer, **Ctrl+Alt+N** for a fresh text editor,
 or **Ctrl+Alt+Q** to toggle the Quick Launcher. Profiles and other
+
 features can be wired up to custom hotkeys.
 Use **Settings → Hotkey Settings** to remap shortcuts from the GUI.
 The helper source lives in `Hotkeys/HotkeyMonitor.swift` and should be built as
