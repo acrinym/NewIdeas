@@ -134,7 +134,8 @@ public class TerminalPlugin : IPlugin
                 var run = new Run(segment);
                 if (color.HasValue)
                     run.Foreground = new SolidColorBrush(color.Value);
-                block.Inlines.Add(run);
+                // Safeguard in case Inlines collection is unexpectedly null
+                block.Inlines?.Add(run);
             }
             _outputPanel.Children.Add(block);
         }

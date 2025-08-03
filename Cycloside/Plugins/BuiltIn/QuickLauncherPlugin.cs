@@ -1,5 +1,7 @@
 using Avalonia.Controls;
 using Avalonia;
+using Avalonia.Media;
+using Cycloside;
 using Cycloside.Services;
 using System;
 using System.Linq;
@@ -28,16 +30,34 @@ public class QuickLauncherPlugin : IPlugin
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QuickLauncherPlugin));
 
         var panel = _window.FindControl<StackPanel>("ButtonsPanel");
+        if (panel is null)
+        {
+            Logger.Log("QuickLauncher: ButtonsPanel not found.");
+            return;
+        }
+
         foreach (var plugin in _manager.Plugins.Where(p => p != this))
         {
             var button = new Button { Content = plugin.Name, Margin = new Thickness(0, 0, 4, 0) };
+
+            void UpdateState()
+            {
+                button.Background = _manager.IsEnabled(plugin)
+                    ? Brushes.LimeGreen
+                    : Brushes.Gray;
+            }
+
+            UpdateState();
+
             button.Click += (_, _) =>
             {
                 if (_manager.IsEnabled(plugin))
                     _manager.DisablePlugin(plugin);
                 else
                     _manager.EnablePlugin(plugin);
+                UpdateState();
             };
+
             panel.Children.Add(button);
         }
         _window.Show();
