@@ -80,7 +80,8 @@ curl -X POST -H "X-Api-Token: <token>" http://localhost:4123/trigger -d "my:even
 Cycloside registers system-wide shortcuts using Avalonia's hotkey framework.
 On macOS a small Swift helper hooks into `NSEvent` so hotkeys fire even when
 the application is unfocused. Press **Ctrl+Alt+W** at any time to summon the
-widget host. Profiles and other features can be wired up to custom hotkeys.
+widget host or **Ctrl+Alt+T** to pop open a terminal. Profiles and other
+features can be wired up to custom hotkeys.
 Use **Settings → Hotkey Settings** to remap shortcuts from the GUI.
 The helper source lives in `Hotkeys/HotkeyMonitor.swift` and should be built as
 `libHotkeyMonitor.dylib` placed next to the application binary.
