@@ -79,8 +79,10 @@ public class EncryptionPlugin : IPlugin
         if (_inputBox == null || _keyBox == null || _outputBox == null) return;
         try
         {
-            var data = Encoding.UTF8.GetBytes(_inputBox.Text);
-            var result = EncryptBytes(data, _keyBox.Text, SelectedAlgorithm());
+            var text = _inputBox.Text ?? string.Empty;
+            var key = _keyBox.Text ?? string.Empty;
+            var data = Encoding.UTF8.GetBytes(text);
+            var result = await Task.Run(() => EncryptBytes(data, key, SelectedAlgorithm()));
             _outputBox.Text = Convert.ToBase64String(result);
         }
         catch (Exception ex)
@@ -94,8 +96,10 @@ public class EncryptionPlugin : IPlugin
         if (_inputBox == null || _keyBox == null || _outputBox == null) return;
         try
         {
-            var data = Convert.FromBase64String(_inputBox.Text);
-            var result = DecryptBytes(data, _keyBox.Text, SelectedAlgorithm());
+            var text = _inputBox.Text ?? string.Empty;
+            var key = _keyBox.Text ?? string.Empty;
+            var data = Convert.FromBase64String(text);
+            var result = await Task.Run(() => DecryptBytes(data, key, SelectedAlgorithm()));
             _outputBox.Text = Encoding.UTF8.GetString(result);
         }
         catch (Exception ex)
@@ -117,8 +121,9 @@ public class EncryptionPlugin : IPlugin
         if (file?.TryGetLocalPath() is not { } dest) return;
         try
         {
+            var key = _keyBox.Text ?? string.Empty;
             var data = await File.ReadAllBytesAsync(path);
-            var result = EncryptBytes(data, _keyBox.Text, SelectedAlgorithm());
+            var result = EncryptBytes(data, key, SelectedAlgorithm());
             await File.WriteAllBytesAsync(dest, result);
         }
         catch (Exception ex)
@@ -140,8 +145,9 @@ public class EncryptionPlugin : IPlugin
         if (file?.TryGetLocalPath() is not { } dest) return;
         try
         {
+            var key = _keyBox.Text ?? string.Empty;
             var data = await File.ReadAllBytesAsync(path);
-            var result = DecryptBytes(data, _keyBox.Text, SelectedAlgorithm());
+            var result = DecryptBytes(data, key, SelectedAlgorithm());
             await File.WriteAllBytesAsync(dest, result);
         }
         catch (Exception ex)

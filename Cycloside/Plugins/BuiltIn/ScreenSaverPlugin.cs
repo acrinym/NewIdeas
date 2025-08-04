@@ -11,6 +11,7 @@ using Avalonia.Interactivity;
 using Cycloside.Services;
 using SharpHook;
 using Microsoft.Win32;
+using System.Runtime.Versioning;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -79,6 +80,7 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
+        [SupportedOSPlatform("windows")]
         private void OnPowerModeChanged(object? sender, PowerModeChangedEventArgs e)
         {
             switch (e.Mode)
