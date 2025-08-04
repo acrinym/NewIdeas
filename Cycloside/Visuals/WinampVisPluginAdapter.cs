@@ -58,6 +58,8 @@ public class WinampVisPluginAdapter
         _module.hwndParent = IntPtr.Zero;
         _module.sRate = 44100;
         _module.nCh = 2;
+        _module.spectrumNch = 2;
+        _module.waveformNch = 2;
         _module.spectrumData = new byte[1152];
         _module.waveformData = new byte[1152];
         return true;
