@@ -28,6 +28,12 @@ class Program
         {
             Logger.Log($"Unobserved: {e.Exception}");
         };
+        // Prevent crash when no GUI environment is present (e.g. CI or headless servers)
+        if (OperatingSystem.IsLinux() && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")))
+        {
+            Console.Error.WriteLine("X11 display not found. Exiting...");
+            return; // gracefully bail out
+        }
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
