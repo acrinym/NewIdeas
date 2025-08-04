@@ -32,7 +32,7 @@ namespace Cycloside.Plugins.BuiltIn
         
         public string Name => "ScreenSaver Host";
         public string Description => "Runs full-screen screensavers after a period of inactivity.";
-        public Version Version => new(1, 4, 0); // Version bump for stability improvements
+        public Version Version => new(1, 4, 1); // Version bump for stability improvements
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => true;
 
@@ -132,6 +132,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _window = new ScreenSaverWindow(_activeSaver);
                 _window.Closed += (s, e) => _window = null;
                 _window.Show();
+                _window.Activate();
             }
             catch (Exception ex)
             {
@@ -199,8 +200,9 @@ namespace Cycloside.Plugins.BuiltIn
         public ScreenSaverWindow(ScreenSaverType type)
         {
             SystemDecorations = SystemDecorations.None;
-            WindowState = WindowState.Maximized;
+            WindowState = WindowState.FullScreen;
             Topmost = true;
+            ShowInTaskbar = false;
             Background = Brushes.Black;
             Cursor = new Cursor(StandardCursorType.None);
             Content = new ScreenSaverControl(type);
