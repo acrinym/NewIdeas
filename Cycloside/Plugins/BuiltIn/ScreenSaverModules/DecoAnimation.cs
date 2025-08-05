@@ -9,6 +9,7 @@ using Avalonia.Media;
 
 namespace Cycloside.Plugins.BuiltIn.ScreenSaverModules
 {
+    internal class DecoAnimation : IScreenSaverModule
     internal class DecoAnimation : IScreenSaverAnimation
     {
         private readonly Random _random = new();
@@ -21,6 +22,9 @@ namespace Cycloside.Plugins.BuiltIn.ScreenSaverModules
             Brushes.White,
             Brushes.Black
         };
+
+        public string Name => "Deco";
+
 
         public void Update()
         {
