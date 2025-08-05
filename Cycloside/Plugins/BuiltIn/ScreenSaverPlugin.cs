@@ -12,6 +12,7 @@ using Cycloside.Services;
 using SharpHook;
 using Microsoft.Win32;
 using System.Runtime.Versioning;
+using Cycloside.Plugins.BuiltIn.ScreenSaverModules;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -193,7 +194,7 @@ namespace Cycloside.Plugins.BuiltIn
 
     #region ScreenSaver Window and Control
 
-    public enum ScreenSaverType { FlowerBox, WindowsLogo, Twist, Text, Starfield }
+    public enum ScreenSaverType { FlowerBox, WindowsLogo, Twist, Text, Starfield, Deco }
 
     internal class ScreenSaverWindow : Window
     {
@@ -230,6 +231,7 @@ namespace Cycloside.Plugins.BuiltIn
                     ScreenSaverType.Twist => new LemniscateAnimation(),
                     ScreenSaverType.Text => new TextAnimation(),
                     ScreenSaverType.Starfield => new StarFieldAnimation(),
+                    ScreenSaverType.Deco => new DecoAnimation(),
                     _ => new FlowerBoxAnimation()
                 };
 
