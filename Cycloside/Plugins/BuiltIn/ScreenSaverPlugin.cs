@@ -195,6 +195,7 @@ namespace Cycloside.Plugins.BuiltIn
 
     #region ScreenSaver Window and Control
 
+    public enum ScreenSaverType { FlowerBox, WindowsLogo, Twist, Text, Starfield, Deco }
     internal class ScreenSaverWindow : Window
     {
         public ScreenSaverWindow(IScreenSaverModule module)
@@ -225,6 +226,16 @@ namespace Cycloside.Plugins.BuiltIn
             try
             {
                 _module = module;
+                _animation = type switch
+                {
+                    ScreenSaverType.WindowsLogo => new WindowsLogoAnimation(),
+                    ScreenSaverType.Twist => new LemniscateAnimation(),
+                    ScreenSaverType.Text => new TextAnimation(),
+                    ScreenSaverType.Starfield => new StarFieldAnimation(),
+                    ScreenSaverType.Deco => new DecoAnimation(),
+                    _ => new FlowerBoxAnimation()
+                };
+
                 _renderTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Normal, OnTick);
                 _renderTimer.Start();
             }
