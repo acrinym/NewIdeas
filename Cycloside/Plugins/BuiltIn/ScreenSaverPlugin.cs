@@ -193,7 +193,7 @@ namespace Cycloside.Plugins.BuiltIn
 
     #region ScreenSaver Window and Control
 
-    public enum ScreenSaverType { FlowerBox, WindowsLogo, Twist, Text }
+    public enum ScreenSaverType { FlowerBox, WindowsLogo, Twist, Text, Starfield }
 
     internal class ScreenSaverWindow : Window
     {
@@ -229,6 +229,7 @@ namespace Cycloside.Plugins.BuiltIn
                     ScreenSaverType.WindowsLogo => new WindowsLogoAnimation(),
                     ScreenSaverType.Twist => new LemniscateAnimation(),
                     ScreenSaverType.Text => new TextAnimation(),
+                    ScreenSaverType.Starfield => new StarFieldAnimation(),
                     _ => new FlowerBoxAnimation()
                 };
 
@@ -628,6 +629,65 @@ namespace Cycloside.Plugins.BuiltIn
 
                 x += spacing;
             }
+        }
+    }
+
+    /// <summary>
+    /// Simple starfield animation inspired by classic screensavers.
+    /// </summary>
+    internal class StarFieldAnimation : IScreenSaverAnimation
+    {
+        private class Star
+        {
+            public double X;
+            public double Y;
+            public double Z;
+        }
+
+        private readonly List<Star> _stars = new();
+        private readonly Random _random = new();
+        private const int StarCount = 200;
+
+        public void Update()
+        {
+            for (int i = 0; i < _stars.Count; i++)
+            {
+                var star = _stars[i];
+                star.Z -= 0.02;
+                if (star.Z <= 0)
+                {
+                    ResetStar(star);
+                }
+            }
+        }
+
+        public void Render(DrawingContext context, Rect bounds)
+        {
+            if (_stars.Count == 0)
+            {
+                for (int i = 0; i < StarCount; i++)
+                {
+                    var star = new Star();
+                    ResetStar(star);
+                    _stars.Add(star);
+                }
+            }
+
+            foreach (var star in _stars)
+            {
+                double x = bounds.Width / 2 + (star.X / star.Z) * bounds.Width / 2;
+                double y = bounds.Height / 2 + (star.Y / star.Z) * bounds.Height / 2;
+                byte shade = (byte)(255 * (1 - star.Z));
+                var brush = new SolidColorBrush(Color.FromArgb(255, shade, shade, shade));
+                context.FillRectangle(brush, new Rect(x, y, 2, 2));
+            }
+        }
+
+        private void ResetStar(Star star)
+        {
+            star.X = _random.NextDouble() * 2 - 1;
+            star.Y = _random.NextDouble() * 2 - 1;
+            star.Z = _random.NextDouble();
         }
     }
 
