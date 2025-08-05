@@ -12,6 +12,7 @@ using Cycloside.Services;
 using SharpHook;
 using Microsoft.Win32;
 using System.Runtime.Versioning;
+using Cycloside.Plugins.BuiltIn.ScreenSaverModules;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -28,7 +29,7 @@ namespace Cycloside.Plugins.BuiltIn
         private bool _isSystemSleeping;
 
         // Configuration (will be moved to settings later)
-        private ScreenSaverType _activeSaver = ScreenSaverType.Text;
+        private string _activeSaver = ScreenSaverModuleRegistry.ModuleNames.FirstOrDefault() ?? string.Empty;
         
         public string Name => "ScreenSaver Host";
         public string Description => "Runs full-screen screensavers after a period of inactivity.";
@@ -126,10 +127,11 @@ namespace Cycloside.Plugins.BuiltIn
         private void ShowSaver()
         {
             if (_isDisposed || _window != null) return;
-            
+
             try
             {
-                _window = new ScreenSaverWindow(_activeSaver);
+                var module = ScreenSaverModuleRegistry.Create(_activeSaver);
+                _window = new ScreenSaverWindow(module);
                 _window.Closed += (s, e) => _window = null;
                 _window.Show();
                 _window.Activate();
@@ -193,11 +195,9 @@ namespace Cycloside.Plugins.BuiltIn
 
     #region ScreenSaver Window and Control
 
-    public enum ScreenSaverType { FlowerBox, WindowsLogo, Twist, Text, Starfield }
-
     internal class ScreenSaverWindow : Window
     {
-        public ScreenSaverWindow(ScreenSaverType type)
+        public ScreenSaverWindow(IScreenSaverModule module)
         {
             SystemDecorations = SystemDecorations.None;
             WindowState = WindowState.FullScreen;
@@ -205,7 +205,7 @@ namespace Cycloside.Plugins.BuiltIn
             ShowInTaskbar = false;
             Background = Brushes.Black;
             Cursor = new Cursor(StandardCursorType.None);
-            Content = new ScreenSaverControl(type);
+            Content = new ScreenSaverControl(module);
 
             PointerPressed += (s, e) => Close();
             KeyDown += (s, e) => Close();
@@ -215,24 +215,16 @@ namespace Cycloside.Plugins.BuiltIn
     internal class ScreenSaverControl : Control
     {
         private readonly DispatcherTimer _renderTimer;
-        private readonly IScreenSaverAnimation _animation;
+        private readonly IScreenSaverModule _module;
         private bool _isDisposed;
         private int _errorCount;
         private const int MaxErrors = 3;
 
-        public ScreenSaverControl(ScreenSaverType type)
+        public ScreenSaverControl(IScreenSaverModule module)
         {
             try
             {
-                _animation = type switch
-                {
-                    ScreenSaverType.WindowsLogo => new WindowsLogoAnimation(),
-                    ScreenSaverType.Twist => new LemniscateAnimation(),
-                    ScreenSaverType.Text => new TextAnimation(),
-                    ScreenSaverType.Starfield => new StarFieldAnimation(),
-                    _ => new FlowerBoxAnimation()
-                };
-
+                _module = module;
                 _renderTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Normal, OnTick);
                 _renderTimer.Start();
             }
@@ -249,7 +241,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             try
             {
-                _animation.Update();
+                _module.Update();
                 InvalidateVisual();
                 _errorCount = 0; // Reset error count on successful update
             }
@@ -275,7 +267,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             try
             {
-                _animation.Render(context, Bounds);
+                _module.Render(context, Bounds);
             }
             catch (Exception ex)
             {
@@ -298,19 +290,13 @@ namespace Cycloside.Plugins.BuiltIn
             base.OnUnloaded(e);
             _isDisposed = true;
             _renderTimer.Stop();
-            (_animation as IDisposable)?.Dispose();
+            (_module as IDisposable)?.Dispose();
         }
     }
 
     #endregion
-    
-    #region Animation Interface and Core Mesh Logic
-    
-    internal interface IScreenSaverAnimation
-    {
-        void Update();
-        void Render(DrawingContext context, Rect bounds);
-    }
+
+    #region Core Mesh Logic
 
     internal class Mesh
     {
@@ -374,11 +360,13 @@ namespace Cycloside.Plugins.BuiltIn
     /// <summary>
     /// Port of the "3D FlowerBox" screensaver.
     /// </summary>
-    internal class FlowerBoxAnimation : IScreenSaverAnimation
+    internal class FlowerBoxAnimation : IScreenSaverModule
     {
         private readonly FlowerBoxGeometry _geom;
         private double _xr, _yr, _zr;
         private float _sf, _sfi;
+
+        public string Name => "FlowerBox";
 
         public FlowerBoxAnimation()
         {
@@ -418,13 +406,15 @@ namespace Cycloside.Plugins.BuiltIn
     /// <summary>
     /// Port of the "3D Flying Objects - Windows Logo" style.
     /// </summary>
-    internal class WindowsLogoAnimation : IScreenSaverAnimation
+    internal class WindowsLogoAnimation : IScreenSaverModule
     {
         private readonly Mesh _flagMesh;
         private readonly IBrush[] _materials;
         private double _myrot = 23.0;
         private double _myrotInc = 0.5;
         private float _wavePhase = 0.0f;
+
+        public string Name => "WindowsLogo";
 
         public WindowsLogoAnimation()
         {
@@ -488,11 +478,13 @@ namespace Cycloside.Plugins.BuiltIn
     /// <summary>
     /// Port of the "3D Flying Objects - Twist" (Lemniscate) style.
     /// </summary>
-    internal class LemniscateAnimation : IScreenSaverAnimation
+    internal class LemniscateAnimation : IScreenSaverModule
     {
         private readonly Mesh _mesh;
         private double _mxrot, _myrot, _zrot;
         private double _myrotInc = 0.3, _zrotInc = 0.03;
+
+        public string Name => "Twist";
 
         public LemniscateAnimation()
         {
@@ -551,12 +543,14 @@ namespace Cycloside.Plugins.BuiltIn
     /// <summary>
     /// Port of the "3D Text" screensaver from sstext3d.c.
     /// </summary>
-    internal class TextAnimation : IScreenSaverAnimation
+    internal class TextAnimation : IScreenSaverModule
     {
         private readonly Mesh _textMesh;
         private readonly IBrush[] _materials;
         private double _rotX, _rotY, _rotZ;
         private double _rotIncY = 0.5;
+
+        public string Name => "Text";
 
         public TextAnimation()
         {
@@ -635,7 +629,7 @@ namespace Cycloside.Plugins.BuiltIn
     /// <summary>
     /// Simple starfield animation inspired by classic screensavers.
     /// </summary>
-    internal class StarFieldAnimation : IScreenSaverAnimation
+    internal class StarFieldAnimation : IScreenSaverModule
     {
         private class Star
         {
@@ -647,6 +641,7 @@ namespace Cycloside.Plugins.BuiltIn
         private readonly List<Star> _stars = new();
         private readonly Random _random = new();
         private const int StarCount = 200;
+        public string Name => "Starfield";
 
         public void Update()
         {
