@@ -39,6 +39,7 @@ namespace Cycloside.Plugins.BuiltIn
             _outputBox = _window.FindControl<TextBox>("OutputBox");
             _languageBox!.SelectedIndex = 0; // default C#
             _languageBox.SelectionChanged += (_, _) => UpdateHighlighting();
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(CodeEditorPlugin));
             _window.Show();
             UpdateHighlighting();

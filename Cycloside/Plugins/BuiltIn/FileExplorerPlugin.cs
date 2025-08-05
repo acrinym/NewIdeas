@@ -49,6 +49,7 @@ public class FileExplorerPlugin : IPlugin, IDisposable
             _tree.DoubleTapped += (_, __) => UpdatePathFromTree();
             PopulateTree();
         }
+        ThemeManager.ApplyForPlugin(_window, this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(FileExplorerPlugin));
         _window.Show();
         RefreshList();

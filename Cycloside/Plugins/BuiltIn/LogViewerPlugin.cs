@@ -54,7 +54,7 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             _window = new LogViewerWindow();
-            
+            ThemeManager.ApplyForPlugin(_window, this);
             var openButton = new Button { Content = "Open Log File" };
             openButton.Click += async (s, e) => await SelectAndLoadFileAsync();
 

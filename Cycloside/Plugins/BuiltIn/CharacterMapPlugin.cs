@@ -45,6 +45,7 @@ namespace Cycloside.Plugins.BuiltIn
             LoadCharacters();
 
             _window = new CharacterMapWindow { DataContext = this };
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(CharacterMapPlugin));
             _window.Show();
         }

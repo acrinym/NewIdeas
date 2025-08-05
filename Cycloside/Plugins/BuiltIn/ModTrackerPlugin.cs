@@ -100,6 +100,7 @@ namespace Cycloside.Plugins.BuiltIn
             }
             
             _window = BuildTrackerWindow();
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
             _window.Closed += (s, e) => Stop();
             _window.Show();

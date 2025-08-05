@@ -156,6 +156,7 @@ namespace Cycloside.Plugins.BuiltIn
             }
 
             _window = new Views.MP3PlayerWindow { DataContext = this };
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
             _window.Closed += (_, _) => _window = null;
             _window.Show();

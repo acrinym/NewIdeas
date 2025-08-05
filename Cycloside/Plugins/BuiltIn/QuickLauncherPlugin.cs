@@ -27,6 +27,7 @@ public class QuickLauncherPlugin : IPlugin
     public void Start()
     {
         _window = new Views.QuickLauncherWindow();
+        ThemeManager.ApplyForPlugin(_window, this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QuickLauncherPlugin));
 
         var panel = _window.FindControl<StackPanel>("ButtonsPanel");

@@ -40,6 +40,7 @@ public class TerminalPlugin : IPlugin
         {
             _inputBox.KeyDown += OnInputKeyDown;
         }
+        ThemeManager.ApplyForPlugin(_window, this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TerminalPlugin));
         _window.Show();
     }

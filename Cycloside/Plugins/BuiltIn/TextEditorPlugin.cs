@@ -49,6 +49,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 DataContext = this
             };
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TextEditorPlugin));
             _window.Show();
 

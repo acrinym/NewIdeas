@@ -59,10 +59,7 @@ namespace Cycloside.Plugins.BuiltIn
             };
 
             ThemeManager.ApplyForPlugin(_window, this);
-            if (SettingsManager.Settings.PluginSkins.TryGetValue("Jezzball", out var skin))
-            {
-                SkinManager.ApplySkinTo(_window, skin);
-            }
+            SettingsManager.Settings.PluginSkins.TryGetValue("Jezzball", out var skin);
             BuildMenu(themeName, skin);
             _window.KeyDown += OnWindowKeyDown;
             _window.Show();

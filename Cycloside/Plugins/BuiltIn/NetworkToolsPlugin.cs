@@ -49,6 +49,7 @@ public class NetworkToolsPlugin : IPlugin
         _window.FindControl<Button>("MacButton")?.AddHandler(Button.ClickEvent, MacClicked);
         _window.FindControl<Button>("ExportButton")?.AddHandler(Button.ClickEvent, ExportClicked);
 
+        ThemeManager.ApplyForPlugin(_window, this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(NetworkToolsPlugin));
         _window.Show();
     }
