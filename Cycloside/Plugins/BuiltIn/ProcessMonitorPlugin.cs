@@ -38,6 +38,7 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             _window = new ProcessMonitorWindow { DataContext = this };
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ProcessMonitorPlugin));
             _window.Show();
 

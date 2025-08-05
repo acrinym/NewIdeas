@@ -106,6 +106,11 @@ namespace Cycloside.Services
 
             ApplyComponentTheme(window, "Plugins");
             ApplyComponentTheme(window, plugin.Name);
+
+            if (SettingsManager.Settings.PluginSkins.TryGetValue(plugin.Name, out var skin) && !string.IsNullOrEmpty(skin))
+            {
+                SkinManager.ApplySkinTo(window, skin);
+            }
         }
 
         /// <summary>

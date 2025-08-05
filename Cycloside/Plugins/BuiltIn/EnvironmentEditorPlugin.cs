@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Cycloside.Services;
 using ReactiveUI;
 using System;
 using System.Collections;
@@ -67,6 +68,7 @@ namespace Cycloside.Plugins.BuiltIn
             }
 
             LoadVariables();
+            ThemeManager.ApplyForPlugin(_window, this);
             _window.Show();
         }
 

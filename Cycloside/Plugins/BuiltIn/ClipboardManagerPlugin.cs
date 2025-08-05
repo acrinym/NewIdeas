@@ -52,6 +52,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             // The ViewModel's job is to create its View and set the DataContext.
             _window = new ClipboardManagerWindow { DataContext = this };
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(ClipboardManagerPlugin));
             _window.Show();
 

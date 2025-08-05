@@ -34,6 +34,7 @@ namespace Cycloside.Plugins.BuiltIn
             clearLogButton?.AddHandler(Button.ClickEvent, (s, e) => { if (_log != null) _log.Text = string.Empty; });
             saveLogButton?.AddHandler(Button.ClickEvent, async (s, e) => await SaveLogAsync());
 
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(FileWatcherPlugin));
             _window.Show();
         }

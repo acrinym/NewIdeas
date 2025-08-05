@@ -35,6 +35,7 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             _window = new DateTimeOverlayWindow { DataContext = this };
+            ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DateTimeOverlayPlugin));
             
             // Set up the timer

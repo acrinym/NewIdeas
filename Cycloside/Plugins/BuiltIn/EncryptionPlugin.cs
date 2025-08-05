@@ -51,6 +51,7 @@ public class EncryptionPlugin : IPlugin
         };
         PluginBus.Subscribe("encryption:encryptFile", _encryptFileHandler);
         PluginBus.Subscribe("encryption:decryptFile", _decryptFileHandler);
+        ThemeManager.ApplyForPlugin(_window, this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(EncryptionPlugin));
         _window.Show();
     }

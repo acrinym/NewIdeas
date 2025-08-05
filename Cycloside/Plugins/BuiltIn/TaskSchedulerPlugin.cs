@@ -28,6 +28,7 @@ public class TaskSchedulerPlugin : IPlugin
             if (!string.IsNullOrWhiteSpace(_cmdBox?.Text) && !string.IsNullOrWhiteSpace(_timeBox?.Text))
                 AddTask(_cmdBox!.Text, _timeBox!.Text);
         });
+        ThemeManager.ApplyForPlugin(_window, this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(TaskSchedulerPlugin));
         _window.Show();
     }

@@ -36,6 +36,7 @@ public class NotificationCenterPlugin : IPlugin, IDisposable, IWorkspaceItem
             return;
         }
         _window = new Views.NotificationCenterWindow { DataContext = this };
+        ThemeManager.ApplyForPlugin(_window, this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
         _window.Closed += (_, _) => _window = null;
         _window.Show();

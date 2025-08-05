@@ -96,6 +96,7 @@ public class MacroPlugin : IPlugin
         _window.FindControl<AvaloniaButton>("ReloadButton")?.AddHandler(AvaloniaButton.ClickEvent, (_, __) => { MacroManager.Reload(); RefreshList(); });
         _window.FindControl<AvaloniaButton>("DeleteButton")?.AddHandler(AvaloniaButton.ClickEvent, (_, __) => DeleteSelected());
 
+        ThemeManager.ApplyForPlugin(_window, this);
         WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(MacroPlugin));
         _window.Show();
     }
