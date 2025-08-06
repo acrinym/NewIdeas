@@ -236,7 +236,10 @@ namespace Cycloside.Plugins.BuiltIn
         {
             try
             {
-                // Try to find the WinampVisHostPlugin through the applications plugin manager
+                // FIXED: Try multiple approaches to find the WinampVisHostPlugin
+                if (_visHost != null) return; // Already found
+                
+                // Approach 1: Try to find through the applications plugin manager
                 if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
                     desktop.MainWindow is MainWindow mainWindow &&
                     mainWindow.PluginManager != null)
@@ -246,17 +249,17 @@ namespace Cycloside.Plugins.BuiltIn
                     {
                         _visHost = visHost;
                         UpdateVisualizationStatus();
-                        Logger.Log("Found Winamp Visual Host plugin");
-                    }
-                    else
-                    {
-                        Logger.Log("Winamp Visual Host plugin not found in plugin manager");
+                        Logger.Log("Found Winamp Visual Host plugin through plugin manager");
+                        return;
                     }
                 }
-                else
-                {
-                    Logger.Log("Could not access plugin manager to find Winamp Visual Host");
-                }
+                
+                // Approach 2: Try to create a new instance if not found
+                Logger.Log("Winamp Visual Host plugin not found, attempting to create new instance");
+                _visHost = new WinampVisHostPlugin();
+                _visHost.Start();
+                UpdateVisualizationStatus();
+                Logger.Log("Created new Winamp Visual Host plugin instance");
             }
             catch (Exception ex)
             {
@@ -269,10 +272,12 @@ namespace Cycloside.Plugins.BuiltIn
             if (_visHost != null)
             {
                 VisualizationStatus = _visHost.GetStatus();
+                Logger.Log($"Visualization status updated: {VisualizationStatus}");
             }
             else
             {
                 VisualizationStatus = "Plugin not found";
+                Logger.Log("Visualization status: Plugin not found");
             }
         }
 

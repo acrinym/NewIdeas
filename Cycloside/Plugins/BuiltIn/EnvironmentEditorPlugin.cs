@@ -80,18 +80,60 @@ namespace Cycloside.Plugins.BuiltIn
             try
             {
                 var variables = Environment.GetEnvironmentVariables(target);
+                var variableList = new List<EnvItem>();
+                
                 foreach (DictionaryEntry de in variables)
                 {
                     if (de.Key != null)
                     {
-                        _items.Add(new EnvItem { Key = de.Key.ToString()!, Value = de.Value?.ToString() ?? string.Empty });
+                        var key = de.Key.ToString()!;
+                        var value = de.Value?.ToString() ?? string.Empty;
+                        
+                        // FIXED: Add some common environment variables that should always be visible
+                        if (target == EnvironmentVariableTarget.Process)
+                        {
+                            // Add some system variables that might not be in the dictionary
+                            if (!variableList.Any(v => v.Key == "PATH"))
+                            {
+                                variableList.Add(new EnvItem { Key = "PATH", Value = Environment.GetEnvironmentVariable("PATH") ?? "" });
+                            }
+                            if (!variableList.Any(v => v.Key == "TEMP"))
+                            {
+                                variableList.Add(new EnvItem { Key = "TEMP", Value = Environment.GetEnvironmentVariable("TEMP") ?? "" });
+                            }
+                            if (!variableList.Any(v => v.Key == "TMP"))
+                            {
+                                variableList.Add(new EnvItem { Key = "TMP", Value = Environment.GetEnvironmentVariable("TMP") ?? "" });
+                            }
+                            if (!variableList.Any(v => v.Key == "USERNAME"))
+                            {
+                                variableList.Add(new EnvItem { Key = "USERNAME", Value = Environment.GetEnvironmentVariable("USERNAME") ?? "" });
+                            }
+                            if (!variableList.Any(v => v.Key == "COMPUTERNAME"))
+                            {
+                                variableList.Add(new EnvItem { Key = "COMPUTERNAME", Value = Environment.GetEnvironmentVariable("COMPUTERNAME") ?? "" });
+                            }
+                        }
+                        
+                        variableList.Add(new EnvItem { Key = key, Value = value });
                     }
                 }
+                
+                // Sort variables alphabetically for better organization
+                variableList = variableList.OrderBy(v => v.Key).ToList();
+                
+                foreach (var item in variableList)
+                {
+                    _items.Add(item);
+                }
+                
+                Logger.Log($"Environment Editor: Loaded {_items.Count} variables for {target} scope");
             }
             catch (Exception ex)
             {
                 // Often a SecurityException if trying to read Machine scope without rights
                 _items.Add(new EnvItem { Key = "ERROR", Value = $"Could not load variables for this scope: {ex.Message}" });
+                Logger.Log($"Environment Editor: Failed to load variables for {target} scope: {ex.Message}");
             }
         }
         

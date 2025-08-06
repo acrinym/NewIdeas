@@ -69,8 +69,22 @@ namespace Cycloside.Plugins.BuiltIn
             if (result.FirstOrDefault()?.TryGetLocalPath() is { } path && File.Exists(path))
             {
                 _currentFile = path;
-                _editor!.Text = await File.ReadAllTextAsync(path);
-                DetectLanguageFromExtension(path);
+                try
+                {
+                    var content = await File.ReadAllTextAsync(path);
+                    if (_editor != null)
+                    {
+                        _editor.Text = content;
+                        // Force a refresh of the editor to ensure content is displayed
+                        _editor.InvalidateVisual();
+                    }
+                    DetectLanguageFromExtension(path);
+                    Logger.Log($"Code Editor: Successfully loaded file '{path}' ({content.Length} characters)");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"Code Editor: Failed to load file '{path}': {ex.Message}");
+                }
             }
         }
 
@@ -82,7 +96,15 @@ namespace Cycloside.Plugins.BuiltIn
                 await SaveFileAs();
                 return;
             }
-            await File.WriteAllTextAsync(_currentFile, _editor?.Text ?? string.Empty);
+            try
+            {
+                await File.WriteAllTextAsync(_currentFile, _editor?.Text ?? string.Empty);
+                Logger.Log($"Code Editor: Successfully saved file '{_currentFile}'");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Code Editor: Failed to save file '{_currentFile}': {ex.Message}");
+            }
         }
 
         [RelayCommand]
@@ -99,8 +121,16 @@ namespace Cycloside.Plugins.BuiltIn
             if (result?.TryGetLocalPath() is { } path)
             {
                 _currentFile = path;
-                await File.WriteAllTextAsync(path, _editor?.Text ?? string.Empty);
-                DetectLanguageFromExtension(path);
+                try
+                {
+                    await File.WriteAllTextAsync(path, _editor?.Text ?? string.Empty);
+                    DetectLanguageFromExtension(path);
+                    Logger.Log($"Code Editor: Successfully saved file as '{path}'");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"Code Editor: Failed to save file as '{path}': {ex.Message}");
+                }
             }
         }
 
@@ -110,9 +140,16 @@ namespace Cycloside.Plugins.BuiltIn
             if (_editor == null || _outputBox == null) return;
             var code = _editor.Text ?? string.Empty;
             var lang = GetSelectedLanguage();
+            
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                _outputBox.Text = "No code to run. Please enter some code first.";
+                return;
+            }
+            
             try
             {
-                _outputBox.Text = string.Empty;
+                _outputBox.Text = "Running code...\r\n";
                 switch (lang)
                 {
                     case "C#":
@@ -122,7 +159,16 @@ namespace Cycloside.Plugins.BuiltIn
                         object? csResult = null;
                         try
                         {
-                            csResult = await CSharpScript.EvaluateAsync<object?>(code, ScriptOptions.Default.WithImports("System"));
+                            // FIXED: Use proper script options and handle errors better
+                            var options = ScriptOptions.Default
+                                .WithImports("System", "System.Collections.Generic", "System.Linq")
+                                .WithEmitDebugInformation(true);
+                            csResult = await CSharpScript.EvaluateAsync<object?>(code, options);
+                        }
+                        catch (CompilationErrorException ex)
+                        {
+                            _outputBox.Text = $"Compilation Error:\r\n{string.Join("\r\n", ex.Diagnostics)}";
+                            return;
                         }
                         finally
                         {
@@ -159,7 +205,7 @@ namespace Cycloside.Plugins.BuiltIn
             }
             catch (Exception ex)
             {
-                _outputBox.Text = $"Error: {ex.Message}";
+                _outputBox.Text = $"Error: {ex.Message}\r\n\r\nStack Trace:\r\n{ex.StackTrace}";
             }
         }
 

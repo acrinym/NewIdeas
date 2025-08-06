@@ -1900,13 +1900,16 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                     }
                 }
 
-                // Draw preview line
+                // Draw preview line - FIXED: Always show cursor/crosshair when not building a wall
                 if (_gameState.CurrentWall == null && string.IsNullOrEmpty(_gameState.Message))
                 {
                     Pen previewPen = _gameState.OriginalMode ?
                         new Pen(new SolidColorBrush(Colors.Blue), 2, DashStyle.Dash) :
                         _previewPen;
 
+                    // FIXED: Ensure cursor is always visible by using a more prominent color and thickness
+                    var cursorPen = new Pen(new SolidColorBrush(Colors.Yellow), 3, DashStyle.Dash);
+                    
                     if (previewPen.Brush is SolidColorBrush solidBrush)
                     {
                         var glowPreviewPen = new Pen(new SolidColorBrush(Color.FromArgb(
@@ -1920,24 +1923,33 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                         {
                             var top = new Point(start.X, bounds.Top);
                             var bottom = new Point(start.X, bounds.Bottom);
+                            // Draw glow first
                             context.DrawLine(glowPreviewPen, top, bottom);
+                            // Draw main preview line
                             context.DrawLine(previewPen, top, bottom);
+                            // Draw prominent cursor line
+                            context.DrawLine(cursorPen, top, bottom);
                         }
                         else
                         {
                             var left = new Point(bounds.Left, start.Y);
                             var right = new Point(bounds.Right, start.Y);
+                            // Draw glow first
                             context.DrawLine(glowPreviewPen, left, right);
+                            // Draw main preview line
                             context.DrawLine(previewPen, left, right);
+                            // Draw prominent cursor line
+                            context.DrawLine(cursorPen, left, right);
                         }
                     }
                 }
 
-                // Draw flash effect
+                // FIXED: Improved flash effect - less aggressive and more controlled
                 if (_gameState.FlashEffect)
                 {
-                    var flashOpacity = Math.Sin(_flashTimer * Math.PI * 2) * 0.5 + 0.5;
-                    var flashBrush = new SolidColorBrush(Colors.White, flashOpacity * 0.3);
+                    // Use a more controlled flash with better timing
+                    var flashOpacity = Math.Sin(_flashTimer * Math.PI * 4) * 0.3 + 0.1; // Reduced intensity and faster frequency
+                    var flashBrush = new SolidColorBrush(Colors.White, flashOpacity);
                     context.FillRectangle(flashBrush, bounds);
                 }
 

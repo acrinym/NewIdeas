@@ -391,21 +391,34 @@ NEXT i
         #region File Operations
         private async Task LoadFile(string path)
         {
-            if (_editor == null) return;
             try
             {
-                SetStatus($"Loading {Path.GetFileName(path)}...");
+                if (!File.Exists(path))
+                {
+                    SetStatus($"File not found: {path}");
+                    return;
+                }
+
+                var content = await File.ReadAllTextAsync(path);
+                if (_editor != null)
+                {
+                    _editor.Text = content;
+                    // FIXED: Force editor refresh to ensure content is displayed
+                    _editor.InvalidateVisual();
+                    _editor.Focus();
+                }
+                
                 _currentFile = path;
-                _projectPath = Path.GetDirectoryName(path);
-                _editor.Text = await File.ReadAllTextAsync(path);
                 _hasUnsavedChanges = false;
-                if (_window != null) _window.Title = $"QBasic Retro IDE - {Path.GetFileName(path)}";
-                UpdateStatus(false);
+                SetStatus($"Loaded: {Path.GetFileName(path)}");
                 UpdateProjectTree();
+                
+                Logger.Log($"QBasic IDE: Successfully loaded file '{path}' ({content.Length} characters)");
             }
             catch (Exception ex)
             {
                 SetStatus($"Error loading file: {ex.Message}");
+                Logger.Log($"QBasic IDE: Failed to load file '{path}': {ex.Message}");
             }
         }
 

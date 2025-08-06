@@ -73,15 +73,38 @@ namespace Cycloside.Plugins.BuiltIn
                     {
                         try
                         {
-                            // p.WorkingSet64 can throw if the process exits while we're querying it.
-                            return new ProcessInfo(p.ProcessName, p.WorkingSet64 / 1024 / 1024);
+                            // FIXED: Better error handling and more process information
+                            var memoryMB = p.WorkingSet64 / 1024 / 1024;
+                            var processName = !string.IsNullOrEmpty(p.ProcessName) ? p.ProcessName : "Unknown";
+                            
+                            // Try to get the main window title for better identification
+                            string? windowTitle = null;
+                            try
+                            {
+                                if (!p.HasExited && !string.IsNullOrEmpty(p.MainWindowTitle))
+                                {
+                                    windowTitle = p.MainWindowTitle;
+                                }
+                            }
+                            catch
+                            {
+                                // Ignore errors getting window title
+                            }
+                            
+                            var displayName = !string.IsNullOrEmpty(windowTitle) ? $"{processName} - {windowTitle}" : processName;
+                            
+                            return new ProcessInfo(displayName, memoryMB);
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            return new ProcessInfo(p.ProcessName, 0); // Gracefully handle access errors
+                            // Log the specific error for debugging
+                            Logger.Log($"Process Monitor: Error reading process {p.ProcessName}: {ex.Message}");
+                            return new ProcessInfo(p.ProcessName ?? "Unknown", 0);
                         }
                     })
-                    .OrderBy(p => p.Name)
+                    .Where(p => p.MemoryUsageMb > 0) // Only show processes with memory usage
+                    .OrderByDescending(p => p.MemoryUsageMb) // Sort by memory usage
+                    .Take(100) // Limit to top 100 processes
                     .ToList();
 
                 // All UI updates MUST happen on the UI thread.
@@ -95,6 +118,9 @@ namespace Cycloside.Plugins.BuiltIn
                     {
                         Processes.Add(process);
                     }
+                    
+                    // Log the update for debugging
+                    Logger.Log($"Process Monitor: Updated with {currentProcesses.Count} processes");
                 });
             });
         }

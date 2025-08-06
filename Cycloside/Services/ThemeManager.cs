@@ -46,12 +46,22 @@ namespace Cycloside.Services
         /// </summary>
         public static bool LoadGlobalTheme(string themeName)
         {
-            if (Application.Current == null) return false;
+            if (Application.Current == null) 
+            {
+                Logger.Log("ThemeManager: Application.Current is null, cannot load theme");
+                return false;
+            }
 
             var file = Path.Combine(ThemeDir, $"{themeName}.axaml");
             if (!File.Exists(file))
             {
                 Logger.Log($"Global theme '{themeName}' not found at '{file}'.");
+                // FIXED: Try to create a default theme if none exists
+                if (themeName != "MintGreen")
+                {
+                    Logger.Log("Attempting to load fallback theme 'MintGreen'");
+                    return LoadGlobalTheme("MintGreen");
+                }
                 return false;
             }
 
@@ -61,22 +71,28 @@ namespace Cycloside.Services
             if (existing != null)
             {
                 Application.Current.Styles.Remove(existing);
+                Logger.Log($"Removed existing theme: {existing.Source}");
             }
 
             try
             {
-                var newThemeStyle = new StyleInclude(new Uri("resm:Styles?assembly=Cycloside"))
+                // FIXED: Use proper URI construction for theme files
+                var themeUri = new Uri($"file:///{file.Replace('\\', '/')}");
+                var newThemeStyle = new StyleInclude(themeUri)
                 {
-                    Source = new Uri(file)
+                    Source = themeUri
                 };
                 Application.Current.Styles.Add(newThemeStyle);
                 SettingsManager.Settings.GlobalTheme = themeName;
                 SettingsManager.Save();
+                Logger.Log($"Successfully loaded theme '{themeName}' from '{file}'");
                 return true;
             }
             catch (Exception ex)
             {
                 Logger.Log($"Failed to load theme '{themeName}': {ex.Message}");
+                Logger.Log($"Theme file path: {file}");
+                Logger.Log($"Theme directory exists: {Directory.Exists(ThemeDir)}");
                 return false;
             }
         }
