@@ -1916,12 +1916,20 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                             solidBrush.Color.B)), previewPen.Thickness + 1);
 
                         var start = _mousePosition;
-                        var end = _orientation == WallOrientation.Vertical
-                            ? new Point(start.X, bounds.Height)
-                            : new Point(bounds.Width, start.Y);
-
-                        context.DrawLine(glowPreviewPen, start, end);
-                        context.DrawLine(previewPen, start, end);
+                        if (_orientation == WallOrientation.Vertical)
+                        {
+                            var top = new Point(start.X, bounds.Top);
+                            var bottom = new Point(start.X, bounds.Bottom);
+                            context.DrawLine(glowPreviewPen, top, bottom);
+                            context.DrawLine(previewPen, top, bottom);
+                        }
+                        else
+                        {
+                            var left = new Point(bounds.Left, start.Y);
+                            var right = new Point(bounds.Right, start.Y);
+                            context.DrawLine(glowPreviewPen, left, right);
+                            context.DrawLine(previewPen, left, right);
+                        }
                     }
                 }
 
