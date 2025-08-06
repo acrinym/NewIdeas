@@ -1,0 +1,14 @@
+{
+  "name": "@sdl60660/jezzball-part-5-game-state-scoring",
+  "main": "c41da36f6b610258@3797.js",
+  "version": "3797.0.0",
+  "homepage": "https://observablehq.com/@sdl60660/jezzball-part-5-game-state-scoring",
+  "author": {
+    "name": "Sam Learner",
+    "url": "https://observablehq.com/@sdl60660"
+  },
+  "type": "module",
+  "peerDependencies": {
+    "@observablehq/runtime": "4 - 5"
+  }
+}

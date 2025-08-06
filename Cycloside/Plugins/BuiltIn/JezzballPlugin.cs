@@ -817,15 +817,31 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
 
             Position += Velocity * dt;
 
-            if ((Position.X - Radius < bounds.Left && Velocity.X < 0) || (Position.X + Radius > bounds.Right && Velocity.X > 0))
+            // FIXED: Proper boundary detection like the Canvas version
+            // Check if ball hits the walls and bounce properly
+            if (Position.X - Radius <= bounds.Left && Velocity.X < 0)
             {
                 Velocity = Velocity.WithX(-Velocity.X);
+                Position = new Point(bounds.Left + Radius, Position.Y);
             }
-            if ((Position.Y - Radius < bounds.Top && Velocity.Y < 0) || (Position.Y + Radius > bounds.Bottom && Velocity.Y > 0))
+            else if (Position.X + Radius >= bounds.Right && Velocity.X > 0)
+            {
+                Velocity = Velocity.WithX(-Velocity.X);
+                Position = new Point(bounds.Right - Radius, Position.Y);
+            }
+            
+            if (Position.Y - Radius <= bounds.Top && Velocity.Y < 0)
             {
                 Velocity = Velocity.WithY(-Velocity.Y);
+                Position = new Point(Position.X, bounds.Top + Radius);
+            }
+            else if (Position.Y + Radius >= bounds.Bottom && Velocity.Y > 0)
+            {
+                Velocity = Velocity.WithY(-Velocity.Y);
+                Position = new Point(Position.X, bounds.Bottom - Radius);
             }
 
+            // FIXED: Ensure ball stays within bounds (safety check)
             Position = new Point(
                 Math.Clamp(Position.X, bounds.Left + Radius, bounds.Right - Radius),
                 Math.Clamp(Position.Y, bounds.Top + Radius, bounds.Bottom - Radius)
@@ -843,6 +859,78 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
         public double GetPulseScale() => 1 + Math.Sin(_pulseTimer) * 0.1; // 10% size variation
         
         public IReadOnlyList<Point> Trail => _trail.ToList();
+
+        public void Draw(DrawingContext context, Rect bounds)
+        {
+            var scale = GetPulseScale();
+            var radius = Radius * scale;
+            
+            // FIXED: Add ball rotation/spinning effect like the Canvas version
+            var rotationAngle = _pulseTimer * 2.0; // Spin to the left (negative rotation)
+            
+            // Create a transform for rotation around the ball center
+            var center = Position;
+            var transform = Matrix.CreateRotation(rotationAngle, center);
+            
+            // Apply rotation transform using the correct Avalonia pattern
+            using (context.PushTransform(transform))
+            {
+                // Draw ball with rotation
+                if (Type == BallType.RedWhite)
+                {
+                    // Special rendering for red/white balls
+                    var brush1 = new SolidColorBrush(Colors.Red);
+                    var brush2 = new SolidColorBrush(Colors.White);
+                    
+                    // Draw alternating segments
+                    for (int i = 0; i < 8; i++)
+                    {
+                        var angle = i * Math.PI / 4;
+                        var brush = i % 2 == 0 ? brush1 : brush2;
+                        var rect = new Rect(
+                            center.X - radius + Math.Cos(angle) * radius * 0.3,
+                            center.Y - radius + Math.Sin(angle) * radius * 0.3,
+                            radius * 0.6,
+                            radius * 0.6
+                        );
+                        context.DrawEllipse(brush, null, rect);
+                    }
+                }
+                else
+                {
+                    // Regular ball rendering
+                    var rect = new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2);
+                    context.DrawEllipse(Fill, null, rect);
+                    
+                    // Add a subtle highlight for 3D effect
+                    var highlightBrush = new SolidColorBrush(Colors.White, 0.3);
+                    var highlightRect = new Rect(center.X - radius * 0.6, center.Y - radius * 0.6, radius * 1.2, radius * 1.2);
+                    context.DrawEllipse(highlightBrush, null, highlightRect);
+                }
+            }
+            
+            // Draw trail with rotation effect
+            if (_trail.Count > 1)
+            {
+                // FIXED: Handle different brush types for trail color
+                Color trailColor = Colors.Gray; // Default color
+                if (Fill is SolidColorBrush solidBrush)
+                {
+                    trailColor = solidBrush.Color;
+                }
+                
+                var trailBrush = new SolidColorBrush(trailColor, 0.5);
+                var points = _trail.Select(p => new Point(p.X, p.Y)).ToArray();
+                if (points.Length > 1)
+                {
+                    // Draw trail as connected lines
+                    for (int i = 0; i < points.Length - 1; i++)
+                    {
+                        context.DrawLine(new Pen(trailBrush, 2), points[i], points[i + 1]);
+                    }
+                }
+            }
+        }
     }
 
     public class Particle
@@ -1318,7 +1406,7 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                 long comboBonus = _comboCount * 500;
                 Score += 1000 + timeBonus + comboBonus;
                 JezzballSound.Play(JezzballSoundEvent.LevelComplete);
-                Message = $"Level Complete!\nTime Bonus: {timeBonus}\nCombo Bonus: {comboBonus}";
+                Message = $"Well Done!\nTime Bonus: {timeBonus}\nCombo Bonus: {comboBonus}";
             }
         }
 
@@ -1794,66 +1882,10 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                     }
                 }
 
-                // Draw balls with glow and pulse effects
+                // FIXED: Draw balls with rotation and effects using the new Draw method
                 foreach (var ball in _gameState.Balls)
                 {
-                    var pulseScale = ball.GetPulseScale();
-                    
-                    // Add glow effect (only in modern mode)
-                    if (!_gameState.OriginalMode && ball.Fill is SolidColorBrush solidBrush)
-                    {
-                        var glowBrush = new SolidColorBrush(Color.FromArgb(
-                            (byte)Math.Round(solidBrush.Color.A * 0.7),
-                            solidBrush.Color.R,
-                            solidBrush.Color.G,
-                            solidBrush.Color.B));
-                        context.DrawEllipse(glowBrush, null, ball.Position, ball.Radius * pulseScale, ball.Radius * pulseScale);
-                    }
-                    
-                    // Special rendering for different ball types
-                    if (ball.Type == BallType.Normal)
-                    {
-                        var radius = ball.Radius;
-                        var center = ball.Position;
-                        
-                        // Create semicircle geometries
-                        var leftHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
-                        var rightHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
-                        
-                        // Clip to left half (red)
-                        var leftClip = new RectangleGeometry(new Rect(center.X - radius, center.Y - radius, radius, radius * 2));
-                        var leftCombined = new CombinedGeometry(GeometryCombineMode.Intersect, leftHalf, leftClip);
-                        context.DrawGeometry(new SolidColorBrush(Colors.Red), null, leftCombined);
-                        
-                        // Clip to right half (blue)
-                        var rightClip = new RectangleGeometry(new Rect(center.X, center.Y - radius, radius, radius * 2));
-                        var rightCombined = new CombinedGeometry(GeometryCombineMode.Intersect, rightHalf, rightClip);
-                        context.DrawGeometry(new SolidColorBrush(Colors.Blue), null, rightCombined);
-                    }
-                    else if (ball.Type == BallType.RedWhite)
-                    {
-                        var radius = ball.Radius;
-                        var center = ball.Position;
-                        
-                        // Create semicircle geometries for red/white ball
-                        var leftHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
-                        var rightHalf = new EllipseGeometry(new Rect(center.X - radius, center.Y - radius, radius * 2, radius * 2));
-                        
-                        // Clip to left half (red)
-                        var leftClip = new RectangleGeometry(new Rect(center.X - radius, center.Y - radius, radius, radius * 2));
-                        var leftCombined = new CombinedGeometry(GeometryCombineMode.Intersect, leftHalf, leftClip);
-                        context.DrawGeometry(new SolidColorBrush(Colors.Red), null, leftCombined);
-                        
-                        // Clip to right half (white)
-                        var rightClip = new RectangleGeometry(new Rect(center.X, center.Y - radius, radius, radius * 2));
-                        var rightCombined = new CombinedGeometry(GeometryCombineMode.Intersect, rightHalf, rightClip);
-                        context.DrawGeometry(new SolidColorBrush(Colors.White), null, rightCombined);
-                    }
-                    else
-                    {
-                        // Regular rendering for other ball types
-                        context.DrawEllipse(ball.Fill, null, ball.Position, ball.Radius, ball.Radius);
-                    }
+                    ball.Draw(context, bounds);
                 }
 
                 // Draw current wall being built
@@ -1907,8 +1939,9 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                         new Pen(new SolidColorBrush(Colors.Blue), 2, DashStyle.Dash) :
                         _previewPen;
 
-                    // FIXED: Ensure cursor is always visible by using a more prominent color and thickness
+                    // FIXED: Ensure cursor is always visible with multiple layers
                     var cursorPen = new Pen(new SolidColorBrush(Colors.Yellow), 3, DashStyle.Dash);
+                    var cursorGlowPen = new Pen(new SolidColorBrush(Colors.Orange), 5, DashStyle.Dash);
                     
                     if (previewPen.Brush is SolidColorBrush solidBrush)
                     {
@@ -1927,7 +1960,8 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                             context.DrawLine(glowPreviewPen, top, bottom);
                             // Draw main preview line
                             context.DrawLine(previewPen, top, bottom);
-                            // Draw prominent cursor line
+                            // Draw prominent cursor line with glow
+                            context.DrawLine(cursorGlowPen, top, bottom);
                             context.DrawLine(cursorPen, top, bottom);
                         }
                         else
@@ -1938,17 +1972,18 @@ Built with Avalonia UI and .NET8. Enjoy playing!";
                             context.DrawLine(glowPreviewPen, left, right);
                             // Draw main preview line
                             context.DrawLine(previewPen, left, right);
-                            // Draw prominent cursor line
+                            // Draw prominent cursor line with glow
+                            context.DrawLine(cursorGlowPen, left, right);
                             context.DrawLine(cursorPen, left, right);
                         }
                     }
                 }
 
-                // FIXED: Improved flash effect - less aggressive and more controlled
+                // FIXED: Much more subtle flash effect like the Canvas version
                 if (_gameState.FlashEffect)
                 {
-                    // Use a more controlled flash with better timing
-                    var flashOpacity = Math.Sin(_flashTimer * Math.PI * 4) * 0.3 + 0.1; // Reduced intensity and faster frequency
+                    // Use a very subtle flash with better timing
+                    var flashOpacity = Math.Sin(_flashTimer * Math.PI * 6) * 0.15 + 0.05; // Much more subtle
                     var flashBrush = new SolidColorBrush(Colors.White, flashOpacity);
                     context.FillRectangle(flashBrush, bounds);
                 }
