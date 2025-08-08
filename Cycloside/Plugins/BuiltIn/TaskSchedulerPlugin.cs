@@ -13,7 +13,7 @@ public class TaskSchedulerPlugin : IPlugin
 
     public string Name => "Task Scheduler";
     public string Description => "Schedule commands with cron or Task Scheduler";
-    public Version Version => new(0,1,0);
+    public Version Version => new(0, 1, 0);
     public Widgets.IWidget? Widget => null;
     public bool ForceDefaultTheme => false;
 

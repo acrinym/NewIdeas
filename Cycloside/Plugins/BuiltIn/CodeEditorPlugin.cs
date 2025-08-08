@@ -140,13 +140,13 @@ namespace Cycloside.Plugins.BuiltIn
             if (_editor == null || _outputBox == null) return;
             var code = _editor.Text ?? string.Empty;
             var lang = GetSelectedLanguage();
-            
+
             if (string.IsNullOrWhiteSpace(code))
             {
                 _outputBox.Text = "No code to run. Please enter some code first.";
                 return;
             }
-            
+
             try
             {
                 _outputBox.Text = "Running code...\r\n";
@@ -177,19 +177,19 @@ namespace Cycloside.Plugins.BuiltIn
                         _outputBox.Text = csWriter.ToString() + (csResult != null ? csResult.ToString() : string.Empty);
                         break;
                     case "Python":
-                    {
-                        var engine = Python.CreateEngine();
-                        using var stream = new MemoryStream();
-                        engine.Runtime.IO.SetOutput(stream, Encoding.UTF8);
-                        engine.Runtime.IO.SetErrorOutput(stream, Encoding.UTF8);
-                        var scope = engine.CreateScope();
-                        var source = engine.CreateScriptSourceFromString(code);
-                        var pyResult = source.Execute(scope);
-                        stream.Position = 0;
-                        var output = new StreamReader(stream).ReadToEnd();
-                        _outputBox.Text = output + (pyResult != null ? pyResult.ToString() : string.Empty);
-                        break;
-                    }
+                        {
+                            var engine = Python.CreateEngine();
+                            using var stream = new MemoryStream();
+                            engine.Runtime.IO.SetOutput(stream, Encoding.UTF8);
+                            engine.Runtime.IO.SetErrorOutput(stream, Encoding.UTF8);
+                            var scope = engine.CreateScope();
+                            var source = engine.CreateScriptSourceFromString(code);
+                            var pyResult = source.Execute(scope);
+                            stream.Position = 0;
+                            var output = new StreamReader(stream).ReadToEnd();
+                            _outputBox.Text = output + (pyResult != null ? pyResult.ToString() : string.Empty);
+                            break;
+                        }
                     case "JavaScript":
                         var sb = new StringBuilder();
                         var jsEngine = new Engine();

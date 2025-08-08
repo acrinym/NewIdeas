@@ -41,7 +41,7 @@ public class MacroPlugin : IPlugin
     private IGlobalHook? _hook;
     private readonly IEventSimulator _simulator = new EventSimulator();
     private readonly bool _isWindows = OperatingSystem.IsWindows();
-    
+
     // --- Recording Data Fields ---
     private readonly List<MacroEvent> _events = new();
     private Stopwatch? _timer;
@@ -115,8 +115,8 @@ public class MacroPlugin : IPlugin
         _hook.RunAsync();
 
         SetStatus("Recording...");
-        if(_recordButton != null) _recordButton.IsEnabled = false;
-        if(_stopButton != null) _stopButton.IsEnabled = true;
+        if (_recordButton != null) _recordButton.IsEnabled = false;
+        if (_stopButton != null) _stopButton.IsEnabled = true;
     }
 
     private void StopRecording()
@@ -138,9 +138,9 @@ public class MacroPlugin : IPlugin
         {
             SetStatus("Recording stopped. No name provided or no events recorded.");
         }
-        
-        if(_recordButton != null) _recordButton.IsEnabled = true;
-        if(_stopButton != null) _stopButton.IsEnabled = false;
+
+        if (_recordButton != null) _recordButton.IsEnabled = true;
+        if (_stopButton != null) _stopButton.IsEnabled = false;
     }
 
     private void OnKeyPressed(object? sender, KeyboardHookEventArgs e) => AddEvent(true, e.Data.KeyCode);
@@ -198,7 +198,7 @@ public class MacroPlugin : IPlugin
             {
                 await Task.Delay(ev.Delay);
             }
-            
+
             if (ev.IsPress)
                 _simulator.SimulateKeyPress(ev.Code);
             else
@@ -213,7 +213,7 @@ public class MacroPlugin : IPlugin
     private void DeleteSelected()
     {
         if (_macroList?.SelectedItem is not string selectedName) return;
-        
+
         var macro = MacroManager.Macros.FirstOrDefault(m => m.Name == selectedName);
         if (macro != null)
         {

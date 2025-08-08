@@ -36,7 +36,7 @@ public class TransparencyEffect : IWindowEffect
         {
             Duration = TimeSpan.FromMilliseconds(200),
             Easing = new QuadraticEaseOut(),
-            Children = { new KeyFrame{ Cue = new Cue(1d), Setters = { new Setter(Window.OpacityProperty, value) } } }
+            Children = { new KeyFrame { Cue = new Cue(1d), Setters = { new Setter(Window.OpacityProperty, value) } } }
         };
         anim.RunAsync(win);
     }

@@ -25,19 +25,19 @@ namespace Cycloside.Plugins.BuiltIn
         private string _currentFilter = string.Empty;
         private string _severityFilter = "All";
         private ComboBox? _severityBox;
-        private readonly Dictionary<string,long> _filePositions = new();
+        private readonly Dictionary<string, long> _filePositions = new();
 
         private readonly SemaphoreSlim _fileReadLock = new SemaphoreSlim(1, 1);
 
         // --- NEW: A property to hold a filter term on startup ---
         public string InitialFilter { get; set; } = string.Empty;
-        
+
         public string Name => "Log Viewer";
         public string Description => "Tail and filter log files in real-time. Now with auto-loading and saving!";
         public Version Version => new Version(0, 6, 0); // Incremented for new features
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
-        
+
         private string GetLogDirectory()
         {
             if (OperatingSystem.IsWindows())
@@ -58,7 +58,7 @@ namespace Cycloside.Plugins.BuiltIn
             var openButton = new Button { Content = "Open Log File" };
             openButton.Click += async (s, e) => await SelectAndLoadFileAsync();
 
-            var saveButton = new Button { Content = "Save Log As...", Margin = new Avalonia.Thickness(5,0) };
+            var saveButton = new Button { Content = "Save Log As...", Margin = new Avalonia.Thickness(5, 0) };
             saveButton.Click += async (s, e) => await SaveLogAsync();
 
             var filterBox = _window.FindControl<TextBox>("FilterBox");
@@ -134,7 +134,7 @@ namespace Cycloside.Plugins.BuiltIn
             _window.Show();
             Dispatcher.UIThread.InvokeAsync(AttemptToLoadDefaultLogAsync);
         }
-        
+
         private void OnLogBoxTextChanged(object? sender, TextChangedEventArgs e)
         {
             if (_autoScrollCheck?.IsChecked == true && _logBox != null)
@@ -142,7 +142,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _logBox.CaretIndex = _logBox.Text?.Length ?? 0;
             }
         }
-        
+
         private async Task AttemptToLoadDefaultLogAsync()
         {
             var logDir = GetLogDirectory();
@@ -197,7 +197,7 @@ namespace Cycloside.Plugins.BuiltIn
                 FileTypeChoices = new[] { new FilePickerFileType("Text File") { Patterns = new[] { "*.txt" } } },
                 SuggestedStartLocation = start
             });
-            
+
             if (file?.Path.LocalPath != null)
             {
                 try

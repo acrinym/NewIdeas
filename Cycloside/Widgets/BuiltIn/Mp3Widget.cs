@@ -62,7 +62,7 @@ namespace Cycloside.Widgets.BuiltIn
                     _plugin.SeekCommand.Execute(TimeSpan.FromSeconds(progressSlider.Value));
                 }
             }, RoutingStrategies.Tunnel);
-            
+
             // TextBlocks to display "01:23 / 04:56" style time.
             // We use StringFormat in the binding to format the TimeSpan without needing a converter.
             var currentTimeText = new TextBlock { Foreground = Brushes.LightGray, VerticalAlignment = VerticalAlignment.Center };
@@ -111,11 +111,11 @@ namespace Cycloside.Widgets.BuiltIn
                 Margin = new Thickness(0, 8, 0, 0)
             };
             buttonPanel.Children.AddRange(new Control[] { openButton, prevButton, playButton, pauseButton, stopButton, nextButton });
-            
+
             Grid.SetRow(buttonPanel, 2);
             Grid.SetColumn(buttonPanel, 0);
             Grid.SetColumnSpan(buttonPanel, 3);
-            
+
             mainPanel.Children.AddRange(new Control[] { trackDisplay, currentTimeText, progressSlider, totalTimeText, buttonPanel });
 
             return new Border

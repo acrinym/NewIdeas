@@ -12,7 +12,7 @@ namespace Cycloside.Plugins.BuiltIn
         // --- Fields ---
         private DateTimeOverlayWindow? _window;
         private DispatcherTimer? _timer;
-        
+
         // --- Configuration for new features ---
         private readonly List<string> _formats = new() { "G", "g", "yyyy-MM-dd HH:mm:ss", "T", "t" };
         private int _currentFormatIndex = 0;
@@ -37,10 +37,10 @@ namespace Cycloside.Plugins.BuiltIn
             _window = new DateTimeOverlayWindow { DataContext = this };
             ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(DateTimeOverlayPlugin));
-            
+
             // Set up the timer
-            _timer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_,_) => UpdateTime());
-            
+            _timer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => UpdateTime());
+
             UpdateTime(); // Update immediately on start
             _timer.Start();
             _window.Show();

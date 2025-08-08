@@ -37,7 +37,7 @@ namespace Cycloside.Plugins.BuiltIn
 
         [ObservableProperty]
         private string _windowTitle = "Cycloside Editor - Untitled";
-        
+
         // --- Plugin Lifecycle Methods ---
         public void Start()
         {
@@ -90,7 +90,7 @@ namespace Cycloside.Plugins.BuiltIn
         private async Task OpenFile()
         {
             if (_window is null || !await CanProceedWithUnsavedChanges()) return;
-            
+
             var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var openResult = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
@@ -135,7 +135,7 @@ namespace Cycloside.Plugins.BuiltIn
         private async Task SaveFileAs()
         {
             if (_window is null) return;
-            
+
             var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
             var saveResult = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
@@ -173,7 +173,7 @@ namespace Cycloside.Plugins.BuiltIn
         private async Task<bool> CanProceedWithUnsavedChanges()
         {
             if (_window is null || EditorContent == _lastSavedText) return true;
-            
+
             var confirm = new ConfirmationWindow("Unsaved Changes", "Discard unsaved changes?");
             return await confirm.ShowDialog<bool>(_window);
         }

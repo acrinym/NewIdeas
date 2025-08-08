@@ -13,7 +13,7 @@ public class WinampVisHostPlugin : IPlugin
 
     public string Name => "Winamp Visual Host";
     public string Description => "Hosts Winamp visualization plugins";
-    public Version Version => new(0,1,0);
+    public Version Version => new(0, 1, 0);
     public Widgets.IWidget? Widget => null; // For UI widget host support
     public bool ForceDefaultTheme => false;
 
@@ -23,7 +23,7 @@ public class WinampVisHostPlugin : IPlugin
     {
         // Don't auto-start - wait for MP3layer to enable it
         Logger.Log("Winamp Visual Host started - waiting for MP3able visualization");
-        
+
         // FIXED: Create the host window but don't show it yet
         _hostWindow = new VisHostWindow();
         ThemeManager.ApplyForPlugin(_hostWindow, this);
@@ -98,14 +98,14 @@ public class WinampVisHostPlugin : IPlugin
         {
             _manager?.StopPlugin();
             _isEnabled = false;
-            
+
             // FIXED: Hide the host window when visualization is disabled
             if (_hostWindow != null)
             {
                 _hostWindow.Hide();
                 Logger.Log("Winamp Visual Host window hidden");
             }
-            
+
             Logger.Log("Winamp Visual Host disabled");
         }
         catch (Exception ex)

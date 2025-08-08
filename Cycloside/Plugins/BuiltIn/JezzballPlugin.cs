@@ -254,10 +254,10 @@ Tips:
             var dx = end.X - start.X;
             var dy = end.Y - start.Y;
             var length = Math.Sqrt(dx * dx + dy * dy);
-            
+
             if (length == 0) return false;
 
-            var t = Math.Max(0, Math.Min(1, 
+            var t = Math.Max(0, Math.Min(1,
                 ((ball.Position.X - start.X) * dx + (ball.Position.Y - start.Y) * dy) / (length * length)));
 
             var closest = new Point(start.X + t * dx, start.Y + t * dy);
@@ -403,7 +403,7 @@ Tips:
         {
             Lives--;
             JezzballSound.Play(JezzballSoundEvent.WallHit);
-            
+
             if (Lives <= 0)
             {
                 RoundState = "lost";
@@ -480,7 +480,7 @@ Tips:
                 var gridX = (int)(ball.Position.X / _gridSize);
                 var gridY = (int)(ball.Position.Y / _gridSize);
                 var cellIndex = gridY * (int)(_gameSize.Width / _gridSize) + gridX;
-                
+
                 if (cellIndex >= 0 && cellIndex < _grid.Count && !_grid[cellIndex].Scored)
                 {
                     return true;
@@ -624,7 +624,7 @@ Tips:
             if (_gameState.RoundState != "running") return;
 
             var position = e.GetPosition(sender as Control);
-            
+
             if (e.GetCurrentPoint(sender as Control).Properties.IsRightButtonPressed)
             {
                 // Right click changes direction
@@ -675,12 +675,12 @@ Tips:
             {
                 var gridSize = 20.0;
                 var pen = new Pen(Brushes.DarkGray, 1);
-                
+
                 for (double x = 0; x < bounds.Width; x += gridSize)
                 {
                     context.DrawLine(pen, new Point(x, 0), new Point(x, bounds.Height));
                 }
-                
+
                 for (double y = 0; y < bounds.Height; y += gridSize)
                 {
                     context.DrawLine(pen, new Point(0, y), new Point(bounds.Width, y));

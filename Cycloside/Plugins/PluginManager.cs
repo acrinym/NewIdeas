@@ -37,7 +37,7 @@ namespace Cycloside.Plugins
             }
         }
     }
-    
+
     public class PluginManager
     {
         // FIX: The core data structure is now a list of PluginInfo objects.
@@ -142,7 +142,7 @@ namespace Cycloside.Plugins
                 }
             }
         }
-        
+
         /// <summary>
         /// The new, correct implementation for hot-reloading plugins.
         /// </summary>
@@ -154,7 +154,7 @@ namespace Cycloside.Plugins
 
                 // Clear internal state
                 _pluginInfos.Clear();
-                
+
                 // It's crucial to force garbage collection here to finalize the unloading process.
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -182,7 +182,7 @@ namespace Cycloside.Plugins
                 {
                     DisablePlugin(info.Instance);
                 }
-                
+
                 // This is the critical new step: Unload the contexts.
                 foreach (var info in _pluginInfos.Where(p => p.LoadContext != null))
                 {
@@ -201,9 +201,9 @@ namespace Cycloside.Plugins
             lock (_pluginLock)
             {
                 if (_pluginInfos.Any(p => p.Instance.Name == plugin.Name)) return; // Don't add duplicates
-                
+
                 var info = new PluginInfo(plugin); // Built-in plugins have no context or path.
-                
+
                 var versions = SettingsManager.Settings.PluginVersions;
                 if (!versions.TryGetValue(plugin.Name, out var ver))
                 {
@@ -246,7 +246,7 @@ namespace Cycloside.Plugins
                 AddPlugin(factory());
             }
         }
-        
+
         private PluginInfo? GetInfo(IPlugin plugin) => _pluginInfos.FirstOrDefault(p => p.Instance == plugin);
 
         public void EnablePlugin(IPlugin plugin)
