@@ -33,7 +33,7 @@ namespace Cycloside.Services
             {
                 themeName = "MintGreen"; // A safe default
             }
-            
+
             if (!LoadGlobalTheme(themeName) && themeName != "MintGreen")
             {
                 LoadGlobalTheme("MintGreen"); // Fallback on failure
@@ -46,7 +46,7 @@ namespace Cycloside.Services
         /// </summary>
         public static bool LoadGlobalTheme(string themeName)
         {
-            if (Application.Current == null) 
+            if (Application.Current == null)
             {
                 Logger.Log("ThemeManager: Application.Current is null, cannot load theme");
                 return false;

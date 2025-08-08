@@ -284,7 +284,7 @@ namespace Cycloside
 
             var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center };
             buttonPanel.Children.Add(yesButton);
-buttonPanel.Children.Add(noButton);
+            buttonPanel.Children.Add(noButton);
 
             var mainPanel = new StackPanel { Spacing = 10 };
             mainPanel.Children.Add(messageBlock);

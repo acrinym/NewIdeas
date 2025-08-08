@@ -67,10 +67,10 @@ public partial class PluginSettingsWindow : Window
         var newPlugins = _manager.Plugins.Where(p => _manager.GetStatus(p) != Plugins.PluginChangeStatus.None).ToList();
         if (newPlugins.Count > 0)
         {
-            panel.Children.Add(new TextBlock { Text = "New or Updated", FontWeight = FontWeight.Bold, Margin = new Thickness(0,0,0,4) });
+            panel.Children.Add(new TextBlock { Text = "New or Updated", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 0, 4) });
             foreach (var p in newPlugins)
                 AddPluginItem(p);
-            panel.Children.Add(new Separator { Margin = new Thickness(0,4,0,4) });
+            panel.Children.Add(new Separator { Margin = new Thickness(0, 4, 0, 4) });
         }
 
         foreach (var plugin in _manager.Plugins.Except(newPlugins))

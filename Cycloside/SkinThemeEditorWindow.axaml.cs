@@ -15,7 +15,7 @@ public partial class SkinThemeEditorWindow : Window
 {
     private ComboBox? _fileBox;
     private TextEditor? _editor;
-    
+
     // FIX: The path now correctly points to the "Global" subdirectory where themes are stored.
     private string _themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
 
@@ -24,10 +24,10 @@ public partial class SkinThemeEditorWindow : Window
         InitializeComponent();
         CursorManager.ApplyFromSettings(this, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(SkinThemeEditorWindow));
-        
+
         _fileBox = this.FindControl<ComboBox>("FileBox");
         _editor = this.FindControl<TextEditor>("Editor");
-        
+
         if (_editor != null)
         {
             _editor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("XML");
@@ -49,7 +49,7 @@ public partial class SkinThemeEditorWindow : Window
         if (!Directory.Exists(_themeDir))
         {
             // If the directory doesn't exist, create it. This prevents a crash on first run.
-            try 
+            try
             {
                 Directory.CreateDirectory(_themeDir);
             }

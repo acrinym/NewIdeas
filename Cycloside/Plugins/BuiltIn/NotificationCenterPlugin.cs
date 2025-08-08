@@ -16,7 +16,7 @@ public class NotificationCenterPlugin : IPlugin, IDisposable, IWorkspaceItem
     public ObservableCollection<string> Messages { get; } = new();
     public string Name => "Notification Center";
     public string Description => "View recent notifications";
-    public Version Version => new(0,1,0);
+    public Version Version => new(0, 1, 0);
     public Widgets.IWidget? Widget => null;
     public bool ForceDefaultTheme => false;
     public bool UseWorkspace { get; set; }

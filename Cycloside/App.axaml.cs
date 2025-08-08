@@ -70,11 +70,11 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
     }
-    
+
     private MainWindow CreateMainWindow(AppSettings settings)
     {
         _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify);
-        
+
         // Subscribe to plugin reloads to update the UI when plugins are refreshed.
         _pluginManager.PluginsReloaded += OnPluginsReloaded;
 
@@ -93,7 +93,7 @@ public partial class App : Application
 
 
         viewModel.ExitCommand = new ServicesRelayCommand(() => Shutdown());
-        
+
         // Toggle plugin enablement from the main window.
         viewModel.StartPluginCommand = new ServicesRelayCommand(pluginObj =>
         {
@@ -171,7 +171,7 @@ public partial class App : Application
         WorkspaceProfiles.Apply(settings.ActiveProfile, _pluginManager);
         RestoreSessionState(viewModel);
         RegisterHotkeys(_pluginManager);
-        
+
         _trayIcon = new TrayIcon
         {
             Icon = CreateTrayIcon(),
@@ -185,10 +185,10 @@ public partial class App : Application
             icons.Add(_trayIcon);
         }
         _trayIcon.IsVisible = true;
-        
+
         return mainWindow;
     }
-    
+
     // Handle the PluginsReloaded event to refresh menus and view models.
     private void OnPluginsReloaded()
     {
@@ -323,7 +323,7 @@ public partial class App : Application
     }
 
     #region Tray Menu and Icon Logic
-    
+
     private NativeMenu BuildTrayMenu(PluginManager manager, VolatilePluginManager volatileManager, AppSettings settings)
     {
         var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
@@ -347,7 +347,7 @@ public partial class App : Application
         var inlineItem = new NativeMenuItem("Run Inline...");
         inlineItem.Click += (_, _) => new VolatileRunnerWindow(volatileManager).Show();
         volatileMenu.Menu!.Items.Add(inlineItem);
-        
+
         // **NEW: A dedicated menu for log actions**
         var logsMenu = new NativeMenuItem("Logs") { Menu = new NativeMenu() };
         var viewErrorsItem = new NativeMenuItem("View Errors");
@@ -379,7 +379,7 @@ public partial class App : Application
                 pluginsMenu,
                 volatileMenu,
                 new NativeMenuItem("Open Plugins Folder") { Command = new ServicesRelayCommand(() => {
-                    try { Process.Start(new ProcessStartInfo { FileName = manager.PluginDirectory, UseShellExecute = true }); } 
+                    try { Process.Start(new ProcessStartInfo { FileName = manager.PluginDirectory, UseShellExecute = true }); }
                     catch (Exception ex) { Logger.Log($"Failed to open plugin folder: {ex.Message}"); }
                 })},
                 new NativeMenuItemSeparator(),
@@ -387,7 +387,7 @@ public partial class App : Application
             }
         };
     }
-    
+
     private NativeMenuItem BuildPluginMenuItem(IPlugin plugin, PluginManager manager, AppSettings settings)
     {
         var status = manager.GetStatus(plugin);
@@ -407,7 +407,7 @@ public partial class App : Application
         menuItem.Command = new ServicesRelayCommand(o =>
         {
             if (o is not NativeMenuItem item) return;
-            
+
             bool shouldBeEnabled = !manager.IsEnabled(plugin);
             if (shouldBeEnabled)
             {
@@ -483,9 +483,9 @@ public partial class App : Application
                 if (icon != null)
                 {
                     using var stream = new MemoryStream();
-                    #pragma warning disable CA1416
+#pragma warning disable CA1416
                     icon.Save(stream);
-                    #pragma warning restore CA1416
+#pragma warning restore CA1416
                     stream.Position = 0;
                     return new WindowIcon(stream);
                 }
@@ -516,6 +516,6 @@ public partial class App : Application
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
-    
+
     #endregion
 }

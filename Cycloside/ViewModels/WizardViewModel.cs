@@ -28,8 +28,8 @@ namespace Cycloside.ViewModels
             OnPropertyChanged(nameof(NextButtonText));
             OnPropertyChanged(nameof(ProgressText));
         }
-        
-        private const int TotalSteps = 3; 
+
+        private const int TotalSteps = 3;
 
         public string ProgressText => $"Step {CurrentStep + 1} of {TotalSteps}";
         public bool CanGoBack => CurrentStep > 0;
@@ -43,7 +43,7 @@ namespace Cycloside.ViewModels
 
         public ObservableCollection<string> AvailableThemes { get; } = new();
         public ObservableCollection<PluginItem> Plugins { get; } = new();
-        
+
         public event EventHandler? RequestClose;
 
         public WizardViewModel()
@@ -55,7 +55,7 @@ namespace Cycloside.ViewModels
                 SelectedTheme = AvailableThemes.Contains("MintGreen") ? "MintGreen" : AvailableThemes[0];
             }
         }
-        
+
         [RelayCommand]
         private void Back()
         {
@@ -73,27 +73,27 @@ namespace Cycloside.ViewModels
                 CurrentStep++;
                 return;
             }
-            
+
             SettingsManager.Settings.GlobalTheme = SelectedTheme;
             foreach (var item in Plugins)
             {
                 SettingsManager.Settings.PluginEnabled[item.Name] = item.IsEnabled;
             }
-            
+
             var profile = new WorkspaceProfile
             {
                 Name = ProfileName,
                 Plugins = Plugins.ToDictionary(p => p.Name, p => p.IsEnabled)
             };
             WorkspaceProfiles.AddOrUpdate(profile);
-            
+
             SettingsManager.Settings.ActiveProfile = ProfileName;
             SettingsManager.Settings.FirstRun = false;
             SettingsManager.Save();
-            
+
             RequestClose?.Invoke(this, EventArgs.Empty);
         }
-        
+
         private void LoadThemes()
         {
             try
@@ -105,7 +105,7 @@ namespace Cycloside.ViewModels
                     Logger.Log($"Wizard Error: Theme directory not found at '{dir}'");
                     return;
                 }
-                
+
                 foreach (var file in Directory.GetFiles(dir, "*.axaml"))
                 {
                     AvailableThemes.Add(Path.GetFileNameWithoutExtension(file));

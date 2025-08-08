@@ -75,20 +75,20 @@ namespace Cycloside.Plugins.BuiltIn
         private void LoadVariables()
         {
             var target = _currentTarget;
-            
+
             _items.Clear();
             try
             {
                 var variables = Environment.GetEnvironmentVariables(target);
                 var variableList = new List<EnvItem>();
-                
+
                 foreach (DictionaryEntry de in variables)
                 {
                     if (de.Key != null)
                     {
                         var key = de.Key.ToString()!;
                         var value = de.Value?.ToString() ?? string.Empty;
-                        
+
                         // FIXED: Add some common environment variables that should always be visible
                         if (target == EnvironmentVariableTarget.Process)
                         {
@@ -114,19 +114,19 @@ namespace Cycloside.Plugins.BuiltIn
                                 variableList.Add(new EnvItem { Key = "COMPUTERNAME", Value = Environment.GetEnvironmentVariable("COMPUTERNAME") ?? "" });
                             }
                         }
-                        
+
                         variableList.Add(new EnvItem { Key = key, Value = value });
                     }
                 }
-                
+
                 // Sort variables alphabetically for better organization
                 variableList = variableList.OrderBy(v => v.Key).ToList();
-                
+
                 foreach (var item in variableList)
                 {
                     _items.Add(item);
                 }
-                
+
                 Logger.Log($"Environment Editor: Loaded {_items.Count} variables for {target} scope");
             }
             catch (Exception ex)
@@ -136,7 +136,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Logger.Log($"Environment Editor: Failed to load variables for {target} scope: {ex.Message}");
             }
         }
-        
+
         private void SaveVariables()
         {
             var target = _currentTarget;
@@ -156,15 +156,15 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     Environment.SetEnvironmentVariable(key, null, target);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                     _items.Add(new EnvItem { Key = "ERROR", Value = $"Could not remove '{key}': {ex.Message}" });
+                    _items.Add(new EnvItem { Key = "ERROR", Value = $"Could not remove '{key}': {ex.Message}" });
                 }
             }
 
             foreach (var item in _items)
             {
-                if(string.IsNullOrWhiteSpace(item.Key)) continue;
+                if (string.IsNullOrWhiteSpace(item.Key)) continue;
 
                 try
                 {
@@ -175,7 +175,7 @@ namespace Cycloside.Plugins.BuiltIn
                     _items.Add(new EnvItem { Key = "ERROR", Value = $"Could not save '{item.Key}': {ex.Message}" });
                 }
             }
-            
+
             LoadVariables();
         }
 

@@ -77,10 +77,10 @@ namespace Cycloside.Plugins.BuiltIn
                 // Scale the dB value (e.g., -90dB to 0dB) to a byte (0-255)
                 double scaledValue = (90 + decibels) * (255.0 / 90.0);
                 byte finalValue = (byte)Math.Max(0, Math.Min(255, scaledValue));
-                
+
                 // For stereo visualizations, copy the value to both left and right channels
                 fftData[i] = finalValue;
-                if(i + fftData.Length / 2 < fftData.Length)
+                if (i + fftData.Length / 2 < fftData.Length)
                     fftData[i + fftData.Length / 2] = finalValue;
             }
         }
@@ -126,12 +126,12 @@ namespace Cycloside.Plugins.BuiltIn
         // --- Observable Properties ---
         public ObservableCollection<string> Playlist { get; } = new();
         [ObservableProperty] private string? _currentTrackName;
-        [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsStopped))] private bool _isPlaying;
+        [ObservableProperty][NotifyPropertyChangedFor(nameof(IsStopped))] private bool _isPlaying;
         public bool IsStopped => !IsPlaying;
         [ObservableProperty] private TimeSpan _currentTime;
         [ObservableProperty] private TimeSpan _totalTime;
         [ObservableProperty] private string? _errorMessage;
-        [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(ToggleMuteCommand))] private float _volume = 1.0f;
+        [ObservableProperty][NotifyCanExecuteChangedFor(nameof(ToggleMuteCommand))] private float _volume = 1.0f;
         [ObservableProperty] private bool _isMuted;
         [ObservableProperty] private string _visualizationStatus = "Disabled";
 
@@ -238,7 +238,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 // FIXED: Try multiple approaches to find the WinampVisHostPlugin
                 if (_visHost != null) return; // Already found
-                
+
                 // Approach 1: Try to find through the applications plugin manager
                 if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
                     desktop.MainWindow is MainWindow mainWindow &&
@@ -253,7 +253,7 @@ namespace Cycloside.Plugins.BuiltIn
                         return;
                     }
                 }
-                
+
                 // Approach 2: Try to create a new instance if not found
                 Logger.Log("Winamp Visual Host plugin not found, attempting to create new instance");
                 _visHost = new WinampVisHostPlugin();
@@ -290,7 +290,8 @@ namespace Cycloside.Plugins.BuiltIn
             var start = await DialogHelper.GetDefaultStartLocationAsync(topLevel.StorageProvider);
             var openResult = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Select MP3 Files", AllowMultiple = true,
+                Title = "Select MP3 Files",
+                AllowMultiple = true,
                 FileTypeFilter = new[] { new FilePickerFileType("MP3 Files") { Patterns = new[] { "*.mp3" } } },
                 SuggestedStartLocation = start
             });
@@ -382,7 +383,7 @@ namespace Cycloside.Plugins.BuiltIn
             try
             {
                 _audioReader = new AudioFileReader(filePath);
-                
+
                 // Use a SampleAggregator to properly handle audio samples for FFT.
                 var aggregator = new SampleAggregator(_audioReader);
                 _spectrumAnalyzer = new SpectrumAnalyzer(aggregator, 1024);
@@ -474,7 +475,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             if (value) _progressTimer.Start();
             else _progressTimer.Stop();
-            
+
             PlayCommand.NotifyCanExecuteChanged();
             PauseCommand.NotifyCanExecuteChanged();
             StopPlaybackCommand.NotifyCanExecuteChanged();

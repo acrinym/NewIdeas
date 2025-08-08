@@ -35,7 +35,7 @@ namespace Cycloside.Plugins.BuiltIn
         private string? _projectPath = string.Empty;
         private bool _isCompiling = false;
         private bool _hasUnsavedChanges = false;
-        
+
         // List of commands for the Command Palette
         private List<IdeCommand> _ideCommands = new();
 
@@ -50,7 +50,7 @@ namespace Cycloside.Plugins.BuiltIn
             _qb64Path = !string.IsNullOrWhiteSpace(SettingsManager.Settings.QB64Path)
                 ? SettingsManager.Settings.QB64Path
                 : @"C:\qb64pe\qb64pe.exe"; // A more sensible default
-            
+
             _editor = new TextEditor
             {
                 ShowLineNumbers = true,
@@ -61,10 +61,10 @@ namespace Cycloside.Plugins.BuiltIn
                 FontSize = 14,
                 IsReadOnly = false
             };
-            
+
             // --- FIX: Force focus on click to solve the input issue ---
             _editor.PointerPressed += (s, e) => _editor?.Focus();
-            
+
             _editor.TextArea.Caret.PositionChanged += (_, _) => UpdateStatus();
             _editor.TextChanged += (_, _) =>
             {
@@ -80,16 +80,16 @@ namespace Cycloside.Plugins.BuiltIn
                     await LoadFile(path);
                 }
             };
-            
+
             // Initialize commands *before* building the menu
             InitializeCommands();
-            
+
             _status = new TextBlock { Foreground = Brushes.White, Margin = new Thickness(5, 0), VerticalAlignment = VerticalAlignment.Center };
             var menu = BuildMenu();
             var statusBar = new DockPanel { Height = 24, Background = Brushes.DarkSlateBlue };
             DockPanel.SetDock(statusBar, Dock.Bottom);
             statusBar.Children.Add(_status);
-            
+
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
             grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
@@ -106,7 +106,7 @@ namespace Cycloside.Plugins.BuiltIn
             dock.Children.Add(menu);
             dock.Children.Add(statusBar);
             dock.Children.Add(grid);
-            
+
             _window = new Window
             {
                 Title = "QBasic Retro IDE",
@@ -162,8 +162,9 @@ namespace Cycloside.Plugins.BuiltIn
         }
 
         #region Commands
-        
-        [RelayCommand] private async Task NewFile()
+
+        [RelayCommand]
+        private async Task NewFile()
         {
             if (_editor == null) return;
             if (_hasUnsavedChanges && !await ConfirmDiscard()) return;
@@ -173,7 +174,8 @@ namespace Cycloside.Plugins.BuiltIn
             UpdateStatus(false);
         }
 
-        [RelayCommand] private async Task OpenFile()
+        [RelayCommand]
+        private async Task OpenFile()
         {
             if (_window == null || !await ConfirmDiscard()) return;
             var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
@@ -188,8 +190,9 @@ namespace Cycloside.Plugins.BuiltIn
                 await LoadFile(path);
             }
         }
-        
-        [RelayCommand] private Task SaveFile()
+
+        [RelayCommand]
+        private Task SaveFile()
         {
             if (string.IsNullOrEmpty(_currentFile))
             {
@@ -198,7 +201,8 @@ namespace Cycloside.Plugins.BuiltIn
             return WriteTextToFileAsync(_currentFile);
         }
 
-        [RelayCommand] private async Task SaveFileAs()
+        [RelayCommand]
+        private async Task SaveFileAs()
         {
             if (_window == null || _editor == null) return;
             var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
@@ -208,7 +212,7 @@ namespace Cycloside.Plugins.BuiltIn
                 FileTypeChoices = new[] { new FilePickerFileType("BAS Files") { Patterns = new[] { "*.bas" } } },
                 SuggestedFileName = Path.GetFileName(_currentFile) ?? "Untitled.bas",
                 SuggestedStartLocation = start
-             });
+            });
 
             if (result?.TryGetLocalPath() is { } path)
             {
@@ -219,8 +223,9 @@ namespace Cycloside.Plugins.BuiltIn
                 UpdateProjectTree();
             }
         }
-        
-        [RelayCommand] private async Task CompileAndRun()
+
+        [RelayCommand]
+        private async Task CompileAndRun()
         {
             if (_isCompiling) return;
             _isCompiling = true;
@@ -240,7 +245,7 @@ namespace Cycloside.Plugins.BuiltIn
                     .WithArguments($"-c \"{_currentFile}\"")
                     .WithValidation(CommandResultValidation.None)
                     .ExecuteAsync();
-                
+
                 if (result.ExitCode != 0)
                 {
                     SetStatus($"Compilation failed. See QB64PE output for details.");
@@ -269,11 +274,12 @@ namespace Cycloside.Plugins.BuiltIn
                 UpdateStatus();
             }
         }
-        
-        [RelayCommand] private Task ShowHelp()
+
+        [RelayCommand]
+        private Task ShowHelp()
         {
             if (_window == null) return Task.CompletedTask;
-            const string helpText = 
+            const string helpText =
 @"QBasic Retro IDE Help
 
 Common Shortcuts:
@@ -310,7 +316,8 @@ Features:
             return Task.CompletedTask;
         }
 
-        [RelayCommand] private async Task OpenCommandPalette()
+        [RelayCommand]
+        private async Task OpenCommandPalette()
         {
             if (_window == null) return;
             var paletteWindow = new CommandPaletteWindow(_ideCommands);
@@ -321,7 +328,7 @@ Features:
                 await selectedCommand.Command.ExecuteAsync(null);
             }
         }
-        
+
         #endregion
 
         #region UI Construction
@@ -329,9 +336,9 @@ Features:
         {
             // --- Examples Sub-Menu ---
             var helloWorldExample = new MenuItem { Header = "Hello World" };
-            helloWorldExample.Click += (s, e) => 
+            helloWorldExample.Click += (s, e) =>
             {
-                const string exampleCode = 
+                const string exampleCode =
 @"' Hello World Example for Cycloside QBasic IDE
 PRINT ""Hello, Cycloside World!""
 PRINT ""This is running from an in-app example.""
@@ -374,7 +381,7 @@ NEXT i
                 new MenuItem { Header = "_Command Palette...", InputGesture = new KeyGesture(Key.P, KeyModifiers.Control | KeyModifiers.Shift), Command = OpenCommandPaletteCommand },
                 new MenuItem { Header = "_Settings...", Command = new Cycloside.Services.RelayCommand(OpenSettings) },
             };
-            
+
             return new Menu
             {
                 ItemsSource = new object[]
@@ -407,12 +414,12 @@ NEXT i
                     _editor.InvalidateVisual();
                     _editor.Focus();
                 }
-                
+
                 _currentFile = path;
                 _hasUnsavedChanges = false;
                 SetStatus($"Loaded: {Path.GetFileName(path)}");
                 UpdateProjectTree();
-                
+
                 Logger.Log($"QBasic IDE: Successfully loaded file '{path}' ({content.Length} characters)");
             }
             catch (Exception ex)
@@ -437,7 +444,7 @@ NEXT i
                 SetStatus($"Error saving file: {ex.Message}");
             }
         }
-        
+
         private void UpdateProjectTree()
         {
             if (_projectTree == null || string.IsNullOrWhiteSpace(_projectPath)) return;
@@ -489,11 +496,11 @@ NEXT i
             // Standard F5 handling
             if (e.Key == Key.F5 && !_isCompiling)
             {
-               await CompileAndRun();
-               e.Handled = true;
+                await CompileAndRun();
+                e.Handled = true;
             }
         }
-        
+
         private void OpenSettings()
         {
             if (_window == null || _editor == null) return;
@@ -515,7 +522,7 @@ NEXT i
             var confirm = new ConfirmationWindow("Unsaved Changes", "Discard current changes?");
             return await confirm.ShowDialog<bool>(_window);
         }
-        
+
         private static bool IsCommandInPath(string command)
         {
             var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator);
@@ -544,15 +551,15 @@ NEXT i
                 CanResize = false;
 
                 var panel = new DockPanel { Margin = new Thickness(5) };
-                
+
                 _searchBox = new TextBox { Watermark = "Type a command..." };
                 _searchBox.TextChanged += (s, e) => FilterList();
-                _searchBox.KeyDown += (s, e) => 
+                _searchBox.KeyDown += (s, e) =>
                 {
                     if (e.Key == Key.Enter) { SelectAndClose(); e.Handled = true; }
                     if (e.Key == Key.Escape) { Close(null); e.Handled = true; }
                 };
-                
+
                 _listBox = new ListBox();
                 _listBox.DoubleTapped += (s, e) => SelectAndClose();
 

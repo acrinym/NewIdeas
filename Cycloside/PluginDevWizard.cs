@@ -33,7 +33,7 @@ public class PluginDevWizard : Window
         _typeBox.Items.Add("Lua volatile");
         _typeBox.Items.Add("C# volatile");
 
-        var create = new Button { Content = "Create", Margin = new Thickness(0,10,0,0) };
+        var create = new Button { Content = "Create", Margin = new Thickness(0, 10, 0, 0) };
         create.Click += Create_Click;
         panel.Children.Add(_nameBox);
         panel.Children.Add(_typeBox);

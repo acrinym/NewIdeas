@@ -30,7 +30,7 @@ namespace Cycloside.Plugins.BuiltIn
 
         // Configuration (will be moved to settings later)
         private string _activeSaver = ScreenSaverModuleRegistry.ModuleNames.FirstOrDefault() ?? string.Empty;
-        
+
         public string Name => "ScreenSaver Host";
         public string Description => "Runs full-screen screensavers after a period of inactivity.";
         public Version Version => new(1, 4, 1); // Version bump for stability improvements
@@ -43,7 +43,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 _idleTimeout = TimeSpan.FromSeconds(60);
                 _lastInputTime = DateTime.Now;
-                
+
                 _hook = new TaskPoolGlobalHook();
                 _hook.MouseMoved += OnMouseMoved;
                 _hook.KeyPressed += OnKeyPressed;
@@ -249,7 +249,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 Cycloside.Services.Logger.Error($"Error updating animation: {ex.Message}");
                 _errorCount++;
-                
+
                 if (_errorCount >= MaxErrors)
                 {
                     Cycloside.Services.Logger.Error("Too many animation errors, stopping screensaver");
@@ -273,7 +273,7 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 Cycloside.Services.Logger.Error($"Error rendering animation: {ex.Message}");
                 _errorCount++;
-                
+
                 if (_errorCount >= MaxErrors)
                 {
                     Cycloside.Services.Logger.Error("Too many rendering errors, stopping screensaver");
@@ -317,7 +317,7 @@ namespace Cycloside.Plugins.BuiltIn
 
                 foreach (var face in Faces)
                 {
-                    if (face.P0 >= Vertices.Count || face.P1 >= Vertices.Count || 
+                    if (face.P0 >= Vertices.Count || face.P1 >= Vertices.Count ||
                         face.P2 >= Vertices.Count || face.P3 >= Vertices.Count)
                     {
                         Cycloside.Services.Logger.Error("Invalid face vertex indices");
@@ -352,7 +352,7 @@ namespace Cycloside.Plugins.BuiltIn
         public int P0, P1, P2, P3;
         public int MaterialId;
     }
-    
+
     #endregion
 
     #region Animation Implementations
@@ -451,7 +451,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             mesh.Vertices.Clear();
             mesh.Faces.Clear();
-            
+
             float GetZPos(float x) => (float)(Math.Sin(wavePhase + (x * 4.0)) * 0.1);
 
             void AddPanel(float x, float y, float w, float h, int matId)
@@ -468,10 +468,10 @@ namespace Cycloside.Plugins.BuiltIn
             const float w = 0.45f;
             const float h = 0.45f;
             const float gap = 0.1f;
-            AddPanel(-w - gap/2, h + gap/2, w, h, 1); // Red (top-left)
-            AddPanel(gap/2, h + gap/2, w, h, 3);      // Green (top-right)
-            AddPanel(-w - gap/2, -h - gap/2, w, h, 2); // Blue (bottom-left)
-            AddPanel(gap/2, -h - gap/2, w, h, 4);     // Yellow (bottom-right)
+            AddPanel(-w - gap / 2, h + gap / 2, w, h, 1); // Red (top-left)
+            AddPanel(gap / 2, h + gap / 2, w, h, 3);      // Green (top-right)
+            AddPanel(-w - gap / 2, -h - gap / 2, w, h, 2); // Blue (bottom-left)
+            AddPanel(gap / 2, -h - gap / 2, w, h, 4);     // Yellow (bottom-right)
         }
     }
 
@@ -491,7 +491,7 @@ namespace Cycloside.Plugins.BuiltIn
             _mesh = new Mesh();
             GenerateLemniscate(_mesh);
         }
-        
+
         public void Update()
         {
             _mxrot += 0.2; _myrot += _myrotInc; _zrot += _zrotInc;
@@ -511,7 +511,7 @@ namespace Cycloside.Plugins.BuiltIn
                     new TranslateTransform(bounds.Width / 2, bounds.Height / 2)
                 }
             };
-            
+
             using (context.PushTransform(transform.Value))
             {
                 var geometry = new StreamGeometry();
@@ -526,7 +526,7 @@ namespace Cycloside.Plugins.BuiltIn
                 context.DrawGeometry(null, new Pen(Brushes.CornflowerBlue, 0.05), geometry);
             }
         }
-        
+
         private static void GenerateLemniscate(Mesh mesh)
         {
             mesh.Vertices.Clear();
@@ -556,7 +556,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             _textMesh = new Mesh();
             Generate3DTextGeometry(_textMesh, "Cycloside", "Arial", 1.0f, 0.2f);
-            
+
             _materials = new IBrush[] { Brushes.CornflowerBlue, Brushes.DarkSlateBlue };
         }
 
@@ -580,7 +580,7 @@ namespace Cycloside.Plugins.BuiltIn
                     new TranslateTransform(bounds.Width / 2, bounds.Height / 2)
                 }
             };
-            
+
             using (context.PushTransform(transform.Value))
             {
                 _textMesh.Draw(context, _materials);
@@ -687,7 +687,7 @@ namespace Cycloside.Plugins.BuiltIn
     }
 
     #endregion
-    
+
     #region Geometry and Helpers
 
     // A simple 3D point/vector struct for our math
@@ -701,7 +701,7 @@ namespace Cycloside.Plugins.BuiltIn
     {
         public static Point ToPoint(this Point3D p) => new(p.X, p.Y);
     }
-    
+
     internal class FlowerBoxGeometry
     {
         private readonly Point3D[] _basePoints;
@@ -724,7 +724,7 @@ namespace Cycloside.Plugins.BuiltIn
 
             _transformedPoints = new Point3D[_basePoints.Length];
             _vlen = new float[_basePoints.Length];
-            
+
             for (int i = 0; i < _basePoints.Length; i++)
             {
                 var p = _basePoints[i];
@@ -732,7 +732,7 @@ namespace Cycloside.Plugins.BuiltIn
                 d *= 2.0f;
                 _vlen[i] = (1.0f - d) / d;
             }
-            
+
             _sideColors = new IBrush[] { Brushes.Red, Brushes.Green, Brushes.Blue, Brushes.Magenta, Brushes.Cyan, Brushes.Yellow };
             UpdatePoints(0.0f);
         }

@@ -16,7 +16,7 @@ public partial class ThemeSettingsWindow : Window
 {
     private readonly PluginManager _manager;
     private readonly string[] _themes;
-    
+
     private readonly Dictionary<string, ComboBox> _componentComboBoxes = new();
     private ComboBox? _globalThemeBox;
 
@@ -31,7 +31,7 @@ public partial class ThemeSettingsWindow : Window
     public ThemeSettingsWindow(PluginManager manager)
     {
         _manager = manager;
-        
+
         var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
         _themes = Directory.Exists(themeDir)
             ? Directory.GetFiles(themeDir, "*.axaml")
@@ -59,13 +59,13 @@ public partial class ThemeSettingsWindow : Window
         panel.Children.Clear();
 
         // --- Global Theme Setting ---
-        panel.Children.Add(new TextBlock { Text = "Global Application Theme", FontWeight = FontWeight.Bold, Margin = new Thickness(0,0,0,4) });
+        panel.Children.Add(new TextBlock { Text = "Global Application Theme", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 0, 4) });
         _globalThemeBox = new ComboBox { ItemsSource = _themes, SelectedItem = SettingsManager.Settings.GlobalTheme };
         panel.Children.Add(_globalThemeBox);
-        panel.Children.Add(new Separator{ Margin = new Thickness(0, 10)});
+        panel.Children.Add(new Separator { Margin = new Thickness(0, 10) });
 
         // --- Per-Component Theme Settings ---
-        panel.Children.Add(new TextBlock { Text = "Component-Specific Themes (Overrides Global)", FontWeight = FontWeight.Bold, Margin = new Thickness(0,0,0,4) });
+        panel.Children.Add(new TextBlock { Text = "Component-Specific Themes (Overrides Global)", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 0, 4) });
         var components = new List<string> { "MainWindow" };
         components.AddRange(_manager.Plugins.Select(p => p.Name));
 
@@ -73,11 +73,11 @@ public partial class ThemeSettingsWindow : Window
         {
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*") };
             row.Children.Add(new TextBlock { Text = comp, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
-            
+
             var box = new ComboBox { ItemsSource = _themes.Prepend("(Global Theme)").ToList() };
             Grid.SetColumn(box, 1);
             row.Children.Add(box);
-            
+
             if (SettingsManager.Settings.ComponentThemes.TryGetValue(comp, out var themeName))
             {
                 box.SelectedItem = themeName;
@@ -109,12 +109,12 @@ public partial class ThemeSettingsWindow : Window
                 map[comp] = themeName;
             }
         }
-        
+
         SettingsManager.Save();
-        
+
         var msg = new MessageWindow("Settings Saved", "Theme settings have been saved. Some changes may require an application restart to fully apply.");
         msg.ShowDialog(this);
-        
+
         Close();
     }
 

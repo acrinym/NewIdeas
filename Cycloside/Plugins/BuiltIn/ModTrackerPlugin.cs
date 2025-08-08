@@ -49,7 +49,7 @@ namespace Cycloside.Plugins.BuiltIn
         /// </remarks>
         public Module UnsafeGetModule() => _module;
 
-        
+
         public void Dispose()
         {
             _module.Dispose();
@@ -64,14 +64,14 @@ namespace Cycloside.Plugins.BuiltIn
         private IWavePlayer? _wavePlayer;
         private OpenMptWaveProvider? _waveProvider;
         private readonly DispatcherTimer _uiTimer;
-        
+
         // --- IPlugin Properties ---
         public string Name => "ModPlug Tracker";
         public string Description => "Plays and inspects various tracker module files (MOD, IT, S3M, XM, etc.).";
         public Version Version => new(1, 0, 0);
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
-        
+
         // --- Observable Properties for UI Binding ---
         [ObservableProperty]
         private string _moduleName = "No file loaded.";
@@ -98,7 +98,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _window.Activate();
                 return;
             }
-            
+
             _window = BuildTrackerWindow();
             ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
@@ -125,7 +125,7 @@ namespace Cycloside.Plugins.BuiltIn
             _wavePlayer?.Stop();
             _wavePlayer?.Dispose();
             _wavePlayer = null;
-            
+
             _waveProvider?.Dispose();
             _waveProvider = null;
 
@@ -135,21 +135,21 @@ namespace Cycloside.Plugins.BuiltIn
         private void UpdateUI(object? sender, EventArgs e)
         {
             if (!IsPlaying || _waveProvider == null) return;
-            
+
             // This is where we poll libopenmpt for the current state and format it for display.
             var pattern = _waveProvider.UnsafeGetModule().GetCurrentPattern();
             var row = _waveProvider.UnsafeGetModule().GetCurrentRow();
             var numRows = _waveProvider.UnsafeGetModule().GetPatternRowCount(pattern);
-            
+
             var sb = new StringBuilder();
             sb.AppendLine($"Pattern: {pattern} / {_waveProvider.UnsafeGetModule().GetNumberOfPatterns() - 1} | Row: {row} / {numRows - 1}");
             sb.AppendLine("-------------------------------------------------");
-            
+
             // Display a snippet of the current pattern
             int startRow = Math.Max(0, row - 8);
             int endRow = Math.Min(numRows, row + 8);
 
-            for(int r = startRow; r < endRow; r++)
+            for (int r = startRow; r < endRow; r++)
             {
                 if (r == row) sb.Append("> "); else sb.Append("  ");
                 sb.Append($"{r:D2}: ");
@@ -162,9 +162,9 @@ namespace Cycloside.Plugins.BuiltIn
             }
             PatternData = sb.ToString();
         }
-        
+
         // --- Commands ---
-        
+
         [RelayCommand]
         private async Task OpenFile()
         {
@@ -178,13 +178,13 @@ namespace Cycloside.Plugins.BuiltIn
                 FileTypeFilter = new[] { new FilePickerFileType("Tracker Modules") { Patterns = new[] { "*.it", "*.xm", "*.s3m", "*.mod" } }, FilePickerFileTypes.All },
                 SuggestedStartLocation = start
             });
-            
+
             if (result?.FirstOrDefault()?.TryGetLocalPath() is { } path)
             {
                 LoadModule(path);
             }
         }
-        
+
         private void LoadModule(string path)
         {
             CleanupPlayback();
@@ -193,7 +193,7 @@ namespace Cycloside.Plugins.BuiltIn
                 var fileBytes = File.ReadAllBytes(path);
                 var module = Module.Create(fileBytes, new Module.Settings());
                 _waveProvider = new OpenMptWaveProvider(module);
-                
+
                 _wavePlayer = new WaveOutEvent() { DesiredLatency = 200 };
                 _wavePlayer.Init(_waveProvider);
 
@@ -202,11 +202,11 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     ModuleName = Path.GetFileName(path);
                 }
-                
+
                 ModuleInfo = $"Channels: {module.GetNumberOfChannels()} | " +
                              $"Patterns: {module.GetNumberOfPatterns()} | " +
                              $"Samples: {module.GetNumberOfSamples()}";
-                
+
                 PlayCommand.Execute(null);
             }
             catch (Exception ex)
@@ -245,13 +245,13 @@ namespace Cycloside.Plugins.BuiltIn
         }
 
         private bool CanPlay() => !IsPlaying && _waveProvider != null;
-        
+
         // --- UI Construction ---
         private Window BuildTrackerWindow()
         {
             var openButton = new Button { Content = "Open..." };
             openButton.Bind(Button.CommandProperty, new Binding(nameof(OpenFileCommand)));
-            
+
             var playButton = new Button { Content = "Play" };
             playButton.Bind(Button.CommandProperty, new Binding(nameof(PlayCommand)));
 
@@ -269,10 +269,10 @@ namespace Cycloside.Plugins.BuiltIn
                 Children = { openButton, playButton, pauseButton, stopButton }
             };
 
-            var nameBlock = new TextBlock { FontWeight = FontWeight.Bold, FontSize = 14, Margin = new Thickness(5,0) };
+            var nameBlock = new TextBlock { FontWeight = FontWeight.Bold, FontSize = 14, Margin = new Thickness(5, 0) };
             nameBlock.Bind(TextBlock.TextProperty, new Binding(nameof(ModuleName)));
 
-            var infoBlock = new TextBlock { Opacity = 0.8, Margin = new Thickness(5,0,5,5) };
+            var infoBlock = new TextBlock { Opacity = 0.8, Margin = new Thickness(5, 0, 5, 5) };
             infoBlock.Bind(TextBlock.TextProperty, new Binding(nameof(ModuleInfo)));
 
             var patternBlock = new TextBox

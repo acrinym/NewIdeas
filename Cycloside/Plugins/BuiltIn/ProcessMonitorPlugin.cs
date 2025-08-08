@@ -76,7 +76,7 @@ namespace Cycloside.Plugins.BuiltIn
                             // FIXED: Better error handling and more process information
                             var memoryMB = p.WorkingSet64 / 1024 / 1024;
                             var processName = !string.IsNullOrEmpty(p.ProcessName) ? p.ProcessName : "Unknown";
-                            
+
                             // Try to get the main window title for better identification
                             string? windowTitle = null;
                             try
@@ -90,9 +90,9 @@ namespace Cycloside.Plugins.BuiltIn
                             {
                                 // Ignore errors getting window title
                             }
-                            
+
                             var displayName = !string.IsNullOrEmpty(windowTitle) ? $"{processName} - {windowTitle}" : processName;
-                            
+
                             return new ProcessInfo(displayName, memoryMB);
                         }
                         catch (Exception ex)
@@ -118,7 +118,7 @@ namespace Cycloside.Plugins.BuiltIn
                     {
                         Processes.Add(process);
                     }
-                    
+
                     // Log the update for debugging
                     Logger.Log($"Process Monitor: Updated with {currentProcesses.Count} processes");
                 });
