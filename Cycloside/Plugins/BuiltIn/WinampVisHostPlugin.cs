@@ -21,12 +21,11 @@ public class WinampVisHostPlugin : IPlugin
 
     public void Start()
     {
-        // Don't auto-start - wait for MP3layer to enable it
-        Logger.Log("Winamp Visual Host started - waiting for MP3able visualization");
-
-        // FIXED: Create the host window but don't show it yet
+        // Create the host window and immediately enable visualization so the
+        // Winamp plug-ins become visible without extra setup.
         _hostWindow = new VisHostWindow();
         ThemeManager.ApplyForPlugin(_hostWindow, this);
+        EnableVisualization();
     }
 
     public void Stop()
