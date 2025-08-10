@@ -8,8 +8,7 @@ namespace Cycloside.Plugins.BuiltIn;
 public class WinampVisHostPlugin : IPlugin
 {
     private VisPluginManager? _manager;
-    private bool _isEnabled = false;
-    private VisHostWindow? _hostWindow;
+    private bool _isEnabled;
 
     public string Name => "Winamp Visual Host";
     public string Description => "Hosts Winamp visualization plugins";
@@ -21,12 +20,8 @@ public class WinampVisHostPlugin : IPlugin
 
     public void Start()
     {
-        // Don't auto-start - wait for MP3layer to enable it
-        Logger.Log("Winamp Visual Host started - waiting for MP3able visualization");
-
-        // FIXED: Create the host window but don't show it yet
-        _hostWindow = new VisHostWindow();
-        ThemeManager.ApplyForPlugin(_hostWindow, this);
+        // Initialize the plug-in but wait for the MP3 player to request visualization
+        Logger.Log("Winamp Visual Host started");
     }
 
     public void Stop()
@@ -34,8 +29,6 @@ public class WinampVisHostPlugin : IPlugin
         DisableVisualization();
         _manager?.Dispose();
         _manager = null;
-        _hostWindow?.Close();
-        _hostWindow = null;
     }
 
     /// <summary>
@@ -59,13 +52,6 @@ public class WinampVisHostPlugin : IPlugin
 
             _isEnabled = true;
             Logger.Log($"Winamp Visual Host enabled with {_manager.Plugins.Count} plugins");
-
-            // FIXED: Show the host window when visualization is enabled
-            if (_hostWindow != null)
-            {
-                _hostWindow.Show();
-                Logger.Log("Winamp Visual Host window displayed");
-            }
 
             // Auto-start the first plugin if only one is available
             if (_manager.Plugins.Count == 1)
@@ -98,14 +84,6 @@ public class WinampVisHostPlugin : IPlugin
         {
             _manager?.StopPlugin();
             _isEnabled = false;
-
-            // FIXED: Hide the host window when visualization is disabled
-            if (_hostWindow != null)
-            {
-                _hostWindow.Hide();
-                Logger.Log("Winamp Visual Host window hidden");
-            }
-
             Logger.Log("Winamp Visual Host disabled");
         }
         catch (Exception ex)

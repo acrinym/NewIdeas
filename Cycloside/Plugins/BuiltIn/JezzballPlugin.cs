@@ -565,7 +565,10 @@ Tips:
             };
             _timer.Tick += GameTick;
 
-            var canvas = new Canvas();
+            var canvas = new Canvas
+            {
+                Background = Brushes.Transparent // Make canvas hit-testable for pointer events
+            };
             canvas.PointerMoved += OnPointerMoved;
             canvas.PointerPressed += OnPointerPressed;
 
