@@ -10,7 +10,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Cycloside.Plugins;
-using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -127,19 +126,6 @@ Tips:
         WallBreak,
         BallBounce,
         LevelComplete
-    }
-
-    internal static class JezzballSound
-    {
-        public static readonly Dictionary<JezzballSoundEvent, string> Paths = new();
-
-        public static void Play(JezzballSoundEvent ev)
-        {
-            if (Paths.TryGetValue(ev, out var path))
-            {
-                AudioService.Play(path);
-            }
-        }
     }
 
     public class Ball
