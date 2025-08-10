@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -247,7 +248,9 @@ Tips:
                 ((ball.Position.X - start.X) * dx + (ball.Position.Y - start.Y) * dy) / (length * length)));
 
             var closest = new Point(start.X + t * dx, start.Y + t * dy);
-            var distance = (ball.Position - closest).Length;
+            var dx2 = ball.Position.X - closest.X;
+            var dy2 = ball.Position.Y - closest.Y;
+            var distance = Math.Sqrt(dx2 * dx2 + dy2 * dy2);
 
             return distance <= ball.Radius + 2; // 2 for wall thickness
         }
@@ -697,20 +700,18 @@ Tips:
                 var text = _gameState.RoundState == "won" ? "Level Complete!" : "Game Over!";
                 var formattedText = new FormattedText(
                     text,
+                    CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
                     Typeface.Default,
                     48,
-                    TextAlignment.Center,
-                    TextWrapping.NoWrap,
-                    Size.Infinity);
+                    Brushes.White);
 
-                var textBounds = new Rect(
-                    (bounds.Width - formattedText.Bounds.Width) / 2,
-                    (bounds.Height - formattedText.Bounds.Height) / 2,
-                    formattedText.Bounds.Width,
-                    formattedText.Bounds.Height);
+                var textPosition = new Point(
+                    (bounds.Width - formattedText.Width) / 2,
+                    (bounds.Height - formattedText.Height) / 2);
 
                 context.DrawRectangle(new SolidColorBrush(Colors.Black, 0.8), null, bounds);
-                context.DrawText(Brushes.White, textBounds.Position, formattedText);
+                context.DrawText(formattedText, textPosition);
 
                 if (_gameState.RoundState == "won")
                 {
@@ -722,7 +723,6 @@ Tips:
         public void Dispose()
         {
             _timer?.Stop();
-            _timer?.Dispose();
         }
     }
 }
