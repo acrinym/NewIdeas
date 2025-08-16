@@ -3,6 +3,9 @@
 This repository hosts the **Cycloside** project along with related documentation.
 When making changes, please follow these rules:
 
+## Environment Setup
+- Ensure the .NET SDK 8 (`dotnet-sdk-8.0`) is installed before running any builds or linters.
+
 ## Coding Style
 - Use 4 spaces for C# indentation.
 - Keep C# files under `Cycloside/` organized by existing structure.
