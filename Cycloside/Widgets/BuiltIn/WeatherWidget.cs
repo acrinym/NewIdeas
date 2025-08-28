@@ -7,11 +7,21 @@ using System;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Cycloside.Services;
 
 namespace Cycloside.Widgets.BuiltIn;
 
 public class WeatherWidget : IWidget
 {
+    private static readonly HttpClient s_client = CreateClient();
+
+    private static HttpClient CreateClient()
+    {
+        var c = new HttpClient();
+        c.Timeout = TimeSpan.FromSeconds(5);
+        return c;
+    }
+
     public string Name => "Weather";
 
     public Control BuildView()
@@ -25,11 +35,17 @@ public class WeatherWidget : IWidget
             Padding = new Thickness(4),
             Child = text
         };
+        // Open settings on double-click
         border.PointerPressed += (_, e) =>
         {
             if (e.ClickCount == 2)
                 new WeatherSettingsWindow(async () => await UpdateAsync(text)).Show();
         };
+
+        // Subscribe to global refresh so multiple widgets update together
+        Action<object?> handler = async _ => await UpdateAsync(text);
+        PluginBus.Subscribe("weather:refresh", handler);
+        border.DetachedFromVisualTree += (_, __) => PluginBus.Unsubscribe("weather:refresh", handler);
         return border;
     }
 
@@ -37,7 +53,7 @@ public class WeatherWidget : IWidget
     {
         try
         {
-            using var client = new HttpClient();
+            var client = s_client;
             var lat = SettingsManager.Settings.WeatherLatitude;
             var lon = SettingsManager.Settings.WeatherLongitude;
             var city = SettingsManager.Settings.WeatherCity;
@@ -60,8 +76,9 @@ public class WeatherWidget : IWidget
             var temp = doc.RootElement.GetProperty("current_weather").GetProperty("temperature").GetDouble();
             block.Text = $"Temp: {temp}°C";
         }
-        catch
+        catch (Exception ex)
         {
+            Services.Logger.Error($"Weather error: {ex.Message}");
             block.Text = "Weather unavailable";
         }
     }

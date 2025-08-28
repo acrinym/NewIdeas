@@ -21,7 +21,10 @@ public static class StateManager
                 if (data != null) return data;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Services.Logger.Log($"State load error: {ex.Message}");
+        }
         return new Dictionary<string, string>();
     }
 
@@ -32,7 +35,10 @@ public static class StateManager
             var json = JsonSerializer.Serialize(_state, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(StatePath, json);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Services.Logger.Log($"State save error: {ex.Message}");
+        }
     }
 
     public static void Set(string key, string value)

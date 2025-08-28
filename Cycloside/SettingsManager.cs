@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Threading;
 
 namespace Cycloside;
 
@@ -71,8 +73,19 @@ public static class SettingsManager
 {
     private static readonly string SettingsPath = Path.Combine(AppContext.BaseDirectory, "settings.json");
     private static AppSettings _settings = Load();
+    private static Timer? _saveTimer;
 
     public static AppSettings Settings => _settings;
+
+    static SettingsManager()
+    {
+        // Ensure a non-default API token is set on first run.
+        if (string.IsNullOrWhiteSpace(_settings.RemoteApiToken) || _settings.RemoteApiToken == "secret")
+        {
+            _settings.RemoteApiToken = GenerateToken();
+            Save();
+        }
+    }
 
     /// <summary>
     /// Loads settings from disk or returns defaults when the file is missing.
@@ -88,7 +101,10 @@ public static class SettingsManager
                 if (s != null) return s;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Services.Logger.Log($"Settings load error: {ex.Message}");
+        }
         return new AppSettings();
     }
 
@@ -102,6 +118,35 @@ public static class SettingsManager
             var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(SettingsPath, json);
         }
+        catch (Exception ex)
+        {
+            Services.Logger.Log($"Settings save error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Batches multiple Save requests into a single write after a short delay.
+    /// Helps reduce startup I/O when many plugins update version info.
+    /// </summary>
+    public static void SaveSoon(int delayMs = 500)
+    {
+        try
+        {
+            _saveTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+        }
         catch { }
+        _saveTimer ??= new Timer(_ =>
+        {
+            try { Save(); }
+            catch { }
+        });
+        _saveTimer.Change(delayMs, Timeout.Infinite);
+    }
+
+    private static string GenerateToken()
+    {
+        var bytes = new byte[32];
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToHexString(bytes);
     }
 }

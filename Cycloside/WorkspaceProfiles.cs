@@ -35,7 +35,10 @@ public static class WorkspaceProfiles
                 if (p != null) return p;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Services.Logger.Log($"Profiles load error: {ex.Message}");
+        }
         return new();
     }
 
@@ -46,7 +49,10 @@ public static class WorkspaceProfiles
             var json = JsonSerializer.Serialize(_profiles, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(ProfilePath, json);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Services.Logger.Log($"Profiles save error: {ex.Message}");
+        }
     }
 
     public static void Apply(string name, PluginManager manager)

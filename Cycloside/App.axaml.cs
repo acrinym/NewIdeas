@@ -66,7 +66,12 @@ public partial class App : Application
             _mainWindow.Show();
         }
 
-        desktop.Exit += (_, _) => SaveSessionState();
+        desktop.Exit += (_, _) =>
+        {
+            SaveSessionState();
+            // Ensure logs are flushed at shutdown
+            Services.Logger.Shutdown();
+        };
 
         base.OnFrameworkInitializationCompleted();
     }
@@ -186,6 +191,43 @@ public partial class App : Application
         }
         _trayIcon.IsVisible = true;
 
+        // Post-startup: try upgrading the tray icon from a fast placeholder to a system icon on Windows
+        if (OperatingSystem.IsWindows())
+        {
+            try
+            {
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                        var icon = ExtractIconFromDll(Path.Combine(systemDir, "imageres.dll"), 25) ??
+                                   ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 20) ??
+                                   ExtractIconFromDll(Path.Combine(systemDir, "shell32.dll"), 8);
+                        if (icon != null)
+                        {
+                            using var stream = new MemoryStream();
+#pragma warning disable CA1416
+                            icon.Save(stream);
+#pragma warning restore CA1416
+                            stream.Position = 0;
+                            var winIcon = new WindowIcon(stream);
+                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            {
+                                if (_trayIcon != null)
+                                    _trayIcon.Icon = winIcon;
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"Tray icon upgrade failed: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex) { Logger.Log($"Tray icon upgrade scheduling failed: {ex.Message}"); }
+        }
+
         return mainWindow;
     }
 
@@ -221,6 +263,7 @@ public partial class App : Application
 
         TryAdd(() => new DateTimeOverlayPlugin());
         TryAdd(() => new MP3PlayerPlugin());
+        TryAdd(() => new ManagedVisHostPlugin());
         TryAdd(() => new MacroPlugin());
         TryAdd(() => new TextEditorPlugin());
         TryAdd(() => new WallpaperPlugin());

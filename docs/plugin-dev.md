@@ -70,6 +70,38 @@ Alternatively use **Settings → Generate New Plugin** inside the app to pick fr
 Lua (`.lua`) and C# script (`.csx`) files can be executed in memory. Use the tray menu **Settings → Generate New Plugin** and choose a volatile type to create a starter file.
 See [volatile-scripting.md](volatile-scripting.md) for common examples and tips.
 
+## Managed Visualizers (C#)
+
+You can implement audio visualizers in pure C# using Avalonia drawing primitives — no native dependencies required.
+
+- Implement `Cycloside.Visuals.Managed.IManagedVisualizer`:
+
+```csharp
+using Avalonia;
+using Avalonia.Media;
+using Cycloside.Plugins.BuiltIn; // AudioData
+using Cycloside.Visuals.Managed;
+
+public sealed class MyVisualizer : IManagedVisualizer
+{
+    public string Name => "My Visualizer";
+    public string Description => "Awesome visuals";
+    public void Init() { }
+    public void Dispose() { }
+    public void UpdateAudioData(AudioData data) { /* read spectrum/waveform */ }
+    public void Render(DrawingContext ctx, Size size, TimeSpan elapsed)
+    {
+        ctx.FillRectangle(ManagedVisStyle.Background(), new Rect(size));
+        // draw...
+    }
+}
+```
+
+- Optional: implement `IManagedVisualizerConfigurable` to expose a small options panel (e.g., sliders) and persist values via `StateManager`.
+- Discovery: visualizers are discovered by reflection on startup of the `Managed Visual Host` plugin (public parameterless ctor required).
+- Styling: use `ManagedVisStyle.Background()/Accent()/Secondary()` and `ManagedVisStyle.Sensitivity` for consistent visuals.
+- Audio: the host forwards `AudioData` published by the MP3 player on bus topic `audio:data`.
+
 ## Metadata
 
 Each plugin should expose `Name`, `Description` and `Version`. The plugin manager uses these to display information in the GUI.

@@ -9,7 +9,7 @@ namespace Cycloside.Hotkeys;
 
 internal sealed class SharpGlobalHotkeyManager : IDisposable
 {
-    private readonly IGlobalHook _hook = new TaskPoolGlobalHook();
+    private IGlobalHook? _hook;
     private readonly List<KeyGesture> _gestures = new();
     private bool _running;
 
@@ -31,6 +31,7 @@ internal sealed class SharpGlobalHotkeyManager : IDisposable
 
     private void Start()
     {
+        _hook ??= new TaskPoolGlobalHook();
         _hook.KeyPressed += OnKeyPressed;
         _hook.RunAsync();
         _running = true;
@@ -38,8 +39,12 @@ internal sealed class SharpGlobalHotkeyManager : IDisposable
 
     private void Stop()
     {
-        _hook.KeyPressed -= OnKeyPressed;
-        _hook.Dispose();
+        if (_hook != null)
+        {
+            _hook.KeyPressed -= OnKeyPressed;
+            _hook.Dispose();
+            _hook = null;
+        }
         _running = false;
     }
 

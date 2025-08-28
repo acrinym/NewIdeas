@@ -53,6 +53,8 @@ public class WeatherSettingsWindow : Window
         SettingsManager.Settings.WeatherCity = _cityBox.Text ?? string.Empty;
         SettingsManager.Save();
         _onSaved?.Invoke();
+        // Notify all widgets to refresh their displayed data
+        PluginBus.Publish("weather:refresh");
         Close();
     }
 }

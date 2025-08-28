@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Cycloside;
 
@@ -59,5 +60,13 @@ public static class PluginBus
         {
             try { h(payload); } catch (Exception ex) { Logger.Log($"Bus handler error: {ex.Message}"); }
         }
+    }
+
+    /// <summary>
+    /// Publish an event asynchronously. Handlers run on thread pool threads.
+    /// </summary>
+    public static void PublishAsync(string topic, object? payload = null)
+    {
+        Task.Run(() => Publish(topic, payload));
     }
 }

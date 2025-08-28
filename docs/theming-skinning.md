@@ -84,3 +84,10 @@ The preview window now loads your markup at runtime so the layout matches the
 XAML exactly. If parsing fails, the error message is displayed inside the
 preview. The editor also exposes a list of available cursors so you can quickly
 try them out while designing your look.
+
+## Native Colors in Managed Visuals
+
+The Managed Visual Host can adopt the operating system’s accent and background colors.
+Toggle “Use native colors” in the visualizer window to enable this. Otherwise, pick from
+presets like Neon, Classic, Fire, Ocean, Matrix, and Sunset. A global Sensitivity slider
+scales spectrum/beat responses across visualizers.

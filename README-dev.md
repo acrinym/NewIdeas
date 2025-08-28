@@ -44,6 +44,16 @@ planned features for the Cycloside project.
 | `TerminalPlugin` | Simple command shell window. |
 | `WidgetHostPlugin` | Hosts small widgets inside dockable panels. |
 | `WinampVisHostPlugin` | Runs Winamp AVS visualisation presets. |
+| `ManagedVisHostPlugin` | Hosts fully managed C# visualizers, discovered via reflection. |
+
+## Managed Visuals (Architecture)
+
+- Host plugin: `ManagedVisHostPlugin` subscribes to `audio:data` and renders in an Avalonia window.
+- Visualizer contract: implement `IManagedVisualizer` with `Init()`, `UpdateAudioData(AudioData)`, and `Render(DrawingContext, Size, TimeSpan)`.
+- Optional options panel: implement `IManagedVisualizerConfigurable` to expose a small options `Control` and load persisted values from `StateManager`.
+- Discovery: all `IManagedVisualizer` types with a public parameterless constructor are discovered via reflection and shown in a selector.
+- Styling: `ManagedVisStyle` provides native color adoption (system accent + background), theme presets (Neon, Classic, Fire, Ocean, Matrix, Sunset), and a global Sensitivity value.
+- Data: `AudioData` carries 1152-byte stereo spectrum and waveform arrays; the MP3 player publishes to `PluginBus` on topic `audio:data`.
 
 ## Issues and TODO
 - Crash logging is enabled by default but stack traces should also be written to

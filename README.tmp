@@ -34,8 +34,6 @@ Detailed instructions for creating your own look are in
 [`docs/theming-skinning.md`](docs/theming-skinning.md).
 
 For plugin development details see [`docs/plugin-dev.md`](docs/plugin-dev.md).
-For details on the new fully managed visualization system (no native deps), see
-[`docs/managed-visuals.md`](docs/managed-visuals.md).
 Examples live under [`docs/examples/`](docs/examples/).
 For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scripting.md).
 
@@ -98,7 +96,6 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `WallpaperPlugin`        | Changes the desktop wallpaper periodically.                                              |
 | `WidgetHostPlugin`       | Hosts small widgets inside dockable panels.                                              |
 | `WinampVisHostPlugin`    | Winamp visualisations integrated with the MP3 player.|
-| `ManagedVisHostPlugin`   | Fully managed C# visualizers (bars, oscilloscope, spectrogram, matrix rain, lava lamp, starfield, etc.).|
 
 </details>
 
@@ -109,3 +106,4 @@ Ensure the .NET 8 SDK is installed (download from https://dotnet.microsoft.com/d
 ```bash
 dotnet build Cycloside/Cycloside.csproj
 ```
+

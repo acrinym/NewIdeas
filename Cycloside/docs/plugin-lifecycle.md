@@ -31,6 +31,8 @@ PluginBus.Publish("my:event", payload);
 
 Unsubscribing removes the handler so plugins can clean up during `Stop()`.
 
+The MP3 player publishes audio data (`AudioData`) on the topic `audio:data`. The managed visual host subscribes to this to drive visualizers.
+
 ## Remote API
 
 `RemoteApiServer` exposes `http://localhost:4123/trigger`. Posting a topic name to this endpoint publishes that event on the bus. This allows scripts or other applications to control your plugins without direct references.

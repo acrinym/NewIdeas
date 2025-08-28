@@ -114,6 +114,10 @@ namespace Cycloside.Plugins.BuiltIn
         private SpectrumAnalyzer? _spectrumAnalyzer;
         private Views.MP3PlayerWindow? _window; // Using explicit namespace to avoid ambiguity
         private WinampVisHostPlugin? _visHost;
+        private readonly byte[] _spectrumBuf = new byte[576];
+        private readonly byte[] _waveformBuf = new byte[576];
+        private readonly byte[] _stereoSpectrum = new byte[1152];
+        private readonly byte[] _stereoWaveform = new byte[1152];
 
         // --- IPlugin Properties ---
         public string Name => "MP3 Player";
@@ -420,23 +424,22 @@ namespace Cycloside.Plugins.BuiltIn
             if (_audioReader is null || !IsPlaying || _spectrumAnalyzer is null) return;
             CurrentTime = _audioReader.CurrentTime;
 
-            // Ensure byte arrays are correctly sized for Winamp visualizers (576 samples)
-            var spectrum = new byte[576];
-            var waveform = new byte[576];
+            // Only compute and publish audio data if visualization host is enabled
+            if (_visHost?.IsEnabled == true)
+            {
+                // Reuse buffers to reduce allocations each tick.
+                _spectrumAnalyzer.GetFftData(_spectrumBuf);
+                _spectrumAnalyzer.GetWaveformData(_waveformBuf);
 
-            _spectrumAnalyzer.GetFftData(spectrum);
-            _spectrumAnalyzer.GetWaveformData(waveform);
+                // Duplicate mono data into stereo buffers expected by visualizers.
+                Buffer.BlockCopy(_spectrumBuf, 0, _stereoSpectrum, 0, 576);
+                Buffer.BlockCopy(_spectrumBuf, 0, _stereoSpectrum, 576, 576);
+                Buffer.BlockCopy(_waveformBuf, 0, _stereoWaveform, 0, 576);
+                Buffer.BlockCopy(_waveformBuf, 0, _stereoWaveform, 576, 576);
 
-            // Publish a stereo version of the data for plugins that expect it.
-            var stereoSpectrum = new byte[1152];
-            var stereoWaveform = new byte[1152];
-            Array.Copy(spectrum, 0, stereoSpectrum, 0, 576);
-            Array.Copy(spectrum, 0, stereoSpectrum, 576, 576); // Duplicate mono to right channel
-            Array.Copy(waveform, 0, stereoWaveform, 0, 576);
-            Array.Copy(waveform, 0, stereoWaveform, 576, 576);
-
-            var payload = new AudioData(stereoSpectrum, stereoWaveform);
-            PluginBus.Publish(AudioDataTopic, payload);
+                var payload = new AudioData(_stereoSpectrum, _stereoWaveform);
+                PluginBus.PublishAsync(AudioDataTopic, payload);
+            }
         }
 
         private void CleanupPlayback()

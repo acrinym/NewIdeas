@@ -12,3 +12,6 @@ the main window's **Settings** menu.
 - Enable Safe Mode per built-in plugin when needed.
 
 Changes are saved back to `settings.json` when you press **Save**.
+
+Note: Managed Visual Host options (native colors, preset theme, sensitivity, and per‑visualizer settings)
+are available directly in the visualizer window and persist automatically; they do not appear in the Control Panel.

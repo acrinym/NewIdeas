@@ -215,7 +215,8 @@ namespace Cycloside.Plugins
                 }
 
                 versions[plugin.Name] = plugin.Version.ToString();
-                SettingsManager.Save(); // Consider debouncing this if it's slow
+                // Debounced save to avoid repeated disk writes during startup
+                SettingsManager.SaveSoon();
 
                 _pluginInfos.Add(info);
             }
