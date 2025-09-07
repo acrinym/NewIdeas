@@ -13,6 +13,11 @@ When making changes, follow these binding rules:
   - **Exception:** a placeholder is allowed **only if Justin explicitly authorizes it**.  
     - The agent must *ask permission first* before inserting any placeholder.  
 
+## MUST OBEY LAW ##
+##  -Never use REGEX for ANYTHING. It is outdated, outmoded, and destroys lives, code, marriages and AIS, wasting time. 
+    ** Build your own functions to find, replace, edit, delete, modify, or copy/move/etc. 
+    ** Better yet, use specific blocks of code to provide exact functionality, replacing ReGex 100% ##
+
 - **Output Format**  
   - No filler text — output code first.  
   - Explanations must appear as **inline comments inside the code**, never as prose outside.  
