@@ -113,7 +113,10 @@ namespace Cycloside.Plugins.BuiltIn
         private float _volumeBeforeMute;
         private SpectrumAnalyzer? _spectrumAnalyzer;
         private Views.MP3PlayerWindow? _window; // Using explicit namespace to avoid ambiguity
-        private WinampVisHostPlugin? _visHost;
+        // Switched from WinampVisHostPlugin to the managed visualizer host.
+        // We keep a reference to the plugin instance and the manager that controls enablement.
+        private IPlugin? _visHost;
+        private Plugins.PluginManager? _visHostManager;
         private readonly byte[] _spectrumBuf = new byte[576];
         private readonly byte[] _waveformBuf = new byte[576];
         private readonly byte[] _stereoSpectrum = new byte[1152];
@@ -165,7 +168,7 @@ namespace Cycloside.Plugins.BuiltIn
             _window.Closed += (_, _) => _window = null;
             _window.Show();
 
-            // Try to find the Winamp visualization host plugin
+            // Try to find the managed visualization host plugin
             TryFindVisHost();
         }
 
@@ -192,13 +195,17 @@ namespace Cycloside.Plugins.BuiltIn
                 TryFindVisHost();
                 if (_visHost == null)
                 {
-                    ErrorMessage = "Winamp Visual Host plugin not found";
+                    ErrorMessage = "Managed Visual Host plugin not found";
                     return;
                 }
             }
 
-            _visHost.ToggleVisualization();
-            UpdateVisualizationStatus();
+            if (_visHostManager != null && _visHost != null)
+            {
+                if (_visHostManager.IsEnabled(_visHost)) _visHostManager.DisablePlugin(_visHost);
+                else _visHostManager.EnablePlugin(_visHost);
+                UpdateVisualizationStatus();
+            }
         }
 
         [RelayCommand]
@@ -209,13 +216,16 @@ namespace Cycloside.Plugins.BuiltIn
                 TryFindVisHost();
                 if (_visHost == null)
                 {
-                    ErrorMessage = "Winamp Visual Host plugin not found";
+                    ErrorMessage = "Managed Visual Host plugin not found";
                     return;
                 }
             }
 
-            _visHost.EnableVisualization();
-            UpdateVisualizationStatus();
+            if (_visHostManager != null && _visHost != null)
+            {
+                _visHostManager.EnablePlugin(_visHost);
+                UpdateVisualizationStatus();
+            }
         }
 
         [RelayCommand]
@@ -226,13 +236,16 @@ namespace Cycloside.Plugins.BuiltIn
                 TryFindVisHost();
                 if (_visHost == null)
                 {
-                    ErrorMessage = "Winamp Visual Host plugin not found";
+                    ErrorMessage = "Managed Visual Host plugin not found";
                     return;
                 }
             }
 
-            _visHost.DisableVisualization();
-            UpdateVisualizationStatus();
+            if (_visHostManager != null && _visHost != null)
+            {
+                _visHostManager.DisablePlugin(_visHost);
+                UpdateVisualizationStatus();
+            }
         }
 
         // --- Private Methods ---
@@ -240,7 +253,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             try
             {
-                // FIXED: Try multiple approaches to find the WinampVisHostPlugin
+                // Locate the Managed Visual Host plugin via the app's PluginManager
                 if (_visHost != null) return; // Already found
 
                 // Approach 1: Try to find through the applications plugin manager
@@ -248,34 +261,43 @@ namespace Cycloside.Plugins.BuiltIn
                     desktop.MainWindow is MainWindow mainWindow &&
                     mainWindow.PluginManager != null)
                 {
-                    var visPlugin = mainWindow.PluginManager.Plugins.FirstOrDefault(p => p.Name == "Winamp Visual Host");
-                    if (visPlugin is WinampVisHostPlugin visHost)
+                    var visPlugin = mainWindow.PluginManager.Plugins.FirstOrDefault(p => p.Name == "Managed Visual Host");
+                    if (visPlugin is IPlugin visHost)
                     {
                         _visHost = visHost;
+                        _visHostManager = mainWindow.PluginManager;
                         UpdateVisualizationStatus();
-                        Logger.Log("Found Winamp Visual Host plugin through plugin manager");
+                        Logger.Log("Found Managed Visual Host plugin through plugin manager");
                         return;
                     }
                 }
 
-                // Approach 2: Try to create a new instance if not found
-                Logger.Log("Winamp Visual Host plugin not found, attempting to create new instance");
-                _visHost = new WinampVisHostPlugin();
-                _visHost.Start();
-                UpdateVisualizationStatus();
-                Logger.Log("Created new Winamp Visual Host plugin instance");
+                // Approach 2: Register a new built-in ManagedVisHostPlugin if not found
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop2 &&
+                    desktop2.MainWindow is MainWindow mainWindow2 &&
+                    mainWindow2.PluginManager != null)
+                {
+                    var plugin = new ManagedVisHostPlugin();
+                    mainWindow2.PluginManager.AddPlugin(plugin);
+                    _visHost = plugin;
+                    _visHostManager = mainWindow2.PluginManager;
+                    _visHostManager.EnablePlugin(plugin);
+                    UpdateVisualizationStatus();
+                    Logger.Log("Registered and enabled Managed Visual Host plugin");
+                    return;
+                }
             }
             catch (Exception ex)
             {
-                Logger.Log($"Failed to find Winamp Visual Host: {ex.Message}");
+                Logger.Log($"Failed to find Managed Visual Host: {ex.Message}");
             }
         }
 
         private void UpdateVisualizationStatus()
         {
-            if (_visHost != null)
+            if (_visHost != null && _visHostManager != null)
             {
-                VisualizationStatus = _visHost.GetStatus();
+                VisualizationStatus = _visHostManager.IsEnabled(_visHost) ? "Active" : "Disabled";
                 Logger.Log($"Visualization status updated: {VisualizationStatus}");
             }
             else
@@ -424,22 +446,20 @@ namespace Cycloside.Plugins.BuiltIn
             if (_audioReader is null || !IsPlaying || _spectrumAnalyzer is null) return;
             CurrentTime = _audioReader.CurrentTime;
 
-            // Only compute and publish audio data if visualization host is enabled
-            if (_visHost?.IsEnabled == true)
-            {
-                // Reuse buffers to reduce allocations each tick.
-                _spectrumAnalyzer.GetFftData(_spectrumBuf);
-                _spectrumAnalyzer.GetWaveformData(_waveformBuf);
+            // Always compute and publish audio data so any visual host can subscribe.
+            // This avoids tight coupling to specific host plugin enablement paths.
+            // Reuse buffers to reduce allocations each tick.
+            _spectrumAnalyzer.GetFftData(_spectrumBuf);
+            _spectrumAnalyzer.GetWaveformData(_waveformBuf);
 
-                // Duplicate mono data into stereo buffers expected by visualizers.
-                Buffer.BlockCopy(_spectrumBuf, 0, _stereoSpectrum, 0, 576);
-                Buffer.BlockCopy(_spectrumBuf, 0, _stereoSpectrum, 576, 576);
-                Buffer.BlockCopy(_waveformBuf, 0, _stereoWaveform, 0, 576);
-                Buffer.BlockCopy(_waveformBuf, 0, _stereoWaveform, 576, 576);
+            // Duplicate mono data into stereo buffers expected by visualizers.
+            Buffer.BlockCopy(_spectrumBuf, 0, _stereoSpectrum, 0, 576);
+            Buffer.BlockCopy(_spectrumBuf, 0, _stereoSpectrum, 576, 576);
+            Buffer.BlockCopy(_waveformBuf, 0, _stereoWaveform, 0, 576);
+            Buffer.BlockCopy(_waveformBuf, 0, _stereoWaveform, 576, 576);
 
-                var payload = new AudioData(_stereoSpectrum, _stereoWaveform);
-                PluginBus.PublishAsync(AudioDataTopic, payload);
-            }
+            var payload = new AudioData(_stereoSpectrum, _stereoWaveform);
+            PluginBus.PublishAsync(AudioDataTopic, payload);
         }
 
         private void CleanupPlayback()

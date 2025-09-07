@@ -281,7 +281,10 @@ public partial class App : Application
         TryAdd(() => new JezzballPlugin());
         TryAdd(() => new QuickLauncherPlugin(manager));
         TryAdd(() => new WidgetHostPlugin(manager));
-        TryAdd(() => new WinampVisHostPlugin());
+        // Switched from legacy Winamp-based visual host to the fully managed visualizer host.
+        // The managed host renders with Avalonia, avoids native DLLs, and integrates directly
+        // with our AudioData bus. This removes the dependency on vis_avs.dll and related C++ shims.
+        TryAdd(() => new ManagedVisHostPlugin());
         TryAdd(() => new QBasicRetroIDEPlugin());
         // TryAdd(() => new ScreenSaverPlugin()); // Disabled for stability
     }

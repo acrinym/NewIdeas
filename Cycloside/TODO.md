@@ -31,7 +31,10 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
     - [x] Command history (arrow keys)
     - [x] Styled output (color text, scrollback)
 - [x] Jezzball plugin powerups, visual effects & Original Mode
-- [x] Winamp visualizer integration with MP3 player
+- [x] Managed visualizer host with MP3 player (Avalonia-based)
+    - [ ] Reduce visualizer latency (UI marshalling/back-pressure)
+    - [ ] Optional AVS preset support via transpiler (scoped subset)
+    - [ ] Replace/augment NAudio backend (evaluate BASS/CSCore/FFmpeg)
 - [x] **Network Tools Plugin**
     - [x] Ping, traceroute utilities
     - [x] Port scanner
