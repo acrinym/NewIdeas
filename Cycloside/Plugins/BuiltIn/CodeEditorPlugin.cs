@@ -209,6 +209,24 @@ namespace Cycloside.Plugins.BuiltIn
             }
         }
 
+        [RelayCommand]
+        private void Close() => _window?.Close();
+
+        [RelayCommand]
+        private void Undo() => _editor?.Undo();
+
+        [RelayCommand]
+        private void Redo() => _editor?.Redo();
+
+        [RelayCommand]
+        private void Cut() => _editor?.Cut();
+
+        [RelayCommand]
+        private void Copy() => _editor?.Copy();
+
+        [RelayCommand]
+        private void Paste() => _editor?.Paste();
+
         private string GetSelectedLanguage() => _languageBox?.SelectedItem switch
         {
             ComboBoxItem item => item.Content?.ToString() ?? "C#",

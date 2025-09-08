@@ -7,15 +7,29 @@
         Title="Code Editor"
         Width="800" Height="600">
     <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open..." Command="{Binding OpenFileCommand}" />
+                <MenuItem Header="_Save" Command="{Binding SaveFileCommand}" />
+                <MenuItem Header="Save _As..." Command="{Binding SaveFileAsCommand}" />
+                <Separator />
+                <MenuItem Header="_Close" Command="{Binding CloseCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" Command="{Binding UndoCommand}" />
+                <MenuItem Header="_Redo" Command="{Binding RedoCommand}" />
+                <Separator />
+                <MenuItem Header="_Cut" Command="{Binding CutCommand}" />
+                <MenuItem Header="_Copy" Command="{Binding CopyCommand}" />
+                <MenuItem Header="_Paste" Command="{Binding PasteCommand}" />
+            </MenuItem>
+        </Menu>
         <StackPanel Orientation="Horizontal" Spacing="5" Margin="5" DockPanel.Dock="Top">
             <ComboBox x:Name="LanguageBox" Width="100">
                 <ComboBoxItem Content="C#"/>
                 <ComboBoxItem Content="Python"/>
                 <ComboBoxItem Content="JavaScript"/>
             </ComboBox>
-            <Button Content="Open" Command="{Binding OpenFileCommand}"/>
-            <Button Content="Save" Command="{Binding SaveFileCommand}"/>
-            <Button Content="Save As" Command="{Binding SaveFileAsCommand}"/>
             <Button Content="Run" Command="{Binding RunCodeCommand}"/>
         </StackPanel>
         <Grid RowDefinitions="*,Auto" Margin="5">
