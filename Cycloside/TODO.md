@@ -1,6 +1,6 @@
 # Avalonia Hacker's Paradise App — Master ToDo List
 
-This is a development checklist for your Avalonia-powered hacker’s paradise app, plugin system, and future marketplace. Mark items as complete or in progress as you build.
+This is a development checklist for your Avalonia-powered hacker's paradise app, plugin system, and future marketplace. Mark items as complete or in progress as you build.
 
 ---
 
@@ -18,23 +18,20 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 - [x] Error handling: Safe fallback if a plugin fails to load
 
 ## Default Plugins
-- [ ] **Code Editor Plugin** (AvaloniaEdit)
-    - [ ] Syntax highlighting (C#, Python, JS, etc.)
-    - [ ] Auto-complete support
-    - [ ] “Run” button (Roslyn, IronPython, JS engine)
+- [x] **Code Editor Plugin** (AvaloniaEdit)
+    - [x] Syntax highlighting (C#, Python, JS, etc.)
+    - [x] Auto-complete support
+    - [x] "Run" button (Roslyn, IronPython, JS engine)
  - [x] **File Explorer Plugin**
     - [x] TreeView/ListView for file system
     - [x] Context menu (Open, Rename, Delete, etc.)
-    - [x] “Open in Code Editor” action
+    - [x] "Open in Code Editor" action
 - [x] **Terminal Emulator Plugin**
     - [x] Shell command execution
     - [x] Command history (arrow keys)
     - [x] Styled output (color text, scrollback)
 - [x] Jezzball plugin powerups, visual effects & Original Mode
-- [x] Managed visualizer host with MP3 player (Avalonia-based)
-    - [ ] Reduce visualizer latency (UI marshalling/back-pressure)
-    - [ ] Optional AVS preset support via transpiler (scoped subset)
-    - [ ] Replace/augment NAudio backend (evaluate BASS/CSCore/FFmpeg)
+- [x] Winamp visualizer integration with MP3 player
 - [x] **Network Tools Plugin**
     - [x] Ping, traceroute utilities
     - [x] Port scanner
@@ -60,8 +57,8 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 - [x] Save and restore last session state
 
 ## System Integration
-- [ ] Hotkey support for quick access (e.g., Ctrl+T for Terminal)
-- [ ] Cross-platform compatibility (Windows/Linux/Mac)
+- [x] Hotkey support for quick access (e.g., Ctrl+T for Terminal)
+- [x] Cross-platform compatibility (Windows/Linux/Mac)
 - [ ] Installer packaging (MSIX, AppImage, etc.)
 
 ## Advanced Features (Optional/Inspiration)

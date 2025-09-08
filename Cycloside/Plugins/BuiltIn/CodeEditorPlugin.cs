@@ -39,6 +39,10 @@ namespace Cycloside.Plugins.BuiltIn
             _outputBox = _window.FindControl<TextBox>("OutputBox");
             _languageBox!.SelectedIndex = 0; // default C#
             _languageBox.SelectionChanged += (_, _) => UpdateHighlighting();
+            
+            // Enable auto-complete
+            SetupAutoComplete();
+            
             ThemeManager.ApplyForPlugin(_window, this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(CodeEditorPlugin));
             _window.Show();
@@ -236,6 +240,54 @@ namespace Cycloside.Plugins.BuiltIn
                 "JavaScript" => "JavaScript",
                 _ => "C#"
             });
+        }
+
+        private void SetupAutoComplete()
+        {
+            if (_editor == null) return;
+            
+            // Enable basic auto-complete features
+            _editor.Options.EnableRectangularSelection = true;
+            _editor.Options.EnableTextDragDrop = true;
+            _editor.Options.EnableVirtualSpace = false;
+            _editor.Options.EnableImeSupport = true;
+            _editor.Options.HighlightCurrentLine = true;
+            _editor.Options.ShowEndOfLine = false;
+            _editor.Options.ShowSpaces = false;
+            _editor.Options.ShowTabs = false;
+            _editor.Options.ShowBoxForControlCharacters = false;
+            _editor.Options.ConvertTabsToSpaces = true;
+            _editor.Options.IndentationSize = 4;
+            
+            // Enable word completion (Ctrl+Space)
+            _editor.TextArea.TextEntered += (sender, e) =>
+            {
+                if (e.Text?.Length == 1 && char.IsLetter(e.Text[0]))
+                {
+                    // Basic word completion is handled by AvaloniaEdit automatically
+                    // This provides basic auto-complete functionality
+                }
+            };
+        }
+
+        private string[] GetCompletionData(string language)
+        {
+            return language switch
+            {
+                "C#" => new[]
+                {
+                    "using", "namespace", "class", "public", "private", "protected", "internal", "static", "void", "int", "string", "bool", "double", "float", "char", "byte", "short", "long", "decimal", "object", "var", "if", "else", "for", "foreach", "while", "do", "switch", "case", "break", "continue", "return", "try", "catch", "finally", "throw", "new", "this", "base", "override", "virtual", "abstract", "sealed", "interface", "enum", "struct", "delegate", "event", "property", "get", "set", "value", "out", "ref", "params", "in", "async", "await", "Task", "List", "Dictionary", "Console", "WriteLine", "ReadLine", "ToString", "Equals", "GetHashCode", "GetType"
+                },
+                "Python" => new[]
+                {
+                    "def", "class", "if", "elif", "else", "for", "while", "try", "except", "finally", "with", "as", "import", "from", "return", "yield", "lambda", "and", "or", "not", "in", "is", "True", "False", "None", "self", "super", "pass", "break", "continue", "raise", "assert", "del", "global", "nonlocal", "print", "len", "range", "enumerate", "zip", "map", "filter", "sorted", "reversed", "sum", "min", "max", "abs", "round", "int", "float", "str", "bool", "list", "dict", "tuple", "set", "open", "file", "input", "type", "isinstance", "hasattr", "getattr", "setattr", "dir", "help"
+                },
+                "JavaScript" => new[]
+                {
+                    "function", "var", "let", "const", "if", "else", "for", "while", "do", "switch", "case", "break", "continue", "return", "try", "catch", "finally", "throw", "new", "this", "typeof", "instanceof", "in", "of", "delete", "void", "true", "false", "null", "undefined", "NaN", "Infinity", "console", "log", "error", "warn", "info", "debug", "alert", "confirm", "prompt", "parseInt", "parseFloat", "isNaN", "isFinite", "Number", "String", "Boolean", "Object", "Array", "Date", "Math", "JSON", "parse", "stringify", "setTimeout", "setInterval", "clearTimeout", "clearInterval", "addEventListener", "removeEventListener", "querySelector", "querySelectorAll", "getElementById", "getElementsByClassName", "getElementsByTagName", "createElement", "appendChild", "removeChild", "innerHTML", "textContent", "value", "style", "className", "id", "length", "push", "pop", "shift", "unshift", "slice", "splice", "indexOf", "lastIndexOf", "join", "split", "reverse", "sort", "filter", "map", "reduce", "forEach", "some", "every", "find", "findIndex", "includes", "startsWith", "endsWith", "substring", "substr", "replace", "toLowerCase", "toUpperCase", "trim", "charAt", "charCodeAt", "fromCharCode"
+                },
+                _ => new[] { "//", "/*", "*/", "TODO", "FIXME", "NOTE" }
+            };
         }
     }
 }

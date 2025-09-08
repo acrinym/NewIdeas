@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Cycloside.Plugins;
@@ -67,7 +68,7 @@ namespace Cycloside.Services
 
             // Remove any existing global theme to prevent conflicts
             var existing = Application.Current.Styles.OfType<StyleInclude>()
-                .FirstOrDefault(s => s.Source?.OriginalString.Contains("/Themes/Global/") == true);
+                .FirstOrDefault(s => s.Source?.OriginalString.Contains("Themes/Global") == true);
             if (existing != null)
             {
                 Application.Current.Styles.Remove(existing);
@@ -76,16 +77,16 @@ namespace Cycloside.Services
 
             try
             {
-                // FIXED: Use proper URI construction for theme files
-                var themeUri = new Uri($"file:///{file.Replace('\\', '/')}");
-                var newThemeStyle = new StyleInclude(themeUri)
-                {
-                    Source = themeUri
-                };
+                // FIXED: Use proper file URI construction for theme files
+                var fileUri = new Uri(file);
+                var newThemeStyle = new StyleInclude(fileUri);
                 Application.Current.Styles.Add(newThemeStyle);
                 SettingsManager.Settings.GlobalTheme = themeName;
                 SettingsManager.Save();
                 Logger.Log($"Successfully loaded theme '{themeName}' from '{file}'");
+                
+                // FIXED: Force refresh of all existing windows
+                RefreshAllWindows();
                 return true;
             }
             catch (Exception ex)
@@ -93,7 +94,44 @@ namespace Cycloside.Services
                 Logger.Log($"Failed to load theme '{themeName}': {ex.Message}");
                 Logger.Log($"Theme file path: {file}");
                 Logger.Log($"Theme directory exists: {Directory.Exists(ThemeDir)}");
+                Logger.Log($"Theme file exists: {File.Exists(file)}");
+                Logger.Log($"Exception type: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    Logger.Log($"Inner exception: {ex.InnerException.Message}");
+                }
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Forces all existing windows to refresh their styling.
+        /// This ensures theme changes apply immediately without restart.
+        /// </summary>
+        private static void RefreshAllWindows()
+        {
+            try
+            {
+                // Get all open windows and force them to refresh
+                var windows = Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                    ? desktop.Windows.ToList()
+                    : new List<Window>();
+
+                foreach (var window in windows)
+                {
+                    // Force the window to invalidate its visual tree
+                    window.InvalidateVisual();
+                    
+                    // Re-apply component themes if they exist
+                    var windowName = window.GetType().Name;
+                    ApplyComponentTheme(window, windowName);
+                    
+                    Logger.Log($"Refreshed styling for window: {windowName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error refreshing windows: {ex.Message}");
             }
         }
 
@@ -145,16 +183,56 @@ namespace Cycloside.Services
 
                 try
                 {
-                    var themeStyle = new StyleInclude(new Uri("resm:Styles?assembly=Cycloside"))
-                    {
-                        Source = new Uri(file)
-                    };
+                    // FIXED: Use proper file URI for component themes
+                    var fileUri = new Uri(file);
+                    var themeStyle = new StyleInclude(fileUri);
                     element.Styles.Add(themeStyle);
                 }
                 catch (Exception ex)
                 {
                     Logger.Log($"Failed to apply component theme '{themeName}' to '{componentName}': {ex.Message}");
                 }
+            }
+        }
+
+        /// <summary>
+        /// Refreshes component themes for all existing windows.
+        /// This is called when component theme settings change.
+        /// </summary>
+        public static void RefreshComponentThemes()
+        {
+            try
+            {
+                var windows = Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                    ? desktop.Windows.ToList()
+                    : new List<Window>();
+
+                foreach (var window in windows)
+                {
+                    var windowName = window.GetType().Name;
+                    
+                    // Clear existing component themes
+                    var existingThemes = window.Styles.OfType<StyleInclude>()
+                        .Where(s => s.Source?.OriginalString.Contains("Themes/Global") == true)
+                        .ToList();
+                    
+                    foreach (var theme in existingThemes)
+                    {
+                        window.Styles.Remove(theme);
+                    }
+                    
+                    // Re-apply component theme
+                    ApplyComponentTheme(window, windowName);
+                    
+                    // Force visual refresh
+                    window.InvalidateVisual();
+                    
+                    Logger.Log($"Refreshed component theme for window: {windowName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error refreshing component themes: {ex.Message}");
             }
         }
     }
