@@ -112,15 +112,49 @@ public partial class ThemeSettingsWindow : Window
 
         SettingsManager.Save();
 
-        var msg = new MessageWindow("Settings Saved", "Theme settings have been saved. Some changes may require an application restart to fully apply.");
+        // FIXED: Apply component theme changes immediately
+        ThemeManager.RefreshComponentThemes();
+
+        var msg = new MessageWindow("Settings Saved", "Theme settings have been saved and applied immediately!");
         msg.ShowDialog(this);
 
         Close();
     }
 
+    private void PreviewButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        // FIXED: Add preview functionality
+        if (_globalThemeBox?.SelectedItem is string globalTheme)
+        {
+            // Temporarily apply the theme for preview
+            var originalTheme = SettingsManager.Settings.GlobalTheme;
+            ThemeManager.LoadGlobalTheme(globalTheme);
+            
+            // Show preview message
+            var msg = new MessageWindow("Theme Preview", 
+                $"Previewing theme '{globalTheme}'. Click OK to keep this theme or Cancel to revert to '{originalTheme}'.", true);
+            msg.ShowDialog(this);
+            var result = msg.DialogResult;
+            
+            // If user cancels, revert to original theme
+            if (result != true)
+            {
+                ThemeManager.LoadGlobalTheme(originalTheme);
+            }
+            else
+            {
+                // User liked the preview, save it
+                SettingsManager.Settings.GlobalTheme = globalTheme;
+                SettingsManager.Save();
+            }
+        }
+    }
+
     private class MessageWindow : Window
     {
-        public MessageWindow(string title, string message)
+        public bool? DialogResult { get; private set; }
+
+        public MessageWindow(string title, string message, bool showCancel = false)
         {
             Title = title;
             Width = 350;
@@ -135,16 +169,26 @@ public partial class ThemeSettingsWindow : Window
             };
 
             var ok = new Button { Content = "OK", IsDefault = true, Margin = new Thickness(5) };
-            ok.Click += (_, _) => Close();
+            ok.Click += (_, _) => { DialogResult = true; Close(); };
+
+            var cancel = new Button { Content = "Cancel", Margin = new Thickness(5) };
+            cancel.Click += (_, _) => { DialogResult = false; Close(); };
+
+            var buttonPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            
+            buttonPanel.Children.Add(ok);
+            if (showCancel)
+            {
+                buttonPanel.Children.Add(cancel);
+            }
 
             var panel = new StackPanel { Spacing = 10 };
             panel.Children.Add(msg);
-            panel.Children.Add(new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Children = { ok }
-            });
+            panel.Children.Add(buttonPanel);
             Content = panel;
         }
     }

@@ -18,10 +18,10 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 - [x] Error handling: Safe fallback if a plugin fails to load
 
 ## Default Plugins
-- [ ] **Code Editor Plugin** (AvaloniaEdit)
-    - [ ] Syntax highlighting (C#, Python, JS, etc.)
-    - [ ] Auto-complete support
-    - [ ] “Run” button (Roslyn, IronPython, JS engine)
+- [x] **Code Editor Plugin** (AvaloniaEdit)
+    - [x] Syntax highlighting (C#, Python, JS, etc.)
+    - [x] Auto-complete support
+    - [x] "Run" button (Roslyn, IronPython, JS engine)
  - [x] **File Explorer Plugin**
     - [x] TreeView/ListView for file system
     - [x] Context menu (Open, Rename, Delete, etc.)
@@ -57,8 +57,8 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 - [x] Save and restore last session state
 
 ## System Integration
-- [ ] Hotkey support for quick access (e.g., Ctrl+T for Terminal)
-- [ ] Cross-platform compatibility (Windows/Linux/Mac)
+- [x] Hotkey support for quick access (e.g., Ctrl+T for Terminal)
+- [x] Cross-platform compatibility (Windows/Linux/Mac)
 - [ ] Installer packaging (MSIX, AppImage, etc.)
 
 ## Advanced Features (Optional/Inspiration)

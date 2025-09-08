@@ -1,3 +1,4 @@
+
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -7,6 +8,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
@@ -21,14 +23,19 @@
     <AvaloniaResource Include="Resources\**" />
     <AvaloniaResource Include="Themes\Global\*.axaml" />
   </ItemGroup>
+  
   <ItemGroup>
     <Content Include="Themes\Global\*.axaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  
+
   <ItemGroup>
-    <!-- Using the newer package versions from your file -->
+    <!-- MonoGame packages -->
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <PackageReference Include="SpriteFontPlus" Version="0.8.5.43" />
+    
+    <!-- Avalonia packages -->
     <PackageReference Include="Avalonia" Version="11.3.1" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.1" />
@@ -45,6 +52,7 @@
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
     <PackageReference Include="ReactiveUI" Version="19.6.1" />
     
+    <!-- Other packages -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />

@@ -54,6 +54,8 @@ public class FullPathToFileNameConverter : IValueConverter
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // This converter is one-way only (display only), so ConvertBack is not needed
+        // Return the original value or empty string as fallback
+        return value ?? string.Empty;
     }
 }
