@@ -16,6 +16,10 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- Include resources like images or fonts from the Resources folder -->
     <AvaloniaResource Include="Resources\**" />
@@ -60,6 +64,10 @@
 
     <!-- Local build of libopenmpt bindings -->
     <ProjectReference Include="..\LibModPlugSharp\LibModPlugSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="Pty.Net\Pty.Net.csproj" />
   </ItemGroup>
 
 </Project>

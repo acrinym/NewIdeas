@@ -10,12 +10,6 @@ using Cycloside.Services;
 namespace Cycloside.Plugins.BuiltIn
 {
     /// <summary>
-    /// A simple data record to hold information about a single process.
-    /// Using a record is cleaner than passing around formatted strings.
-    /// </summary>
-    public record ProcessInfo(string Name, long MemoryUsageMb);
-
-    /// <summary>
     /// Acts as the ViewModel for the Process Monitor window.
     /// </summary>
     public partial class ProcessMonitorPlugin : ObservableObject, IPlugin, IDisposable
@@ -31,7 +25,7 @@ namespace Cycloside.Plugins.BuiltIn
         public bool ForceDefaultTheme => false;
 
         // --- Observable Properties for UI Binding ---
-        public ObservableCollection<ProcessInfo> Processes { get; } = new();
+        public ObservableCollection<Services.ProcessInfo> Processes { get; } = new();
 
         // --- Plugin Lifecycle & Disposal ---
 
@@ -93,13 +87,13 @@ namespace Cycloside.Plugins.BuiltIn
 
                             var displayName = !string.IsNullOrEmpty(windowTitle) ? $"{processName} - {windowTitle}" : processName;
 
-                            return new ProcessInfo(displayName, memoryMB);
+                            return new Services.ProcessInfo { Pid = p.Id, Name = displayName, MemoryUsageMb = memoryMB, StartTime = p.StartTime };
                         }
                         catch (Exception ex)
                         {
                             // Log the specific error for debugging
                             Logger.Log($"Process Monitor: Error reading process {p.ProcessName}: {ex.Message}");
-                            return new ProcessInfo(p.ProcessName ?? "Unknown", 0);
+                            return new Services.ProcessInfo { Name = p.ProcessName ?? "Unknown" };
                         }
                     })
                     .Where(p => p.MemoryUsageMb > 0) // Only show processes with memory usage

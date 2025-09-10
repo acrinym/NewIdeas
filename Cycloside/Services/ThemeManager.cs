@@ -56,7 +56,6 @@ namespace Cycloside.Services
             if (!File.Exists(file))
             {
                 Logger.Log($"Global theme '{themeName}' not found at '{file}'.");
-                // FIXED: Try to create a default theme if none exists
                 if (themeName != "MintGreen")
                 {
                     Logger.Log("Attempting to load fallback theme 'MintGreen'");
@@ -65,7 +64,6 @@ namespace Cycloside.Services
                 return false;
             }
 
-            // Remove any existing global theme to prevent conflicts
             var existing = Application.Current.Styles.OfType<StyleInclude>()
                 .FirstOrDefault(s => s.Source?.OriginalString.Contains("/Themes/Global/") == true);
             if (existing != null)
@@ -76,35 +74,19 @@ namespace Cycloside.Services
 
             try
             {
-                // FIXED: Use proper URI construction for theme files
-                var themeUri = new Uri($"file:///{file.Replace('\\', '/')}");
-                var newThemeStyle = new StyleInclude(themeUri)
-                {
-                    Source = themeUri
-                };
+                var themeUri = new Uri(file, UriKind.Absolute);
+                var newThemeStyle = new StyleInclude(themeUri);
                 Application.Current.Styles.Add(newThemeStyle);
                 SettingsManager.Settings.GlobalTheme = themeName;
                 SettingsManager.Save();
-                Logger.Log($"Successfully loaded theme '{themeName}' from '{file}'");
+                Logger.Log($"Successfully loaded global theme '{themeName}' from '{file}'");
                 return true;
             }
             catch (Exception ex)
             {
                 Logger.Log($"Failed to load theme '{themeName}': {ex.Message}");
-                Logger.Log($"Theme file path: {file}");
-                Logger.Log($"Theme directory exists: {Directory.Exists(ThemeDir)}");
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Applies the global theme and any component-specific themes
-        /// based on the current settings. This is the main entry point for plugins.
-        /// </summary>
-        public static void ApplyFromSettings(Window window, string componentName)
-        {
-            // The global theme is loaded once at startup, so we just need to apply component themes here.
-            ApplyComponentTheme(window, componentName);
         }
 
         /// <summary>
@@ -145,11 +127,10 @@ namespace Cycloside.Services
 
                 try
                 {
-                    var themeStyle = new StyleInclude(new Uri("resm:Styles?assembly=Cycloside"))
-                    {
-                        Source = new Uri(file)
-                    };
+                    var themeUri = new Uri(file, UriKind.Absolute);
+                    var themeStyle = new StyleInclude(themeUri);
                     element.Styles.Add(themeStyle);
+                    Logger.Log($"Successfully applied component theme '{themeName}' to '{componentName}'");
                 }
                 catch (Exception ex)
                 {

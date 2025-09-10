@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn"
+        xmlns:services="clr-namespace:Cycloside.Services"
+        x:Class="Cycloside.Plugins.BuiltIn.Views.TaskManagerWindow"
+        x:DataType="local:TaskManagerPlugin"
+        Title="Task Manager"
+        Width="600" Height="400">
+    <DockPanel>
+        <Button DockPanel.Dock="Bottom"
+                Content="Kill Selected Process"
+                Command="{Binding KillProcessCommand}"
+                CommandParameter="{Binding #ProcessGrid.SelectedItem}"
+                HorizontalAlignment="Center"
+                Margin="5"/>
+        <DataGrid x:Name="ProcessGrid"
+                  ItemsSource="{Binding Processes}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="*"/>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*"/>
+                <DataGridTextColumn Header="Start Time" Binding="{Binding StartTime, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="2*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

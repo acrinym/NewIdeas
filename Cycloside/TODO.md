@@ -88,6 +88,12 @@ This is a development checklist for your Avalonia-powered hacker’s paradise ap
 - [ ] Rootkit detection and process monitor
 - [ ] Exploit database search plugin
 - [ ] VPN/Proxy switcher
+- [ ] A "Dashboard" Plugin that can host widgets from other plugins.
+- [ ] A "Packet Sniffer" Plugin to capture and inspect network traffic.
+- [ ] A "System Information" Plugin to display detailed system info.
+- [ ] A "Visual Scripting" Plugin for node-based scripting.
+- [ ] A true Cross-Platform Terminal that works on Windows, Linux, and macOS.
+- [ ] An "Admin Commands" Cheat Sheet with explanations and examples for both Windows and Linux.
 
 ---
 

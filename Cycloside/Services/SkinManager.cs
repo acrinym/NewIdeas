@@ -29,11 +29,17 @@ namespace Cycloside.Services
                 Logger.Log($"Warning: The file '{skinName}.axaml' appears to be a global theme but is being applied as a component skin. This may cause unexpected visual results.");
             }
 
-            var skinStyle = new StyleInclude(new Uri("resm:Styles?assembly=Cycloside"))
+            try
             {
-                Source = new Uri(file)
-            };
-            element.Styles.Add(skinStyle);
+                var skinUri = new Uri(file, UriKind.Absolute);
+                var skinStyle = new StyleInclude(skinUri);
+                element.Styles.Add(skinStyle);
+                Logger.Log($"Successfully applied skin '{skinName}' to '{element.GetType().Name}'");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to apply skin '{skinName}' to '{element.GetType().Name}': {ex.Message}");
+            }
         }
 
         private static bool IsFileATheme(string path)

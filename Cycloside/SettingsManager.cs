@@ -29,6 +29,9 @@ public class AppSettings
     // Path to the dotnet executable used by plugins or scripts.
     public string DotNetPath { get; set; } = "dotnet";
 
+    // The shell to use for the terminal.
+    public string TerminalShell { get; set; } = "";
+
     // RENAMED: This maps components (like plugin names) to specific skins.
     public Dictionary<string, string> ComponentThemes { get; set; } = new();
 
@@ -63,6 +66,7 @@ public class AppSettings
     public string ActiveProfile { get; set; } = "default";
     public string RemoteApiToken { get; set; } = "secret";
     public bool FirstRun { get; set; } = true;
+    public Dictionary<string, Dictionary<string, string>> PluginSettings { get; set; } = new();
 }
 
 /// <summary>
@@ -148,5 +152,27 @@ public static class SettingsManager
         var bytes = new byte[32];
         RandomNumberGenerator.Fill(bytes);
         return Convert.ToHexString(bytes);
+    }
+
+    public static void SetPluginSetting(string pluginName, string key, string value)
+    {
+        if (!Settings.PluginSettings.ContainsKey(pluginName))
+        {
+            Settings.PluginSettings[pluginName] = new Dictionary<string, string>();
+        }
+        Settings.PluginSettings[pluginName][key] = value;
+        SaveSoon();
+    }
+
+    public static string GetPluginSetting(string pluginName, string key, string defaultValue)
+    {
+        if (Settings.PluginSettings.TryGetValue(pluginName, out var pluginSettings))
+        {
+            if (pluginSettings.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+        }
+        return defaultValue;
     }
 }

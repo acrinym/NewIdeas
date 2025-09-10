@@ -1,0 +1,47 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <!-- Dracula Colors -->
+    <Color x:Key="ThemeBackgroundColor">#282a36</Color>
+    <Color x:Key="ThemeForegroundColor">#f8f8f2</Color>
+    <Color x:Key="ThemeAccentColor">#bd93f9</Color>
+    <Color x:Key="ThemeHighlightColor">#50fa7b</Color>
+    <Color x:Key="ThemeErrorColor">#ff5555</Color>
+    <Color x:Key="ThemeWarningColor">#f1fa8c</Color>
+    <Color x:Key="ThemeSuccessColor">#50fa7b</Color>
+
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="ThemeBackgroundBrush" Color="{StaticResource ThemeBackgroundColor}"/>
+    <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{StaticResource ThemeForegroundColor}"/>
+    <SolidColorBrush x:Key="ThemeAccentBrush" Color="{StaticResource ThemeAccentColor}"/>
+    <SolidColorBrush x:Key="ThemeHighlightBrush" Color="{StaticResource ThemeHighlightColor}"/>
+    <SolidColorBrush x:Key="ThemeErrorBrush" Color="{StaticResource ThemeErrorColor}"/>
+    <SolidColorBrush x:Key="ThemeWarningBrush" Color="{StaticResource ThemeWarningColor}"/>
+    <SolidColorBrush x:Key="ThemeSuccessBrush" Color="{StaticResource ThemeSuccessColor}"/>
+  </Styles.Resources>
+
+  <!-- Window -->
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource ThemeBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource ThemeForegroundBrush}"/>
+  </Style>
+
+  <!-- Button -->
+  <Style Selector="Button">
+    <Setter Property="Background" Value="{StaticResource ThemeAccentBrush}"/>
+    <Setter Property="Foreground" Value="#ffffff"/>
+  </Style>
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="{StaticResource ThemeHighlightBrush}"/>
+  </Style>
+
+  <!-- TextBox -->
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="#44475a"/>
+    <Setter Property="Foreground" Value="{StaticResource ThemeForegroundColor}"/>
+    <Setter Property="CaretBrush" Value="{StaticResource ThemeForegroundColor}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource ThemeAccentBrush}"/>
+  </Style>
+  <Style Selector="TextBox:focus">
+    <Setter Property="BorderBrush" Value="{StaticResource ThemeHighlightBrush}"/>
+  </Style>
+</Styles>

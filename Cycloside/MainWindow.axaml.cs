@@ -14,7 +14,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         _manager = null!;
-        ThemeManager.ApplyFromSettings(this, nameof(MainWindow));
+        ThemeManager.ApplyComponentTheme(this, nameof(MainWindow));
         CursorManager.ApplyFromSettings(this, nameof(MainWindow));
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(MainWindow));
     }
@@ -23,7 +23,7 @@ public partial class MainWindow : Window
     {
         _manager = manager;
         InitializeComponent();
-        ThemeManager.ApplyFromSettings(this, nameof(MainWindow));
+        ThemeManager.ApplyComponentTheme(this, nameof(MainWindow));
         CursorManager.ApplyFromSettings(this, nameof(MainWindow));
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(MainWindow));
     }

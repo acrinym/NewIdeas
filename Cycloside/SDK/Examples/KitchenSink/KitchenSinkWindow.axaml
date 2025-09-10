@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Cycloside.SDK.Examples.KitchenSink"
+        x:Class="Cycloside.SDK.Examples.KitchenSink.KitchenSinkWindow"
+        x:DataType="vm:KitchenSinkViewModel"
+        Title="SDK Kitchen Sink"
+        Width="400" Height="300">
+    <StackPanel Spacing="10" Margin="10">
+        <TextBlock Text="PluginBus Demo"/>
+        <Button Content="Send Message to Bus" Command="{Binding SendMessageCommand}"/>
+        <TextBlock Text="{Binding MessageFromBus}" Margin="0,10,0,0"/>
+
+        <Separator Margin="0,20,0,0"/>
+
+        <TextBlock Text="SettingsManager Demo"/>
+        <TextBox Text="{Binding PersistedSetting, Mode=TwoWay}" Watermark="Enter a setting to persist"/>
+    </StackPanel>
+</Window>
