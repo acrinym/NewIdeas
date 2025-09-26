@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cycloside; // core models and services
+using Cycloside.Plugins;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -119,17 +120,13 @@ namespace Cycloside.ViewModels
 
         private void LoadPlugins()
         {
-            string[] names =
+            foreach (var descriptor in BuiltInPluginCatalog.Descriptors)
             {
-                "Date/Time Overlay", "MP3 Player", "Macro Engine", "Text Editor", "File Explorer", "Wallpaper Changer",
-                "Clipboard Manager", "File Watcher", "Process Monitor", "Task Scheduler",
-                "Disk Usage", "Log Viewer", "Environment Editor", "Jezzball",
-                "Widget Host", "Winamp Vis Host", "QBasic Retro IDE", "ScreenSaver Host"
-            };
-
-            foreach (var n in names)
-            {
-                Plugins.Add(new PluginItem { Name = n, IsEnabled = true });
+                Plugins.Add(new PluginItem
+                {
+                    Name = descriptor.Name,
+                    IsEnabled = descriptor.EnabledByDefault
+                });
             }
         }
     }
