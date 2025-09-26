@@ -198,6 +198,7 @@ public partial class App : Application
             {
                 Task.Run(() =>
                 {
+                    if (!OperatingSystem.IsWindows()) return; // Analyzer hint: ensure platform guard persists inside async lambda
                     try
                     {
                         var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
@@ -254,39 +255,42 @@ public partial class App : Application
 
     private void LoadAllPlugins(PluginManager manager, AppSettings settings)
     {
-        void TryAdd(Func<IPlugin> factory)
+        bool needsSave = false;
+
+        foreach (var descriptor in BuiltInPluginCatalog.Descriptors)
         {
-            var plugin = factory();
-            if (!settings.DisableBuiltInPlugins || settings.SafeBuiltInPlugins.GetValueOrDefault(plugin.Name, false))
-                manager.AddBuiltInPlugin(factory);
+            bool allow = !settings.DisableBuiltInPlugins ||
+                         settings.SafeBuiltInPlugins.GetValueOrDefault(descriptor.Name, descriptor.IsSafe);
+
+            if (!allow)
+            {
+                if (!settings.SafeBuiltInPlugins.ContainsKey(descriptor.Name))
+                {
+                    settings.SafeBuiltInPlugins[descriptor.Name] = descriptor.IsSafe;
+                    needsSave = true;
+                }
+                continue;
+            }
+
+            manager.AddBuiltInPlugin(() => descriptor.Factory(manager));
+
+            if (!settings.PluginEnabled.ContainsKey(descriptor.Name))
+            {
+                settings.PluginEnabled[descriptor.Name] = descriptor.EnabledByDefault;
+                needsSave = true;
+            }
+
+            if (!settings.SafeBuiltInPlugins.ContainsKey(descriptor.Name))
+            {
+                settings.SafeBuiltInPlugins[descriptor.Name] = descriptor.IsSafe;
+                needsSave = true;
+            }
         }
 
-        TryAdd(() => new DateTimeOverlayPlugin());
-        TryAdd(() => new MP3PlayerPlugin());
-        TryAdd(() => new ManagedVisHostPlugin());
-        TryAdd(() => new MacroPlugin());
-        TryAdd(() => new TextEditorPlugin());
-        TryAdd(() => new WallpaperPlugin());
-        TryAdd(() => new ClipboardManagerPlugin());
-        TryAdd(() => new CodeEditorPlugin());
-        TryAdd(() => new CharacterMapPlugin());
-        TryAdd(() => new FileWatcherPlugin());
-        TryAdd(() => new ProcessMonitorPlugin());
-        TryAdd(() => new TaskSchedulerPlugin());
-        TryAdd(() => new DiskUsagePlugin());
-        TryAdd(() => new TerminalPlugin());
-        TryAdd(() => new LogViewerPlugin());
-        TryAdd(() => new NotificationCenterPlugin());
-        TryAdd(() => new EnvironmentEditorPlugin());
-        TryAdd(() => new JezzballPlugin());
-        TryAdd(() => new QuickLauncherPlugin(manager));
-        TryAdd(() => new WidgetHostPlugin(manager));
-        // Switched from legacy Winamp-based visual host to the fully managed visualizer host.
-        // The managed host renders with Avalonia, avoids native DLLs, and integrates directly
-        // with our AudioData bus. This removes the dependency on vis_avs.dll and related C++ shims.
-        TryAdd(() => new ManagedVisHostPlugin());
-        TryAdd(() => new QBasicRetroIDEPlugin());
-        // TryAdd(() => new ScreenSaverPlugin()); // Disabled for stability
+        if (needsSave)
+        {
+            SettingsManager.SaveSoon();
+        }
     }
 
     private void RegisterHotkeys(PluginManager manager)
