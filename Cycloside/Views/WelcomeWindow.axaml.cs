@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Cycloside.Plugins;
 using Cycloside.Services;
 
@@ -15,7 +16,7 @@ namespace Cycloside.Views
     /// </summary>
     public partial class WelcomeWindow : Window
     {
-        // Plugin configuration will be stored in Controls directly
+        private readonly ObservableCollection<PluginInfo> _pluginItems = new();
 
         public WelcomeWindow()
         {
@@ -52,7 +53,7 @@ namespace Cycloside.Views
                 plugin.LoadOnStartup = config.LoadOnStartup;
             }
 
-            // Create UI items for the ListBox
+            // Clear existing items and add new ones
             PluginListControl.Items.Clear();
             foreach (var plugin in availablePlugins)
             {
@@ -65,7 +66,8 @@ namespace Cycloside.Views
             if (preferredTerminal.Equals("PowerShell", StringComparison.OrdinalIgnoreCase))
             {
                 PowerShellRadio.IsChecked = true;
-            } else
+            }
+            else
             {
                 HackerTerminalRadio.IsChecked = true;
             }
@@ -75,67 +77,65 @@ namespace Cycloside.Views
         {
             var container = new Border
             {
-                Background = Avalonia.Media.Brushes.LightGray,
-                CornerRadius = new Avalonia.CornerRadius(5),
-                Padding = new Avalonia.Thickness(10),
-                Margin = new Avalonia.Thickness(2)
+                Background = Brushes.LightGray,
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(10),
+                Margin = new Thickness(2)
             };
 
-            var grid = new Grid();
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new Avalonia.GridLength(1, Avalonia.GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new Avalonia.GridLength(80) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new Avalonia.GridLength(80) });
+            var mainPanel = new StackPanel();
 
-            // Plugin info
-            var infoPanel = new StackPanel
-            {
-                GridColumn = 0
-            };
-
+            // Plugin name and description
             var nameText = new TextBlock
             {
                 Text = plugin.Name,
-                FontWeight = Avalonia.Media.FontWeight.SemiBold,
-                FontSize = 12
+                FontWeight = FontWeight.SemiBold,
+                FontSize = 14
             };
 
             var descText = new TextBlock
             {
                 Text = plugin.Description,
-                FontSize = 10,
-                Opacity = 0.7
+                FontSize = 12,
+                Opacity = 0.7,
+                TextWrapping = TextWrapping.Wrap
             };
 
-            infoPanel.Children.Add(nameText);
-            infoPanel.Children.Add(descText);
+            mainPanel.Children.Add(nameText);
+            mainPanel.Children.Add(descText);
 
-            // Enabled checkbox
+            // Controls panel
+            var controlsPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 10,
+                Margin = new Thickness(0, 5, 0, 0)
+            };
+
             var enabledCheck = new CheckBox
             {
                 Content = "Enabled",
-                GridColumn = 1,
-                Margin = new Avalonia.Thickness(5),
-                IsChecked = plugin.IsEnabled
+                Margin = new Thickness(5),
+                IsChecked = plugin.IsEnabled,
+                Tag = plugin
             };
-            enabledCheck.Tag = plugin; // Store plugin reference
-            enabledCheck.Checked += OnPluginEnabledChanged;
+            enabledCheck.Click += OnPluginEnabledChanged;
 
-            // Startup checkbox
             var startupCheck = new CheckBox
             {
-                Content = "Startup",
-                GridColumn = 2,
-                Margin = new Avalonia.Thickness(5),
-                IsChecked = plugin.LoadOnStartup
+                Content = "Load on Startup",
+                Margin = new Thickness(5),
+                IsChecked = plugin.LoadOnStartup,
+                Tag = plugin
             };
-            startupCheck.Tag = plugin; // Store plugin reference
-            startupCheck.Checked += OnPluginStartupChanged;
+            startupCheck.Click += OnPluginStartupChanged;
 
-            grid.Children.Add(infoPanel);
-            grid.Children.Add(enabledCheck);
-            grid.Children.Add(startupCheck);
+            controlsPanel.Children.Add(enabledCheck);
+            controlsPanel.Children.Add(startupCheck);
 
-            container.Child = grid;
+            mainPanel.Children.Add(controlsPanel);
+
+            container.Child = mainPanel;
             return container;
         }
 
@@ -143,7 +143,7 @@ namespace Cycloside.Views
         {
             if (sender is CheckBox checkBox && checkBox.Tag is PluginInfo plugin)
             {
-                plugin.IsEnabled = checkBox.Check?.Equals(true) ?? false;
+                plugin.IsEnabled = checkBox.IsChecked ?? false;
                 await ConfigurationManager.SetPluginEnabledAsync(plugin.Name, plugin.IsEnabled);
             }
         }
@@ -152,7 +152,7 @@ namespace Cycloside.Views
         {
             if (sender is CheckBox checkBox && checkBox.Tag is PluginInfo plugin)
             {
-                plugin.LoadOnStartup = checkBox.Check?.Equals(true) ?? false;
+                plugin.LoadOnStartup = checkBox.IsChecked ?? false;
                 await ConfigurationManager.SetPluginStartupPreferenceAsync(plugin.Name, plugin.LoadOnStartup);
             }
         }
@@ -161,7 +161,7 @@ namespace Cycloside.Views
         {
             if (ApplyButton != null)
                 ApplyButton.Click += OnApplyClick;
-            
+
             if (ResetButton != null)
                 ResetButton.Click += OnResetClick;
         }
@@ -179,16 +179,16 @@ namespace Cycloside.Views
                 // Apply terminal preference
                 var preferredTerminal = PowerShellRadio.IsChecked ?? false ? "PowerShell" : "HackerTerminal";
                 await ConfigurationManager.SetTerminalPreferenceAsync(preferredTerminal);
-                
+
                 // Apply welcome preference
                 var dontShowAgain = DontShowAgainCheckBox?.IsChecked ?? false;
                 await ConfigurationManager.SetWelcomePreferenceAsync(!dontShowAgain);
 
                 if (ApplyButton != null)
                     ApplyButton.Content = "✅ Applied!";
-                
+
                 await Task.Delay(1000);
-                
+
                 DialogResult = true;
                 Close();
             }
@@ -199,7 +199,7 @@ namespace Cycloside.Views
                     ApplyButton.Content = "❌ Error";
                     ApplyButton.IsEnabled = true;
                 }
-                
+
                 Logger.Log($"Configuration error: {ex.Message}");
             }
         }
@@ -210,7 +210,7 @@ namespace Cycloside.Views
             {
                 await ConfigurationManager.ResetToDefaultsAsync();
                 LoadPluginsConfiguration();
-                
+
                 if (ResetButton != null)
                 {
                     ResetButton.Content = "✅ Reset!";

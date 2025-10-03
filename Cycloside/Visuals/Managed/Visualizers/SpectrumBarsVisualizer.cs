@@ -82,11 +82,11 @@ public sealed class SpectrumBarsVisualizer : IManagedVisualizer, IManagedVisuali
     {
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         var bars = new Slider { Minimum = 8, Maximum = 128, Width = 160, Value = _bars };
-        bars.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _bars = (int)bars.Value; StateManager.Set(ConfigKey+"Bars", _bars.ToString()); } };
+        bars.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _bars = (int)bars.Value; StateManager.Set(ConfigKey + "Bars", _bars.ToString()); } };
         var smooth = new Slider { Minimum = 0.1, Maximum = 0.95, Width = 140, Value = _smoothFactor };
-        smooth.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _smoothFactor = smooth.Value; StateManager.Set(ConfigKey+"Smooth", _smoothFactor.ToString("0.00")); } };
+        smooth.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _smoothFactor = smooth.Value; StateManager.Set(ConfigKey + "Smooth", _smoothFactor.ToString("0.00")); } };
         var peak = new Slider { Minimum = 0.002, Maximum = 0.05, Width = 140, Value = _peakDecay };
-        peak.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _peakDecay = peak.Value; StateManager.Set(ConfigKey+"PeakDecay", _peakDecay.ToString("0.000")); } };
+        peak.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _peakDecay = peak.Value; StateManager.Set(ConfigKey + "PeakDecay", _peakDecay.ToString("0.000")); } };
         panel.Children.Add(new TextBlock { Text = "Bars:" }); panel.Children.Add(bars);
         panel.Children.Add(new TextBlock { Text = "Smooth:" }); panel.Children.Add(smooth);
         panel.Children.Add(new TextBlock { Text = "Peak:" }); panel.Children.Add(peak);
@@ -94,9 +94,9 @@ public sealed class SpectrumBarsVisualizer : IManagedVisualizer, IManagedVisuali
     }
     public void LoadOptions()
     {
-        if (int.TryParse(StateManager.Get(ConfigKey+"Bars"), out var b)) _bars = Math.Clamp(b, 8, 128);
-        if (double.TryParse(StateManager.Get(ConfigKey+"Smooth"), out var s)) _smoothFactor = Math.Clamp(s, 0.1, 0.95);
-        if (double.TryParse(StateManager.Get(ConfigKey+"PeakDecay"), out var p)) _peakDecay = Math.Clamp(p, 0.002, 0.05);
+        if (int.TryParse(StateManager.Get(ConfigKey + "Bars"), out var b)) _bars = Math.Clamp(b, 8, 128);
+        if (double.TryParse(StateManager.Get(ConfigKey + "Smooth"), out var s)) _smoothFactor = Math.Clamp(s, 0.1, 0.95);
+        if (double.TryParse(StateManager.Get(ConfigKey + "PeakDecay"), out var p)) _peakDecay = Math.Clamp(p, 0.002, 0.05);
         if (_peaks.Length != _bars) _peaks = new double[_bars];
         if (_smooth.Length != _bars) _smooth = new double[_bars];
     }

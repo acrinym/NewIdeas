@@ -127,7 +127,7 @@ namespace Cycloside.Services
         public static async Task SetThemePreferenceAsync(string theme, string variant)
         {
             var changed = false;
-            
+
             if (CurrentConfig.SelectedTheme != theme)
             {
                 CurrentConfig.SelectedTheme = theme;
@@ -166,10 +166,10 @@ namespace Cycloside.Services
             {
                 plugin.Enabled = enabled;
                 plugin.LoadOnStartup = enabled; // If disabled, don't load on startup
-                
+
                 CurrentConfig.Plugins[pluginName] = plugin;
                 await SaveConfigurationAsync();
-                
+
                 Logger.Log($"🔌 Plugin state updated: {pluginName} = {(enabled ? "Enabled" : "Disabled")}");
                 OnConfigurationChanged("Plugin");
             }
@@ -192,10 +192,10 @@ namespace Cycloside.Services
             if (plugin.LoadOnStartup != loadOnStartup)
             {
                 plugin.LoadOnStartup = loadOnStartup;
-                
+
                 CurrentConfig.Plugins[pluginName] = plugin;
                 await SaveConfigurationAsync();
-                
+
                 Logger.Log($"🚀 Plugin startup preference updated: {pluginName} = {(loadOnStartup ? "Load" : "Don't Load")}");
                 OnConfigurationChanged("Startup");
             }
@@ -255,10 +255,10 @@ namespace Cycloside.Services
         public static async Task ResetToDefaultsAsync()
         {
             Logger.Log("🔄 Resetting configuration to defaults...");
-            
+
             _currentConfig = new CyclosideConfig();
             await SaveConfigurationAsync();
-            
+
             Logger.Log("✅ Configuration reset to defaults");
             OnConfigurationChanged("Reset");
         }

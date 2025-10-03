@@ -14,7 +14,7 @@ namespace Cycloside.Services
                 : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             return await provider.TryGetFolderFromPathAsync(path);
         }
-        
+
         /// <summary>
         /// Shows a Yes/No dialog and returns true if the user clicked Yes.
         /// </summary>
@@ -27,7 +27,7 @@ namespace Cycloside.Services
             var confirmWindow = new ConfirmationDialog(title, message);
             return await confirmWindow.ShowDialog<bool>(parent);
         }
-        
+
         /// <summary>
         /// Shows an information dialog with an OK button.
         /// </summary>
@@ -40,7 +40,7 @@ namespace Cycloside.Services
             await messageWindow.ShowDialog(parent);
         }
     }
-    
+
     /// <summary>
     /// A simple confirmation dialog with Yes/No buttons.
     /// </summary>
@@ -53,11 +53,11 @@ namespace Cycloside.Services
             SizeToContent = SizeToContent.Height;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-            var messageBlock = new TextBlock 
-            { 
-                Text = message, 
-                Margin = new Thickness(15), 
-                TextWrapping = Avalonia.Media.TextWrapping.Wrap 
+            var messageBlock = new TextBlock
+            {
+                Text = message,
+                Margin = new Thickness(15),
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap
             };
 
             var yesButton = new Button { Content = "Yes", IsDefault = true, Margin = new Thickness(5) };
@@ -66,10 +66,10 @@ namespace Cycloside.Services
             var noButton = new Button { Content = "No", IsCancel = true, Margin = new Thickness(5) };
             noButton.Click += (_, _) => Close(false);
 
-            var buttonPanel = new StackPanel 
-            { 
-                Orientation = Avalonia.Layout.Orientation.Horizontal, 
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center 
+            var buttonPanel = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
             };
             buttonPanel.Children.Add(yesButton);
             buttonPanel.Children.Add(noButton);

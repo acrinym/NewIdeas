@@ -29,20 +29,20 @@ public sealed class ParticlePulseVisualizer : IManagedVisualizer
     public void Render(DrawingContext ctx, Size size, TimeSpan elapsed)
     {
         var w = size.Width; var h = size.Height; if (w <= 0 || h <= 0) return;
-        ctx.FillRectangle(ManagedVisStyle.Background(), new Rect(0,0,w,h));
+        ctx.FillRectangle(ManagedVisStyle.Background(), new Rect(0, 0, w, h));
 
         // Spawn proportional to amp
         int spawn = (int)(2 + _amp * 40);
-        for (int i=0;i<spawn;i++)
+        for (int i = 0; i < spawn; i++)
         {
             var ang = _rng.NextDouble() * Math.PI * 2;
             var speed = 30 + _rng.NextDouble() * 220 * (0.3 + _amp);
             _ps.Add(new P
             {
-                Pos = new Point(w/2, h/2),
-                Vel = new Point(Math.Cos(ang)*speed, Math.Sin(ang)*speed),
+                Pos = new Point(w / 2, h / 2),
+                Vel = new Point(Math.Cos(ang) * speed, Math.Sin(ang) * speed),
                 Life = 0,
-                MaxLife = 0.8 + _rng.NextDouble()*1.5
+                MaxLife = 0.8 + _rng.NextDouble() * 1.5
             });
         }
 
@@ -67,7 +67,7 @@ public sealed class ParticlePulseVisualizer : IManagedVisualizer
             var color = Color.FromArgb(a, ac.R, ac.G, ac.B);
             var brush = new SolidColorBrush(color);
             double r = 2 + 6 * (1 - t);
-            var geo = new EllipseGeometry(new Rect(p.Pos.X - r, p.Pos.Y - r, 2*r, 2*r));
+            var geo = new EllipseGeometry(new Rect(p.Pos.X - r, p.Pos.Y - r, 2 * r, 2 * r));
             ctx.DrawGeometry(brush, null, geo);
         }
     }

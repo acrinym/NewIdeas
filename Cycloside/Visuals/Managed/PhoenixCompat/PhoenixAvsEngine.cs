@@ -148,7 +148,7 @@ public sealed class AvsEngine : IAvsEngine
 
     private static void RunBlock(SuperscopeEvaluator eval, string code)
     {
-        var parts = code.Split(new[] { ';' , '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var parts = code.Split(new[] { ';', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         foreach (var raw in parts)
         {
             var line = raw;

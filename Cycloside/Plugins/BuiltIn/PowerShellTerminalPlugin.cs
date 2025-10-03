@@ -25,11 +25,11 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Advanced PowerShell terminal with elevation and auto-detection";
         public Version Version => new(1, 0, 0);
         public bool ForceDefaultTheme => false;
-        
+
         public class PowerShellTerminalWidget : IWidget
         {
             public string Name => "PowerShell Terminal";
-            
+
             private TextBox? _outputEditor;
             private TextBox? _commandInput;
             private StackPanel? _toolbar;
@@ -43,7 +43,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _commandHistory = new List<string>();
                 _commandHistoryIndex = 0;
                 _isElevated = PowerShellManager.IsElevated;
-                
+
                 // Subscribe to elevation changes
                 PowerShellManager.ElevationStatusChanged += OnElevationStatusChanged;
                 PowerShellManager.StatusChanged += OnPowerShellStatusChanged;
@@ -243,33 +243,33 @@ namespace Cycloside.Plugins.BuiltIn
                 switch (e.Key)
                 {
                     case Avalonia.Input.Key.Enter:
-                    {
-                        var command = _commandInput?.Text?.Trim();
-                        if (!string.IsNullOrEmpty(command))
                         {
-                            await ExecutePowerShellCommand(command);
-                            if (_commandInput != null)
-                                _commandInput.Text = "";
-                            _commandHistoryIndex = _commandHistory.Count;
+                            var command = _commandInput?.Text?.Trim();
+                            if (!string.IsNullOrEmpty(command))
+                            {
+                                await ExecutePowerShellCommand(command);
+                                if (_commandInput != null)
+                                    _commandInput.Text = "";
+                                _commandHistoryIndex = _commandHistory.Count;
+                            }
+                            break;
                         }
-                        break;
-                    }
                     case Avalonia.Input.Key.Up:
-                    {
-                        NavigateHistory(-1);
-                        break;
-                    }
+                        {
+                            NavigateHistory(-1);
+                            break;
+                        }
                     case Avalonia.Input.Key.Down:
-                    {
-                        NavigateHistory(1);
-                        break;
-                    }
+                        {
+                            NavigateHistory(1);
+                            break;
+                        }
                     case Avalonia.Input.Key.Tab:
-                    {
-                        // Future: PowerShell tab completion
-                        e.Handled = true;
-                        break;
-                    }
+                        {
+                            // Future: PowerShell tab completion
+                            e.Handled = true;
+                            break;
+                        }
                 }
             }
 
@@ -278,7 +278,7 @@ namespace Cycloside.Plugins.BuiltIn
                 if (_commandHistory.Count == 0) return;
 
                 _commandHistoryIndex = Math.Max(0, Math.Min(_commandHistory.Count - 1, _commandHistoryIndex + direction));
-                
+
                 if (_commandHistoryIndex >= 0 && _commandHistoryIndex < _commandHistory.Count && _commandInput != null)
                 {
                     _commandInput.Text = _commandHistory[_commandHistoryIndex];
@@ -309,7 +309,7 @@ namespace Cycloside.Plugins.BuiltIn
 
                     // Execute command
                     var result = await PowerShellManager.ExecutePowerShellCommandAsync(command, false);
-                    
+
                     if (result != null)
                     {
                         AppendOutput(result);
@@ -357,7 +357,7 @@ namespace Cycloside.Plugins.BuiltIn
                 try
                 {
                     UpdateStatus("🔒 Checking elevation status...");
-                    
+
                     if (_isElevated)
                     {
                         AppendOutput("ℹ️ Already running with admin privileges");
@@ -366,21 +366,21 @@ namespace Cycloside.Plugins.BuiltIn
                     }
 
                     AppendOutput("🔒 Requesting elevation to admin privileges...");
-                    
+
                     var success = await PowerShellManager.ElevateToAdminAsync();
-                    
+
                     if (success)
                     {
                         AppendOutput("✅ Successfully elevated to admin privileges!");
                         UpdateStatus("🔒 Running as administrator");
-                        
+
                         // Update toolbar button
                         if (sender is Button button)
                         {
                             button.Content = "🔒 ADMIN";
                             button.Background = Brushes.Red;
                         }
-                        
+
                         // Update prompt
                         AppendOutput(GetPrompt());
                     }
@@ -404,7 +404,7 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     AppendOutput("📥 Initiating PowerShell installation...");
                     UpdateStatus("📥 Checking PowerShell installation...");
-                    
+
                     if (PowerShellManager.IsPowerShellAvailable)
                     {
                         AppendOutput($"✅ PowerShell already installed: v{PowerShellManager.Version}");
@@ -413,18 +413,18 @@ namespace Cycloside.Plugins.BuiltIn
                     }
 
                     AppendOutput("⚠️ PowerShell not detected - Installer starting...");
-                    
+
                     var success = await PowerShellManager.InstallPowerShellAsync();
-                    
+
                     if (success)
                     {
                         AppendOutput("🎉 PowerShell installation completed successfully!");
                         UpdateStatus("✅ PowerShell installed and ready");
-                        
+
                         // Refresh welcome message
                         if (_outputEditor != null)
                             _outputEditor.Text = GetWelcomeMessage();
-                        
+
                         // Update button state
                         if (sender is Button button)
                         {
@@ -453,13 +453,13 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     AppendOutput("📋 Checking PowerShell execution policy...");
                     UpdateStatus("📋 Analyzing execution policy...");
-                    
+
                     var policy = await PowerShellManager.GetExecutionPolicyAsync();
-                    
+
                     if (!string.IsNullOrEmpty(policy))
                     {
                         AppendOutput($"📋 Current execution policy: {policy}");
-                        
+
                         if (policy.Contains("Restricted", StringComparison.OrdinalIgnoreCase))
                         {
                             AppendOutput("⚠️ Policy is Restricted - Scripts may not run");
@@ -470,7 +470,7 @@ namespace Cycloside.Plugins.BuiltIn
                         {
                             AppendOutput("✅ Execution policy allows script execution");
                         }
-                        
+
                         UpdateStatus($"📋 Policy: {policy}");
                     }
                     else
@@ -499,14 +499,14 @@ namespace Cycloside.Plugins.BuiltIn
                 Dispatcher.UIThread.Post(() =>
                 {
                     _isElevated = isAdmin;
-                    
+
                     // Update toolbar button
                     if (_toolbar?.Children.Count > 0 && _toolbar.Children[0] is Button statusButton)
                     {
                         statusButton.Content = _isElevated ? "🔒 ADMIN" : "👤 User";
                         statusButton.Background = _isElevated ? Brushes.Red : Brushes.Green;
                     }
-                    
+
                     AppendOutput($"🔒 Elevation status: {(_isElevated ? "ADMIN" : "User Mode")}");
                 });
             }
@@ -525,7 +525,7 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             Logger.Log("🚀 PowerShell Terminal Plugin started - Production PowerShell integration active");
-            
+
             // Initialize PowerShell Manager
             _ = PowerShellManager.InitializeAsync();
         }

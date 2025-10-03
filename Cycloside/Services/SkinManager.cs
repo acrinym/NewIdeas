@@ -46,12 +46,12 @@ namespace Cycloside.Services
     {
         private static readonly Dictionary<string, SkinManifest> _manifestCache = new();
         private static readonly Dictionary<string, Dictionary<string, StyleInclude>> _skinCache = new();
-        
+
         /// <summary>
         /// Current active skin name
         /// </summary>
         public static string CurrentSkin { get; private set; } = string.Empty;
-        
+
         /// <summary>
         /// Event fired when skin changes
         /// </summary>
@@ -183,12 +183,12 @@ namespace Cycloside.Services
 
                 var json = await File.ReadAllTextAsync(manifestPath);
                 var manifest = JsonSerializer.Deserialize<SkinManifest>(json);
-                
+
                 if (manifest != null)
                 {
                     _manifestCache[skinName] = manifest;
                 }
-                
+
                 return manifest;
             }
             catch (Exception ex)
@@ -201,7 +201,7 @@ namespace Cycloside.Services
         private static async Task ApplyGlobalOverlaysAsync(List<string> globalStyles, StyledElement? element)
         {
             var skinDir = Path.Combine(SkinDir, CurrentSkin);
-            
+
             foreach (var styleFile in globalStyles)
             {
                 var stylePath = Path.Combine(skinDir, styleFile);
@@ -218,7 +218,7 @@ namespace Cycloside.Services
         private static async Task ApplySelectorOverlaysAsync(List<SkinSelector> selectors, StyledElement? element)
         {
             var skinDir = Path.Combine(SkinDir, CurrentSkin);
-            
+
             foreach (var selector in selectors)
             {
                 foreach (var styleFile in selector.Styles)
@@ -268,7 +268,7 @@ namespace Cycloside.Services
                 var replacementFile = kvp.Value;
 
                 Logger.Log($"Window replacement configuration: {windowType} -> {replacementFile}");
-                
+
                 // Apply window replacements to any open windows of the specified type
                 if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
                 {
@@ -278,7 +278,7 @@ namespace Cycloside.Services
                         {
                             var skinDir = Path.Combine(AppContext.BaseDirectory, "Skins", CurrentSkin);
                             var replacementPath = Path.Combine(skinDir, replacementFile);
-                            
+
                             await WindowReplacementManager.ReplaceWindowContentAsync(window, replacementPath);
                         }
                     }
@@ -307,7 +307,7 @@ namespace Cycloside.Services
             var skinStyles = element.Styles.OfType<StyleInclude>()
                 .Where(s => s.Source?.OriginalString.Contains("/Skins/") == true)
                 .ToList();
-            
+
             foreach (var skin in skinStyles)
             {
                 element.Styles.Remove(skin);

@@ -46,7 +46,7 @@ namespace Cycloside.Services
             var settings = SettingsManager.Settings;
             var themeName = settings.GlobalTheme ?? "LightTheme";
             var variant = ParseVariantFromSettings(settings.RequestedThemeVariant);
-            
+
             ApplyThemeAsync(themeName, variant, false).Wait();
         }
 
@@ -164,27 +164,27 @@ namespace Cycloside.Services
                 if (variantTheme != null && File.Exists(variantTheme))
                 {
                     var cacheKey = $"variant_{variant}_{variantTheme}";
-                    
+
                     // Check cache first
                     if (IsCachedUpToDate(cacheKey, variantTheme))
                     {
                         var cachedStyle = GetCachedStyleInclude(cacheKey);
-                    if (cachedStyle != null && Application.Current != null)
-                    {
-                        Application.Current.Styles.Add(cachedStyle);
-                        Logger.Log($"Loaded cached variant theme: {variant}");
-                        return Task.FromResult(true);
-                    }
+                        if (cachedStyle != null && Application.Current != null)
+                        {
+                            Application.Current.Styles.Add(cachedStyle);
+                            Logger.Log($"Loaded cached variant theme: {variant}");
+                            return Task.FromResult(true);
+                        }
                     }
 
                     // Load and cache new variant
                     var uri = new Uri($"file:///{variantTheme.Replace('\\', '/')}");
                     var styleInclude = new StyleInclude(uri) { Source = uri };
-                    
+
                     CacheStyleInclude(cacheKey, styleInclude, variantTheme);
                     if (Application.Current != null)
                         Application.Current.Styles.Add(styleInclude);
-                    
+
                     Logger.Log($"Loaded and cached variant theme: {variant}");
                     return Task.FromResult(true);
                 }
@@ -290,7 +290,7 @@ namespace Cycloside.Services
                 {
                     // Apply theme to window
                     await ApplyThemeToWindowAsync(window);
-                    
+
                     // Force visual refresh
                     window.InvalidateVisual();
                 }
@@ -332,7 +332,7 @@ namespace Cycloside.Services
             {
                 window.InvalidateMeasure();
                 window.InvalidateArrange();
-                
+
                 // Trigger layout updates - simplified for now
                 window.InvalidateVisual();
             }
@@ -419,15 +419,15 @@ namespace Cycloside.Services
                     return false;
 
                 var content = File.ReadAllText(filePath);
-                
+
                 // Basic XAML validation
-                return content.Contains("<Style") && 
+                return content.Contains("<Style") &&
                        content.Contains("</Style>") ||
-                       content.Contains("<Styles") && 
+                       content.Contains("<Styles") &&
                        content.Contains("</Styles>");
-                }
-                catch (Exception ex)
-                {
+            }
+            catch (Exception ex)
+            {
                 Logger.Log($"Error validating theme file: {ex.Message}");
                 return false;
             }
@@ -442,7 +442,7 @@ namespace Cycloside.Services
                 return false;
 
             var currentTimestamp = File.GetLastWriteTime(filePath);
-            
+
             lock (_cacheLock)
             {
                 return _fileTimestamps.TryGetValue(cacheKey, out var cachedTimestamp) &&
@@ -457,7 +457,7 @@ namespace Cycloside.Services
         {
             lock (_cacheLock)
             {
-                return _themeCache.TryGetValue(cacheKey, out var style) ? 
+                return _themeCache.TryGetValue(cacheKey, out var style) ?
                        CloneStyleInclude(style) : null;
             }
         }

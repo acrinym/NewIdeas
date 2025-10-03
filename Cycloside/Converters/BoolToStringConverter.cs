@@ -21,11 +21,11 @@ namespace Cycloside.Converters
                         return boolValue ? values[0] : values[1];
                     }
                 }
-                
+
                 // Default values if no parameter is provided
                 return boolValue ? "System" : "User";
             }
-            
+
             return value?.ToString() ?? string.Empty;
         }
 

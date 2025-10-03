@@ -32,15 +32,15 @@ public sealed class LavaLampVisualizer : IManagedVisualizer
         // Background
         var bg = new LinearGradientBrush
         {
-            StartPoint = new RelativePoint(0,0,RelativeUnit.Relative),
-            EndPoint = new RelativePoint(0,1,RelativeUnit.Relative),
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
             GradientStops = new GradientStops
             {
                 new GradientStop(Color.FromRgb(18,6,6), 0),
                 new GradientStop(Color.FromRgb(6,2,2), 1)
             }
         };
-        ctx.FillRectangle(bg, new Rect(0,0,w,h));
+        ctx.FillRectangle(bg, new Rect(0, 0, w, h));
 
         // Init blobs
         if (_blobs.Length == 0)
@@ -51,9 +51,9 @@ public sealed class LavaLampVisualizer : IManagedVisualizer
             {
                 _blobs[i] = new Blob
                 {
-                    P = new Point(_rng.NextDouble()*w, _rng.NextDouble()*h),
-                    V = new Point((_rng.NextDouble()-0.5)*40, (_rng.NextDouble()-0.5)*40),
-                    R = Math.Min(w,h) * (0.06 + _rng.NextDouble()*0.12)
+                    P = new Point(_rng.NextDouble() * w, _rng.NextDouble() * h),
+                    V = new Point((_rng.NextDouble() - 0.5) * 40, (_rng.NextDouble() - 0.5) * 40),
+                    R = Math.Min(w, h) * (0.06 + _rng.NextDouble() * 0.12)
                 };
             }
         }
@@ -67,8 +67,8 @@ public sealed class LavaLampVisualizer : IManagedVisualizer
 
             var grad = new RadialGradientBrush
             {
-                GradientOrigin = new RelativePoint(0.5,0.5,RelativeUnit.Relative),
-                Center = new RelativePoint(0.5,0.5,RelativeUnit.Relative),
+                GradientOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
                 RadiusX = new RelativeScalar(1, RelativeUnit.Relative),
                 RadiusY = new RelativeScalar(1, RelativeUnit.Relative),
                 GradientStops = new GradientStops
@@ -79,7 +79,7 @@ public sealed class LavaLampVisualizer : IManagedVisualizer
                 }
             };
 
-            var geo = new EllipseGeometry(new Rect(b.P.X - b.R, b.P.Y - b.R, 2*b.R, 2*b.R));
+            var geo = new EllipseGeometry(new Rect(b.P.X - b.R, b.P.Y - b.R, 2 * b.R, 2 * b.R));
             ctx.DrawGeometry(grad, null, geo);
         }
     }

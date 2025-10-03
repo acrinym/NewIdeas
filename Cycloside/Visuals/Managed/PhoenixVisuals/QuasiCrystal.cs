@@ -35,7 +35,7 @@ public sealed class QuasiCrystal : IVisualizerPlugin
         float dy = _h / (float)(rows - 1);
 
         // Precompute wave directions
-        Span<(float x,float y)> dir = stackalloc (float,float)[Waves];
+        Span<(float x, float y)> dir = stackalloc (float, float)[Waves];
         for (int k = 0; k < Waves; k++)
         {
             float a = k * (MathF.PI * 2f) / Waves + _phase * 0.2f;

@@ -12,7 +12,7 @@ namespace Cycloside
     public static class TodoPurger
     {
         private static readonly string[] Markers = { "TODO", "FIXME", "HACK", "XXX" };
-        private static readonly string[] CyclosideDirectories = 
+        private static readonly string[] CyclosideDirectories =
         {
             Path.Combine(AppContext.BaseDirectory, "..", "docs"),
             Path.Combine(AppContext.BaseDirectory)
@@ -128,8 +128,8 @@ namespace Cycloside
         private static bool ContainsTodoMarker(string line, string marker)
         {
             // Look for common comment patterns: //, #, <!--, REM, *
-            var commentPatterns = new[] { "//", "#", "<!--", "REM", "*", "'"};
-            
+            var commentPatterns = new[] { "//", "#", "<!--", "REM", "*", "'" };
+
             foreach (var pattern in commentPatterns)
             {
                 var commentStart = line.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
@@ -149,7 +149,7 @@ namespace Cycloside
         private static string CleanTodoInLine(string line, string marker, FileContext context)
         {
             // Strategy: Replace TODO comments with equivalent notes or remove entirely
-            
+
             if (context == FileContext.Code)
             {
                 // For code files, simplify or remove TODO comments

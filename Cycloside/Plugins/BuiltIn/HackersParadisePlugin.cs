@@ -21,7 +21,7 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             Logger.Log("🚀 Hacker's Paradise initialized - Let the hacking begin! 🔥");
-            
+
             // Show the widget
             if (Widget != null)
             {
@@ -33,7 +33,7 @@ namespace Cycloside.Plugins.BuiltIn
                     Height = 400,
                     Background = Brushes.Black
                 };
-                
+
                 widgetWindow.Show();
             }
         }

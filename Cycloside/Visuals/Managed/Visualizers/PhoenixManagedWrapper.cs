@@ -70,7 +70,7 @@ public class PhoenixManagedWrapper<T> : IManagedVisualizer where T : IVisualizer
             Volume = energy,
             Peak = peak,
             TimeSeconds = time,
-            FrequencyBands = new[] { TakeBand(fft,0,0.1f), TakeBand(fft,0.1f,0.2f), TakeBand(fft,0.2f,0.4f), TakeBand(fft,0.4f,0.8f), TakeBand(fft,0.8f,1.0f) },
+            FrequencyBands = new[] { TakeBand(fft, 0, 0.1f), TakeBand(fft, 0.1f, 0.2f), TakeBand(fft, 0.2f, 0.4f), TakeBand(fft, 0.4f, 0.8f), TakeBand(fft, 0.8f, 1.0f) },
             SmoothedFft = fft.ToArray(),
         };
         static float TakeBand(float[] f, double s, double e)

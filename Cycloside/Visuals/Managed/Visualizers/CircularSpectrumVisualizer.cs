@@ -55,12 +55,12 @@ public sealed class CircularSpectrumVisualizer : IManagedVisualizer, IManagedVis
     {
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         var bars = new Slider { Minimum = 16, Maximum = 128, Width = 160, Value = _bars };
-        bars.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _bars = (int)bars.Value; StateManager.Set(ConfigKey+"Bars", _bars.ToString()); } };
+        bars.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _bars = (int)bars.Value; StateManager.Set(ConfigKey + "Bars", _bars.ToString()); } };
         panel.Children.Add(new TextBlock { Text = "Bars:" }); panel.Children.Add(bars);
         return panel;
     }
     public void LoadOptions()
     {
-        if (int.TryParse(StateManager.Get(ConfigKey+"Bars"), out var b)) _bars = Math.Clamp(b, 16, 128);
+        if (int.TryParse(StateManager.Get(ConfigKey + "Bars"), out var b)) _bars = Math.Clamp(b, 16, 128);
     }
 }

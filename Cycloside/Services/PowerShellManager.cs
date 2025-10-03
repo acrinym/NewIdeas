@@ -37,7 +37,7 @@ namespace Cycloside.Services
         public static async Task InitializeAsync()
         {
             Logger.Log("🔧 Initializing PowerShell Manager...");
-            
+
             try
             {
                 // Check admin elevation first
@@ -46,7 +46,7 @@ namespace Cycloside.Services
 
                 // Detect PowerShell installations
                 await DetectPowerShellAsync();
-                
+
                 // If no PowerShell or outdated, show options
                 if (!IsPowerShellAvailable)
                 {
@@ -119,7 +119,7 @@ namespace Cycloside.Services
                 var newest = powershellPaths.OrderByDescending(x => x.version).First();
                 _powerShellPath = newest.path;
                 _powerShellVersion = newest.version;
-                
+
                 LogStatus($"💻 PowerShell {_powerShellVersion} selected: {Path.GetFileName(_powerShellPath)}");
             }
             else
@@ -149,7 +149,7 @@ namespace Cycloside.Services
 
                 using var process = Process.Start(startInfo)!;
                 var output = await process.StandardOutput.ReadToEndAsync();
-                process.WaitForExit();
+                await process.WaitForExitAsync();
 
                 if (process.ExitCode == 0)
                 {
@@ -163,7 +163,7 @@ namespace Cycloside.Services
 
                 // Fallback: try to get version from file info
                 var fileVer = FileVersionInfo.GetVersionInfo(path);
-                if (!string.IsNullOrEmpty(fileVer.FileVersion) && 
+                if (!string.IsNullOrEmpty(fileVer.FileVersion) &&
                     Version.TryParse(fileVer.FileVersion, out var fileVersion))
                 {
                     return fileVersion;
@@ -199,7 +199,7 @@ namespace Cycloside.Services
             if (requireElevation && !_isAdminMode)
             {
                 LogStatus("🔒 Elevation required for command");
-                
+
                 var result = await ElevateToAdminAsync();
                 if (!result)
                 {
@@ -211,9 +211,9 @@ namespace Cycloside.Services
             try
             {
                 LogStatus($"⚡ Executing PowerShell: {command}");
-                
+
                 var result = await ExecuteCommandAsync(_powerShellPath!, command);
-                
+
                 LogStatus("✅ PowerShell command completed");
                 return result;
             }
@@ -244,7 +244,7 @@ namespace Cycloside.Services
             using var process = Process.Start(startInfo)!;
             var output = await process.StandardOutput.ReadToEndAsync();
             var error = await process.StandardError.ReadToEndAsync();
-            
+
             await process.WaitForExitAsync();
 
             if (process.ExitCode != 0)
@@ -294,7 +294,7 @@ namespace Cycloside.Services
                 await process.WaitForExitAsync();
 
                 var success = process.ExitCode == 0;
-                
+
                 if (success)
                 {
                     _isAdminMode = true;
@@ -380,12 +380,12 @@ namespace Cycloside.Services
                 // This would require HttpClient and specific PowerShell download URLs
                 // For now, return null to indicate download not implemented
                 LogStatus("⚠️ PowerShell download not implemented - Manual installation required");
-                
+
                 // In production, this would:
                 // 1. Query PowerShell GitHub releases API
                 // 2. Download latest MSI for user's architecture
                 // 3. Save to temp directory
-                
+
                 return null;
             }
             catch (Exception ex)
@@ -418,12 +418,12 @@ namespace Cycloside.Services
                 };
 
                 LogStatus("⚙️ Installing PowerShell (silent mode)...");
-                
+
                 using var process = Process.Start(startInfo)!;
                 await process.WaitForExitAsync();
 
                 var success = process.ExitCode == 0;
-                
+
                 if (success)
                 {
                     LogStatus("✅ PowerShell installation completed");

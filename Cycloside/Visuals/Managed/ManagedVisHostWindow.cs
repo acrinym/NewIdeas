@@ -19,7 +19,7 @@ public class ManagedVisHostWindow : Window
     private readonly DispatcherTimer _timer;
     private readonly List<IManagedVisualizer> _visualizers;
     private DateTime _start;
-    private readonly Border _optionsHost = new() { Margin = new Thickness(6,0,6,6) };
+    private readonly Border _optionsHost = new() { Margin = new Thickness(6, 0, 6, 6) };
 
     public ManagedVisHostWindow(IEnumerable<IManagedVisualizer> visualizers)
     {
@@ -45,7 +45,7 @@ public class ManagedVisHostWindow : Window
 
         _selector.SelectionChanged += (_, __) => { _canvas.InvalidateVisual(); RefreshOptions(); };
 
-        var topBar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(6,6,6,0) };
+        var topBar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(6, 6, 6, 0) };
         topBar.Children.Add(new TextBlock { Text = "Visualizer:", VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
         topBar.Children.Add(_selector);
 

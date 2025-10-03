@@ -34,7 +34,7 @@ public sealed class MatrixRainVisualizer : IManagedVisualizer, IManagedVisualize
     public void Render(DrawingContext ctx, Size size, TimeSpan elapsed)
     {
         var w = size.Width; var h = size.Height; if (w <= 0 || h <= 0) return;
-        ctx.FillRectangle(ManagedVisStyle.Background(), new Rect(0,0,w,h));
+        ctx.FillRectangle(ManagedVisStyle.Background(), new Rect(0, 0, w, h));
 
         // Initialize columns lazily
         if (_cols == 0 || _y == null || _speed == null)
@@ -74,12 +74,12 @@ public sealed class MatrixRainVisualizer : IManagedVisualizer, IManagedVisualize
     {
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         var cols = new Slider { Minimum = 16, Maximum = 160, Width = 160, Value = _desiredCols };
-        cols.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _desiredCols = (int)cols.Value; StateManager.Set(ConfigKey+"Cols", _desiredCols.ToString()); _y = null; _speed = null; _cols = 0; } };
+        cols.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _desiredCols = (int)cols.Value; StateManager.Set(ConfigKey + "Cols", _desiredCols.ToString()); _y = null; _speed = null; _cols = 0; } };
         panel.Children.Add(new TextBlock { Text = "Columns:" }); panel.Children.Add(cols);
         return panel;
     }
     public void LoadOptions()
     {
-        if (int.TryParse(StateManager.Get(ConfigKey+"Cols"), out var c)) _desiredCols = Math.Clamp(c, 16, 160);
+        if (int.TryParse(StateManager.Get(ConfigKey + "Cols"), out var c)) _desiredCols = Math.Clamp(c, 16, 160);
     }
 }

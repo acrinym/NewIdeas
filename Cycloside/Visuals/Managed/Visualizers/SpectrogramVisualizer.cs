@@ -34,7 +34,7 @@ public sealed class SpectrogramVisualizer : IManagedVisualizer, IManagedVisualiz
         if (_columns == null || _columns.Length != w)
         {
             _columns = new byte[w][];
-            for (int i=0;i<w;i++) _columns[i] = new byte[_bands];
+            for (int i = 0; i < w; i++) _columns[i] = new byte[_bands];
             _head = 0;
         }
 
@@ -48,7 +48,7 @@ public sealed class SpectrogramVisualizer : IManagedVisualizer, IManagedVisualiz
         _head = (_head + 1) % _columns.Length;
 
         // background
-        ctx.FillRectangle(ManagedVisStyle.Background(), new Rect(0,0,w,h));
+        ctx.FillRectangle(ManagedVisStyle.Background(), new Rect(0, 0, w, h));
 
         // draw from oldest to newest left->right
         for (int x = 0; x < _columns.Length; x++)
@@ -80,12 +80,12 @@ public sealed class SpectrogramVisualizer : IManagedVisualizer, IManagedVisualiz
     {
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         var bands = new Slider { Minimum = 16, Maximum = 128, Width = 160, Value = _bands };
-        bands.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _bands = (int)bands.Value; StateManager.Set(ConfigKey+"Bands", _bands.ToString()); _columns = null; } };
+        bands.PropertyChanged += (_, e) => { if (e.Property.Name == nameof(Slider.Value)) { _bands = (int)bands.Value; StateManager.Set(ConfigKey + "Bands", _bands.ToString()); _columns = null; } };
         panel.Children.Add(new TextBlock { Text = "Bands:" }); panel.Children.Add(bands);
         return panel;
     }
     public void LoadOptions()
     {
-        if (int.TryParse(StateManager.Get(ConfigKey+"Bands"), out var b)) _bands = Math.Clamp(b, 16, 128);
+        if (int.TryParse(StateManager.Get(ConfigKey + "Bands"), out var b)) _bands = Math.Clamp(b, 16, 128);
     }
 }

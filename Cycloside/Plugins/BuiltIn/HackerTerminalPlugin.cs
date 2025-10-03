@@ -29,7 +29,7 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             Logger.Log("💻 Hacker Terminal initialized - Ready for advanced operations!");
-            
+
             var terminalWidget = new HackerTerminalWidget();
             var window = new Window
             {
@@ -40,7 +40,7 @@ namespace Cycloside.Plugins.BuiltIn
                 Background = Brushes.Black,
                 CanResize = true
             };
-            
+
             window.Show();
             Logger.Log("💻 Hacker Terminal launched - Professional command execution!");
         }
@@ -59,7 +59,6 @@ namespace Cycloside.Plugins.BuiltIn
         public string Name => "💻 Hacker Terminal";
         private TextBox? _terminalOutput;
         private TextBox? _commandInput;
-        private Process? _currentProcess;
         private int _commandHistoryIndex = 0;
         private readonly List<string> _commandHistory = new();
 
@@ -71,13 +70,13 @@ namespace Cycloside.Plugins.BuiltIn
                 {
                     StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
                     EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
-                GradientStops =
+                    GradientStops =
                 {
                     new GradientStop(Colors.Black, 0.0),
                     new GradientStop(Colors.DarkSlateBlue, 0.5),
                     new GradientStop(Colors.DarkGreen, 1.0)
                 }
-            },
+                },
                 Margin = new Thickness(10),
                 Spacing = 10
             };
@@ -349,8 +348,9 @@ Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
         {
             if (e.Key == Avalonia.Input.Key.Enter)
             {
-                ExecuteCommand(_commandInput!.Text);
-                _commandInput.Text = "";
+                var command = _commandInput?.Text ?? "";
+                ExecuteCommand(command);
+                if (_commandInput != null) _commandInput.Text = "";
                 _commandHistoryIndex = _commandHistory.Count;
             }
             else if (e.Key == Avalonia.Input.Key.Up)
@@ -402,8 +402,10 @@ Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
             }
         }
 
-        private bool HandleBuiltInCommand(string command)
+        private bool HandleBuiltInCommand(string? command)
         {
+            if (string.IsNullOrEmpty(command)) return false;
+
             var parts = command.Split(' ');
             var cmd = parts[0].ToLowerInvariant();
 
@@ -464,7 +466,7 @@ Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
             }
         }
 
-        private void ExecuteExternalCommand(string command)
+        private void ExecuteExternalCommand(string? command)
         {
             try
             {
@@ -553,7 +555,7 @@ Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
         private void ShowHistory(object? sender, RoutedEventArgs e)
         {
             var historyText = "\n📚 COMMAND HISTORY:\n================\n";
-            
+
             for (int i = 0; i < _commandHistory.Count; i++)
             {
                 historyText += $"{i + 1,-3}: {_commandHistory[i]}\n";
@@ -576,8 +578,8 @@ Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
             try
             {
                 var bytes = File.ReadAllBytes(filename);
-                var hexDump = $"🔱 HEX DUMP: {filename}\n{'=', 50}\n";
-                
+                var hexDump = $"🔱 HEX DUMP: {filename}\n{'=',50}\n";
+
                 for (int i = 0; i < Math.Min(bytes.Length, 1024); i += 16)
                 {
                     var offset = i.ToString("X8");
@@ -619,7 +621,7 @@ Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
                 var bytes = System.Text.Encoding.UTF8.GetBytes(text);
                 var md5 = System.Security.Cryptography.MD5.Create();
                 var base64 = Convert.ToBase64String(md5.ComputeHash(bytes));
-                
+
                 AppendOutput($"🔑 MD5 Hash: {base64}");
                 AppendOutput($"📏 Text length: {text.Length} characters");
             }

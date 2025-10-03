@@ -18,18 +18,18 @@ namespace Cycloside.Converters
                 if (colors.Length >= 2)
                 {
                     var colorName = boolValue ? colors[0] : colors[1];
-                    
+
                     // Try to parse the color
                     if (Color.TryParse(colorName, out var color))
                     {
                         return new SolidColorBrush(color);
                     }
-                    
+
                     // If parsing fails, try to use a named color
                     return new SolidColorBrush(GetColorByName(colorName));
                 }
             }
-            
+
             // Default to black if conversion fails
             return new SolidColorBrush(Colors.Black);
         }
@@ -38,7 +38,7 @@ namespace Cycloside.Converters
         {
             throw new NotImplementedException();
         }
-        
+
         private Color GetColorByName(string colorName)
         {
             return colorName.Trim().ToLowerInvariant() switch

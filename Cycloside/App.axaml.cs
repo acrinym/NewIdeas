@@ -48,7 +48,7 @@ public partial class App : Application
 
         var settings = SettingsManager.Settings;
         ThemeManager.InitializeFromSettings();
-        
+
         // Initialize Configuration Manager
         _ = ConfigurationManager.InitializeAsync();
 
@@ -59,16 +59,16 @@ public partial class App : Application
             welcome.Closed += async (_, _) =>
             {
                 settings.FirstRun = false;
-                SettingsManager.SaveSettings();
-                
+                // Settings are automatically saved by SettingsManager
+
                 // Load plugins selectively based on configuration
                 await LoadConfiguredPlugins();
-                
+
                 _mainWindow = CreateMainWindow(SettingsManager.Settings);
                 desktop.MainWindow = _mainWindow;
                 _mainWindow.Show();
             };
-            
+
             desktop.MainWindow = welcome;
             welcome.Show();
         }
@@ -76,7 +76,7 @@ public partial class App : Application
         {
             // Load plugins selectively based on configuration
             _ = LoadConfiguredPlugins();
-            
+
             _mainWindow = CreateMainWindow(settings);
             desktop.MainWindow = _mainWindow;
             _mainWindow.Show();
@@ -297,10 +297,10 @@ public partial class App : Application
         void TryAdd(Func<IPlugin> factory)
         {
             var plugin = factory();
-            
+
             // Check if plugin should be loaded based on configuration
             bool shouldLoad = false;
-            
+
             // First check if selective loading is enabled and plugin is configured
             if (_pluginsLoadedSelectively)
             {
@@ -312,7 +312,7 @@ public partial class App : Application
                 // Fallback to legacy settings (for compatibility)
                 shouldLoad = !settings.DisableBuiltInPlugins || settings.SafeBuiltInPlugins.GetValueOrDefault(plugin.Name, false);
             }
-            
+
             if (shouldLoad)
             {
                 manager.AddBuiltInPlugin(factory);

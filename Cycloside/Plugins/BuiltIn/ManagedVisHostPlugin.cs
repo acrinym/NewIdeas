@@ -54,7 +54,7 @@ public class ManagedVisHostPlugin : IPlugin, IDisposable
             catch (Exception ex) { Logger.Log($"Visualizer load failed for {t.Name}: {ex.Message}"); }
         }
         // Sort by name for stable order
-        visualizers.Sort((a,b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        visualizers.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
         _window = new ManagedVisHostWindow(visualizers);
         ThemeManager.ApplyForPlugin(_window, this);

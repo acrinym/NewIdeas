@@ -32,7 +32,7 @@ public sealed class MoebiusStrip : IVisualizerPlugin
         float R = 1.2f;             // radius of central circle
         float W = 0.4f + f.Energy * 0.3f; // half-width of strip
         int vBands = 18;            // cross bands
-        int uSegs  = 160;           // segments around ring
+        int uSegs = 160;           // segments around ring
 
         // Build ring polylines for each cross band v
         var line = new (float x, float y)[uSegs + 1];
@@ -46,8 +46,8 @@ public sealed class MoebiusStrip : IVisualizerPlugin
                 // Möbius strip param eqs
                 float cu2 = MathF.Cos(u * 0.5f);
                 float su2 = MathF.Sin(u * 0.5f);
-                float cu  = MathF.Cos(u);
-                float su  = MathF.Sin(u);
+                float cu = MathF.Cos(u);
+                float su = MathF.Sin(u);
                 float x = (R + v * cu2) * cu;
                 float y = (R + v * cu2) * su;
                 float z = v * su2;

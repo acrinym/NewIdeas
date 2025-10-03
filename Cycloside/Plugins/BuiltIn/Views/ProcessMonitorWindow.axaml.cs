@@ -9,7 +9,7 @@ namespace Cycloside.Plugins.BuiltIn
         {
             InitializeComponent();
         }
-        
+
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);

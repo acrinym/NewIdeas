@@ -79,7 +79,7 @@ namespace Cycloside.Services
                 // Load skin manifest to get replacement file path
                 var skinDir = Path.Combine(AppContext.BaseDirectory, "Skins", skinName);
                 var manifestPath = Path.Combine(skinDir, "skin.json");
-                
+
                 if (!File.Exists(manifestPath))
                 {
                     Logger.Log($"Skin manifest not found for window replacement: {skinName}");
@@ -88,7 +88,7 @@ namespace Cycloside.Services
 
                 var manifestContent = await File.ReadAllTextAsync(manifestPath);
                 var manifest = System.Text.Json.JsonSerializer.Deserialize<SkinManifest>(manifestContent);
-                
+
                 if (manifest?.ReplaceWindows?.TryGetValue(windowType, out var replacementFile) == true)
                 {
                     var replacementPath = Path.Combine(skinDir, replacementFile);
@@ -117,10 +117,10 @@ namespace Cycloside.Services
                     return false;
 
                 var content = File.ReadAllText(replacementFile);
-                
+
                 // Basic XAML validation - check for valid root element
-                return content.Contains("<") && 
-                       content.Contains(">") && 
+                return content.Contains("<") &&
+                       content.Contains(">") &&
                        (content.Contains("Window") || content.Contains("UserControl") || content.Contains("ContentControl"));
             }
             catch (Exception ex)
@@ -138,12 +138,12 @@ namespace Cycloside.Services
         public static async Task<Dictionary<string, string>> GetAvailableWindowReplacementsAsync(string skinName)
         {
             var replacements = new Dictionary<string, string>();
-            
+
             try
             {
                 var skinDir = Path.Combine(AppContext.BaseDirectory, "Skins", skinName);
                 var manifestPath = Path.Combine(skinDir, "skin.json");
-                
+
                 if (!File.Exists(manifestPath))
                     return replacements;
 
@@ -177,10 +177,10 @@ namespace Cycloside.Services
                 // For now, return a placeholder - actual implementation would load and parse XAML
                 // This would require more complex XAML loading logic in a real implementation
                 Logger.Log($"Loading window content from: {filePath}");
-                
+
                 // Simulate async loading
                 await Task.Delay(10);
-                
+
                 return new ContentControl(); // Placeholder
             }
             catch (Exception ex)
@@ -195,13 +195,13 @@ namespace Cycloside.Services
             // This is a simplified implementation
             // In a real implementation, this would use reflection to capture event handlers
             var subscriptions = new Dictionary<string, Delegate>();
-            
+
             // Store common event subscriptions that need to be preserved
             if (window.DataContext is IDisposable disposable)
             {
                 // Store disposable instances to maintain proper cleanup
             }
-            
+
             return subscriptions;
         }
 

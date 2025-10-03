@@ -23,7 +23,7 @@ namespace Cycloside.Plugins
         {
             // Subscribe to the Closed event to clean up resources
             Closed += PluginWindowBase_Closed;
-            
+
             // Subscribe to global theme/skin changes
             Services.ThemeManager.ThemeChanged += OnGlobalThemeChanged;
             Services.SkinManager.SkinChanged += OnGlobalSkinChanged;
@@ -37,7 +37,7 @@ namespace Cycloside.Plugins
         {
             Plugin = plugin;
             ThemeManager.ApplyForPlugin(this, plugin);
-            
+
             // Apply plugin-specific theming if supported
             if (plugin is IThemablePlugin themablePlugin && themablePlugin.ParticipateInAutomaticTheming)
             {
@@ -63,7 +63,7 @@ namespace Cycloside.Plugins
                 // Apply current theme/skin state
                 themablePlugin.OnGlobalThemeChanged(Services.ThemeManager.CurrentTheme, Services.ThemeManager.CurrentVariant.ToString());
                 themablePlugin.OnGlobalSkinChanged(Services.SkinManager.CurrentSkin);
-                
+
                 Logger.Log($"Applied theming hooks to plugin: {themablePlugin.Name}");
             }
             catch (Exception ex)
@@ -82,19 +82,19 @@ namespace Cycloside.Plugins
                 try
                 {
                     themablePlugin.OnGlobalThemeChanged(e.ThemeName, e.Variant.ToString());
-                    
+
                     // Reapply theme classes if they changed
                     var currentClasses = Classes.ToList();
                     var expectedClasses = themablePlugin.ThemeClasses.ToList();
-                    
+
                     var classesToRemove = currentClasses.Except(expectedClasses).ToList();
                     var classesToAdd = expectedClasses.Except(currentClasses).ToList();
-                    
+
                     foreach (var cls in classesToRemove)
                         Classes.Remove(cls);
-                    
+
                     Classes.AddRange(classesToAdd);
-                    
+
                     Logger.Log($"Updated theme-dependent classes for plugin: {themablePlugin.Name}");
                 }
                 catch (Exception ex)
@@ -131,12 +131,12 @@ namespace Cycloside.Plugins
             // Clean up themes and skins to prevent memory leaks
             ThemeManager.RemoveComponentThemes(this);
             SkinManager.RemoveAllSkinsFrom(this);
-            
+
             // Unsubscribe from events
             Services.ThemeManager.ThemeChanged -= OnGlobalThemeChanged;
             Services.SkinManager.SkinChanged -= OnGlobalSkinChanged;
             Closed -= PluginWindowBase_Closed;
-            
+
             Logger.Log($"Cleaned up resources for plugin window: {GetType().Name}");
         }
     }

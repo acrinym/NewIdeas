@@ -22,7 +22,7 @@ public class AppSettings
 
     // RENAMED: This is now the single, application-wide theme.
     public string GlobalTheme { get; set; } = "MintGreen";
-    
+
     // Theme variant (Light/Dark/HighContrast/Default)
     public string RequestedThemeVariant { get; set; } = "Default";
 
