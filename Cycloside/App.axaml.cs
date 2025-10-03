@@ -270,6 +270,7 @@ public partial class App : Application
         TryAdd(() => new ClipboardManagerPlugin());
         TryAdd(() => new HackersParadisePlugin());
         TryAdd(() => new HackerTerminalPlugin());
+        TryAdd(() => new PowerShellTerminalPlugin());
         TryAdd(() => new CharacterMapPlugin());
         TryAdd(() => new FileWatcherPlugin());
         TryAdd(() => new TaskSchedulerPlugin());
