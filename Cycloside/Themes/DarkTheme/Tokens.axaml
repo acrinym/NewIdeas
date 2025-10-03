@@ -1,0 +1,37 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <!-- Dark Theme Color Variants -->
+    <Color x:Key="SystemBackground">#1A1A1A</Color>
+    <Color x:Key="SystemForeground">#FFFFFF</Color>
+    <Color x:Key="SystemAccent">#0078D4</Color>
+    <Color x:Key="SystemHighlight">#106EBE</Color>
+    <Color x:Key="SystemError">#D13438</Color>
+    <Color x:Key="SystemWarning">#FF8C00</Color>
+    <Color x:Key="SystemSuccess">#107C10</Color>
+    
+    <!-- Dark Theme Layer-specific Backgrounds -->
+    <Color x:Key="CanvasBackground">#1A1A1A</Color>
+    <Color x:Key="PopupBackground">#2D2D2D</Color>
+    <Color x:Key="OverlayBackground">#00000080</Color>
+    <Color x:Key="CardBackground">#252526</Color>
+    <Color x:Key="PanelBackground">#2E2E2E</Color>
+    
+    <!-- Dark Theme Text Colors -->
+    <Color x:Key="PrimaryText">#FFFFFF</Color>
+    <Color x:Key="SecondaryText">#CCCCCC</Color>
+    <Color x:Key="DisabledText">#6B6B6B</Color>
+    <Color x:Key="PlaceholderText">#6B6B6B</Color>
+    
+    <!-- Dark Theme Interactive States -->
+    <Color x:Key="InteractiveHover">#403F3E</Color>
+    <Color x:Key="InteractivePressed">#5A5755</Color>
+    <Color x:Key="InteractiveSelected">#0078D4</Color>
+    <Color x:Key="InteractiveFocusRing">#0078D4</Color>
+    
+    <!-- Dark Theme Borders -->
+    <Color x:Key="BorderDefault">#464647</Color>
+    <Color x:Key="BorderStrong">#7B7B7B</Color>
+    <Color x:Key="BorderSubtle">#3E3E3E</Color>
+    <Color x:Key="Separator">#404040</Color>
+  </Style.Resources>
+</Style>

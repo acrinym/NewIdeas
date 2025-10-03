@@ -15,3 +15,5 @@ AllFiles.txt
 bin/
 obj/
 Cycloside/CombinedCode.txt
+Cycloside/export_codebase.ps1
+Cycloside/outsource.txt

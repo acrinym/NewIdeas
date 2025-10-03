@@ -46,7 +46,7 @@ public partial class App : Application
         }
 
         var settings = SettingsManager.Settings;
-        ThemeManager.LoadGlobalThemeFromSettings();
+        ThemeManager.InitializeFromSettings();
 
         if (settings.FirstRun)
         {

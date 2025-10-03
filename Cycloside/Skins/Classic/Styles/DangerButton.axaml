@@ -1,0 +1,22 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Danger button styling -->
+  
+  <Style Selector="Button.danger">
+    <Setter Property="Background" Value="{DynamicResource SystemErrorBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemErrorBrush}"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="Button.danger:pointerover">
+    <Setter Property="Background" Value="DarkRed"/>
+    <Setter Property="BorderBrush" Value="DarkRed"/>
+  </Style>
+
+  <Style Selector="Button.danger:pressed">
+    <Setter Property="Background" Value="Maroon"/>
+    <Setter Property="BorderBrush" Value="Maroon"/>
+  </Style>
+
+</Style>

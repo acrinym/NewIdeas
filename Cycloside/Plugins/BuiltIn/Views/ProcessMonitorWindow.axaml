@@ -1,26 +1,62 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn"
+        xmlns:converters="clr-namespace:Cycloside.Converters"
         x:Class="Cycloside.Plugins.BuiltIn.ProcessMonitorWindow"
         x:DataType="local:ProcessMonitorPlugin"
         Title="Process Monitor"
-        Width="450" Height="600">
+        Width="550" Height="600">
 
-  <DataGrid ItemsSource="{Binding Processes}"
-            IsReadOnly="True"
-            GridLinesVisibility="Horizontal"
-            CanUserResizeColumns="True"
-            CanUserSortColumns="True">
-    <DataGrid.Columns>
-      <DataGridTextColumn Header="Process Name"
-                          Binding="{Binding Name}"
-                          Width="*" />
-      
-      <DataGridTextColumn Header="Memory (MB)"
-                          Binding="{Binding MemoryUsageMb, StringFormat='{}{0} MB'}"
-                          Width="Auto" />
-                          
-    </DataGrid.Columns>
-  </DataGrid>
+  <Window.Resources>
+    <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
+  </Window.Resources>
+
+  <Grid RowDefinitions="Auto,*,Auto">
+    <!-- Toolbar -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5" Spacing="5">
+      <Button Content="Refresh" Command="{Binding RefreshProcessesCommand}" 
+              ToolTip.Tip="Refresh process list" />
+      <Button Content="Close Process" Command="{Binding CloseProcessCommand}" 
+              IsEnabled="{Binding !!SelectedProcess}"
+              ToolTip.Tip="Close the selected process" />
+    </StackPanel>
+    
+    <!-- Process List -->
+    <DataGrid Grid.Row="1" 
+              ItemsSource="{Binding Processes}"
+              SelectedItem="{Binding SelectedProcess}"
+              IsReadOnly="True"
+              GridLinesVisibility="Horizontal"
+              CanUserResizeColumns="True"
+              CanUserSortColumns="True">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Process Name"
+                            Binding="{Binding Name}"
+                            Width="*" />
+        
+        <DataGridTextColumn Header="Memory (MB)"
+                            Binding="{Binding MemoryUsageMb, StringFormat='{}{0} MB'}"
+                            Width="Auto" />
+                            
+        <DataGridTextColumn Header="PID"
+                            Binding="{Binding ProcessId}"
+                            Width="Auto" />
+                            
+        <DataGridTemplateColumn Header="Type" Width="Auto">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding IsSystemProcess, Converter={StaticResource BoolToStringConverter}, ConverterParameter='System,User'}" 
+                         Foreground="{Binding IsSystemProcess, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Red,Black'}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+      </DataGrid.Columns>
+    </DataGrid>
+    
+    <!-- Status Bar -->
+    <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="0,1,0,0">
+      <TextBlock Text="{Binding StatusMessage}" Margin="5" />
+    </Border>
+  </Grid>
   
 </Window>

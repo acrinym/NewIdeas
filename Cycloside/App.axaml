@@ -7,19 +7,17 @@
 
     <Application.Styles>
         <FluentTheme />
+        <!-- Base semantic tokens loaded first -->
+        <StyleInclude Source="axaml://Cycloside/Themes/Tokens.axaml"/>
     </Application.Styles>
 
-    <!--
-      REFACTOR: This is the central resource dictionary for the application.
-      It's empty by default.
-      Your 'ThemeManager' or 'SkinManager' (in C#) will be responsible for loading 
-      the selected skin file (e.g., Mint.axaml) and merging its resources here at runtime.
-      This allows resources like 'ApplicationBackgroundBrush' to be found by any window.
-    -->
     <Application.Resources>
         <ResourceDictionary>
-            <!-- This will be populated by your ThemeManager -->
+            <!-- Application converters -->
             <converters:IsWorkspaceItemConverter x:Key="IsWorkspaceItemConverter" />
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            
+            <!-- Dynamic theme resources will be loaded here by ThemeManager -->
         </ResourceDictionary>
     </Application.Resources>
     

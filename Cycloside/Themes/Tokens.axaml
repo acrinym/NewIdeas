@@ -1,0 +1,102 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <!-- Semantic Color Tokens - Base Foundation -->
+    <Color x:Key="SystemBackground">#FFFFFF</Color>
+    <Color x:Key="SystemForeground">#000000</Color>
+    <Color x:Key="SystemAccent">#0078D4</Color>
+    <Color x:Key="SystemHighlight">#106EBE</Color>
+    <Color x:Key="SystemError">#D13438</Color>
+    <Color x:Key="SystemWarning">#FF8C00</Color>
+    <Color x:Key="SystemSuccess">#107C10</Color>
+    
+    <!-- Layer-specific Background Tokens -->
+    <Color x:Key="CanvasBackground">#FFFFFF</Color>
+    <Color x:Key="PopupBackground">#FFFFFF</Color>
+    <Color x:Key="OverlayBackground">#00000080</Color>
+    <Color x:Key="CardBackground">#F8F8F8</Color>
+    <Color x:Key="PanelBackground">#F0F0F0</Color>
+    
+    <!-- Layer-specific Foreground Tokens -->
+    <Color x:Key="PrimaryText">#000000</Color>
+    <Color x:Key="SecondaryText">#666666</Color>
+    <Color x:Key="DisabledText">#999999</Color>
+    <Color x:Key="PlaceholderText">#CCCCCC</Color>
+    
+    <!-- Interactive States -->
+    <Color x:Key="InteractiveHover">#F3F2F1</Color>
+    <Color x:Key="InteractivePressed">#E1DFDD</Color>
+    <Color x:Key="InteractiveSelected">#D1E7DD</Color>
+    <Color x:Key="InteractiveFocusRing">#0078D4</Color>
+    
+    <!-- Border and Separator Tokens -->
+    <Color x:Key="BorderDefault">#CCCCCC</Color>
+    <Color x:Key="BorderStrong">#999999</Color>
+    <Color x:Key="BorderSubtle">#E0E0E0</Color>
+    <Color x:Key="Separator">#E5E5E5</Color>
+    
+    <!-- Semantic Brushes - Backgrounds -->
+    <SolidColorBrush x:Key="SystemBackgroundBrush" Color="{DynamicResource SystemBackground}"/>
+    <SolidColorBrush x:Key="SystemForegroundBrush" Color="{DynamicResource SystemForeground}"/>
+    <SolidColorBrush x:Key="SystemAccentBrush" Color="{DynamicResource SystemAccent}"/>
+    <SolidColorBrush x:Key="SystemHighlightBrush" Color="{DynamicResource SystemHighlight}"/>
+    <SolidColorBrush x:Key="SystemErrorBrush" Color="{DynamicResource SystemError}"/>
+    <SolidColorBrush x:Key="SystemWarningBrush" Color="{DynamicResource SystemWarning}"/>
+    <SolidColorBrush x:Key="SystemSuccessBrush" Color="{DynamicResource SystemSuccess}"/>
+    
+    <!-- Semantic Brushes - Layer-specific Backgrounds -->
+    <SolidColorBrush x:Key="CanvasBackgroundBrush" Color="{DynamicResource CanvasBackground}"/>
+    <SolidColorBrush x:Key="PopupBackgroundBrush" Color="{DynamicResource PopupBackground}"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource CardBackground}"/>
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{DynamicResource PanelBackground}"/>
+    
+    <!-- Semantic Brushes - Text -->
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="{DynamicResource PrimaryText}"/>
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="{DynamicResource SecondaryText}"/>
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="{DynamicResource DisabledText}"/>
+    <SolidColorBrush x:Key="PlaceholderTextBrush" Color="{DynamicResource PlaceholderText}"/>
+    
+    <!-- Semantic Brushes - Interactive -->
+    <SolidColorBrush x:Key="InteractiveHoverBrush" Color="{DynamicResource InteractiveHover}"/>
+    <SolidColorBrush x:Key="InteractivePressedBrush" Color="{DynamicResource InteractivePressed}"/>
+    <SolidColorBrush x:Key="InteractiveSelectedBrush" Color="{DynamicResource InteractiveSelected}"/>
+    <SolidColorBrush x:Key="InteractiveFocusRingBrush" Color="{DynamicResource InteractiveFocusRing}"/>
+    
+    <!-- Semantic Brushes - Borders -->
+    <SolidColorBrush x:Key="BorderDefaultBrush" Color="{DynamicResource BorderDefault}"/>
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="{DynamicResource BorderStrong}"/>
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="{DynamicResource BorderSubtle}"/>
+    <SolidColorBrush x:Key="SeparatorBrush" Color="{DynamicResource Separator}"/>
+    
+    <!-- Typography Tokens -->
+    <FontFamily x:Key="FontFamilyPrimary">Segoe UI</FontFamily>
+    <FontFamily x:Key="FontFamilySecondary">Consolas</FontFamily>
+    <FontFamily x:Key="FontFamilyMono">Cascadia Code</FontFamily>
+    
+    <x:Double x:Key="FontSizeCaption">11</x:Double>
+    <x:Double x:Key="FontSizeBody">13</x:Double>
+    <x:Double x:Key="FontSizeSubtitle">14</x:Double>
+    <x:Double x:Key="FontSizeTitle">16</x:Double>
+    <x:Double x:Key="FontSizeHeader">20</x:Double>
+    <x:Double x:Key="FontSizeLargeTitle">24</x:Double>
+    
+    <!-- Spacing Tokens -->
+    <Thickness x:Key="SpacingXS">2</Thickness>
+    <Thickness x:Key="SpacingS">4</Thickness>
+    <Thickness x:Key="SpacingM">8</Thickness>
+    <Thickness x:Key="SpacingL">12</Thickness>
+    <Thickness x:Key="SpacingXL">16</Thickness>
+    <Thickness x:Key="SpacingXXL">24</Thickness>
+    
+    <!-- Border Radius Tokens -->
+    <CornerRadius x:Key="RadiusS">2</CornerRadius>
+    <CornerRadius x:Key="RadiusM">4</CornerRadius>
+    <CornerRadius x:Key="RadiusL">8</CornerRadius>
+    <CornerRadius x:Key="RadiusXL">12</CornerRadius>
+    
+    <!-- Shadow Tokens -->
+    <BoxShadow x:Key="ShadowSubtle">0 1 3 0 rgba(0,0,0,0.1)</BoxShadow>
+    <BoxShadow x:Key="ShadowStandard">0 2 6 0 rgba(0,0,0,0.15)</BoxShadow>
+    <BoxShadow x:Key="ShadowElevated">0 4 12 0 rgba(0,0,0,0.2)</BoxShadow>
+    <BoxShadow x:Key="ShadowFloating">0 8 24 0 rgba(0,0,0,0.25)</BoxShadow>
+  </Style.Resources>
+</Style>

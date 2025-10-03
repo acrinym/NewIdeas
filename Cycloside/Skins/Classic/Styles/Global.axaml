@@ -1,0 +1,45 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  
+  <!-- Global Classic Skin Styles -->
+  
+  <!-- Button Classic Style -->
+  <Style Selector="Button">
+    <Setter Property="Padding" Value="{DynamicResource SpacingM}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusS}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+  </Style>
+
+  <Style Selector="Button:pressed">
+    <Setter Property="Background" Value="{DynamicResource InteractivePressedBrush}"/>
+    <Setter Property="RenderTransform" Value="scale(0.98)"/>
+  </Style>
+
+  <!-- Classic TextBox -->
+  <Style Selector="TextBox">
+    <Setter Property="Padding" Value="{DynamicResource SpacingM}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusS}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Background" Value="{DynamicResource SystemBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+  </Style>
+
+  <Style Selector="TextBox:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+  </Style>
+
+  <!-- Classic Window styling -->
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource CanvasBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+</Style>

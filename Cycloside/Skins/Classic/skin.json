@@ -1,0 +1,27 @@
+{
+  "name": "Classic",
+  "version": 1,
+  "contract": "v1",
+  "overlays": {
+    "global": ["Styles/Global.axaml"],
+    "bySelector": [
+      { 
+        "type": "MainWindow", 
+        "classes": ["primary"], 
+        "styles": ["Styles/MainWindow.Primary.axaml"] 
+      },
+      { 
+        "xName": "ApplyButton", 
+        "styles": ["Styles/ApplyButton.axaml"] 
+      },
+      {
+        "type": "Button",
+        "classes": ["danger"],
+        "styles": ["Styles/DangerButton.axaml"]
+      }
+    ]
+  },
+  "replaceWindows": {
+    "MainWindow": "Components/MainWindow.axaml"
+  }
+}

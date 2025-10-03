@@ -1,128 +1,315 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Cycloside.Plugins;
+using System.Threading.Tasks;
 
 namespace Cycloside.Services
 {
     /// <summary>
-    /// Manages the application of global and component-specific themes.
-    /// This has been rewritten to be more robust and correct.
+    /// Manages dynamic theme switching including ThemeVariant and subtheme packs.
+    /// Supports runtime switching of themes applied to all open windows.
     /// </summary>
     public static class ThemeManager
     {
-        // All themes are stored under the 'Themes/Global' subdirectory. The
-        // editor and setup wizard already point there, but the ThemeManager
-        // previously used the parent directory which caused missing theme
-        // errors at runtime.
-        private static string ThemeDir => Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
+        private static readonly Dictionary<string, ResourceDictionary> _themeCache = new();
+        private static readonly Dictionary<string, ResourceDictionary> _variantCache = new();
+        
+        /// <summary>
+        /// Current active theme name (subtheme pack name)
+        /// </summary>
+        public static string CurrentTheme { get; private set; } = "LightTheme";
 
         /// <summary>
-        /// Applies the application-wide global theme from settings.
-        /// Falls back to a default theme if the setting is invalid.
+        /// Current ThemeVariant (Light/Dark/HighContrast)
         /// </summary>
-        public static void LoadGlobalThemeFromSettings()
+        public static ThemeVariant CurrentVariant { get; private set; } = ThemeVariant.Default;
+
+        /// <summary>
+        /// Event fired when theme or variant changes
+        /// </summary>
+        public static event EventHandler<ThemeChangedEventArgs>? ThemeChanged;
+
+        /// <summary>
+        /// Initialize theme system from settings
+        /// </summary>
+        public static void InitializeFromSettings()
         {
-            var themeName = SettingsManager.Settings.GlobalTheme;
-
-            if (string.IsNullOrWhiteSpace(themeName))
-            {
-                themeName = "MintGreen"; // A safe default
-            }
-
-            if (!LoadGlobalTheme(themeName) && themeName != "MintGreen")
-            {
-                LoadGlobalTheme("MintGreen"); // Fallback on failure
-            }
+            var settings = SettingsManager.Settings;
+            var themeName = settings.GlobalTheme ?? "LightTheme";
+            var variant = ParseVariantFromSettings(settings.RequestedThemeVariant);
+            
+            ApplyThemeAsync(themeName, variant, false).Wait();
         }
 
         /// <summary>
-        /// Applies a single global theme to the entire application.
-        /// It clears any previously loaded global theme first.
+        /// Apply a specific theme and variant combination
         /// </summary>
-        public static bool LoadGlobalTheme(string themeName)
+        public static async Task<bool> ApplyThemeAsync(string themeName, ThemeVariant variant, bool saveSettings = true)
         {
             if (Application.Current == null)
             {
-                Logger.Log("ThemeManager: Application.Current is null, cannot load theme");
+                Logger.Log("ThemeManager: Application.Current is null, cannot apply theme");
                 return false;
-            }
-
-            var file = Path.Combine(ThemeDir, $"{themeName}.axaml");
-            if (!File.Exists(file))
-            {
-                Logger.Log($"Global theme '{themeName}' not found at '{file}'.");
-                // FIXED: Try to create a default theme if none exists
-                if (themeName != "MintGreen")
-                {
-                    Logger.Log("Attempting to load fallback theme 'MintGreen'");
-                    return LoadGlobalTheme("MintGreen");
-                }
-                return false;
-            }
-
-            // Remove any existing global theme to prevent conflicts
-            var existing = Application.Current.Styles.OfType<StyleInclude>()
-                .FirstOrDefault(s => s.Source?.OriginalString.Contains("/Themes/Global/") == true);
-            if (existing != null)
-            {
-                Application.Current.Styles.Remove(existing);
-                Logger.Log($"Removed existing theme: {existing.Source}");
             }
 
             try
             {
-                // FIXED: Use proper URI construction for theme files
-                var themeUri = new Uri($"file:///{file.Replace('\\', '/')}");
-                var newThemeStyle = new StyleInclude(themeUri)
+                // Load theme variant tokens first
+                if (!await LoadThemeVariantTokensAsync(variant))
                 {
-                    Source = themeUri
-                };
-                Application.Current.Styles.Add(newThemeStyle);
-                SettingsManager.Settings.GlobalTheme = themeName;
-                SettingsManager.Save();
-                Logger.Log($"Successfully loaded theme '{themeName}' from '{file}'");
+                    Logger.Log($"Failed to load theme variant tokens for {variant}");
+                    return false;
+                }
+
+                // Load subtheme pack if specified
+                if (!string.IsNullOrEmpty(themeName) && !await LoadSubthemeAsync(themeName))
+                {
+                    Logger.Log($"Failed to load subtheme pack: {themeName}");
+                    return false;
+                }
+
+                // Update current theme state
+                CurrentTheme = themeName ?? "LightTheme";
+                CurrentVariant = variant;
+
+                // Save settings if requested
+                if (saveSettings)
+                {
+                    SettingsManager.Settings.GlobalTheme = themeName;
+                    SettingsManager.Settings.RequestedThemeVariant = variant.ToString();
+                    SettingsManager.Save();
+                }
+
+                // Apply to all open windows
+                await ApplyToAllWindowsAsync();
+
+                // Fire theme changed event
+                ThemeChanged?.Invoke(null, new ThemeChangedEventArgs(CurrentTheme, CurrentVariant));
+
+                Logger.Log($"Successfully applied theme '{themeName}' with variant '{variant}'");
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.Log($"Failed to load theme '{themeName}': {ex.Message}");
-                Logger.Log($"Theme file path: {file}");
-                Logger.Log($"Theme directory exists: {Directory.Exists(ThemeDir)}");
+                Logger.Log($"Error applying theme '{themeName}' with variant '{variant}': {ex.Message}");
                 return false;
             }
         }
 
         /// <summary>
-        /// Applies the global theme and any component-specific themes
-        /// based on the current settings. This is the main entry point for plugins.
+        /// Apply theme variant only (Light/Dark/HighContrast)
         /// </summary>
-        public static void ApplyFromSettings(Window window, string componentName)
+        public static async Task<bool> ApplyVariantAsync(ThemeVariant variant)
         {
-            // The global theme is loaded once at startup, so we just need to apply component themes here.
-            ApplyComponentTheme(window, componentName);
+            return await ApplyThemeAsync(CurrentTheme, variant);
         }
 
         /// <summary>
-        /// Applies themes for a plugin window. This first applies the generic
-        /// "Plugins" theme, then the plugin specific theme using the plugin's
-        /// <see cref="IPlugin.Name"/>. If <see cref="IPlugin.ForceDefaultTheme"/>
-        /// is true, no component themes are applied.
+        /// Apply subtheme pack only
         /// </summary>
-        /// <param name="window">The window to theme.</param>
-        /// <param name="plugin">The plugin instance.</param>
+        public static async Task<bool> ApplySubthemeAsync(string themeName)
+        {
+            return await ApplyThemeAsync(themeName, CurrentVariant);
+        }
+
+        /// <summary>
+        /// Get available theme names
+        /// </summary>
+        public static IEnumerable<string> GetAvailableThemes()
+        {
+            var themesDir = Path.Combine(AppContext.BaseDirectory, "Themes");
+            if (!Directory.Exists(themesDir)) return Enumerable.Empty<string>();
+
+            return Directory.GetDirectories(themesDir)
+                .Select(dir => Path.GetFileName(dir)!)
+                .Where(name => name != "Global" && File.Exists(Path.Combine(themesDir, name, "Tokens.axaml")))
+                .OrderBy(name => name);
+        }
+
+        /// <summary>
+        /// Get available theme variants
+        /// </summary>
+        public static ThemeVariant[] GetAvailableVariants()
+        {
+            return new[] { ThemeVariant.Light, ThemeVariant.Dark };
+        }
+
+        private static async Task<bool> LoadThemeVariantTokensAsync(ThemeVariant variant)
+        {
+            try
+            {
+                // Clear any existing variant tokens
+                ClearVariantTokens();
+
+                string? variantTheme = null;
+                if (variant == ThemeVariant.Light)
+                {
+                    variantTheme = Path.Combine(AppContext.BaseDirectory, "Themes", "LightTheme", "Tokens.axaml");
+                }
+                else if (variant == ThemeVariant.Dark)
+                {
+                    variantTheme = Path.Combine(AppContext.BaseDirectory, "Themes", "DarkTheme", "Tokens.axaml");
+                }
+
+                if (variantTheme != null && File.Exists(variantTheme))
+                {
+                    var uri = new Uri($"file:///{variantTheme.Replace('\\', '/')}");
+                    var styleInclude = new StyleInclude(uri) { Source = uri };
+                    
+                    Application.Current.Styles.Add(styleInclude);
+                    return true;
+                }
+                else
+                {
+                    // Default variant - no special handling needed
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to load theme variant tokens for {variant}: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static async Task<bool> LoadSubthemeAsync(string themeName)
+        {
+            try
+            {
+                // Clear any existing subtheme
+                ClearSubthemeStyles();
+
+                var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", themeName);
+                if (!Directory.Exists(themeDir))
+                {
+                    Logger.Log($"Subtheme directory not found: {themeDir}");
+                    return false;
+                }
+
+                // Load subtheme styles files
+                var styleFiles = Directory.GetFiles(themeDir, "*.axaml")
+                    .Where(f => !Path.GetFileName(f).Equals("Tokens.axaml", StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                foreach (var styleFile in styleFiles)
+                {
+                    try
+                    {
+                        var uri = new Uri($"file:///{styleFile.Replace('\\', '/')}");
+                        var styleInclude = new StyleInclude(uri) { Source = uri };
+                        Application.Current.Styles.Add(styleInclude);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"Failed to load subtheme style file '{styleFile}': {ex.Message}");
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to load subtheme '{themeName}': {ex.Message}");
+                return false;
+            }
+        }
+
+        private static void ClearVariantTokens()
+        {
+            if (Application.Current?.Styles == null) return;
+
+            var variantTokens = Application.Current.Styles.OfType<StyleInclude>()
+                .Where(s => s.Source?.OriginalString.Contains("/Themes/LightTheme/") == true ||
+                           s.Source?.OriginalString.Contains("/Themes/DarkTheme/") == true ||
+                           s.Source?.OriginalString.Contains("/Themes/HighContrastTheme/") == true)
+                .ToList();
+
+            foreach (var token in variantTokens)
+            {
+                Application.Current.Styles.Remove(token);
+            }
+        }
+
+        private static void ClearSubthemeStyles()
+        {
+            if (Application.Current?.Styles == null) return;
+
+            var subthemeStyles = Application.Current.Styles.OfType<StyleInclude>()
+                .Where(s => s.Source?.OriginalString.Contains("/Themes/") == true &&
+                           !s.Source.OriginalString.Contains("/Themes/LightTheme/") &&
+                           !s.Source.OriginalString.Contains("/Themes/DarkTheme/") &&
+                           !s.Source.OriginalString.Contains("/Themes/HighContrastTheme/") &&
+                           !s.Source.OriginalString.Contains("/Themes/Tokens.axaml"))
+                .ToList();
+
+            foreach (var style in subthemeStyles)
+            {
+                Application.Current.Styles.Remove(style);
+            }
+        }
+
+        private static async Task ApplyToAllWindowsAsync()
+        {
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return;
+
+            var windows = desktop.Windows;
+            foreach (var window in windows)
+            {
+                try
+                {
+                    // Force refresh of window styles
+                    window.InvalidateVisual();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"Failed to refresh window '{window.Title}': {ex.Message}");
+                }
+            }
+        }
+
+        private static ThemeVariant ParseVariantFromSettings(string? variantString)
+        {
+            return variantString switch
+            {
+                "Light" => ThemeVariant.Light,
+                "Dark" => ThemeVariant.Dark,
+                _ => ThemeVariant.Default
+            };
+        }
+
+        /// <summary>
+        /// Legacy compatibility method - loads global theme (backward compatibility)
+        /// </summary>
+        public static bool LoadGlobalTheme(string themeName)
+        {
+            try
+            {
+                ApplyThemeAsync(themeName, ThemeVariant.Default, false).Wait();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Legacy compatibility method - applies theme for plugin windows
+        /// </summary>
         public static void ApplyForPlugin(Window window, Cycloside.Plugins.IPlugin plugin)
         {
             if (plugin.ForceDefaultTheme)
                 return;
 
-            ApplyComponentTheme(window, "Plugins");
-            ApplyComponentTheme(window, plugin.Name);
-
+            // Plugin-specific skins are now handled by SkinManager
             if (SettingsManager.Settings.PluginSkins.TryGetValue(plugin.Name, out var skin) && !string.IsNullOrEmpty(skin))
             {
                 SkinManager.ApplySkinTo(window, skin);
@@ -130,32 +317,43 @@ namespace Cycloside.Services
         }
 
         /// <summary>
-        /// Applies a specific theme to a single window, overriding the global theme for that window only.
+        /// Legacy compatibility method - applies component theme
+        /// </summary>
+        public static void ApplyFromSettings(Window window, string componentName)
+        {
+            // Legacy method - no longer used in new system
+            // Component themes are now handled via semantic tokens and skins
+        }
+
+        /// <summary>
+        /// Legacy compatibility method - applies component theme to element
         /// </summary>
         public static void ApplyComponentTheme(StyledElement element, string componentName)
         {
-            if (SettingsManager.Settings.ComponentThemes.TryGetValue(componentName, out var themeName) && !string.IsNullOrEmpty(themeName))
-            {
-                var file = Path.Combine(ThemeDir, $"{themeName}.axaml");
-                if (!File.Exists(file))
-                {
-                    Logger.Log($"Component theme '{themeName}' for '{componentName}' not found.");
-                    return;
-                }
+            // Legacy method - component themes are now handled via semantic tokens and skins
+        }
 
-                try
-                {
-                    var themeStyle = new StyleInclude(new Uri("resm:Styles?assembly=Cycloside"))
-                    {
-                        Source = new Uri(file)
-                    };
-                    element.Styles.Add(themeStyle);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Log($"Failed to apply component theme '{themeName}' to '{componentName}': {ex.Message}");
-                }
-            }
+        /// <summary>
+        /// Legacy compatibility method - removes component themes
+        /// </summary>
+        public static void RemoveComponentThemes(StyledElement element)
+        {
+            // Legacy method - no longer needed with new system
+        }
+    }
+
+    /// <summary>
+    /// Event args for theme changed events
+    /// </summary>
+    public class ThemeChangedEventArgs : EventArgs
+    {
+        public string ThemeName { get; }
+        public ThemeVariant Variant { get; }
+
+        public ThemeChangedEventArgs(string themeName, ThemeVariant variant)
+        {
+            ThemeName = themeName;
+            Variant = variant;
         }
     }
 }
