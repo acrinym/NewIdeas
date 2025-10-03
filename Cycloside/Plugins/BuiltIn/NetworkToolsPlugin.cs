@@ -1,250 +1,567 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Platform.Storage;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
+using Cycloside.Plugins;
 using Cycloside.Services;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+using Cycloside.Widgets;
 
-namespace Cycloside.Plugins.BuiltIn;
-
-/// <summary>
-/// Provides several small network utilities in one plugin. Results can
-/// be saved to disk for later reference.
-/// </summary>
-public class NetworkToolsPlugin : IPlugin
+namespace Cycloside.Plugins.BuiltIn
 {
-    private NetworkToolsWindow? _window;
-    private TextBox? _outputBox;
-    private TextBox? _inputBox;
-    private ComboBox? _ipconfigArgsBox;
-
-    public string Name => "Network Tools";
-    public string Description => "Ping, traceroute and more";
-    public Version Version => new(0, 1, 0);
-    public Widgets.IWidget? Widget => null;
-    public bool ForceDefaultTheme => false;
-
-    public void Start()
+    /// <summary>
+    /// NETWORK TOOLS - Comprehensive network analysis and security toolkit
+    /// Provides packet sniffing, port scanning, HTTP inspection, and traffic monitoring
+    /// </summary>
+    public class NetworkToolsPlugin : IPlugin
     {
-        _window = new NetworkToolsWindow();
-        _outputBox = _window.FindControl<TextBox>("OutputBox");
-        _inputBox = _window.FindControl<TextBox>("InputBox");
-        _ipconfigArgsBox = _window.FindControl<ComboBox>("IpconfigArgsBox");
+        public string Name => "Network Tools";
+        public string Description => "Comprehensive network analysis and security toolkit";
+        public Version Version => new(1, 0, 0);
+        public bool ForceDefaultTheme => false;
 
-        _window.FindControl<Button>("PingButton")?.AddHandler(Button.ClickEvent, PingClicked);
-        _window.FindControl<Button>("TraceButton")?.AddHandler(Button.ClickEvent, TraceClicked);
-        _window.FindControl<Button>("IpconfigButton")?.AddHandler(Button.ClickEvent, IpconfigClicked);
-        _window.FindControl<Button>("PortScanButton")?.AddHandler(Button.ClickEvent, PortScanClicked);
-        _window.FindControl<Button>("WhoisButton")?.AddHandler(Button.ClickEvent, WhoisClicked);
-        _window.FindControl<Button>("IpViewButton")?.AddHandler(Button.ClickEvent, IpViewClicked);
-        _window.FindControl<Button>("MacButton")?.AddHandler(Button.ClickEvent, MacClicked);
-        _window.FindControl<Button>("ExportButton")?.AddHandler(Button.ClickEvent, ExportClicked);
-
-        ThemeManager.ApplyForPlugin(_window, this);
-        WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(NetworkToolsPlugin));
-        _window.Show();
-    }
-
-    public void Stop()
-    {
-        _window?.Close();
-        _window = null;
-    }
-
-    private void AppendOutput(string text)
-    {
-        if (_outputBox == null) return;
-        _outputBox.Text += text + "\n";
-    }
-
-    private async void PingClicked(object? sender, RoutedEventArgs e)
-    {
-        if (_inputBox == null) return;
-        var host = _inputBox.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(host)) return;
-        AppendOutput($"Pinging {host}...");
-        try
+        public class NetworkToolsWidget : IWidget
         {
-            var ping = new Ping();
-            var reply = await ping.SendPingAsync(host);
-            AppendOutput(reply.Status == IPStatus.Success
-                ? $"Reply from {reply.Address}: time={reply.RoundtripTime}ms"
-                : $"Ping failed: {reply.Status}");
-        }
-        catch (Exception ex)
-        {
-            AppendOutput($"Ping error: {ex.Message}");
-        }
-    }
+            public string Name => "Network Tools";
 
-    private async void TraceClicked(object? sender, RoutedEventArgs e)
-    {
-        if (_inputBox == null) return;
-        var host = _inputBox.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(host)) return;
-        AppendOutput($"Tracing route to {host}...");
-        try
-        {
-            var sb = new StringBuilder();
-            using var ping = new Ping();
-            for (int ttl = 1; ttl <= 30; ttl++)
+            private TabControl? _mainTabControl;
+            private TextBlock? _statusText;
+            private ListBox? _packetList;
+            private ListBox? _portScanResults;
+            private ListBox? _httpRequests;
+            private ComboBox? _interfaceSelector;
+            private TextBox? _targetHostInput;
+            private TextBox? _portRangeInput;
+
+            public Control BuildView()
             {
-                var options = new PingOptions(ttl, true);
-                var reply = await ping.SendPingAsync(host, 4000, new byte[32], options);
-                sb.AppendLine($"{ttl}\t{reply.Address} {reply.Status}");
-                if (reply.Status == IPStatus.Success) break;
-            }
-            AppendOutput(sb.ToString());
-        }
-        catch (Exception ex)
-        {
-            AppendOutput($"Traceroute error: {ex.Message}");
-        }
-    }
-
-    private async void IpconfigClicked(object? sender, RoutedEventArgs e)
-    {
-        var arg = _ipconfigArgsBox?.SelectedItem as string ?? "/all";
-        AppendOutput($"Running ipconfig {arg}...");
-        try
-        {
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = OperatingSystem.IsWindows() ? "ipconfig" : "ifconfig",
-                Arguments = arg,
-                RedirectStandardOutput = true,
-                UseShellExecute = false
-            };
-            using var process = System.Diagnostics.Process.Start(psi);
-            if (process != null)
-            {
-                var output = await process.StandardOutput.ReadToEndAsync();
-                process.WaitForExit();
-                AppendOutput(output);
-            }
-        }
-        catch (Exception ex)
-        {
-            AppendOutput($"ipconfig error: {ex.Message}");
-        }
-    }
-
-    private async void PortScanClicked(object? sender, RoutedEventArgs e)
-    {
-        if (_inputBox == null) return;
-        var host = _inputBox.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(host)) return;
-        AppendOutput($"Scanning {host} ports 1-1024...");
-        var openPorts = new List<int>();
-        for (int port = 1; port <= 1024; port++)
-        {
-            try
-            {
-                using var client = new TcpClient();
-                var connectTask = client.ConnectAsync(host, port);
-                if (await Task.WhenAny(connectTask, Task.Delay(200)) == connectTask && client.Connected)
+                var mainPanel = new StackPanel
                 {
-                    openPorts.Add(port);
+                    Orientation = Orientation.Vertical,
+                    Margin = new Thickness(10)
+                };
+
+                // Header
+                var headerPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var headerText = new TextBlock
+                {
+                    Text = "🌐 Network Tools",
+                    FontSize = 18,
+                    FontWeight = FontWeight.Bold
+                };
+
+                var statusPanel = new Border
+                {
+                    Background = Brushes.LightGray,
+                    CornerRadius = new CornerRadius(5),
+                    Padding = new Thickness(8, 4),
+                    Margin = new Thickness(15, 0, 0, 0)
+                };
+
+                _statusText = new TextBlock
+                {
+                    Text = "Ready",
+                    FontSize = 12
+                };
+
+                statusPanel.Child = _statusText;
+
+                headerPanel.Children.Add(headerText);
+                headerPanel.Children.Add(statusPanel);
+
+                // Main tab control
+                _mainTabControl = new TabControl();
+
+                // Packet Sniffer Tab
+                var packetTab = CreatePacketSnifferTab();
+                _mainTabControl.Items.Add(packetTab);
+
+                // Port Scanner Tab
+                var portTab = CreatePortScannerTab();
+                _mainTabControl.Items.Add(portTab);
+
+                // HTTP Inspector Tab
+                var httpTab = CreateHttpInspectorTab();
+                _mainTabControl.Items.Add(httpTab);
+
+                // Network Monitor Tab
+                var monitorTab = CreateNetworkMonitorTab();
+                _mainTabControl.Items.Add(monitorTab);
+
+                mainPanel.Children.Add(headerPanel);
+                mainPanel.Children.Add(_mainTabControl);
+
+                var border = new Border
+                {
+                    Child = mainPanel,
+                    Background = Brushes.White,
+                    BorderBrush = Brushes.LightGray,
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(8),
+                    Margin = new Thickness(10)
+                };
+
+                return border;
+            }
+
+            private TabItem CreatePacketSnifferTab()
+            {
+                var tab = new TabItem { Header = "📡 Packet Sniffer" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                // Controls
+                var controlsPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 15) };
+
+                var interfacePanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+
+                var interfaceLabel = new TextBlock { Text = "Interface:", Margin = new Thickness(0, 0, 10, 0) };
+                _interfaceSelector = new ComboBox { Width = 200 };
+
+                // Populate interfaces
+                foreach (var interfaceInfo in NetworkTools.NetworkInterfaces)
+                {
+                    _interfaceSelector.Items.Add(interfaceInfo.Name);
+                }
+
+                interfacePanel.Children.Add(interfaceLabel);
+                interfacePanel.Children.Add(_interfaceSelector);
+
+                var buttonsPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+
+                var startButton = new Button
+                {
+                    Content = "▶️ Start Capture",
+                    Background = Brushes.Green,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(10, 5)
+                };
+                startButton.Click += OnStartPacketCapture;
+
+                var stopButton = new Button
+                {
+                    Content = "⏹️ Stop Capture",
+                    Background = Brushes.Red,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(10, 5)
+                };
+                stopButton.Click += OnStopPacketCapture;
+
+                var clearButton = new Button
+                {
+                    Content = "🗑️ Clear",
+                    Background = Brushes.Gray,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(10, 5)
+                };
+                clearButton.Click += OnClearPackets;
+
+                buttonsPanel.Children.Add(startButton);
+                buttonsPanel.Children.Add(stopButton);
+                buttonsPanel.Children.Add(clearButton);
+
+                controlsPanel.Children.Add(interfacePanel);
+                controlsPanel.Children.Add(buttonsPanel);
+
+                // Packet list
+                var packetPanel = new StackPanel { Margin = new Thickness(0, 15, 0, 0) };
+
+                var packetLabel = new TextBlock
+                {
+                    Text = "📊 Captured Packets:",
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+
+                _packetList = new ListBox { Height = 300 };
+
+                packetPanel.Children.Add(packetLabel);
+                packetPanel.Children.Add(_packetList);
+
+                panel.Children.Add(controlsPanel);
+                panel.Children.Add(packetPanel);
+
+                tab.Content = panel;
+                return tab;
+            }
+
+            private TabItem CreatePortScannerTab()
+            {
+                var tab = new TabItem { Header = "🔍 Port Scanner" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                // Target input
+                var targetPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 15) };
+
+                var targetLabel = new TextBlock { Text = "Target Host:", FontWeight = FontWeight.Bold };
+                _targetHostInput = new TextBox
+                {
+                    Text = "localhost",
+                    Width = 200,
+                    Margin = new Thickness(0, 5, 0, 0)
+                };
+
+                var portLabel = new TextBlock { Text = "Port Range:", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 10, 0, 0) };
+                _portRangeInput = new TextBox
+                {
+                    Text = "1-1024",
+                    Width = 200,
+                    Margin = new Thickness(0, 5, 0, 0)
+                };
+
+                targetPanel.Children.Add(targetLabel);
+                targetPanel.Children.Add(_targetHostInput);
+                targetPanel.Children.Add(portLabel);
+                targetPanel.Children.Add(_portRangeInput);
+
+                // Scan button
+                var scanButton = new Button
+                {
+                    Content = "🔍 Start Scan",
+                    Background = Brushes.Blue,
+                    Foreground = Brushes.White,
+                    FontWeight = FontWeight.Bold,
+                    Padding = new Thickness(15, 8),
+                    Margin = new Thickness(0, 15, 0, 0)
+                };
+                scanButton.Click += OnStartPortScan;
+
+                // Results
+                var resultsPanel = new StackPanel { Margin = new Thickness(0, 20, 0, 0) };
+
+                var resultsLabel = new TextBlock
+                {
+                    Text = "📊 Scan Results:",
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+
+                _portScanResults = new ListBox { Height = 300 };
+
+                resultsPanel.Children.Add(resultsLabel);
+                resultsPanel.Children.Add(_portScanResults);
+
+                panel.Children.Add(targetPanel);
+                panel.Children.Add(scanButton);
+                panel.Children.Add(resultsPanel);
+
+                tab.Content = panel;
+                return tab;
+            }
+
+            private TabItem CreateHttpInspectorTab()
+            {
+                var tab = new TabItem { Header = "🌐 HTTP Inspector" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                // Controls
+                var controlsPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 15) };
+
+                var monitorButton = new Button
+                {
+                    Content = "▶️ Start Monitoring",
+                    Background = Brushes.Green,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(15, 8)
+                };
+                monitorButton.Click += OnStartHttpMonitoring;
+
+                var stopButton = new Button
+                {
+                    Content = "⏹️ Stop Monitoring",
+                    Background = Brushes.Red,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(15, 8),
+                    Margin = new Thickness(10, 0, 0, 0)
+                };
+                stopButton.Click += OnStopHttpMonitoring;
+
+                controlsPanel.Children.Add(monitorButton);
+                controlsPanel.Children.Add(stopButton);
+
+                // HTTP requests list
+                var requestsPanel = new StackPanel { Margin = new Thickness(0, 15, 0, 0) };
+
+                var requestsLabel = new TextBlock
+                {
+                    Text = "📋 HTTP Requests:",
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+
+                _httpRequests = new ListBox { Height = 400 };
+
+                requestsPanel.Children.Add(requestsLabel);
+                requestsPanel.Children.Add(_httpRequests);
+
+                panel.Children.Add(controlsPanel);
+                panel.Children.Add(requestsPanel);
+
+                tab.Content = panel;
+                return tab;
+            }
+
+            private TabItem CreateNetworkMonitorTab()
+            {
+                var tab = new TabItem { Header = "📊 Network Monitor" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                // Network interfaces
+                var interfacesPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
+
+                var interfacesLabel = new TextBlock
+                {
+                    Text = "🌐 Network Interfaces:",
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+
+                var interfacesList = new ListBox { Height = 150 };
+
+                foreach (var interfaceInfo in NetworkTools.NetworkInterfaces)
+                {
+                    interfacesList.Items.Add($"{interfaceInfo.Name} - {interfaceInfo.IPv4Address} ({interfaceInfo.Type})");
+                }
+
+                interfacesPanel.Children.Add(interfacesLabel);
+                interfacesPanel.Children.Add(interfacesList);
+
+                // Statistics
+                var statsPanel = new StackPanel { Margin = new Thickness(0, 20, 0, 0) };
+
+                var statsLabel = new TextBlock
+                {
+                    Text = "📈 Network Statistics:",
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+
+                var statsGrid = new Grid();
+                statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+                var packetsLabel = new TextBlock { Text = "📦 Packets Captured:" };
+                var packetsValue = new TextBlock { Text = "0", FontWeight = FontWeight.Bold };
+
+                var portsLabel = new TextBlock { Text = "🔍 Ports Scanned:" };
+                var portsValue = new TextBlock { Text = "0", FontWeight = FontWeight.Bold };
+
+                var requestsLabel = new TextBlock { Text = "🌐 HTTP Requests:" };
+                var requestsValue = new TextBlock { Text = "0", FontWeight = FontWeight.Bold };
+
+                statsGrid.Children.Add(packetsLabel);
+                statsGrid.Children.Add(packetsValue);
+                Grid.SetColumn(packetsValue, 1);
+
+                statsGrid.Children.Add(portsLabel);
+                statsGrid.Children.Add(portsValue);
+                Grid.SetColumn(portsValue, 1);
+                Grid.SetRow(portsLabel, 1);
+
+                statsGrid.Children.Add(requestsLabel);
+                statsGrid.Children.Add(requestsValue);
+                Grid.SetColumn(requestsValue, 1);
+                Grid.SetRow(requestsLabel, 2);
+
+                statsPanel.Children.Add(statsLabel);
+                statsPanel.Children.Add(statsGrid);
+
+                panel.Children.Add(interfacesPanel);
+                panel.Children.Add(statsPanel);
+
+                tab.Content = panel;
+                return tab;
+            }
+
+            private async void OnStartPacketCapture(object? sender, RoutedEventArgs e)
+            {
+                var interfaceName = _interfaceSelector?.SelectedItem?.ToString();
+                if (string.IsNullOrEmpty(interfaceName))
+                {
+                    UpdateStatus("❌ Please select a network interface");
+                    return;
+                }
+
+                UpdateStatus($"📡 Starting packet capture on {interfaceName}...");
+
+                var success = await NetworkTools.StartPacketCaptureAsync(interfaceName);
+                if (success)
+                {
+                    UpdateStatus("✅ Packet capture started");
+                    SubscribeToNetworkEvents();
+                }
+                else
+                {
+                    UpdateStatus("❌ Failed to start packet capture");
                 }
             }
-            catch { }
-        }
-        AppendOutput(openPorts.Count > 0
-            ? $"Open ports: {string.Join(", ", openPorts)}"
-            : "No open ports detected.");
-    }
 
-    private async void WhoisClicked(object? sender, RoutedEventArgs e)
-    {
-        if (_inputBox == null) return;
-        var domain = _inputBox.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(domain)) return;
-        AppendOutput($"Looking up {domain}...");
-        try
-        {
-            using var tcp = new TcpClient("whois.verisign-grs.com", 43);
-            using var stream = tcp.GetStream();
-            var query = Encoding.ASCII.GetBytes(domain + "\r\n");
-            await stream.WriteAsync(query, 0, query.Length);
-            using var reader = new StreamReader(stream, Encoding.ASCII);
-            var result = await reader.ReadToEndAsync();
-            AppendOutput(result);
-        }
-        catch (Exception ex)
-        {
-            AppendOutput($"Whois error: {ex.Message}");
-        }
-    }
+            private async void OnStopPacketCapture(object? sender, RoutedEventArgs e)
+            {
+                UpdateStatus("🛑 Stopping packet capture...");
+                await NetworkTools.StopPacketCaptureAsync();
+                UpdateStatus("✅ Packet capture stopped");
+            }
 
-    private async void IpViewClicked(object? sender, RoutedEventArgs e)
-    {
-        AppendOutput("Getting IP addresses...");
-        try
-        {
-            var addresses = NetworkInterface.GetAllNetworkInterfaces()
-                .SelectMany(n => n.GetIPProperties().UnicastAddresses)
-                .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork)
-                .Select(a => a.Address.ToString());
-            AppendOutput("Internal IPs: " + string.Join(", ", addresses));
-            try
+            private void OnClearPackets(object? sender, RoutedEventArgs e)
             {
-                using var client = new HttpClient();
-                var external = await client.GetStringAsync("https://api.ipify.org");
-                AppendOutput("External IP: " + external);
+                NetworkTools.CapturedPackets.Clear();
+                UpdateStatus("🗑️ Packets cleared");
             }
-            catch (Exception ex)
-            {
-                AppendOutput($"External IP error: {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            AppendOutput($"IP view error: {ex.Message}");
-        }
-    }
 
-    private void MacClicked(object? sender, RoutedEventArgs e)
-    {
-        AppendOutput("MAC Addresses:");
-        foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
-        {
-            var mac = ni.GetPhysicalAddress().ToString();
-            if (!string.IsNullOrWhiteSpace(mac))
-                AppendOutput($"{ni.Name}: {mac}");
-        }
-    }
+            private async void OnStartPortScan(object? sender, RoutedEventArgs e)
+            {
+                var targetHost = _targetHostInput?.Text?.Trim();
+                if (string.IsNullOrEmpty(targetHost))
+                {
+                    UpdateStatus("❌ Please enter a target host");
+                    return;
+                }
 
-    private async void ExportClicked(object? sender, RoutedEventArgs e)
-    {
-        if (_window == null || _outputBox == null) return;
-        var start = await DialogHelper.GetDefaultStartLocationAsync(_window.StorageProvider);
-        var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Save Results",
-            SuggestedFileName = $"network_results_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
-            DefaultExtension = "txt",
-            FileTypeChoices = new[] { new FilePickerFileType("Text") { Patterns = new[] { "*.txt" } } },
-            SuggestedStartLocation = start
-        });
-        if (file?.Path.LocalPath != null)
-        {
-            try
-            {
-                await File.WriteAllTextAsync(file.Path.LocalPath, _outputBox.Text);
+                // Parse port range
+                var portRange = _portRangeInput?.Text?.Trim() ?? "1-1024";
+                var parts = portRange.Split('-');
+                if (parts.Length != 2 || !int.TryParse(parts[0], out var startPort) || !int.TryParse(parts[1], out var endPort))
+                {
+                    UpdateStatus("❌ Invalid port range format. Use '1-1024'");
+                    return;
+                }
+
+                UpdateStatus($"🔍 Starting port scan on {targetHost}:{startPort}-{endPort}...");
+
+                var success = await NetworkTools.StartPortScanAsync(targetHost, startPort, endPort);
+                if (success)
+                {
+                    UpdateStatus("✅ Port scan started");
+                }
+                else
+                {
+                    UpdateStatus("❌ Failed to start port scan");
+                }
             }
-            catch (Exception ex)
+
+            private async void OnStartHttpMonitoring(object? sender, RoutedEventArgs e)
             {
-                AppendOutput($"Save error: {ex.Message}");
+                UpdateStatus("🌐 Starting HTTP traffic monitoring...");
+
+                var success = await NetworkTools.StartHttpMonitoringAsync();
+                if (success)
+                {
+                    UpdateStatus("✅ HTTP monitoring started");
+                }
+                else
+                {
+                    UpdateStatus("❌ Failed to start HTTP monitoring");
+                }
             }
+
+            private async void OnStopHttpMonitoring(object? sender, RoutedEventArgs e)
+            {
+                UpdateStatus("🛑 Stopping HTTP monitoring...");
+                await NetworkTools.StopHttpMonitoringAsync();
+                UpdateStatus("✅ HTTP monitoring stopped");
+            }
+
+            private void SubscribeToNetworkEvents()
+            {
+                NetworkTools.PacketCaptured += OnPacketCaptured;
+                NetworkTools.PortScanCompleted += OnPortScanCompleted;
+                NetworkTools.HttpRequestCaptured += OnHttpRequestCaptured;
+            }
+
+            private void OnPacketCaptured(object? sender, NetworkPacketEventArgs e)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_packetList != null)
+                    {
+                        var item = $"{e.Packet.Timestamp:HH:mm:ss} | {e.Packet.Protocol} | {e.Packet.Source}:{e.Packet.Destination} | {e.Packet.Size} bytes";
+                        _packetList.Items.Add(item);
+
+                        // Keep only recent packets
+                        if (_packetList.Items.Count > 100)
+                        {
+                            _packetList.Items.RemoveAt(0);
+                        }
+
+                        if (_packetList.Items.Count > 0)
+                            _packetList.ScrollIntoView(_packetList.Items[^1]);
+                    }
+                });
+            }
+
+            private void OnPortScanCompleted(object? sender, PortScanEventArgs e)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_portScanResults != null)
+                    {
+                        var item = $"{e.Result.Port} | {e.Result.Status} | {e.Result.Service} | {e.Result.ResponseTime}ms";
+                        _portScanResults.Items.Add(item);
+
+                        if (_portScanResults.Items.Count > 0)
+                            _portScanResults.ScrollIntoView(_portScanResults.Items[^1]);
+                    }
+                });
+            }
+
+            private void OnHttpRequestCaptured(object? sender, HttpRequestEventArgs e)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_httpRequests != null)
+                    {
+                        var item = $"{e.Request.Method} {e.Request.Url} | {e.Request.StatusCode} | {e.Request.ResponseSize} bytes | {e.Request.ResponseTime}ms";
+                        _httpRequests.Items.Add(item);
+
+                        // Keep only recent requests
+                        if (_httpRequests.Items.Count > 50)
+                        {
+                            _httpRequests.Items.RemoveAt(0);
+                        }
+
+                        if (_httpRequests.Items.Count > 0)
+                            _httpRequests.ScrollIntoView(_httpRequests.Items[^1]);
+                    }
+                });
+            }
+
+            private void UpdateStatus(string message)
+            {
+                if (_statusText != null)
+                {
+                    _statusText.Text = message;
+                }
+
+                Logger.Log($"Network Tools: {message}");
+            }
+        }
+
+        public IWidget? Widget => new NetworkToolsWidget();
+
+        public void Start()
+        {
+            Logger.Log("🌐 Network Tools Plugin started - Ready for network analysis!");
+
+            // Initialize Network Tools service
+            _ = NetworkTools.InitializeAsync();
+        }
+
+        public void Stop()
+        {
+            Logger.Log("🛑 Network Tools Plugin stopped");
         }
     }
 }

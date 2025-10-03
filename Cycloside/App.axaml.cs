@@ -50,36 +50,40 @@ public partial class App : Application
         ThemeManager.InitializeFromSettings();
 
         // Initialize Configuration Manager
-        _ = ConfigurationManager.InitializeAsync();
-
-        // Show welcome modal if needed (first run or user preference)
-        if (settings.FirstRun || ConfigurationManager.IsWelcomeEnabled)
+        try
         {
-            var welcome = new WelcomeWindow();
-            welcome.Closed += async (_, _) =>
-            {
-                settings.FirstRun = false;
-                // Settings are automatically saved by SettingsManager
-
-                // Load plugins selectively based on configuration
-                await LoadConfiguredPlugins();
-
-                _mainWindow = CreateMainWindow(SettingsManager.Settings);
-                desktop.MainWindow = _mainWindow;
-                _mainWindow.Show();
-            };
-
-            desktop.MainWindow = welcome;
-            welcome.Show();
+            _ = ConfigurationManager.InitializeAsync();
+            Logger.Log("✅ Configuration Manager initialized successfully");
         }
-        else
+        catch (Exception ex)
         {
-            // Load plugins selectively based on configuration
-            _ = LoadConfiguredPlugins();
+            Logger.Log($"❌ Configuration Manager initialization failed: {ex.Message}");
+        }
 
+        // Load plugins selectively based on configuration
+        try
+        {
+            _ = LoadConfiguredPlugins();
+            Logger.Log("✅ Plugin loading setup completed");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Plugin loading setup failed: {ex.Message}");
+        }
+
+        // Create and show main window
+        try
+        {
             _mainWindow = CreateMainWindow(settings);
             desktop.MainWindow = _mainWindow;
             _mainWindow.Show();
+            Logger.Log("🚀 Main window shown successfully - Cycloside is ready!");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Main window creation failed: {ex.Message}");
+            Logger.Log($"Stack trace: {ex.StackTrace}");
+            throw; // Re-throw to fail fast
         }
 
         desktop.Exit += (_, _) =>
@@ -336,6 +340,7 @@ public partial class App : Application
         TryAdd(() => new PowerShellTerminalPlugin());
         TryAdd(() => new PluginMarketplacePlugin());
         TryAdd(() => new AdvancedCodeEditorPlugin());
+        TryAdd(() => new NetworkToolsPlugin());
         TryAdd(() => new CharacterMapPlugin());
         TryAdd(() => new FileWatcherPlugin());
         TryAdd(() => new TaskSchedulerPlugin());

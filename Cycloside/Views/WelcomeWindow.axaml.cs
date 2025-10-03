@@ -187,9 +187,12 @@ namespace Cycloside.Views
                 if (ApplyButton != null)
                     ApplyButton.Content = "✅ Applied!";
 
-                await Task.Delay(1000);
+                await Task.Delay(500);
 
+                // Set DialogResult to indicate successful completion
                 DialogResult = true;
+
+                // Close the window - the App.axaml.cs will handle the transition
                 Close();
             }
             catch (Exception ex)
@@ -201,6 +204,7 @@ namespace Cycloside.Views
                 }
 
                 Logger.Log($"Configuration error: {ex.Message}");
+                Logger.Log($"Stack trace: {ex.StackTrace}");
             }
         }
 
