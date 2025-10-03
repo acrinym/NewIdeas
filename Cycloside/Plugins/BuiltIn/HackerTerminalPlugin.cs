@@ -141,7 +141,7 @@ namespace Cycloside.Plugins.BuiltIn
                 BorderBrush = Brushes.Lime,
                 BorderThickness = new Thickness(2),
                 CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(15)
+                Margin = new Thickness(15)
             };
 
             return border;
@@ -155,7 +155,6 @@ namespace Cycloside.Plugins.BuiltIn
                 Background = new SolidColorBrush(Color.FromArgb(100, 0, 0, 255)),
                 Margin = new Thickness(10, 5),
                 Spacing = 10,
-                Padding = new Thickness(10)
             };
 
             var clearButton = new Button
@@ -289,7 +288,6 @@ namespace Cycloside.Plugins.BuiltIn
                 BorderThickness = new Thickness(1),
                 Margin = new Thickness(10, 5),
                 CornerRadius = new CornerRadius(5),
-                Padding = new Thickness(10)
             };
 
             return border;
@@ -383,7 +381,7 @@ Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
             if (string.IsNullOrWhiteSpace(command)) return;
 
             // Add to history
-            _commandHistory.Add(command);
+            _commandHistory.Add(command ?? "");
             _commandHistoryIndex = _commandHistory.Count;
 
             // Show command

@@ -268,10 +268,10 @@ public partial class App : Application
         TryAdd(() => new TextEditorPlugin());
         TryAdd(() => new WallpaperPlugin());
         TryAdd(() => new ClipboardManagerPlugin());
-        TryAdd(() => new CodeEditorPlugin());
+        TryAdd(() => new HackersParadisePlugin());
+        TryAdd(() => new HackerTerminalPlugin());
         TryAdd(() => new CharacterMapPlugin());
         TryAdd(() => new FileWatcherPlugin());
-        TryAdd(() => new ProcessMonitorPlugin());
         TryAdd(() => new TaskSchedulerPlugin());
         TryAdd(() => new DiskUsagePlugin());
         TryAdd(() => new TerminalPlugin());

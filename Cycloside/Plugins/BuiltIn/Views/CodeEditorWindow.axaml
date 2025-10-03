@@ -3,7 +3,6 @@
         xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
         xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn"
         x:Class="Cycloside.Plugins.BuiltIn.CodeEditorWindow"
-        x:DataType="local:CodeEditorPlugin"
         Title="Code Editor"
         Width="800" Height="600">
     <DockPanel>
@@ -13,14 +12,19 @@
                 <ComboBoxItem Content="Python"/>
                 <ComboBoxItem Content="JavaScript"/>
             </ComboBox>
-            <Button Content="Open" Command="{Binding OpenFileCommand}"/>
-            <Button Content="Save" Command="{Binding SaveFileCommand}"/>
-            <Button Content="Save As" Command="{Binding SaveFileAsCommand}"/>
-            <Button Content="Run" Command="{Binding RunCodeCommand}"/>
+            <Button Content="New" Width="60"/>
+            <Button Content="Open" Width="60"/>
+            <Button Content="Save" Width="60"/>
+            <Button Content="Save As" Width="80"/>
+            <Button Content="Run" Width="60"/>
         </StackPanel>
-        <Grid RowDefinitions="*,Auto" Margin="5">
-            <ae:TextEditor x:Name="Editor" ShowLineNumbers="True"/>
-            <TextBox x:Name="OutputBox" Height="100" IsReadOnly="True" FontFamily="monospace" Margin="0,5,0,0"/>
-        </Grid>
+        <ae:TextEditor x:Name="Editor" FontFamily="Consolas" FontSize="14">
+            <ae:TextEditor.Text>
+                // Welcome to Cycloside Code Editor
+                // Ready for professional development!
+                console.log('Hello World!');
+            </ae:TextEditor.Text>
+        </ae:TextEditor>
+        <TextBlock Text="Ready for coding!" DockPanel.Dock="Bottom" Margin="5"/>
     </DockPanel>
 </Window>
