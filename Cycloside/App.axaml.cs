@@ -31,6 +31,7 @@ public partial class App : Application
     private TrayIcon? _trayIcon; // Keep a reference to the tray icon
     private MainWindow? _mainWindow;
     private MainWindowViewModel? _mainViewModel;
+    private bool _pluginsLoadedSelectively = false;
 
     public override void Initialize()
     {
@@ -47,20 +48,35 @@ public partial class App : Application
 
         var settings = SettingsManager.Settings;
         ThemeManager.InitializeFromSettings();
+        
+        // Initialize Configuration Manager
+        _ = ConfigurationManager.InitializeAsync();
 
-        if (settings.FirstRun)
+        // Show welcome modal if needed (first run or user preference)
+        if (settings.FirstRun || ConfigurationManager.IsWelcomeEnabled)
         {
-            var wiz = new WizardWindow();
-            wiz.Closed += (_, _) =>
+            var welcome = new WelcomeWindow();
+            welcome.Closed += async (_, _) =>
             {
+                settings.FirstRun = false;
+                SettingsManager.SaveSettings();
+                
+                // Load plugins selectively based on configuration
+                await LoadConfiguredPlugins();
+                
                 _mainWindow = CreateMainWindow(SettingsManager.Settings);
                 desktop.MainWindow = _mainWindow;
                 _mainWindow.Show();
             };
-            wiz.Show();
+            
+            desktop.MainWindow = welcome;
+            welcome.Show();
         }
         else
         {
+            // Load plugins selectively based on configuration
+            _ = LoadConfiguredPlugins();
+            
             _mainWindow = CreateMainWindow(settings);
             desktop.MainWindow = _mainWindow;
             _mainWindow.Show();
@@ -252,13 +268,60 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// Load plugins selectively based on configuration
+    /// </summary>
+    private async Task LoadConfiguredPlugins()
+    {
+        if (_pluginsLoadedSelectively) return;
+
+        try
+        {
+            // Wait for Configuration Manager to be ready
+            await Task.Delay(100); // Brief delay to ensure ConfigurationManager is initialized
+
+            Logger.Log("🔧 Loading plugins selectively based on configuration...");
+
+            // This will be called when creating the plugin manager
+            _pluginsLoadedSelectively = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Selective plugin loading setup failed: {ex.Message}");
+            _pluginsLoadedSelectively = true; // Continue anyway
+        }
+    }
+
     private void LoadAllPlugins(PluginManager manager, AppSettings settings)
     {
         void TryAdd(Func<IPlugin> factory)
         {
             var plugin = factory();
-            if (!settings.DisableBuiltInPlugins || settings.SafeBuiltInPlugins.GetValueOrDefault(plugin.Name, false))
+            
+            // Check if plugin should be loaded based on configuration
+            bool shouldLoad = false;
+            
+            // First check if selective loading is enabled and plugin is configured
+            if (_pluginsLoadedSelectively)
+            {
+                shouldLoad = ConfigurationManager.ShouldLoadPluginOnStartup(plugin.Name);
+                Logger.Log($"🔌 Plugin {plugin.Name}: {(shouldLoad ? "Enabled" : "Disabled")} by configuration");
+            }
+            else
+            {
+                // Fallback to legacy settings (for compatibility)
+                shouldLoad = !settings.DisableBuiltInPlugins || settings.SafeBuiltInPlugins.GetValueOrDefault(plugin.Name, false);
+            }
+            
+            if (shouldLoad)
+            {
                 manager.AddBuiltInPlugin(factory);
+                Logger.Log($"✅ Loading plugin: {plugin.Name}");
+            }
+            else
+            {
+                Logger.Log($"⏭️ Skipping plugin: {plugin.Name}");
+            }
         }
 
         TryAdd(() => new DateTimeOverlayPlugin());

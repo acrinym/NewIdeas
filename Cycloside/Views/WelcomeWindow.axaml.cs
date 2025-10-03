@@ -15,6 +15,8 @@ namespace Cycloside.Views
     /// </summary>
     public partial class WelcomeWindow : Window
     {
+        // Plugin configuration will be stored in Controls directly
+
         public WelcomeWindow()
         {
             InitializeComponent();
@@ -31,27 +33,128 @@ namespace Cycloside.Views
         {
             var availablePlugins = new[]
             {
-                new PluginConfigViewModel { Name = "HackerTerminalPlugin", Description = "Professional CMD terminal with hacker tools" },
-                new PluginConfigViewModel { Name = "PowerShellTerminalPlugin", Description = "Advanced PowerShell integration with elevation" },
-                new PluginConfigViewModel { Name = "HackersParadisePlugin", Description = "Dashboard for hacker paradise tools and features" },
-                new PluginConfigViewModel { Name = "TextEditorPlugin", Description = "Multi-language code editor" },
-                new PluginConfigViewModel { Name = "NotificationCenterPlugin", Description = "System notifications and alerts" },
-                new PluginConfigViewModel { Name = "WallpaperPlugin", Description = "Dynamic wallpaper management" },
-                new PluginConfigViewModel { Name = "ClipboardManagerPlugin", Description = "Enhanced clipboard management" },
-                new PluginConfigViewModel { Name = "FileWatcherPlugin", Description = "File system monitoring" },
-                new PluginConfigViewModel { Name = "MacroPlugin", Description = "Automation and macro management" },
-                new PluginConfigViewModel { Name = "TaskSchedulerPlugin", Description = "Advanced task scheduling" }
+                new PluginInfo { Name = "HackerTerminalPlugin", Description = "Professional CMD terminal with hacker tools", IsEnabled = true, LoadOnStartup = false },
+                new PluginInfo { Name = "PowerShellTerminalPlugin", Description = "Advanced PowerShell integration with elevation", IsEnabled = true, LoadOnStartup = false },
+                new PluginInfo { Name = "HackersParadisePlugin", Description = "Dashboard for hacker paradise tools and features", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "TextEditorPlugin", Description = "Multi-language code editor", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "NotificationCenterPlugin", Description = "System notifications and alerts", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "WallpaperPlugin", Description = "Dynamic wallpaper management", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "ClipboardManagerPlugin", Description = "Enhanced clipboard management", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "FileWatcherPlugin", Description = "File system monitoring", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "MacroPlugin", Description = "Automation and macro management", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "TaskSchedulerPlugin", Description = "Advanced task scheduling", IsEnabled = false, LoadOnStartup = false }
             };
 
             foreach (var plugin in availablePlugins)
             {
                 var config = ConfigurationManager.GetPluginConfig(plugin.Name);
-                plugin.Enabled = config.Enabled;
+                plugin.IsEnabled = config.Enabled;
                 plugin.LoadOnStartup = config.LoadOnStartup;
             }
 
-            if (PluginListControl != null)
-                PluginListControl.ItemsSource = availablePlugins;
+            // Create UI items for the ListBox
+            PluginListControl.Items.Clear();
+            foreach (var plugin in availablePlugins)
+            {
+                var item = CreatePluginItem(plugin);
+                PluginListControl.Items.Add(item);
+            }
+
+            // Set terminal preference
+            var preferredTerminal = ConfigurationManager.CurrentConfig.PreferredTerminal;
+            if (preferredTerminal.Equals("PowerShell", StringComparison.OrdinalIgnoreCase))
+            {
+                PowerShellRadio.IsChecked = true;
+            } else
+            {
+                HackerTerminalRadio.IsChecked = true;
+            }
+        }
+
+        private Control CreatePluginItem(PluginInfo plugin)
+        {
+            var container = new Border
+            {
+                Background = Avalonia.Media.Brushes.LightGray,
+                CornerRadius = new Avalonia.CornerRadius(5),
+                Padding = new Avalonia.Thickness(10),
+                Margin = new Avalonia.Thickness(2)
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new Avalonia.GridLength(1, Avalonia.GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new Avalonia.GridLength(80) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new Avalonia.GridLength(80) });
+
+            // Plugin info
+            var infoPanel = new StackPanel
+            {
+                GridColumn = 0
+            };
+
+            var nameText = new TextBlock
+            {
+                Text = plugin.Name,
+                FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                FontSize = 12
+            };
+
+            var descText = new TextBlock
+            {
+                Text = plugin.Description,
+                FontSize = 10,
+                Opacity = 0.7
+            };
+
+            infoPanel.Children.Add(nameText);
+            infoPanel.Children.Add(descText);
+
+            // Enabled checkbox
+            var enabledCheck = new CheckBox
+            {
+                Content = "Enabled",
+                GridColumn = 1,
+                Margin = new Avalonia.Thickness(5),
+                IsChecked = plugin.IsEnabled
+            };
+            enabledCheck.Tag = plugin; // Store plugin reference
+            enabledCheck.Checked += OnPluginEnabledChanged;
+
+            // Startup checkbox
+            var startupCheck = new CheckBox
+            {
+                Content = "Startup",
+                GridColumn = 2,
+                Margin = new Avalonia.Thickness(5),
+                IsChecked = plugin.LoadOnStartup
+            };
+            startupCheck.Tag = plugin; // Store plugin reference
+            startupCheck.Checked += OnPluginStartupChanged;
+
+            grid.Children.Add(infoPanel);
+            grid.Children.Add(enabledCheck);
+            grid.Children.Add(startupCheck);
+
+            container.Child = grid;
+            return container;
+        }
+
+        private async void OnPluginEnabledChanged(object? sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox && checkBox.Tag is PluginInfo plugin)
+            {
+                plugin.IsEnabled = checkBox.Check?.Equals(true) ?? false;
+                await ConfigurationManager.SetPluginEnabledAsync(plugin.Name, plugin.IsEnabled);
+            }
+        }
+
+        private async void OnPluginStartupChanged(object? sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox && checkBox.Tag is PluginInfo plugin)
+            {
+                plugin.LoadOnStartup = checkBox.Check?.Equals(true) ?? false;
+                await ConfigurationManager.SetPluginStartupPreferenceAsync(plugin.Name, plugin.LoadOnStartup);
+            }
         }
 
         private void SetupEventHandlers()
@@ -73,8 +176,11 @@ namespace Cycloside.Views
                     ApplyButton.Content = "🔄 Applying...";
                 }
 
-                await ApplyPluginConfigurations();
+                // Apply terminal preference
+                var preferredTerminal = PowerShellRadio.IsChecked ?? false ? "PowerShell" : "HackerTerminal";
+                await ConfigurationManager.SetTerminalPreferenceAsync(preferredTerminal);
                 
+                // Apply welcome preference
                 var dontShowAgain = DontShowAgainCheckBox?.IsChecked ?? false;
                 await ConfigurationManager.SetWelcomePreferenceAsync(!dontShowAgain);
 
@@ -94,21 +200,7 @@ namespace Cycloside.Views
                     ApplyButton.IsEnabled = true;
                 }
                 
-                Console.WriteLine($"Configuration error: {ex.Message}");
-            }
-        }
-
-        private async Task ApplyPluginConfigurations()
-        {
-            var plugins = PluginListControl?.ItemsSource?.Cast<PluginConfigViewModel>();
-
-            if (plugins != null)
-            {
-                foreach (var plugin in plugins)
-                {
-                    await ConfigurationManager.SetPluginEnabledAsync(plugin.Name, plugin.Enabled);
-                    await ConfigurationManager.SetPluginStartupPreferenceAsync(plugin.Name, plugin.LoadOnStartup);
-                }
+                Logger.Log($"Configuration error: {ex.Message}");
             }
         }
 
@@ -120,14 +212,15 @@ namespace Cycloside.Views
                 LoadPluginsConfiguration();
                 
                 if (ResetButton != null)
+                {
                     ResetButton.Content = "✅ Reset!";
+                    await Task.Delay(1000);
+                    ResetButton.Content = "🔄 Reset to Defaults";
+                }
             }
             catch (Exception ex)
             {
-                if (ResetButton != null)
-                    ResetButton.Content = "❌ Error";
-                
-                Console.WriteLine($"Reset error: {ex.Message}");
+                Logger.Log($"Reset error: {ex.Message}");
             }
         }
 
@@ -135,13 +228,13 @@ namespace Cycloside.Views
     }
 
     /// <summary>
-    /// ViewModel for plugin configuration
+    /// Plugin information model
     /// </summary>
-    public class PluginConfigViewModel
+    public class PluginInfo
     {
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
-        public bool Enabled { get; set; } = true;
+        public bool IsEnabled { get; set; } = true;
         public bool LoadOnStartup { get; set; } = false;
     }
 }

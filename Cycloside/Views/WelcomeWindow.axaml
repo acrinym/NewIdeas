@@ -26,38 +26,45 @@
                        FontSize="14" 
                        HorizontalAlignment="Center"
                        Margin="0, 0, 0, 15"/>
+            <Border Background="#e8f4f8" CornerRadius="8" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="🎯 Setup your preferences:" FontWeight="Bold" Margin="0, 0, 0, 5"/>
+                    <TextBlock Text="• Choose which plugins to load on startup" Margin="0, 2"/>
+                    <TextBlock Text="• Select your preferred terminal (PowerShell vs CMD)" Margin="0, 2"/>
+                    <TextBlock Text="• Configure themes and layout options" Margin="0, 2"/>
+                </StackPanel>
+            </Border>
         </StackPanel>
 
         <!-- Configuration -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="10">
-                <TextBlock Text="🔌 Configure Plugins:" 
+                <TextBlock Text="🔌 Available Plugins:" 
                            FontSize="16" 
                            FontWeight="Bold" 
                            Margin="0, 0, 0, 15"/>
                 
                 <ListBox Name="PluginListControl" Height="300">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="#f5f5f5" CornerRadius="5" Padding="10" Margin="2">
-                                <Grid ColumnDefinitions="*,Auto,Auto">
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock Text="{Binding Description}" FontSize="10" Opacity="0.7"/>
-                                    </StackPanel>
-                                    <CheckBox Grid.Column="1" 
-                                             Content="Enabled" 
-                                             IsChecked="{Binding Enabled}" 
-                                             Margin="5"/>
-                                    <CheckBox Grid.Column="2" 
-                                             Content="Startup" 
-                                             IsChecked="{Binding LoadOnStartup}" 
-                                             Margin="5"/>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
+                    <!-- Items will be added programmatically in code-behind -->
                 </ListBox>
+
+                <StackPanel Margin="0, 20, 0, 0">
+                    <TextBlock Text="💻 Terminal Preference:" 
+                               FontSize="14" 
+                               FontWeight="Bold" 
+                               Margin="0, 0, 0, 10"/>
+                    
+                    <RadioButton GroupName="Terminal" 
+                                Content="PowerShell Terminal (Advanced PowerShell integration)"
+                                Name="PowerShellRadio" 
+                                IsChecked="True" 
+                                Margin="0, 5"/>
+                    
+                    <RadioButton GroupName="Terminal" 
+                                Content="Hacker Terminal (CMD with hacker tools)"
+                                Name="HackerTerminalRadio" 
+                                Margin="0, 5"/>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
 
@@ -70,13 +77,18 @@
                      Margin="0, 0, 20, 0"/>
             
             <Button Name="ResetButton"
-                   Content="🔄 Reset" 
+                   Content="🔄 Reset to Defaults" 
                    Margin="0, 0, 10, 0"
-                   Width="100"/>
+                   Width="140"
+                   Background="#ff6b6b" 
+                   Foreground="White"/>
             
             <Button Name="ApplyButton"
-                   Content="✅ Apply" 
-                   Width="100"/>
+                   Content="✅ Apply and Continue" 
+                   Width="140"
+                   Background="#51cf66" 
+                   Foreground="White"
+                   FontWeight="Bold"/>
         </StackPanel>
     </Grid>
 </Window>
