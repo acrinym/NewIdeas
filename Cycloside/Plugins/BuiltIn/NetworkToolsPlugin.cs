@@ -13,16 +13,16 @@ using Cycloside.Widgets;
 
 namespace Cycloside.Plugins.BuiltIn
 {
-    /// <summary>
+/// <summary>
     /// NETWORK TOOLS - Comprehensive network analysis and security toolkit
     /// Provides packet sniffing, port scanning, HTTP inspection, and traffic monitoring
-    /// </summary>
-    public class NetworkToolsPlugin : IPlugin
-    {
-        public string Name => "Network Tools";
+/// </summary>
+public class NetworkToolsPlugin : IPlugin
+{
+    public string Name => "Network Tools";
         public string Description => "Comprehensive network analysis and security toolkit";
         public Version Version => new(1, 0, 0);
-        public bool ForceDefaultTheme => false;
+    public bool ForceDefaultTheme => false;
 
         public class NetworkToolsWidget : IWidget
         {
@@ -96,6 +96,10 @@ namespace Cycloside.Plugins.BuiltIn
                 // Network Monitor Tab
                 var monitorTab = CreateNetworkMonitorTab();
                 _mainTabControl.Items.Add(monitorTab);
+
+                // MAC/IP Spoofing Tab
+                var spoofingTab = CreateSpoofingTab();
+                _mainTabControl.Items.Add(spoofingTab);
 
                 mainPanel.Children.Add(headerPanel);
                 mainPanel.Children.Add(_mainTabControl);
@@ -380,6 +384,290 @@ namespace Cycloside.Plugins.BuiltIn
 
                 panel.Children.Add(interfacesPanel);
                 panel.Children.Add(statsPanel);
+
+                tab.Content = panel;
+                return tab;
+            }
+
+            private TabItem CreateSpoofingTab()
+            {
+                var tab = new TabItem { Header = "🔒 MAC/IP Spoofing" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                // Warning panel
+                var warningPanel = new Border
+                {
+                    Background = Brushes.Orange,
+                    BorderBrush = Brushes.DarkOrange,
+                    BorderThickness = new Thickness(2),
+                    CornerRadius = new CornerRadius(5),
+                    Margin = new Thickness(0, 0, 0, 20),
+                    Padding = new Thickness(10)
+                };
+
+                var warningText = new TextBlock
+                {
+                    Text = "⚠️ WARNING: MAC and IP spoofing can violate network policies, break connectivity, and may be illegal in some jurisdictions. Use only for authorized testing and educational purposes.",
+                    TextWrapping = TextWrapping.Wrap,
+                    Foreground = Brushes.DarkRed,
+                    FontWeight = FontWeight.Bold
+                };
+
+                warningPanel.Child = warningText;
+                panel.Children.Add(warningPanel);
+
+                // MAC Address Spoofing
+                var macPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
+
+                var macLabel = new TextBlock
+                {
+                    Text = "🔗 MAC Address Spoofing:",
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+
+                var macControls = new StackPanel { Spacing = 10 };
+
+                var macInterfacePanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+                var macInterfaceLabel = new TextBlock { Text = "Interface:", Margin = new Thickness(0, 0, 10, 0) };
+                var macInterfaceCombo = new ComboBox { Width = 200 };
+
+                // Populate MAC interfaces
+                foreach (var interfaceInfo in NetworkTools.NetworkInterfaces)
+                {
+                    macInterfaceCombo.Items.Add(interfaceInfo.Name);
+                }
+
+                macInterfacePanel.Children.Add(macInterfaceLabel);
+                macInterfacePanel.Children.Add(macInterfaceCombo);
+
+                var macInputPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+                var macLabel2 = new TextBlock { Text = "New MAC:", Margin = new Thickness(0, 0, 10, 0) };
+                var macInput = new TextBox
+                {
+                    Text = NetworkTools.GenerateRandomMacAddress(),
+                    Width = 150,
+                    Margin = new Thickness(0, 0, 10, 0)
+                };
+                var generateMacButton = new Button
+                {
+                    Content = "🎲 Random",
+                    Background = Brushes.Blue,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(8, 4)
+                };
+                generateMacButton.Click += (_, _) =>
+                {
+                    macInput.Text = NetworkTools.GenerateRandomMacAddress();
+                };
+
+                macInputPanel.Children.Add(macLabel2);
+                macInputPanel.Children.Add(macInput);
+                macInputPanel.Children.Add(generateMacButton);
+
+                var macButtonsPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+                var changeMacButton = new Button
+                {
+                    Content = "🔄 Change MAC",
+                    Background = Brushes.Green,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(10, 5)
+                };
+                changeMacButton.Click += async (_, _) =>
+                {
+                    var interfaceName = macInterfaceCombo.SelectedItem?.ToString();
+                    var newMac = macInput.Text;
+
+                    if (string.IsNullOrEmpty(interfaceName) || string.IsNullOrEmpty(newMac))
+                    {
+                        UpdateStatus("❌ Please select interface and enter MAC address");
+                        return;
+                    }
+
+                    UpdateStatus($"🔄 Changing MAC address of {interfaceName}...");
+                    var success = await NetworkTools.ChangeMacAddressAsync(interfaceName, newMac);
+
+                    if (success)
+                    {
+                        UpdateStatus($"✅ MAC address changed to {newMac}");
+                    }
+                    else
+                    {
+                        UpdateStatus("❌ MAC address change failed");
+                    }
+                };
+
+                var restoreMacButton = new Button
+                {
+                    Content = "🔄 Restore MAC",
+                    Background = Brushes.Orange,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(10, 5)
+                };
+                restoreMacButton.Click += async (_, _) =>
+                {
+                    var interfaceName = macInterfaceCombo.SelectedItem?.ToString();
+
+                    if (string.IsNullOrEmpty(interfaceName))
+                    {
+                        UpdateStatus("❌ Please select interface");
+                        return;
+                    }
+
+                    UpdateStatus($"🔄 Restoring MAC address of {interfaceName}...");
+                    var success = await NetworkTools.RestoreMacAddressAsync(interfaceName);
+
+                    if (success)
+                    {
+                        UpdateStatus("✅ MAC address restored");
+                    }
+                    else
+                    {
+                        UpdateStatus("❌ MAC address restoration failed");
+                    }
+                };
+
+                macButtonsPanel.Children.Add(changeMacButton);
+                macButtonsPanel.Children.Add(restoreMacButton);
+
+                macControls.Children.Add(macInterfacePanel);
+                macControls.Children.Add(macInputPanel);
+                macControls.Children.Add(macButtonsPanel);
+
+                macPanel.Children.Add(macLabel);
+                macPanel.Children.Add(macControls);
+
+                // IP Address Spoofing
+                var ipPanel = new StackPanel { Margin = new Thickness(0, 20, 0, 0) };
+
+                var ipLabel = new TextBlock
+                {
+                    Text = "🌐 IP Address Spoofing:",
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+
+                var ipControls = new StackPanel { Spacing = 10 };
+
+                var ipInterfacePanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+                var ipInterfaceLabel = new TextBlock { Text = "Interface:", Margin = new Thickness(0, 0, 10, 0) };
+                var ipInterfaceCombo = new ComboBox { Width = 200 };
+
+                // Populate IP interfaces
+                foreach (var interfaceInfo in NetworkTools.NetworkInterfaces)
+                {
+                    ipInterfaceCombo.Items.Add(interfaceInfo.Name);
+                }
+
+                ipInterfacePanel.Children.Add(ipInterfaceLabel);
+                ipInterfacePanel.Children.Add(ipInterfaceCombo);
+
+                var ipInputPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+                var ipLabel2 = new TextBlock { Text = "New IP:", Margin = new Thickness(0, 0, 10, 0) };
+                var ipInput = new TextBox
+                {
+                    Text = "192.168.1.100",
+                    Width = 120,
+                    Margin = new Thickness(0, 0, 10, 0)
+                };
+                var subnetLabel = new TextBlock { Text = "Subnet:", Margin = new Thickness(0, 0, 10, 0) };
+                var subnetInput = new TextBox
+                {
+                    Text = "255.255.255.0",
+                    Width = 120,
+                    Margin = new Thickness(0, 0, 10, 0)
+                };
+                var gatewayLabel = new TextBlock { Text = "Gateway:", Margin = new Thickness(0, 0, 10, 0) };
+                var gatewayInput = new TextBox
+                {
+                    Text = "192.168.1.1",
+                    Width = 120
+                };
+
+                ipInputPanel.Children.Add(ipLabel2);
+                ipInputPanel.Children.Add(ipInput);
+                ipInputPanel.Children.Add(subnetLabel);
+                ipInputPanel.Children.Add(subnetInput);
+                ipInputPanel.Children.Add(gatewayLabel);
+                ipInputPanel.Children.Add(gatewayInput);
+
+                var ipButtonsPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+                var spoofIpButton = new Button
+                {
+                    Content = "🌐 Spoof IP",
+                    Background = Brushes.Green,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(10, 5)
+                };
+                spoofIpButton.Click += async (_, _) =>
+                {
+                    var interfaceName = ipInterfaceCombo.SelectedItem?.ToString();
+                    var newIp = ipInput.Text;
+                    var subnet = subnetInput.Text;
+                    var gateway = gatewayInput.Text;
+
+                    if (string.IsNullOrEmpty(interfaceName) || string.IsNullOrEmpty(newIp))
+                    {
+                        UpdateStatus("❌ Please select interface and enter IP address");
+                        return;
+                    }
+
+                    UpdateStatus($"🌐 Spoofing IP address of {interfaceName} to {newIp}...");
+                    var success = await NetworkTools.SpoofIpAddressAsync(interfaceName, newIp, subnet, gateway);
+
+                    if (success)
+                    {
+                        UpdateStatus($"✅ IP address spoofed to {newIp}");
+                    }
+                    else
+                    {
+                        UpdateStatus("❌ IP address spoofing failed");
+                    }
+                };
+
+                var restoreIpButton = new Button
+                {
+                    Content = "🔄 Restore IP",
+                    Background = Brushes.Orange,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(10, 5)
+                };
+                restoreIpButton.Click += async (_, _) =>
+                {
+                    var interfaceName = ipInterfaceCombo.SelectedItem?.ToString();
+
+                    if (string.IsNullOrEmpty(interfaceName))
+                    {
+                        UpdateStatus("❌ Please select interface");
+                        return;
+                    }
+
+                    UpdateStatus($"🔄 Restoring IP configuration of {interfaceName}...");
+                    var success = await NetworkTools.RestoreIpConfigurationAsync(interfaceName);
+
+                    if (success)
+                    {
+                        UpdateStatus("✅ IP configuration restored");
+                    }
+                    else
+                    {
+                        UpdateStatus("❌ IP configuration restoration failed");
+                    }
+                };
+
+                ipButtonsPanel.Children.Add(spoofIpButton);
+                ipButtonsPanel.Children.Add(restoreIpButton);
+
+                ipControls.Children.Add(ipInterfacePanel);
+                ipControls.Children.Add(ipInputPanel);
+                ipControls.Children.Add(ipButtonsPanel);
+
+                ipPanel.Children.Add(ipLabel);
+                ipPanel.Children.Add(ipControls);
+
+                panel.Children.Add(macPanel);
+                panel.Children.Add(ipPanel);
 
                 tab.Content = panel;
                 return tab;
