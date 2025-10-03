@@ -1,0 +1,42 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  
+  <!-- Sample Theme Styles -->
+  
+  <!-- Button Sample Theme Style -->
+  <Style Selector="Button">
+    <Setter Property="Padding" Value="{DynamicResource SpacingL}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusL}"/>
+    <Setter Property="BorderThickness" Value="2"/>
+    <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SystemHighlightBrush}"/>
+    <Setter Property="RenderTransform" Value="scale(1.05)"/>
+  </Style>
+
+  <Style Selector="Button:pressed">
+    <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="RenderTransform" Value="scale(0.95)"/>
+  </Style>
+
+  <!-- Window Sample Theme -->
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="BorderThickness" Value="3"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusXL}"/>
+  </Style>
+
+  <!-- Tab Control Sample Theme -->
+  <Style Selector="TabControl">
+    <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+    <Setter Property="BorderThickness" Value="2"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusL}"/>
+  </Style>
+
+</Style>

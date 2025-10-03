@@ -266,8 +266,21 @@ namespace Cycloside.Services
                 var replacementFile = kvp.Value;
 
                 Logger.Log($"Window replacement configuration: {windowType} -> {replacementFile}");
-                // Note: Actual window replacement logic would be implemented here
-                // This requires more complex window lifecycle management
+                
+                // Apply window replacements to any open windows of the specified type
+                if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetime.IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    foreach (var window in desktop.Windows)
+                    {
+                        if (window.GetType().Name == windowType)
+                        {
+                            var skinDir = Path.Combine(AppContext.BaseDirectory, "Skins", CurrentSkin);
+                            var replacementPath = Path.Combine(skinDir, replacementFile);
+                            
+                            await WindowReplacementManager.ReplaceWindowContentAsync(window, replacementPath);
+                        }
+                    }
+                }
             }
         }
 

@@ -18,8 +18,10 @@ namespace Cycloside.Services
     /// </summary>
     public static class ThemeManager
     {
-        private static readonly Dictionary<string, ResourceDictionary> _themeCache = new();
-        private static readonly Dictionary<string, ResourceDictionary> _variantCache = new();
+        private static readonly Dictionary<string, StyleInclude> _themeCache = new();
+        private static readonly Dictionary<string, StyleInclude> _variantCache = new();
+        private static readonly Dictionary<string, DateTime> _fileTimestamps = new();
+        private static readonly object _cacheLock = new object();
         
         /// <summary>
         /// Current active theme name (subtheme pack name)
@@ -160,10 +162,28 @@ namespace Cycloside.Services
 
                 if (variantTheme != null && File.Exists(variantTheme))
                 {
+                    var cacheKey = $"variant_{variant}_{variantTheme}";
+                    
+                    // Check cache first
+                    if (IsCachedUpToDate(cacheKey, variantTheme))
+                    {
+                        var cachedStyle = GetCachedStyleInclude(cacheKey);
+                        if (cachedStyle != null)
+                        {
+                            Application.Current.Styles.Add(cachedStyle);
+                            Logger.Log($"Loaded cached variant theme: {variant}");
+                            return true;
+                        }
+                    }
+
+                    // Load and cache new variant
                     var uri = new Uri($"file:///{variantTheme.Replace('\\', '/')}");
                     var styleInclude = new StyleInclude(uri) { Source = uri };
                     
+                    CacheStyleInclude(cacheKey, styleInclude, variantTheme);
                     Application.Current.Styles.Add(styleInclude);
+                    
+                    Logger.Log($"Loaded and cached variant theme: {variant}");
                     return true;
                 }
                 else
@@ -260,18 +280,61 @@ namespace Cycloside.Services
             if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
                 return;
 
-            var windows = desktop.Windows;
+            var windows = desktop.Windows.ToArray(); // Create snapshot to avoid collection changes
             foreach (var window in windows)
             {
                 try
                 {
-                    // Force refresh of window styles
+                    // Apply theme to window
+                    await ApplyThemeToWindowAsync(window);
+                    
+                    // Force visual refresh
                     window.InvalidateVisual();
                 }
                 catch (Exception ex)
                 {
                     Logger.Log($"Failed to refresh window '{window.Title}': {ex.Message}");
                 }
+            }
+        }
+
+        private static async Task ApplyThemeToWindowAsync(Window window)
+        {
+            try
+            {
+                // Apply global theme to window
+                _ = ApplyThemeAsync(CurrentTheme, CurrentVariant, false).ConfigureAwait(false);
+
+                // If this is a plugin window, apply plugin-specific theming  
+                if (window is Plugins.PluginWindowBase pluginWindow && pluginWindow.Plugin != null)
+                {
+                    ApplyForPlugin(window, pluginWindow.Plugin);
+                }
+
+                // Trigger any window in events for theme change
+                TriggerWindowThemeChangeEvents(window);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error applying theme to window '{window.Title}': {ex.Message}");
+            }
+        }
+
+        private static void TriggerWindowThemeChangeEvents(Window window)
+        {
+            // This allows windows to respond to theme changes if they implement theming interfaces
+            // For now, we'll just invalidate the visual tree to force a re-render
+            try
+            {
+                window.InvalidateMeasure();
+                window.InvalidateArrange();
+                
+                // Trigger layout updates - simplified for now
+                window.InvalidateVisual();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error triggering theme change events: {ex.Message}");
             }
         }
 
@@ -339,6 +402,94 @@ namespace Cycloside.Services
         public static void RemoveComponentThemes(StyledElement element)
         {
             // Legacy method - no longer needed with new system
+        }
+
+        /// <summary>
+        /// Validates theme file and performs safety checks
+        /// </summary>
+        private static bool ValidateThemeFile(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                    return false;
+
+                var content = File.ReadAllText(filePath);
+                
+                // Basic XAML validation
+                return content.Contains("<Style") && 
+                       content.Contains("</Style>") ||
+                       content.Contains("<Styles") && 
+                       content.Contains("</Styles>");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error validating theme file: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Checks if cached resource is up to date based on file timestamp
+        /// </summary>
+        private static bool IsCachedUpToDate(string cacheKey, string filePath)
+        {
+            if (!File.Exists(filePath))
+                return false;
+
+            var currentTimestamp = File.GetLastWriteTime(filePath);
+            
+            lock (_cacheLock)
+            {
+                return _fileTimestamps.TryGetValue(cacheKey, out var cachedTimestamp) &&
+                       currentTimestamp <= cachedTimestamp;
+            }
+        }
+
+        /// <summary>
+        /// Gets cached StyleInclude if available
+        /// </summary>
+        private static StyleInclude? GetCachedStyleInclude(string cacheKey)
+        {
+            lock (_cacheLock)
+            {
+                return _themeCache.TryGetValue(cacheKey, out var style) ? 
+                       CloneStyleInclude(style) : null;
+            }
+        }
+
+        /// <summary>
+        /// Caches StyleInclude with file timestamp
+        /// </summary>
+        private static void CacheStyleInclude(string cacheKey, StyleInclude styleInclude, string filePath)
+        {
+            lock (_cacheLock)
+            {
+                _themeCache[cacheKey] = CloneStyleInclude(styleInclude);
+                _fileTimestamps[cacheKey] = File.GetLastWriteTime(filePath);
+            }
+        }
+
+        /// <summary>
+        /// Creates a clone of StyleInclude for caching
+        /// </summary>
+        private static StyleInclude CloneStyleInclude(StyleInclude original)
+        {
+            return new StyleInclude(original.Source!) { Source = original.Source };
+        }
+
+        /// <summary>
+        /// Clears all cached themes to free memory
+        /// </summary>
+        public static void ClearThemeCache()
+        {
+            lock (_cacheLock)
+            {
+                _themeCache.Clear();
+                _variantCache.Clear();
+                _fileTimestamps.Clear();
+                Logger.Log("Theme cache cleared");
+            }
         }
     }
 

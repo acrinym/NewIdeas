@@ -1,0 +1,25 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <!-- Sample Theme Color Variants -->
+    <Color x:Key="SystemAccent">#FF6B35</Color>
+    <Color x:Key="SystemHighlight">#D45A2A</Color>
+    <Color x:Key="SystemError">#E74C3C</Color>
+    <Color x:Key="SystemWarning">#F39C12</Color>
+    <Color x:Key="SystemSuccess">#27AE60</Color>
+    
+    <!-- Sample Theme Layer-specific Backgrounds -->
+    <Color x:Key="CardBackground">#FDF6E3</Color>
+    <Color x:Key="PanelBackground">#F5E6BD</Color>
+    
+    <!-- Sample Theme Borders -->
+    <Color x:Key="BorderDefault">#E0932F</Color>
+    <Color x:Key="BorderStrong">#B8860B</Color>
+    <Color x:Key="BorderSubtle">#FFF4E6</Color>
+    
+    <!-- Sample Theme Brushes -->
+    <SolidColorBrush x:Key="SystemAccentBrush" Color="{DynamicResource SystemAccent}"/>
+    <SolidColorBrush x:Key="SystemHighlightBrush" Color="{DynamicResource SystemHighlight}"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{DynamicResource CardBackground}"/>
+    <SolidColorBrush x:Key="BorderDefaultBrush" Color="{DynamicResource BorderDefault}"/>
+  </Style.Resources>
+</Style>
