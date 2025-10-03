@@ -22,7 +22,7 @@ namespace Cycloside.Services
         private static readonly Dictionary<string, StyleInclude> _variantCache = new();
         private static readonly Dictionary<string, DateTime> _fileTimestamps = new();
         private static readonly object _cacheLock = new object();
-        
+
         /// <summary>
         /// Current active theme name (subtheme pack name)
         /// </summary>
@@ -84,8 +84,9 @@ namespace Cycloside.Services
                 // Save settings if requested
                 if (saveSettings)
                 {
-                    SettingsManager.Settings.GlobalTheme = themeName;
-                    SettingsManager.Settings.RequestedThemeVariant = variant.ToString();
+                    var settings = SettingsManager.Settings;
+                    settings.GlobalTheme = themeName ?? "LightTheme";
+                    settings.RequestedThemeVariant = variant.ToString();
                     SettingsManager.Save();
                 }
 
@@ -143,7 +144,7 @@ namespace Cycloside.Services
             return new[] { ThemeVariant.Light, ThemeVariant.Dark };
         }
 
-        private static async Task<bool> LoadThemeVariantTokensAsync(ThemeVariant variant)
+        private static Task<bool> LoadThemeVariantTokensAsync(ThemeVariant variant)
         {
             try
             {
@@ -168,12 +169,12 @@ namespace Cycloside.Services
                     if (IsCachedUpToDate(cacheKey, variantTheme))
                     {
                         var cachedStyle = GetCachedStyleInclude(cacheKey);
-                        if (cachedStyle != null)
-                        {
-                            Application.Current.Styles.Add(cachedStyle);
-                            Logger.Log($"Loaded cached variant theme: {variant}");
-                            return true;
-                        }
+                    if (cachedStyle != null && Application.Current != null)
+                    {
+                        Application.Current.Styles.Add(cachedStyle);
+                        Logger.Log($"Loaded cached variant theme: {variant}");
+                        return Task.FromResult(true);
+                    }
                     }
 
                     // Load and cache new variant
@@ -181,25 +182,26 @@ namespace Cycloside.Services
                     var styleInclude = new StyleInclude(uri) { Source = uri };
                     
                     CacheStyleInclude(cacheKey, styleInclude, variantTheme);
-                    Application.Current.Styles.Add(styleInclude);
+                    if (Application.Current != null)
+                        Application.Current.Styles.Add(styleInclude);
                     
                     Logger.Log($"Loaded and cached variant theme: {variant}");
-                    return true;
+                    return Task.FromResult(true);
                 }
                 else
                 {
                     // Default variant - no special handling needed
-                    return true;
+                    return Task.FromResult(true);
                 }
             }
             catch (Exception ex)
             {
                 Logger.Log($"Failed to load theme variant tokens for {variant}: {ex.Message}");
-                return false;
+                return Task.FromResult(false);
             }
         }
 
-        private static async Task<bool> LoadSubthemeAsync(string themeName)
+        private static Task<bool> LoadSubthemeAsync(string themeName)
         {
             try
             {
@@ -210,7 +212,7 @@ namespace Cycloside.Services
                 if (!Directory.Exists(themeDir))
                 {
                     Logger.Log($"Subtheme directory not found: {themeDir}");
-                    return false;
+                    return Task.FromResult(false);
                 }
 
                 // Load subtheme styles files
@@ -224,7 +226,8 @@ namespace Cycloside.Services
                     {
                         var uri = new Uri($"file:///{styleFile.Replace('\\', '/')}");
                         var styleInclude = new StyleInclude(uri) { Source = uri };
-                        Application.Current.Styles.Add(styleInclude);
+                        if (Application.Current != null)
+                            Application.Current.Styles.Add(styleInclude);
                     }
                     catch (Exception ex)
                     {
@@ -232,12 +235,12 @@ namespace Cycloside.Services
                     }
                 }
 
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
                 Logger.Log($"Failed to load subtheme '{themeName}': {ex.Message}");
-                return false;
+                return Task.FromResult(false);
             }
         }
 
@@ -298,7 +301,7 @@ namespace Cycloside.Services
             }
         }
 
-        private static async Task ApplyThemeToWindowAsync(Window window)
+        private static Task ApplyThemeToWindowAsync(Window window)
         {
             try
             {
@@ -318,6 +321,7 @@ namespace Cycloside.Services
             {
                 Logger.Log($"Error applying theme to window '{window.Title}': {ex.Message}");
             }
+            return Task.CompletedTask;
         }
 
         private static void TriggerWindowThemeChangeEvents(Window window)
@@ -421,9 +425,9 @@ namespace Cycloside.Services
                        content.Contains("</Style>") ||
                        content.Contains("<Styles") && 
                        content.Contains("</Styles>");
-            }
-            catch (Exception ex)
-            {
+                }
+                catch (Exception ex)
+                {
                 Logger.Log($"Error validating theme file: {ex.Message}");
                 return false;
             }

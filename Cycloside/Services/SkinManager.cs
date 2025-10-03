@@ -131,7 +131,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Clear all skins from element or application
         /// </summary>
-        public static async Task ClearSkinAsync(StyledElement? element = null)
+        public static Task ClearSkinAsync(StyledElement? element = null)
         {
             if (element != null)
             {
@@ -142,6 +142,7 @@ namespace Cycloside.Services
                 ClearApplicationSkins();
                 CurrentSkin = string.Empty;
             }
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -234,7 +235,7 @@ namespace Cycloside.Services
             }
         }
 
-        private static async Task ApplyStyleFileAsync(string stylePath, StyledElement? element)
+        private static Task ApplyStyleFileAsync(string stylePath, StyledElement? element)
         {
             try
             {
@@ -256,6 +257,7 @@ namespace Cycloside.Services
             {
                 Logger.Log($"Failed to apply style file '{stylePath}': {ex.Message}");
             }
+            return Task.CompletedTask;
         }
 
         private static async Task ApplyWindowReplacementsAsync(Dictionary<string, string> replacements)
@@ -268,7 +270,7 @@ namespace Cycloside.Services
                 Logger.Log($"Window replacement configuration: {windowType} -> {replacementFile}");
                 
                 // Apply window replacements to any open windows of the specified type
-                if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetime.IClassicDesktopStyleApplicationLifetime desktop)
+                if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
                 {
                     foreach (var window in desktop.Windows)
                     {

@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Roslynator>
+  <CodeAnalysis>
+    <Summary>
+      <Diagnostic Id="CS1998" Title="Async method lacks 'await' operators and will run synchronously" Count="3">
+        <HelpLink>https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&amp;k=k(CS1998)</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="CS8601" Title="Possible null reference assignment." Count="1">
+        <HelpLink>https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&amp;k=k(CS8601)</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="CS8602" Title="Dereference of a possibly null reference." Count="3">
+        <HelpLink>https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&amp;k=k(CS8602)</HelpLink>
+      </Diagnostic>
+    </Summary>
+    <Projects>
+      <Project Name="Cycloside" FilePath="D:\GitHub\NewIdeas\Cycloside\Cycloside.csproj">
+        <Diagnostics>
+          <Diagnostic Id="CS1998">
+            <Severity>Warning</Severity>
+            <Message>Async method lacks 'await' operators and will run synchronously</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside\Services\ThemeManager.cs</FilePath>
+            <Location Line="146" Character="41" />
+          </Diagnostic>
+          <Diagnostic Id="CS1998">
+            <Severity>Warning</Severity>
+            <Message>Async method lacks 'await' operators and will run synchronously</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside\Services\ThemeManager.cs</FilePath>
+            <Location Line="202" Character="41" />
+          </Diagnostic>
+          <Diagnostic Id="CS1998">
+            <Severity>Warning</Severity>
+            <Message>Async method lacks 'await' operators and will run synchronously</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside\Services\ThemeManager.cs</FilePath>
+            <Location Line="301" Character="35" />
+          </Diagnostic>
+          <Diagnostic Id="CS8601">
+            <Severity>Warning</Severity>
+            <Message>Possible null reference assignment.</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside\Services\ThemeManager.cs</FilePath>
+            <Location Line="87" Character="60" />
+          </Diagnostic>
+          <Diagnostic Id="CS8602">
+            <Severity>Warning</Severity>
+            <Message>Dereference of a possibly null reference.</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside\Services\ThemeManager.cs</FilePath>
+            <Location Line="173" Character="29" />
+          </Diagnostic>
+          <Diagnostic Id="CS8602">
+            <Severity>Warning</Severity>
+            <Message>Dereference of a possibly null reference.</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside\Services\ThemeManager.cs</FilePath>
+            <Location Line="184" Character="21" />
+          </Diagnostic>
+          <Diagnostic Id="CS8602">
+            <Severity>Warning</Severity>
+            <Message>Dereference of a possibly null reference.</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside\Services\ThemeManager.cs</FilePath>
+            <Location Line="227" Character="25" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+    </Projects>
+  </CodeAnalysis>
+</Roslynator>

@@ -5,7 +5,6 @@
   <Style Selector="Window.primary Grid">
     <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
     <Setter Property="Margin" Value="{DynamicResource SpacingL}"/>
-    <Setter Property="Padding" Value="{DynamicResource SpacingXL}"/>
   </Style>
 
   <Style Selector="Window.primary Border">
