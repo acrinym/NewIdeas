@@ -12,6 +12,8 @@ cd Cycloside
 dotnet run
 ```
 
+> **📚 New to Cycloside development?** Check out [WhatIlearned.md](WhatIlearned.md) for our lessons learned, best practices, and common pitfalls guide - essential reading for each development session!
+
 ## 🔌 Plugins
 
 Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` directory and they will be loaded automatically. The tray menu includes a **Plugins** submenu to toggle modules on or off.
