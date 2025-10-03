@@ -17,14 +17,14 @@
         <Border Grid.Row="0" Background="#f8f9fa" BorderBrush="#e1e5e9" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Margin="10" Spacing="10">
                 <!-- File Operations -->
-                <Button Name="NewFileButton" Content="📄 New" ToolTip="New File"/>
-                <Button Name="OpenFileButton" Content="📂 Open" ToolTip="Open File"/>
-                <Button Name="SaveFileButton" Content="💾 Save" ToolTip="Save File"/>
+                <Button Name="NewFileButton" Content="📄 New"/>
+                <Button Name="OpenFileButton" Content="📂 Open"/>
+                <Button Name="SaveFileButton" Content="💾 Save"/>
 
                 <Separator/>
 
                 <!-- Language Selection -->
-                <ComboBox Name="LanguageComboBox" Width="120" ToolTip="Select Language">
+                <ComboBox Name="LanguageComboBox" Width="120">
                     <ComboBoxItem Content="C#" IsSelected="True"/>
                     <ComboBoxItem Content="Python"/>
                     <ComboBoxItem Content="JavaScript"/>
@@ -36,8 +36,8 @@
                 <Separator/>
 
                 <!-- View Options -->
-                <ToggleButton Name="WordWrapToggle" Content="↩️ Word Wrap" ToolTip="Toggle Word Wrap"/>
-                <ToggleButton Name="LineNumbersToggle" Content="🔢 Line Numbers" ToolTip="Toggle Line Numbers" IsChecked="True"/>
+                <ToggleButton Name="WordWrapToggle" Content="↩️ Word Wrap"/>
+                <ToggleButton Name="LineNumbersToggle" Content="🔢 Line Numbers" IsChecked="True"/>
             </StackPanel>
         </Border>
 
@@ -50,34 +50,37 @@
 
             <!-- Editor -->
             <Border Grid.Column="0" Background="White" BorderBrush="#e1e5e9" BorderThickness="0,0,1,0">
-                <TextEditor Name="MainEditor"
-                           FontFamily="Consolas"
-                           FontSize="14"
-                           ShowLineNumbers="True"/>
+                <TextBox Name="MainEditor"
+                         FontFamily="Consolas"
+                         FontSize="14"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalAlignment="Stretch"
+                         HorizontalAlignment="Stretch"/>
             </Border>
 
             <!-- Sidebar -->
             <Border Grid.Column="1" Background="#f1f3f4" BorderBrush="#e1e5e9" BorderThickness="1,0,0,0">
                 <TabControl Name="SidebarTabControl">
-                    <TabControlItem Header="📁 Explorer">
+                    <TabItem Header="📁 Explorer">
                         <StackPanel Margin="10" Spacing="10">
                             <TextBlock Text="📁 Project Files" FontWeight="Bold"/>
                             <TreeView Name="FileExplorerTree">
                                 <!-- Files will be populated here -->
                             </TreeView>
                         </StackPanel>
-                    </TabControlItem>
+                    </TabItem>
 
-                    <TabControlItem Header="🔍 Search">
+                    <TabItem Header="🔍 Search">
                         <StackPanel Margin="10" Spacing="10">
                             <TextBlock Text="🔍 Search in Code" FontWeight="Bold"/>
                             <TextBox Name="SearchTextBox" Watermark="Search..."/>
                             <Button Name="SearchButton" Content="🔍 Search" HorizontalAlignment="Stretch"/>
                             <ListBox Name="SearchResultsList" Height="200"/>
                         </StackPanel>
-                    </TabControlItem>
+                    </TabItem>
 
-                    <TabControlItem Header="⚡ IntelliSense">
+                    <TabItem Header="⚡ IntelliSense">
                         <StackPanel Margin="10" Spacing="10">
                             <TextBlock Text="💡 Code Suggestions" FontWeight="Bold"/>
                             <ListBox Name="IntelliSenseList" Height="200">
@@ -87,7 +90,7 @@
                                 <ListBoxItem Content="Dictionary&lt;TKey, TValue&gt;"/>
                             </ListBox>
                         </StackPanel>
-                    </TabControlItem>
+                    </TabItem>
                 </TabControl>
             </Border>
         </Grid>

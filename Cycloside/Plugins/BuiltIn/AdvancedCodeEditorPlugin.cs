@@ -1,5 +1,7 @@
 using System;
 using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Cycloside.Plugins;
 using Cycloside.Services;
 using Cycloside.Views;
@@ -84,9 +86,9 @@ namespace Cycloside.Plugins.BuiltIn
                 var openEditorButton = new Button
                 {
                     Content = "🚀 Open Editor",
-                    Background = Brushes.DodgerBlue,
-                    Foreground = Brushes.White,
-                    FontWeight = FontWeight.Bold,
+                    Background = Avalonia.Media.Brushes.DodgerBlue,
+                    Foreground = Avalonia.Media.Brushes.White,
+                    FontWeight = Avalonia.Media.FontWeight.Bold,
                     Padding = new Thickness(15, 8)
                 };
                 openEditorButton.Click += OnOpenEditor;
@@ -94,8 +96,8 @@ namespace Cycloside.Plugins.BuiltIn
                 var newFileButton = new Button
                 {
                     Content = "📄 New File",
-                    Background = Brushes.Green,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.Green,
+                    Foreground = Avalonia.Media.Brushes.White,
                     Padding = new Thickness(15, 8)
                 };
                 newFileButton.Click += OnNewFile;
@@ -103,8 +105,8 @@ namespace Cycloside.Plugins.BuiltIn
                 var openFileButton = new Button
                 {
                     Content = "📂 Open File",
-                    Background = Brushes.Orange,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.Orange,
+                    Foreground = Avalonia.Media.Brushes.White,
                     Padding = new Thickness(15, 8)
                 };
                 openFileButton.Click += OnOpenFile;
