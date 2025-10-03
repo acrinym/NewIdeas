@@ -1,0 +1,42 @@
+{
+  "Name": "SampleCodeAnalyzer",
+  "Description": "Advanced code analysis plugin with syntax highlighting and error detection",
+  "Author": "Cycloside Community",
+  "Version": "1.2.0",
+  "License": "MIT",
+  "Homepage": "https://github.com/cycloside/plugins/tree/main/SampleCodeAnalyzer",
+  "Tags": ["code", "analysis", "syntax", "highlighting", "development"],
+  "Files": [
+    {
+      "Path": "SampleCodeAnalyzer.cs",
+      "Checksum": "sha256:abc123...",
+      "Size": 15432
+    },
+    {
+      "Path": "Views/CodeAnalyzerWindow.axaml",
+      "Checksum": "sha256:def456...",
+      "Size": 8765
+    },
+    {
+      "Path": "Views/CodeAnalyzerWindow.axaml.cs",
+      "Checksum": "sha256:ghi789...",
+      "Size": 12345
+    },
+    {
+      "Path": "README.md",
+      "Checksum": "sha256:jkl012...",
+      "Size": 2341
+    }
+  ],
+  "Dependencies": {
+    "RequiredPlugins": [],
+    "MinimumCyclosideVersion": "1.0.0"
+  },
+  "PublishedDate": "2024-01-15T10:30:00Z",
+  "Downloads": 1250,
+  "Rating": 4.7,
+  "Screenshots": [
+    "screenshot1.png",
+    "screenshot2.png"
+  ]
+}

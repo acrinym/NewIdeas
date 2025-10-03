@@ -1,0 +1,182 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn.Views"
+        x:Class="Cycloside.Plugins.BuiltIn.Views.PluginMarketplaceWindow"
+        Title="🔌 Plugin Marketplace"
+        Width="900" Height="700"
+        CanResize="True"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0, 0, 0, 20">
+            <TextBlock Text="🔌 Cycloside Plugin Marketplace"
+                       FontSize="28"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       Margin="0, 0, 0, 10"/>
+
+            <Border Background="#f0f8ff"
+                    CornerRadius="8"
+                    Padding="15">
+                <StackPanel>
+                    <TextBlock Text="🚀 Discover, install, and manage community plugins"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Margin="0, 0, 0, 5"/>
+                    <TextBlock Text="Browse thousands of plugins created by the Cycloside community"
+                               FontSize="12"
+                               Opacity="0.8"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel - Plugin List -->
+            <Border Grid.Column="0"
+                    Background="#f8f9fa"
+                    CornerRadius="8"
+                    Margin="0, 0, 10, 0">
+                <StackPanel Margin="15">
+                    <!-- Search -->
+                    <TextBox Name="SearchBox"
+                             Watermark="Search plugins..."
+                             Margin="0, 0, 0, 10"/>
+
+                    <!-- Filter Tabs -->
+                    <TabStrip Name="FilterTabs" Margin="0, 0, 0, 15">
+                        <TabStripItem Content="🔥 Popular" IsSelected="True"/>
+                        <TabStripItem Content="⭐ Featured"/>
+                        <TabStripItem Content="🆕 Latest"/>
+                        <TabStripItem Content="📦 Installed"/>
+                    </TabStrip>
+
+                    <!-- Plugin List -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="400">
+                        <ListBox Name="PluginListBox">
+                            <!-- Items will be populated programmatically -->
+                        </ListBox>
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
+
+            <!-- Right Panel - Plugin Details -->
+            <Border Grid.Column="1"
+                    Background="White"
+                    BorderBrush="#e1e5e9"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="20">
+                    <StackPanel>
+                        <TextBlock Text="📦 Select a plugin to view details"
+                                   FontSize="16"
+                                   HorizontalAlignment="Center"
+                                   Margin="0, 50, 0, 50"
+                                   Opacity="0.6"/>
+
+                        <!-- Plugin details will be populated when a plugin is selected -->
+                        <StackPanel Name="PluginDetailsPanel" IsVisible="False">
+                            <TextBlock Name="PluginTitle"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Margin="0, 0, 0, 10"/>
+
+                            <TextBlock Name="PluginDescription"
+                                       FontSize="14"
+                                       TextWrapping="Wrap"
+                                       Margin="0, 0, 0, 15"/>
+
+                            <!-- Author and Version -->
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel Grid.Column="0" Margin="0, 0, 20, 0">
+                                    <TextBlock Text="👤 Author:" FontWeight="SemiBold"/>
+                                    <TextBlock Name="PluginAuthor" Margin="0, 2, 0, 0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="📋 Version:" FontWeight="SemiBold"/>
+                                    <TextBlock Name="PluginVersion" Margin="0, 2, 0, 0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Rating and Downloads -->
+                            <Grid ColumnDefinitions="*,*" Margin="0, 15, 0, 0">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="⭐ Rating:" FontWeight="SemiBold"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0, 2, 0, 0">
+                                        <TextBlock Name="PluginRating" FontSize="16" FontWeight="Bold"/>
+                                        <TextBlock Text="/5.0" Margin="5, 0, 0, 0"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="📈 Downloads:" FontWeight="SemiBold"/>
+                                    <TextBlock Name="PluginDownloads" Margin="0, 2, 0, 0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Tags -->
+                            <StackPanel Margin="0, 15, 0, 0">
+                                <TextBlock Text="🏷️ Tags:" FontWeight="SemiBold" Margin="0, 0, 0, 5"/>
+                                <WrapPanel Name="PluginTags" Orientation="Horizontal"/>
+                            </StackPanel>
+
+                            <!-- Screenshots -->
+                            <StackPanel Name="PluginScreenshotsPanel" Margin="0, 15, 0, 0">
+                                <TextBlock Text="📸 Screenshots:" FontWeight="SemiBold" Margin="0, 0, 0, 10"/>
+                                <WrapPanel Name="ScreenshotsContainer" Orientation="Horizontal"/>
+                            </StackPanel>
+
+                            <!-- Action Buttons -->
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0, 20, 0, 0"
+                                        HorizontalAlignment="Center">
+                                <Button Name="InstallPluginButton"
+                                        Content="📥 Install Plugin"
+                                        Background="#28a745"
+                                        Foreground="White"
+                                        FontWeight="Bold"
+                                        Padding="15, 8"
+                                        Margin="0, 0, 10, 0"/>
+
+                                <Button Name="ViewSourceButton"
+                                        Content="🔗 View Source"
+                                        Background="#6c757d"
+                                        Foreground="White"
+                                        Padding="15, 8"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Footer -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Margin="20, 0, 0, 0">
+            <TextBlock Name="StatusText"
+                       Text="Ready to explore plugins!"
+                       HorizontalAlignment="Center"/>
+
+            <Button Name="RefreshButton"
+                   Content="🔄 Refresh"
+                   Margin="20, 0, 0, 0"
+                   Background="#007bff"
+                   Foreground="White"/>
+        </StackPanel>
+    </Grid>
+</Window>
