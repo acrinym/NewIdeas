@@ -335,6 +335,7 @@ public partial class App : Application
         TryAdd(() => new HackerTerminalPlugin());
         TryAdd(() => new PowerShellTerminalPlugin());
         TryAdd(() => new PluginMarketplacePlugin());
+        TryAdd(() => new AdvancedCodeEditorPlugin());
         TryAdd(() => new CharacterMapPlugin());
         TryAdd(() => new FileWatcherPlugin());
         TryAdd(() => new TaskSchedulerPlugin());

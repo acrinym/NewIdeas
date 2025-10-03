@@ -1,0 +1,95 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn.Views"
+        x:Class="Cycloside.Plugins.BuiltIn.Views.AdvancedCodeEditorWindow"
+        Title="💻 Advanced Code Editor"
+        Width="1000" Height="700"
+        CanResize="True"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="#f8f9fa" BorderBrush="#e1e5e9" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="10" Spacing="10">
+                <!-- File Operations -->
+                <Button Name="NewFileButton" Content="📄 New" ToolTip="New File"/>
+                <Button Name="OpenFileButton" Content="📂 Open" ToolTip="Open File"/>
+                <Button Name="SaveFileButton" Content="💾 Save" ToolTip="Save File"/>
+
+                <Separator/>
+
+                <!-- Language Selection -->
+                <ComboBox Name="LanguageComboBox" Width="120" ToolTip="Select Language">
+                    <ComboBoxItem Content="C#" IsSelected="True"/>
+                    <ComboBoxItem Content="Python"/>
+                    <ComboBoxItem Content="JavaScript"/>
+                    <ComboBoxItem Content="HTML"/>
+                    <ComboBoxItem Content="CSS"/>
+                    <ComboBoxItem Content="JSON"/>
+                </ComboBox>
+
+                <Separator/>
+
+                <!-- View Options -->
+                <ToggleButton Name="WordWrapToggle" Content="↩️ Word Wrap" ToolTip="Toggle Word Wrap"/>
+                <ToggleButton Name="LineNumbersToggle" Content="🔢 Line Numbers" ToolTip="Toggle Line Numbers" IsChecked="True"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Editor Area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="250"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Editor -->
+            <Border Grid.Column="0" Background="White" BorderBrush="#e1e5e9" BorderThickness="0,0,1,0">
+                <TextEditor Name="MainEditor"
+                           FontFamily="Consolas"
+                           FontSize="14"
+                           ShowLineNumbers="True"/>
+            </Border>
+
+            <!-- Sidebar -->
+            <Border Grid.Column="1" Background="#f1f3f4" BorderBrush="#e1e5e9" BorderThickness="1,0,0,0">
+                <TabControl Name="SidebarTabControl">
+                    <TabControlItem Header="📁 Explorer">
+                        <StackPanel Margin="10" Spacing="10">
+                            <TextBlock Text="📁 Project Files" FontWeight="Bold"/>
+                            <TreeView Name="FileExplorerTree">
+                                <!-- Files will be populated here -->
+                            </TreeView>
+                        </StackPanel>
+                    </TabControlItem>
+
+                    <TabControlItem Header="🔍 Search">
+                        <StackPanel Margin="10" Spacing="10">
+                            <TextBlock Text="🔍 Search in Code" FontWeight="Bold"/>
+                            <TextBox Name="SearchTextBox" Watermark="Search..."/>
+                            <Button Name="SearchButton" Content="🔍 Search" HorizontalAlignment="Stretch"/>
+                            <ListBox Name="SearchResultsList" Height="200"/>
+                        </StackPanel>
+                    </TabControlItem>
+
+                    <TabControlItem Header="⚡ IntelliSense">
+                        <StackPanel Margin="10" Spacing="10">
+                            <TextBlock Text="💡 Code Suggestions" FontWeight="Bold"/>
+                            <ListBox Name="IntelliSenseList" Height="200">
+                                <ListBoxItem Content="Console.WriteLine"/>
+                                <ListBoxItem Content="string.Format"/>
+                                <ListBoxItem Content="List&lt;T&gt;"/>
+                                <ListBoxItem Content="Dictionary&lt;TKey, TValue&gt;"/>
+                            </ListBox>
+                        </StackPanel>
+                    </TabControlItem>
+                </TabControl>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
