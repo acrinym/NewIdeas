@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\\Core\\Cycloside.Core.csproj" />
+    <ProjectReference Include="..\\Bridge\\Cycloside.Bridge.csproj" />
+    <ProjectReference Include="..\\Input\\Cycloside.Input.csproj" />
+    <ProjectReference Include="..\\SSH\\Cycloside.SSH.csproj" />
+    <ProjectReference Include="..\\Rules\\Cycloside.Rules.csproj" />
+    <ProjectReference Include="..\\Utils\\Cycloside.Utils.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -3,12 +3,12 @@
 
  Directory of D:\GitHub\NewIdeas\Cycloside
 
-10/03/2025  09:25 AM    <DIR>          .
-10/03/2025  09:22 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          .
+10/03/2025  09:45 AM    <DIR>          ..
 09/24/2025  06:35 PM    <DIR>          .zencoder
 07/12/2025  03:16 PM           440,133 allfiles.txt
 10/03/2025  09:18 AM             1,042 App.axaml
-10/03/2025  08:51 AM            23,108 App.axaml.cs
+10/03/2025  04:49 PM            25,739 App.axaml.cs
 06/09/2025  10:17 PM               929 app.manifest
 06/22/2025  06:03 PM           260,127 AvaloniaProjectSource.txt
 06/30/2025  03:15 AM    <DIR>          bin
@@ -16,7 +16,7 @@
 07/15/2025  09:18 PM             2,074 ControlPanelWindow.axaml
 07/15/2025  09:18 PM               841 ControlPanelWindow.axaml.cs
 09/24/2025  07:14 PM    <DIR>          Converters
-09/13/2025  09:23 AM             3,142 Cycloside.csproj
+10/03/2025  10:33 AM             3,298 Cycloside.csproj
 09/13/2025  09:23 AM    <DIR>          docs
 08/09/2025  10:51 PM    <DIR>          Effects
 09/08/2025  08:41 PM             4,611 export_codebase.ps1
@@ -31,10 +31,10 @@
 10/03/2025  08:52 AM             3,952 MainWindow.axaml
 07/16/2025  10:18 PM             1,392 MainWindow.axaml.cs
 07/15/2025  09:18 PM             1,129 MessageWindow.cs
-10/03/2025  08:53 AM    <DIR>          obj
-10/03/2025  09:25 AM                 0 outdirs.txt
+10/03/2025  10:35 AM    <DIR>          obj
+10/03/2025  07:48 PM                 0 outdirs.txt
 06/22/2025  06:00 PM             1,676 output.ps1
-10/03/2025  09:24 AM         6,695,764 outsource.txt
+10/03/2025  07:47 PM         8,530,545 outsource.txt
 08/27/2025  06:57 PM             2,206 PluginBus.cs
 08/09/2025  10:51 PM             2,320 PluginDevWizard.cs
 06/13/2025  07:43 PM             2,026 PluginMarketplace.cs
@@ -50,10 +50,11 @@
 06/30/2025  07:49 PM               561 run.bat
 07/04/2025  10:06 AM               646 RuntimeSettingsWindow.axaml
 07/15/2025  09:18 PM             2,789 RuntimeSettingsWindow.axaml.cs
+10/03/2025  12:10 PM             1,110 sample-plugin-manifest.json
 07/12/2025  03:14 PM    <DIR>          Scripting
 07/17/2025  06:39 PM    <DIR>          SDK
-10/03/2025  08:57 AM    <DIR>          Services
-10/03/2025  08:51 AM             5,367 SettingsManager.cs
+10/03/2025  06:27 PM    <DIR>          Services
+10/03/2025  11:15 AM             5,366 SettingsManager.cs
 07/15/2025  09:18 PM               281 SkinPreviewWindow.axaml
 07/15/2025  09:18 PM             1,058 SkinPreviewWindow.axaml.cs
 10/03/2025  08:51 AM    <DIR>          Skins
@@ -66,10 +67,10 @@
 09/13/2025  09:23 AM             5,333 ThemeSettingsWindow.axaml.cs
 06/23/2025  12:41 AM               232 ThemeSnapshot.cs
 09/13/2025  09:23 AM             3,941 TODO.md
-10/03/2025  08:52 AM             7,274 TodoPurger.cs
+10/03/2025  11:15 AM             7,250 TodoPurger.cs
 06/12/2025  12:42 AM             1,062 Updater.cs
 08/09/2025  10:51 PM    <DIR>          ViewModels
-06/30/2025  06:16 PM    <DIR>          Views
+10/03/2025  11:02 AM    <DIR>          Views
 09/08/2025  06:18 PM    <DIR>          Visuals
 06/09/2025  10:17 PM             2,229 VolatilePluginManager.cs
 06/11/2025  11:54 PM               625 VolatileRunnerWindow.axaml
@@ -78,12 +79,12 @@
 10/03/2025  09:20 AM            14,930 WhatIlearned.md
 06/17/2025  12:09 AM    <DIR>          Widgets
 08/27/2025  06:57 PM             3,092 WorkspaceProfiles.cs
-              54 File(s)      8,405,251 bytes
+              55 File(s)     10,243,904 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\.zencoder
 
 09/24/2025  06:35 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 09/24/2025  06:36 PM    <DIR>          rules
                0 File(s)              0 bytes
 
@@ -97,7 +98,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin
 
 06/30/2025  03:15 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 07/16/2025  11:14 PM    <DIR>          Debug
                0 File(s)              0 bytes
 
@@ -105,12 +106,12 @@
 
 07/16/2025  11:14 PM    <DIR>          .
 06/30/2025  03:15 AM    <DIR>          ..
-10/03/2025  09:24 AM    <DIR>          net8.0-windows
+10/03/2025  05:22 PM    <DIR>          net8.0-windows
                0 File(s)              0 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows
 
-10/03/2025  09:24 AM    <DIR>          .
+10/03/2025  05:22 PM    <DIR>          .
 07/16/2025  11:14 PM    <DIR>          ..
 06/05/2025  12:31 PM         2,067,968 Avalonia.Base.dll
 06/05/2025  12:31 PM           480,256 Avalonia.Controls.ColorPicker.dll
@@ -144,11 +145,11 @@
 12/11/2024  05:51 PM           201,216 CliWrap.dll
 04/26/2023  08:48 PM           117,384 CommunityToolkit.Mvvm.dll
 09/07/2025  07:50 PM    <DIR>          cs
-10/03/2025  09:12 AM            63,930 Cycloside.deps.json
-10/03/2025  09:24 AM           826,368 Cycloside.dll
-10/03/2025  09:24 AM           152,064 Cycloside.exe
-10/03/2025  09:24 AM           327,508 Cycloside.pdb
-10/03/2025  09:12 AM               520 Cycloside.runtimeconfig.json
+10/03/2025  10:42 AM            69,440 Cycloside.deps.json
+10/03/2025  05:22 PM           996,864 Cycloside.dll
+10/03/2025  05:22 PM           152,064 Cycloside.exe
+10/03/2025  05:22 PM           372,920 Cycloside.pdb
+10/03/2025  10:42 AM               520 Cycloside.runtimeconfig.json
 09/07/2025  07:50 PM    <DIR>          de
 12/11/2023  03:38 AM           813,568 DynamicData.dll
 09/07/2025  07:50 PM    <DIR>          es
@@ -164,8 +165,8 @@
 03/08/2021  02:36 PM           402,432 Jint.dll
 09/07/2025  07:50 PM    <DIR>          ko
 09/07/2025  07:50 PM    <DIR>          Lib
-10/03/2025  09:24 AM             7,168 libopenmpt-sharp.dll
-10/03/2025  09:24 AM            12,564 libopenmpt-sharp.pdb
+10/03/2025  05:22 PM             7,168 libopenmpt-sharp.dll
+10/03/2025  05:22 PM            12,568 libopenmpt-sharp.pdb
 06/28/2025  12:24 AM    <DIR>          logs
 07/02/2025  08:45 PM                 2 macros.json
 11/02/2022  05:37 AM            14,336 MicroCom.Runtime.dll
@@ -186,19 +187,20 @@
 09/04/2023  03:49 PM            57,344 NAudio.WinMM.dll
 09/07/2025  07:50 PM    <DIR>          pl
 06/28/2025  12:24 AM    <DIR>          Plugins
-09/07/2025  08:32 PM               907 profiles.json
+10/03/2025  05:30 PM             1,007 profiles.json
 09/07/2025  07:50 PM    <DIR>          pt-BR
 03/25/2024  05:56 AM           326,160 ReactiveUI.dll
 09/07/2025  07:50 PM    <DIR>          ru
-06/28/2025  12:13 AM    <DIR>          runtimes
-09/07/2025  09:34 PM             2,262 settings.json
+10/03/2025  10:42 AM    <DIR>          runtimes
+10/03/2025  05:30 PM             2,610 settings.json
 08/10/2023  04:48 PM            71,680 SharpHook.dll
 11/07/2024  09:55 AM           437,808 SkiaSharp.dll
 12/09/2023  08:20 AM           140,304 Splat.dll
-09/07/2025  09:36 PM            19,858 state.json
+10/03/2025  05:31 PM            19,848 state.json
 10/28/2024  10:40 PM           183,576 System.CodeDom.dll
 05/22/2022  03:39 PM           205,216 System.CommandLine.dll
 10/31/2023  10:59 AM            77,984 System.IO.Pipelines.dll
+10/31/2023  11:02 AM            35,488 System.IO.Ports.dll
 10/28/2024  10:43 PM            73,480 System.Management.dll
 05/19/2023  01:42 AM         1,344,080 System.Reactive.dll
 07/04/2025  08:07 PM    <DIR>          Themes
@@ -206,12 +208,12 @@
 09/07/2025  07:50 PM    <DIR>          tr
 09/07/2025  07:50 PM    <DIR>          zh-Hans
 09/07/2025  07:50 PM    <DIR>          zh-Hant
-              76 File(s)     32,804,071 bytes
+              77 File(s)     33,061,419 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\cs
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           423,072 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,056 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            47,368 Microsoft.CodeAnalysis.resources.dll
@@ -222,7 +224,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\de
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           452,256 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,680 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            49,312 Microsoft.CodeAnalysis.resources.dll
@@ -233,7 +235,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\es
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           443,040 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,584 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            48,816 Microsoft.CodeAnalysis.resources.dll
@@ -244,7 +246,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\fr
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           453,792 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,056 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            49,824 Microsoft.CodeAnalysis.resources.dll
@@ -255,7 +257,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\it
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           449,184 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,056 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            49,840 Microsoft.CodeAnalysis.resources.dll
@@ -266,7 +268,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\ja
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           495,392 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,568 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            52,912 Microsoft.CodeAnalysis.resources.dll
@@ -277,7 +279,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\ko
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           454,408 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,056 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            49,824 Microsoft.CodeAnalysis.resources.dll
@@ -288,7 +290,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\Lib
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 11/16/2020  09:05 PM             7,330 abc.py
 11/16/2020  09:05 PM            35,579 aifc.py
 11/16/2020  09:05 PM                64 antigravity.py
@@ -1002,14 +1004,14 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\logs
 
 06/28/2025  12:24 AM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
-09/07/2025  09:35 PM           506,192 app.log
-               1 File(s)        506,192 bytes
+10/03/2025  05:22 PM    <DIR>          ..
+10/03/2025  05:30 PM           519,120 app.log
+               1 File(s)        519,120 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\pl
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           455,328 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,056 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            49,824 Microsoft.CodeAnalysis.resources.dll
@@ -1020,7 +1022,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\Plugins
 
 06/28/2025  12:24 AM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 06/28/2025  12:50 AM    <DIR>          Winamp
                0 File(s)              0 bytes
 
@@ -1034,7 +1036,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\pt-BR
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           434,848 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,056 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            48,288 Microsoft.CodeAnalysis.resources.dll
@@ -1045,7 +1047,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\ru
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           598,704 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            18,096 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            59,552 Microsoft.CodeAnalysis.resources.dll
@@ -1055,8 +1057,8 @@
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes
 
-06/28/2025  12:13 AM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          .
+10/03/2025  05:22 PM    <DIR>          ..
 06/28/2025  12:13 AM    <DIR>          linux-arm
 06/28/2025  12:13 AM    <DIR>          linux-arm64
 06/28/2025  12:13 AM    <DIR>          linux-loongarch64
@@ -1073,6 +1075,7 @@
 06/28/2025  12:13 AM    <DIR>          osx
 06/28/2025  12:13 AM    <DIR>          osx-arm64
 06/28/2025  12:13 AM    <DIR>          osx-x64
+10/03/2025  10:42 AM    <DIR>          unix
 06/28/2025  12:13 AM    <DIR>          win
 06/28/2025  12:13 AM    <DIR>          win-arm64
 06/28/2025  12:13 AM    <DIR>          win-x64
@@ -1082,39 +1085,41 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-arm
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
-09/07/2025  07:50 PM    <DIR>          native
+10/03/2025  10:42 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          native
                0 File(s)              0 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-arm\native
 
-09/07/2025  07:50 PM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          .
 06/28/2025  12:13 AM    <DIR>          ..
 04/25/2025  01:42 PM         1,535,696 libHarfBuzzSharp.so
 11/07/2024  09:03 AM         5,536,764 libSkiaSharp.so
+10/31/2023  10:45 AM             9,568 libSystem.IO.Ports.Native.so
 08/10/2023  04:48 PM           207,644 libuiohook.so
-               3 File(s)      7,280,104 bytes
+               4 File(s)      7,289,672 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-arm64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
-09/07/2025  07:50 PM    <DIR>          native
+10/03/2025  10:42 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          native
                0 File(s)              0 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-arm64\native
 
-09/07/2025  07:50 PM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          .
 06/28/2025  12:13 AM    <DIR>          ..
 04/25/2025  01:42 PM         2,221,048 libHarfBuzzSharp.so
 11/07/2024  09:03 AM         8,056,736 libSkiaSharp.so
+10/31/2023  10:46 AM            14,632 libSystem.IO.Ports.Native.so
 08/10/2023  04:48 PM           256,072 libuiohook.so
-               3 File(s)     10,533,856 bytes
+               4 File(s)     10,548,488 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-loongarch64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1128,7 +1133,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-musl-arm
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1142,7 +1147,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-musl-arm64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1156,7 +1161,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-musl-loongarch64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1170,7 +1175,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-musl-riscv64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1184,7 +1189,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-musl-x64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1199,7 +1204,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-riscv64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1213,23 +1218,24 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-x64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
-09/24/2025  10:59 PM    <DIR>          native
+10/03/2025  10:42 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          native
                0 File(s)              0 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-x64\native
 
-09/24/2025  10:59 PM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          .
 06/28/2025  12:13 AM    <DIR>          ..
 04/25/2025  01:42 PM         2,471,408 libHarfBuzzSharp.so
 11/07/2024  09:03 AM         9,244,960 libSkiaSharp.so
+10/31/2023  10:46 AM            14,488 libSystem.IO.Ports.Native.so
 08/10/2023  04:48 PM           229,632 libuiohook.so
-               3 File(s)     11,946,000 bytes
+               4 File(s)     11,960,488 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\linux-x86
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1243,7 +1249,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\maccatalyst-arm64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1257,7 +1263,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\maccatalyst-x64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1271,7 +1277,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\osx
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/24/2025  10:59 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1287,35 +1293,58 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\osx-arm64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
-09/07/2025  07:50 PM    <DIR>          native
+10/03/2025  10:42 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          native
                0 File(s)              0 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\osx-arm64\native
 
-09/07/2025  07:50 PM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          .
 06/28/2025  12:13 AM    <DIR>          ..
+10/31/2023  10:48 AM            70,464 libSystem.IO.Ports.Native.dylib
 08/10/2023  04:48 PM            98,463 libuiohook.dylib
-               1 File(s)         98,463 bytes
+               2 File(s)        168,927 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\osx-x64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
-09/07/2025  07:50 PM    <DIR>          native
+10/03/2025  10:42 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          native
                0 File(s)              0 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\osx-x64\native
 
-09/07/2025  07:50 PM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          .
 06/28/2025  12:13 AM    <DIR>          ..
+10/31/2023  10:49 AM            70,480 libSystem.IO.Ports.Native.dylib
 08/10/2023  04:48 PM            81,200 libuiohook.dylib
-               1 File(s)         81,200 bytes
+               2 File(s)        151,680 bytes
+
+ Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\unix
+
+10/03/2025  10:42 AM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          lib
+               0 File(s)              0 bytes
+
+ Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\unix\lib
+
+10/03/2025  10:42 AM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          net8.0
+               0 File(s)              0 bytes
+
+ Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\unix\lib\net8.0
+
+10/03/2025  10:42 AM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          ..
+10/31/2023  11:02 AM            74,416 System.IO.Ports.dll
+               1 File(s)         74,416 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\win
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 06/28/2025  12:13 AM    <DIR>          lib
                0 File(s)              0 bytes
 
@@ -1323,20 +1352,21 @@
 
 06/28/2025  12:13 AM    <DIR>          .
 06/28/2025  12:13 AM    <DIR>          ..
-09/07/2025  07:50 PM    <DIR>          net8.0
+10/03/2025  10:42 AM    <DIR>          net8.0
                0 File(s)              0 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\win\lib\net8.0
 
-09/07/2025  07:50 PM    <DIR>          .
+10/03/2025  10:42 AM    <DIR>          .
 06/28/2025  12:13 AM    <DIR>          ..
+10/31/2023  11:00 AM            87,728 System.IO.Ports.dll
 10/28/2024  10:43 PM           312,600 System.Management.dll
-               1 File(s)        312,600 bytes
+               2 File(s)        400,328 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\win-arm64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1353,7 +1383,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\win-x64
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/24/2025  10:59 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1370,7 +1400,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\runtimes\win-x86
 
 06/28/2025  12:13 AM    <DIR>          .
-06/28/2025  12:13 AM    <DIR>          ..
+10/03/2025  10:42 AM    <DIR>          ..
 09/24/2025  10:59 PM    <DIR>          native
                0 File(s)              0 bytes
 
@@ -1387,7 +1417,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\Themes
 
 07/04/2025  08:07 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 09/07/2025  07:50 PM    <DIR>          Global
                0 File(s)              0 bytes
 
@@ -1410,7 +1440,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\tr
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           431,264 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,584 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            47,776 Microsoft.CodeAnalysis.resources.dll
@@ -1421,7 +1451,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\zh-Hans
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           383,648 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,056 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            44,720 Microsoft.CodeAnalysis.resources.dll
@@ -1432,7 +1462,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\bin\Debug\net8.0-windows\zh-Hant
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
+10/03/2025  05:22 PM    <DIR>          ..
 02/29/2024  08:39 PM           383,136 Microsoft.CodeAnalysis.CSharp.resources.dll
 02/29/2024  08:42 PM            17,056 Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll
 02/29/2024  08:25 PM            44,704 Microsoft.CodeAnalysis.resources.dll
@@ -1443,16 +1473,16 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\Converters
 
 09/24/2025  07:14 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
-09/24/2025  06:43 PM             2,002 BoolToColorConverter.cs
-09/24/2025  07:14 PM             1,166 BoolToStringConverter.cs
+10/03/2025  07:47 PM    <DIR>          ..
+10/03/2025  11:15 AM             1,942 BoolToColorConverter.cs
+10/03/2025  11:15 AM             1,138 BoolToStringConverter.cs
 07/15/2025  09:18 PM               772 IsWorkspaceItemConverter.cs
-               3 File(s)          3,940 bytes
+               3 File(s)          3,852 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\docs
 
 09/13/2025  09:23 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 06/11/2025  11:54 PM             1,649 avalonia-usage.md
 06/30/2025  11:02 AM            18,607 EnvironmentVariable.txt
 08/06/2025  06:03 PM             4,137 jezzball-new-implementation.md
@@ -30369,7 +30399,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\Effects
 
 08/09/2025  10:51 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 06/11/2025  11:54 PM               283 IWindowEffect.cs
 06/13/2025  07:43 PM             1,620 RollUpEffect.cs
 06/13/2025  07:43 PM               754 ShadowEffect.cs
@@ -30382,7 +30412,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\Hotkeys
 
 06/13/2025  07:43 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 06/13/2025  07:43 PM               852 HotkeyMonitor.swift
 06/13/2025  07:43 PM             3,776 MacGlobalHotkeyManager.cs
 08/27/2025  06:55 PM             4,241 SharpGlobalHotkeyManager.cs
@@ -30391,29 +30421,29 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\Interop
 
 06/11/2025  01:06 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 06/11/2025  01:06 AM             1,619 WinampVisInterop.cs
                1 File(s)          1,619 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\obj
 
-10/03/2025  08:53 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
-10/03/2025  08:53 AM             7,201 Cycloside.csproj.nuget.dgspec.json
-10/03/2025  08:53 AM           359,633 Cycloside.csproj.nuget.g.props
+10/03/2025  10:35 AM    <DIR>          .
+10/03/2025  07:47 PM    <DIR>          ..
+10/03/2025  10:35 AM             7,471 Cycloside.csproj.nuget.dgspec.json
+10/03/2025  10:35 AM           359,633 Cycloside.csproj.nuget.g.props
 10/03/2025  08:53 AM             2,328 Cycloside.csproj.nuget.g.targets
 06/30/2025  07:44 PM    <DIR>          Debug
-10/03/2025  08:53 AM           405,458 project.assets.json
-10/03/2025  08:53 AM             8,225 project.nuget.cache
-               5 File(s)        782,845 bytes
+10/03/2025  10:35 AM           416,413 project.assets.json
+10/03/2025  10:35 AM             9,225 project.nuget.cache
+               5 File(s)        795,070 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\obj\Debug
 
 06/30/2025  07:44 PM    <DIR>          .
-10/03/2025  08:53 AM    <DIR>          ..
+10/03/2025  10:35 AM    <DIR>          ..
 06/30/2025  07:44 PM    <DIR>          .net8.0
 07/04/2025  08:03 PM    <DIR>          net8.0
-10/03/2025  09:24 AM    <DIR>          net8.0-windows
+10/03/2025  07:47 PM    <DIR>          net8.0-windows
                0 File(s)              0 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\obj\Debug\.net8.0
@@ -30485,71 +30515,72 @@
 
  Directory of D:\GitHub\NewIdeas\Cycloside\obj\Debug\net8.0-windows
 
-10/03/2025  09:24 AM    <DIR>          .
+10/03/2025  07:47 PM    <DIR>          .
 06/30/2025  07:44 PM    <DIR>          ..
 08/27/2025  06:13 PM               198 .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
-10/03/2025  09:24 AM           152,064 apphost.exe
+10/03/2025  05:22 PM           152,064 apphost.exe
 09/07/2025  07:50 PM    <DIR>          Avalonia
-10/03/2025  09:24 AM             1,160 Cycloside.AssemblyInfo.cs
-10/03/2025  09:24 AM                66 Cycloside.AssemblyInfoInputs.cache
-10/03/2025  08:53 AM            73,926 Cycloside.assets.cache
-10/03/2025  09:24 AM            27,891 Cycloside.csproj.AssemblyReference.cache
-10/03/2025  08:58 AM                66 Cycloside.csproj.CoreCompileInputs.cache
-09/24/2025  10:59 PM            58,448 Cycloside.csproj.FileListAbsolute.txt
-10/03/2025  09:24 AM                 0 Cycloside.csproj.Up2Date
-10/03/2025  09:24 AM           826,368 Cycloside.dll
-10/03/2025  08:58 AM            10,243 Cycloside.GeneratedMSBuildEditorConfig.editorconfig
+10/03/2025  07:47 PM             1,160 Cycloside.AssemblyInfo.cs
+10/03/2025  07:47 PM                66 Cycloside.AssemblyInfoInputs.cache
+10/03/2025  10:35 AM            77,558 Cycloside.assets.cache
+10/03/2025  07:47 PM            28,315 Cycloside.csproj.AssemblyReference.cache
+10/03/2025  07:47 PM                66 Cycloside.csproj.CoreCompileInputs.cache
+10/03/2025  10:42 AM            59,278 Cycloside.csproj.FileListAbsolute.txt
+10/03/2025  05:22 PM                 0 Cycloside.csproj.Up2Date
+10/03/2025  05:22 PM           996,864 Cycloside.dll
+10/03/2025  12:22 PM            10,665 Cycloside.GeneratedMSBuildEditorConfig.editorconfig
 10/03/2025  09:12 AM                66 Cycloside.genruntimeconfig.cache
-10/03/2025  09:24 AM           327,508 Cycloside.pdb
-10/03/2025  09:24 AM               137 Cycloside.sourcelink.json
-10/03/2025  09:24 AM    <DIR>          ref
+10/03/2025  05:22 PM           372,920 Cycloside.pdb
+10/03/2025  07:47 PM               137 Cycloside.sourcelink.json
+10/03/2025  05:27 PM    <DIR>          ref
 09/07/2025  07:50 PM    <DIR>          refint
-              14 File(s)      1,478,141 bytes
+              14 File(s)      1,699,357 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\obj\Debug\net8.0-windows\Avalonia
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
-10/03/2025  09:24 AM            24,833 references
-10/03/2025  09:24 AM           111,150 resources
-10/03/2025  08:58 AM                66 Resources.Inputs.cache
-               3 File(s)        136,049 bytes
+10/03/2025  07:47 PM    <DIR>          ..
+10/03/2025  05:22 PM            24,905 references
+10/03/2025  12:53 PM           128,001 resources
+10/03/2025  12:22 PM                66 Resources.Inputs.cache
+               3 File(s)        152,972 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\obj\Debug\net8.0-windows\ref
 
-10/03/2025  09:24 AM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
-10/03/2025  09:24 AM           124,416 Cycloside.dll
-               1 File(s)        124,416 bytes
+10/03/2025  05:27 PM    <DIR>          .
+10/03/2025  07:47 PM    <DIR>          ..
+10/03/2025  05:22 PM           157,696 Cycloside.dll
+               1 File(s)        157,696 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\obj\Debug\net8.0-windows\refint
 
 09/07/2025  07:50 PM    <DIR>          .
-10/03/2025  09:24 AM    <DIR>          ..
-10/03/2025  09:24 AM           124,416 Cycloside.dll
-               1 File(s)        124,416 bytes
+10/03/2025  07:47 PM    <DIR>          ..
+10/03/2025  05:22 PM           157,696 Cycloside.dll
+               1 File(s)        157,696 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Plugins
 
 10/03/2025  08:57 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
-09/13/2025  09:23 AM    <DIR>          BuiltIn
+10/03/2025  07:47 PM    <DIR>          ..
+10/03/2025  06:32 PM    <DIR>          BuiltIn
 10/03/2025  09:00 AM             3,553 IThemablePlugin.cs
 06/13/2025  07:43 PM               104 PluginChangeStatus.cs
 06/12/2025  12:42 AM               691 PluginLoadContext.cs
 08/27/2025  07:35 PM            11,721 PluginManager.cs
-10/03/2025  09:00 AM             5,783 PluginWindowBase.cs
+10/03/2025  11:15 AM             5,619 PluginWindowBase.cs
 07/16/2025  10:09 PM    <DIR>          Winamp
-               5 File(s)         21,852 bytes
+               5 File(s)         21,688 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Plugins\BuiltIn
 
-09/13/2025  09:23 AM    <DIR>          .
+10/03/2025  06:32 PM    <DIR>          .
 10/03/2025  08:57 AM    <DIR>          ..
 06/30/2025  11:44 AM             1,445 AddEditVariableViewModel.cs
+10/03/2025  12:39 PM             8,312 AdvancedCodeEditorPlugin.cs
+10/03/2025  07:47 PM            22,594 AiAssistantPlugin.cs
 08/05/2025  08:07 PM             3,502 CharacterMapPlugin.cs
 08/05/2025  08:07 PM             4,910 ClipboardManagerPlugin.cs
-09/13/2025  09:23 AM             9,547 CodeEditorPlugin.cs
 08/09/2025  10:51 PM             2,563 DateTimeOverlayPlugin.cs
 06/26/2025  11:02 PM             1,488 DateTimeOverlayWindow.axaml
 06/26/2025  08:26 PM               853 DateTimeOverlayWindow.axaml.cs
@@ -30559,18 +30590,21 @@
 06/26/2025  10:16 PM               832 FftExtensions.cs
 08/05/2025  08:07 PM             8,738 FileExplorerPlugin.cs
 08/05/2025  08:07 PM             6,256 FileWatcherPlugin.cs
+10/03/2025  11:15 AM             6,682 HackersParadisePlugin.cs
+10/03/2025  11:15 AM            21,815 HackerTerminalPlugin.cs
 09/13/2025  09:23 AM            22,838 JezzballPlugin.cs
 08/06/2025  06:03 PM            84,862 JezzballPlugin.cs.disabled
 09/13/2025  09:23 AM               389 JezzballSound.cs
 08/06/2025  06:03 PM               407 JezzballSound.cs.disabled
 08/09/2025  10:51 PM            12,562 LogViewerPlugin.cs
 08/09/2025  10:51 PM             7,946 MacroPlugin.cs
-08/27/2025  07:52 PM             3,123 ManagedVisHostPlugin.cs
+10/03/2025  11:15 AM             3,124 ManagedVisHostPlugin.cs
 08/09/2025  10:51 PM            11,210 ModTrackerPlugin.cs
 09/08/2025  06:18 PM            19,728 MP3PlayerPlugin.cs
-08/05/2025  08:07 PM             9,257 NetworkToolsPlugin.cs
+10/03/2025  05:21 PM            34,255 NetworkToolsPlugin.cs
 08/09/2025  10:51 PM             1,815 NotificationCenterPlugin.cs
-09/24/2025  06:51 PM            13,966 ProcessMonitorPlugin.cs
+10/03/2025  12:10 PM             9,395 PluginMarketplace.cs
+10/03/2025  11:15 AM            22,166 PowerShellTerminalPlugin.cs
 08/09/2025  10:51 PM            27,533 QBasicRetroIDEPlugin.cs
 08/05/2025  08:07 PM             2,037 QuickLauncherPlugin.cs
 06/26/2025  10:16 PM             1,491 SampleAggregator.cs
@@ -30579,15 +30613,15 @@
 08/09/2025  10:51 PM             1,924 TaskSchedulerPlugin.cs
 08/05/2025  08:07 PM             7,122 TerminalPlugin.cs
 08/09/2025  10:51 PM             7,266 TextEditorPlugin.cs
-09/13/2025  09:23 AM    <DIR>          Views
+10/03/2025  12:21 PM    <DIR>          Views
 07/04/2025  10:06 AM             4,821 WallpaperPlugin.cs
 08/09/2025  10:51 PM             3,038 WidgetHostPlugin.cs
-              34 File(s)        339,814 bytes
+              38 File(s)        432,264 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Plugins\BuiltIn\ScreenSaverModules
 
 08/05/2025  08:32 PM    <DIR>          .
-09/13/2025  09:23 AM    <DIR>          ..
+10/03/2025  06:32 PM    <DIR>          ..
 08/05/2025  08:07 PM             1,259 BouncingBallAnimation.cs
 08/05/2025  08:32 PM             2,416 DecoAnimation.cs
 08/05/2025  08:07 PM               274 IScreenSaverModule.cs
@@ -30597,15 +30631,17 @@
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Plugins\BuiltIn\Views
 
-09/13/2025  09:23 AM    <DIR>          .
-09/13/2025  09:23 AM    <DIR>          ..
+10/03/2025  12:21 PM    <DIR>          .
+10/03/2025  06:32 PM    <DIR>          ..
 06/30/2025  11:44 AM             1,351 AddEditVariableWindow.axaml
 06/30/2025  11:44 AM               246 AddEditVariableWindow.axaml.cs
+10/03/2025  12:53 PM             4,557 AdvancedCodeEditorWindow.axaml
+10/03/2025  12:41 PM             4,102 AdvancedCodeEditorWindow.axaml.cs
 07/15/2025  09:18 PM             2,141 CharacterMapWindow.axaml
 07/15/2025  09:18 PM               758 CharacterMapWindow.axaml.cs
 07/15/2025  09:18 PM             1,462 ClipboardManagerWindow.axaml
 06/26/2025  11:20 PM               757 ClipboardManagerWindow.axaml.cs
-07/17/2025  06:39 PM             1,356 CodeEditorWindow.axaml
+10/03/2025  10:43 AM             1,414 CodeEditorWindow.axaml
 07/17/2025  06:39 PM               236 CodeEditorWindow.axaml.cs
 06/23/2025  12:23 AM               559 DiskUsageWindow.axaml
 06/23/2025  12:23 AM               234 DiskUsageWindow.axaml.cs
@@ -30631,8 +30667,10 @@
 07/15/2025  09:18 PM               222 NotificationCenterView.axaml.cs
 07/15/2025  09:18 PM               476 NotificationCenterWindow.axaml
 07/15/2025  09:18 PM               221 NotificationCenterWindow.axaml.cs
-09/24/2025  07:14 PM             2,725 ProcessMonitorWindow.axaml
-09/24/2025  06:51 PM               459 ProcessMonitorWindow.axaml.cs
+10/03/2025  12:10 PM             8,778 PluginMarketplaceWindow.axaml
+10/03/2025  12:10 PM            14,371 PluginMarketplaceWindow.axaml.cs
+10/03/2025  10:43 AM             1,313 ProcessMonitorWindow.axaml
+10/03/2025  11:15 AM               451 ProcessMonitorWindow.axaml.cs
 08/10/2025  03:04 PM               543 QuickLauncherWindow.axaml
 07/17/2025  06:39 PM               336 QuickLauncherWindow.axaml.cs
 06/26/2025  08:26 PM               469 TaskSchedulerWindow.axaml
@@ -30643,7 +30681,7 @@
 06/26/2025  08:26 PM               236 TextEditorWindow.axaml.cs
 06/23/2025  12:23 AM               498 WallpaperWindow.axaml
 06/23/2025  12:23 AM               234 WallpaperWindow.axaml.cs
-              44 File(s)         37,814 bytes
+              48 File(s)         68,260 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Plugins\Winamp
 
@@ -30657,21 +30695,21 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\Resources
 
 06/26/2025  08:49 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 06/26/2025  08:49 PM             1,078 42.ico
                1 File(s)          1,078 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Scripting
 
 07/12/2025  03:14 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 07/12/2025  03:14 PM            15,566 CyclosideBasicEngine.cs
                1 File(s)         15,566 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\SDK
 
 07/17/2025  06:39 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 08/09/2025  10:51 PM    <DIR>          Examples
 07/15/2025  09:18 PM             1,431 IPlugin.cs
 07/15/2025  09:18 PM               748 IPluginExtended.cs
@@ -30690,24 +30728,29 @@
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Services
 
-10/03/2025  08:57 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  06:27 PM    <DIR>          .
+10/03/2025  07:47 PM    <DIR>          ..
+10/03/2025  07:47 PM            24,270 AiAssistant.cs
 06/26/2025  10:16 PM               785 ApplicationExtensions.cs
 08/27/2025  06:57 PM             1,377 AudioService.cs
+10/03/2025  11:15 AM            12,395 ConfigurationManager.cs
 06/30/2025  05:57 PM             1,600 CursorManager.cs
-09/24/2025  07:02 PM             3,327 DialogHelper.cs
+10/03/2025  11:15 AM             3,298 DialogHelper.cs
 08/27/2025  07:20 PM             2,978 Logger.cs
+10/03/2025  05:02 PM            35,292 NetworkTools.cs
 07/15/2025  09:18 PM               739 NotificationCenter.cs
+10/03/2025  12:10 PM            15,681 PluginRepository.cs
+10/03/2025  11:15 AM            18,947 PowerShellManager.cs
 07/02/2025  07:40 PM             2,357 RelayCommand.cs
-10/03/2025  09:13 AM            12,281 SkinManager.cs
-10/03/2025  09:18 AM            18,881 ThemeManager.cs
-10/03/2025  09:00 AM             8,975 WindowReplacementManager.cs
-              10 File(s)         53,300 bytes
+10/03/2025  11:15 AM            12,172 SkinManager.cs
+10/03/2025  11:15 AM            18,786 ThemeManager.cs
+10/03/2025  11:15 AM             8,841 WindowReplacementManager.cs
+              15 File(s)        159,518 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Skins
 
 10/03/2025  08:51 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 07/02/2025  07:06 PM               103 Blank.axaml
 10/03/2025  08:51 AM    <DIR>          Classic
 06/13/2025  07:43 PM               208 ConsoleGreen.axaml
@@ -30740,7 +30783,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\Themes
 
 10/03/2025  08:56 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 10/03/2025  08:51 AM    <DIR>          DarkTheme
 07/17/2025  06:39 PM    <DIR>          Global
 10/03/2025  08:51 AM    <DIR>          LightTheme
@@ -30790,7 +30833,7 @@
  Directory of D:\GitHub\NewIdeas\Cycloside\ViewModels
 
 08/09/2025  10:51 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 07/15/2025  09:18 PM             1,608 ControlPanelViewModel.cs
 07/15/2025  09:18 PM               898 MainWindowViewModel.cs
 08/09/2025  10:51 PM             4,347 WizardViewModel.cs
@@ -30799,16 +30842,18 @@
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Views
 
-06/30/2025  06:16 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  11:02 AM    <DIR>          .
+10/03/2025  07:47 PM    <DIR>          ..
+10/03/2025  11:08 AM             4,180 WelcomeWindow.axaml
+10/03/2025  01:34 PM             9,208 WelcomeWindow.axaml.cs
 06/30/2025  06:16 PM             2,621 WizardWindow.axaml
 06/26/2025  10:16 PM             1,807 WizardWindow.axaml.cs
-               2 File(s)          4,428 bytes
+               4 File(s)         17,816 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Visuals
 
 09/08/2025  06:18 PM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 09/08/2025  06:18 PM    <DIR>          Managed
                0 File(s)              0 bytes
 
@@ -30818,21 +30863,21 @@
 09/08/2025  06:18 PM    <DIR>          ..
 08/27/2025  07:44 PM               386 IManagedVisualizer.cs
 08/27/2025  08:26 PM               203 IManagedVisualizerConfigurable.cs
-08/27/2025  08:27 PM             5,567 ManagedVisHostWindow.cs
+10/03/2025  11:15 AM             5,573 ManagedVisHostWindow.cs
 08/27/2025  08:22 PM             4,336 ManagedVisStyle.cs
 09/08/2025  06:18 PM    <DIR>          PhoenixCompat
 09/08/2025  06:18 PM    <DIR>          PhoenixVisuals
 09/08/2025  06:18 PM    <DIR>          Visualizers
-               4 File(s)         10,492 bytes
+               4 File(s)         10,498 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Visuals\Managed\PhoenixCompat
 
 09/08/2025  06:18 PM    <DIR>          .
 09/08/2025  06:18 PM    <DIR>          ..
 09/08/2025  06:18 PM             5,133 AvaloniaCanvasAdapter.cs
-09/08/2025  06:18 PM            12,851 PhoenixAvsEngine.cs
+10/03/2025  11:15 AM            12,850 PhoenixAvsEngine.cs
 09/08/2025  06:18 PM             2,410 PhoenixContracts.cs
-               3 File(s)         20,394 bytes
+               3 File(s)         20,393 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Visuals\Managed\PhoenixVisuals
 
@@ -30843,10 +30888,10 @@
 09/08/2025  06:18 PM             4,281 FiberLamp.cs
 09/08/2025  06:18 PM             2,664 Gears.cs
 09/08/2025  06:18 PM             4,524 GFlux.cs
-09/08/2025  06:18 PM             3,893 MoebiusStrip.cs
+10/03/2025  11:15 AM             3,890 MoebiusStrip.cs
 09/08/2025  06:18 PM             7,231 PhoenixCircularBarsPlugin.cs
-09/08/2025  06:18 PM             3,072 QuasiCrystal.cs
-09/08/2025  06:18 PM             2,402 RainbowMerkabaSuperscope.cs
+10/03/2025  11:15 AM             3,074 QuasiCrystal.cs
+10/03/2025  11:15 AM             2,450 RainbowMerkabaSuperscope.cs
 09/08/2025  06:18 PM             1,532 RainbowSphereGridSuperscope.cs
 09/08/2025  06:18 PM             2,219 RaverHoop.cs
 09/08/2025  06:18 PM             1,231 RotatingBowSuperscope.cs
@@ -30856,32 +30901,32 @@
 09/08/2025  06:18 PM             1,644 SpiralSuperscope.cs
 09/08/2025  06:18 PM             3,521 TimeTunnel.cs
 09/08/2025  06:18 PM             4,180 UnknownPleasures.cs
-              18 File(s)         53,394 bytes
+              18 File(s)         53,441 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Visuals\Managed\Visualizers
 
 09/08/2025  06:18 PM    <DIR>          .
 09/08/2025  06:18 PM    <DIR>          ..
 09/08/2025  06:18 PM            24,147 AvsSuperscopeVisualizer.cs
-08/27/2025  08:46 PM             2,807 CircularSpectrumVisualizer.cs
-08/27/2025  08:09 PM             3,055 LavaLampVisualizer.cs
-08/27/2025  08:47 PM             3,467 MatrixRainVisualizer.cs
+10/03/2025  11:15 AM             2,811 CircularSpectrumVisualizer.cs
+10/03/2025  11:15 AM             3,085 LavaLampVisualizer.cs
+10/03/2025  11:15 AM             3,474 MatrixRainVisualizer.cs
 08/27/2025  07:45 PM             2,457 OscilloscopeVisualizer.cs
-08/27/2025  08:19 PM             2,570 ParticlePulseVisualizer.cs
-09/08/2025  06:18 PM             6,628 PhoenixAvsVisualizer.cs
+10/03/2025  11:15 AM             2,593 ParticlePulseVisualizer.cs
+10/03/2025  11:15 AM             6,638 PhoenixAvsVisualizer.cs
 09/08/2025  06:18 PM             1,820 PhoenixBuiltInsManaged.cs
-09/08/2025  06:18 PM             3,890 PhoenixManagedWrapper.cs
-08/27/2025  08:46 PM             3,156 PolarWaveVisualizer.cs
-08/27/2025  08:46 PM             3,402 SpectrogramVisualizer.cs
-08/27/2025  08:51 PM             4,549 SpectrumBarsVisualizer.cs
-08/27/2025  08:46 PM             3,052 StarfieldVisualizer.cs
-08/27/2025  08:42 PM             4,674 WindowsMediaBarsVisualizer.cs
-              14 File(s)         69,674 bytes
+10/03/2025  11:15 AM             3,900 PhoenixManagedWrapper.cs
+10/03/2025  11:15 AM             3,226 PolarWaveVisualizer.cs
+10/03/2025  11:15 AM             3,415 SpectrogramVisualizer.cs
+10/03/2025  11:15 AM             4,561 SpectrumBarsVisualizer.cs
+10/03/2025  11:15 AM             3,116 StarfieldVisualizer.cs
+10/03/2025  11:15 AM             4,743 WindowsMediaBarsVisualizer.cs
+              14 File(s)         69,986 bytes
 
  Directory of D:\GitHub\NewIdeas\Cycloside\Widgets
 
 06/17/2025  12:09 AM    <DIR>          .
-10/03/2025  09:25 AM    <DIR>          ..
+10/03/2025  07:47 PM    <DIR>          ..
 08/09/2025  10:51 PM    <DIR>          BuiltIn
 06/11/2025  11:54 PM               144 IWidget.cs
 06/11/2025  11:54 PM               295 WidgetHostWindow.axaml
@@ -30900,5 +30945,5 @@
                4 File(s)         11,889 bytes
 
      Total Files Listed:
-           20378 File(s)  2,344,891,829 bytes
-            4508 Dir(s)  160,195,973,120 bytes free
+           20402 File(s)  2,347,902,072 bytes
+            4517 Dir(s)  179,358,941,184 bytes free
