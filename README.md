@@ -1,23 +1,40 @@
 # Cycloside
 
-Cycloside is a small cross‑platform tray application built for tinkerers. It hosts plugins, custom window effects, and live theming so you can shape the desktop to your liking.
+Cycloside is a comprehensive cross-platform desktop application built for tinkerers, developers, and cybersecurity professionals. It hosts plugins, custom window effects, live theming, and provides a complete development and hacking toolkit.
 
 ---
 
 ## Why Cycloside?
 
-* Collects small utilities in one place: from a clipboard history viewer to a simple IDE and wallpaper manager.
-* Lets you experiment with window effects and custom cursors.
-* Works on Windows, Linux, and macOS using the Avalonia UI framework.
+* **Complete Plugin Ecosystem**: Browse, install, and manage community plugins from a built-in marketplace
+* **Professional Development Environment**: Advanced code editor with syntax highlighting, IntelliSense, and multi-language support
+* **Comprehensive Cybersecurity Toolkit**: Network analysis, packet sniffing, port scanning, MAC/IP spoofing
+* **Communication Bridges**: Serial, MQTT, OSC protocol support for IoT and automation
+* **Input Device Integration**: MIDI and gamepad input routing for creative applications
+* **Remote Management**: SSH client with command execution and file monitoring
+* **Automation Engine**: Event-driven rule processing for workflow automation
+* **Windows Utilities**: Screenshot annotation, sticky notes, color picker, pixel ruler
+* **Cross-Platform**: Works on Windows, Linux, and macOS using the Avalonia UI framework
 
 ---
 
-## Use Cases
+## Multi-Project Architecture
 
-* Organise shortcuts and tools in a single tray icon.
-* Inspect disk usage or running processes with the built‑in plugins.
-* Edit themes/skins and instantly preview them on a test window.
-* Run volatile Lua or C# snippets for quick experiments.
+Cycloside now uses a modular multi-project structure:
+
+```
+CyclosideNextFeatures/
+├── Core/           # EventBus, JSON config, message system
+├── Bridge/         # Serial/MQTT/OSC communication protocols
+├── Input/          # MIDI & Gamepad input routing
+├── SSH/            # SSH client management with profiles
+├── Rules/          # Event-driven automation engine
+├── Utils/          # Windows utilities (screenshot, notes, etc.)
+├── SampleHost/     # Console demo wiring everything together
+└── Cycloside/      # Main Avalonia UI application
+```
+
+Each project can be developed, tested, and deployed independently while communicating through the shared EventBus system.
 
 ---
 
@@ -43,11 +60,13 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 
 <details><summary>Core</summary>
 
-* Built-in plugin system with hot reload. Sample modules include a clock overlay,
-    MP3 player, macro recorder (Windows only), text editor, **code editor**,
-    wallpaper changer, **file explorer**, **network tools**, **encryption helper**,
-    widget host, Winamp visualizer host, a tracker module player and a simple
-    command shell.
+* **Multi-Project Architecture**: Modular design with Core, Bridge, Input, SSH, Rules, Utils, and SampleHost projects
+* **EventBus System**: In-process pub/sub messaging with wildcard topic support
+* **JSON Configuration**: Persistent settings management with automatic serialization
+* **Plugin Marketplace**: Browse, install, and manage community plugins
+* **Advanced Code Editor**: Professional IDE with syntax highlighting, IntelliSense, and multi-language support
+* **Dynamic Theming**: Live theme switching with custom skin support
+* **Window Effects**: Custom window behaviors and visual enhancements
 * Workspace profiles remember your wallpaper and plugin states for quick swaps.
 * Run Lua or C# snippets as volatile scripts straight from the tray menu.
 * Cross-platform auto-start and settings stored in `settings.json`.
@@ -67,6 +86,65 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 * Optional auto-update helper swaps in new versions using a checksum.
 * Dedicated logs menu surfaces recent errors from the tray.
 * A unified workspace shows compatible plugins as tabs or docked panels.
+
+</details>
+
+<details><summary>Communication Bridges</summary>
+
+* **Serial Communication**: COM port bridging with real-time data forwarding
+* **MQTT Protocol**: Full MQTT client with subscription and publishing capabilities
+* **OSC Protocol**: Open Sound Control for multimedia and IoT communication
+* **Cross-Platform**: Works on Windows, Linux, and macOS with proper protocol handling
+
+</details>
+
+<details><summary>Input Device Integration</summary>
+
+* **MIDI Router**: MIDI device input routing and message forwarding to the event bus
+* **Gamepad Router**: XInput gamepad state monitoring and event publishing
+* **Real-time Input**: Live input device state monitoring and event generation
+* **Cross-Platform**: Works on Windows with proper input device handling
+
+</details>
+
+<details><summary>SSH Management</summary>
+
+* **SSH Client Manager**: SSH connection management with configurable profiles
+* **Command Execution**: Remote command execution with timeout handling
+* **File Tailing**: Real-time file monitoring over SSH connections
+* **Profile Management**: Save and restore SSH connection configurations
+
+</details>
+
+<details><summary>Automation Engine</summary>
+
+* **Rules Engine**: Event-driven automation with multiple trigger types
+* **Trigger Types**: Bus topics, timers, file changes, process monitoring
+* **Action Types**: Bus publishing, process execution, toast notifications
+* **Configurable Rules**: JSON-based rule definitions with flexible matching
+
+</details>
+
+<details><summary>Windows Utilities</summary>
+
+* **Screenshot Annotator**: Region selection and annotation overlay with save/copy functionality
+* **Sticky Notes Manager**: Persistent JSON-based sticky notes with window management
+* **Color Picker Tool**: Pixel color selection with hex output and event publishing
+* **Pixel Ruler**: Screen measurement overlay tool for precise measurements
+* **HTML/Markdown Host**: WebView2-based HTML/Markdown rendering with live preview
+* **Python Runner**: IronPython execution with network import restrictions
+* **QuickShare Server**: HTTP file sharing with QR code generation and upload form
+
+</details>
+
+<details><summary>Network Security</summary>
+
+* **Packet Sniffer**: Real-time network packet capture and protocol analysis
+* **Port Scanner**: Comprehensive port scanning for vulnerability assessment
+* **HTTP Inspector**: Web traffic monitoring and request/response analysis
+* **MAC Address Spoofing**: Network interface MAC address modification
+* **IP Address Spoofing**: Network interface IP configuration spoofing
+* **Network Traffic Monitor**: Real-time network traffic visualization and analysis
 
 </details>
 

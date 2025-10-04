@@ -30,8 +30,201 @@ if (Application.Current != null)
 - Always use null-coalescing operator (`??`) for parameter assignments
 - Check `Application.Current` before accessing application-scoped resources
 - Use explicit null checks rather than nullable operators when safety is critical
+- **Multi-project solutions require careful dependency management** - each project must compile independently
+- **Event bus communication enables loose coupling** between components
+- **JSON serialization requires proper null handling** for complex object graphs
 
 ---
+
+## 🏗️ Multi-Project Architecture Lessons
+
+### Project Structure and Dependencies
+
+**Issues Encountered:**
+- **Circular dependencies** between projects can break builds
+- **Framework mismatches** between projects (net8.0 vs net8.0-windows)
+- **Package compatibility** issues with .NET Framework vs .NET Core libraries
+
+**✅ Solutions Applied:**
+```csharp
+// ✅ GOOD: Consistent framework targeting
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+</Project>
+```
+
+**📚 Key Learnings:**
+- Use consistent .NET 8 targeting across all projects
+- Add Windows-specific configurations conditionally
+- Use `Microsoft.NET.Sdk` for cross-platform projects, `Microsoft.NET.Sdk.WindowsDesktop` only when needed
+- Test builds on target platforms to catch compatibility issues early
+
+### Event Bus Communication
+
+**Issues Encountered:**
+- **Threading issues** with UI updates from background tasks
+- **Memory leaks** from unsubscribed event handlers
+- **Type safety** issues with JSON serialization/deserialization
+
+**✅ Solutions Applied:**
+```csharp
+// ✅ GOOD: Proper async UI updates
+private static void OnPacketCaptured(NetworkPacket packet)
+{
+    Dispatcher.UIThread.InvokeAsync(() =>
+    {
+        _capturedPackets.Add(packet);
+        OnPacketCaptured(packet);
+    });
+}
+
+// ✅ GOOD: Proper resource disposal
+public void Dispose()
+{
+    _readTimer?.Dispose();
+    _port?.Dispose();
+}
+```
+
+**📚 Key Learnings:**
+- Use `Dispatcher.UIThread.InvokeAsync()` for UI updates from background threads
+- Always implement `IDisposable` for resources with cleanup requirements
+- Use structured event args with proper serialization support
+- Test threading scenarios to catch race conditions
+
+### Package Compatibility Issues
+
+**Issues Encountered:**
+- **Rug.Osc** targeting .NET Framework instead of .NET 8
+- **System.IO.Ports** missing from Bridge project
+- **Timer** ambiguity between `System.Windows.Forms.Timer` and `System.Threading.Timer`
+
+**✅ Solutions Applied:**
+```xml
+<!-- ✅ GOOD: Add missing package references -->
+<PackageReference Include="System.IO.Ports" Version="8.0.0" />
+```
+
+```csharp
+// ✅ GOOD: Resolve namespace conflicts
+using Timer = System.Windows.Forms.Timer;
+```
+
+**📚 Key Learnings:**
+- Check package compatibility with target framework before adding
+- Use explicit namespace resolution for ambiguous types
+- Test on target platforms to catch runtime compatibility issues
+- Consider using .NET 8 native alternatives when available
+
+### Windows Forms Integration in Avalonia
+
+**Issues Encountered:**
+- **WinForms controls** don't work directly in Avalonia
+- **API differences** between WinForms and Avalonia
+- **Platform-specific code** needs proper abstraction
+
+**✅ Solutions Applied:**
+```csharp
+// ✅ GOOD: Platform-specific conditional compilation
+[SupportedOSPlatform("windows")]
+public void WindowsSpecificMethod()
+{
+    // Windows-specific implementation
+}
+```
+
+**📚 Key Learnings:**
+- Use `[SupportedOSPlatform]` attributes for platform-specific code
+- Abstract platform-specific functionality behind interfaces
+- Consider cross-platform alternatives when possible
+- Test on all target platforms during development
+
+---
+
+## 🚀 Multi-Project Solution Architecture
+
+### Event-Driven Communication
+
+**Implementation:**
+```csharp
+// Core event bus for inter-project communication
+public sealed class EventBus
+{
+    private readonly ConcurrentDictionary<string, List<Action<BusMessage>>> _handlers = new();
+
+    public BusSubscription Subscribe(string topicPattern, Action<BusMessage> handler)
+    {
+        // Wildcard topic matching: "network/*", "ui/*"
+        return new BusSubscription(() => { /* unsubscribe */ });
+    }
+
+    public void Publish<T>(string topic, T payload)
+    {
+        var msg = BusMessage.From(topic, payload);
+        // Broadcast to all matching handlers
+    }
+}
+```
+
+**Benefits:**
+- **Loose coupling** between projects
+- **Extensible messaging** system
+- **Type-safe** payload handling
+- **Performance** with concurrent operations
+
+### JSON Configuration Management
+
+**Implementation:**
+```csharp
+public static class JsonConfig
+{
+    public static T LoadOrDefault<T>(string path, T @default)
+    {
+        if (!File.Exists(path)) return @default;
+        var json = File.ReadAllText(path);
+        return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true
+        }) ?? @default;
+    }
+}
+```
+
+**Benefits:**
+- **Version-tolerant** configuration loading
+- **Human-readable** JSON format
+- **Automatic defaults** for missing configurations
+- **Cross-platform** file path handling
+
+### Modular Project Structure
+
+**Architecture:**
+```
+CyclosideNextFeatures/
+├── Core/           # Shared infrastructure (EventBus, Config)
+├── Bridge/         # Communication protocols (Serial, MQTT, OSC)
+├── Input/          # Input device routing (MIDI, Gamepad)
+├── SSH/            # Remote management (SSH client)
+├── Rules/          # Automation engine (Event-driven rules)
+├── Utils/          # Platform utilities (Screenshot, Notes, etc.)
+├── SampleHost/     # Console demo wiring everything together
+└── Cycloside/      # Main Avalonia UI application
+```
+
+**Benefits:**
+- **Independent development** of each component
+- **Clear separation of concerns**
+- **Reusable components** across projects
+- **Easier testing** and maintenance
+- **Scalable architecture** for future features
 
 ### Async/Task Pattern Inconsistencies (CS1998, CS0029, CS4016)
 
