@@ -6,8 +6,8 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
-using Cycloside.ViewModels;
 using Cycloside.Services;
+using Cycloside.ViewModels;
 using Cycloside.Views;
 using System;
 using System.Collections.Generic;
@@ -38,7 +38,212 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public override void OnFrameworkInitializationCompleted()
+    /// <summary>
+    /// Initialize configuration system
+    /// </summary>
+    private async Task InitializeConfigurationAsync()
+    {
+        try
+        {
+            await ConfigurationManager.InitializeAsync();
+            Logger.Log("✅ Configuration Manager initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Configuration Manager initialization failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Initialize theme system
+    /// </summary>
+    private async Task InitializeThemesAsync()
+    {
+        try
+        {
+            // Theme initialization is synchronous, but we can preload theme resources
+            await Task.Run(() => ThemeManager.PreloadThemeResources());
+            Logger.Log("✅ Theme system initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Theme system initialization failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Initialize services and plugins
+    /// </summary>
+    private async Task InitializeServicesAsync()
+    {
+        try
+        {
+            // Load plugins selectively based on configuration
+            await LoadConfiguredPlugins();
+            Logger.Log("✅ Services and plugins initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Services initialization failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Show startup progress window
+    /// </summary>
+    private Window? ShowStartupProgress()
+    {
+        try
+        {
+            var progressWindow = new Window
+            {
+                Title = "Starting Cycloside...",
+                Width = 400,
+                Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                CanResize = false,
+                Background = Brushes.Black
+            };
+
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(20)
+            };
+
+            var title = new TextBlock
+            {
+                Text = "🚀 Initializing Cycloside Cybersecurity Platform",
+                Foreground = Brushes.White,
+                FontSize = 16,
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+
+            var status = new TextBlock
+            {
+                Text = "Loading core systems...",
+                Foreground = Brushes.Cyan,
+                FontSize = 12,
+                TextAlignment = TextAlignment.Center
+            };
+
+            var progressBar = new ProgressBar
+            {
+                Width = 300,
+                Height = 4,
+                Margin = new Thickness(0, 20, 0, 0),
+                IsIndeterminate = true
+            };
+
+            panel.Children.Add(title);
+            panel.Children.Add(status);
+            panel.Children.Add(progressBar);
+
+            progressWindow.Content = panel;
+            progressWindow.Show();
+
+            return progressWindow;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Failed to show startup progress: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Clean up resources and memory
+    /// </summary>
+    private void CleanupResources()
+    {
+        try
+        {
+            Logger.Log("🧹 Performing resource cleanup...");
+
+            // Clear theme caches to free memory
+            ThemeManager.ClearThemeCache();
+
+            // Clear any temporary files or caches
+            ClearTempFiles();
+
+            // Force garbage collection for better memory usage
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+
+            Logger.Log("✅ Resource cleanup completed");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Resource cleanup failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Start periodic cleanup for memory optimization
+    /// </summary>
+    private async Task StartPeriodicCleanup()
+    {
+        try
+        {
+            // Run cleanup every 30 minutes
+            var timer = new System.Threading.Timer(async _ =>
+            {
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
+                    desktop.MainWindow != null)
+                {
+                    CleanupResources();
+                }
+            }, null, TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(30));
+
+            Logger.Log("⏰ Periodic cleanup scheduled every 30 minutes");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Failed to start periodic cleanup: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Clear temporary files and caches
+    /// </summary>
+    private void ClearTempFiles()
+    {
+        try
+        {
+            var tempDir = Path.GetTempPath();
+            var cyclosideTemp = Path.Combine(tempDir, "Cycloside");
+
+            if (Directory.Exists(cyclosideTemp))
+            {
+                var tempFiles = Directory.GetFiles(cyclosideTemp, "*", SearchOption.AllDirectories);
+                foreach (var file in tempFiles)
+                {
+                    try
+                    {
+                        if (File.Exists(file))
+                        {
+                            File.Delete(file);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"⚠️ Failed to delete temp file {file}: {ex.Message}");
+                    }
+                }
+
+                Logger.Log($"🗑️ Cleared {tempFiles.Length} temporary files");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"❌ Failed to clear temp files: {ex.Message}");
+        }
+    }
+
+    public override async void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -49,49 +254,113 @@ public partial class App : Application
         var settings = SettingsManager.Settings;
         ThemeManager.InitializeFromSettings();
 
-        // Initialize Configuration Manager
+        // Optimize startup with parallel initialization
+        var initializationTasks = new List<Task>
+        {
+            InitializeConfigurationAsync(),
+            InitializeThemesAsync(),
+            InitializeServicesAsync()
+        };
+
+        // Show loading progress while initializing
+        var progressWindow = ShowStartupProgress();
+
         try
         {
-            _ = ConfigurationManager.InitializeAsync();
-            Logger.Log("✅ Configuration Manager initialized successfully");
+            // Wait for all core systems to initialize in parallel
+            await Task.WhenAll(initializationTasks);
+            Logger.Log("✅ All core systems initialized successfully");
         }
         catch (Exception ex)
         {
-            Logger.Log($"❌ Configuration Manager initialization failed: {ex.Message}");
+            Logger.Log($"❌ Core system initialization failed: {ex.Message}");
+        }
+        finally
+        {
+            progressWindow?.Close();
         }
 
-        // Load plugins selectively based on configuration
-        try
+        // Show welcome modal if needed (first run or user preference)
+        if (settings.FirstRun || ConfigurationManager.IsWelcomeEnabled)
         {
-            _ = LoadConfiguredPlugins();
-            Logger.Log("✅ Plugin loading setup completed");
-        }
-        catch (Exception ex)
-        {
-            Logger.Log($"❌ Plugin loading setup failed: {ex.Message}");
-        }
+            var welcome = new WelcomeWindow();
 
-        // Create and show main window
-        try
-        {
-            _mainWindow = CreateMainWindow(settings);
-            desktop.MainWindow = _mainWindow;
-            _mainWindow.Show();
-            Logger.Log("🚀 Main window shown successfully - Cycloside is ready!");
+            // Set up the transition handler (non-async for Avalonia compatibility)
+            welcome.Closed += (_, _) =>
+            {
+                Logger.Log("🔄 Welcome window closed - transitioning to main window...");
+
+                try
+                {
+                    // Mark first run as completed
+                    settings.FirstRun = false;
+
+                    // Create and show main window
+                    _mainWindow = CreateMainWindow(settings);
+                    desktop.MainWindow = _mainWindow;
+
+                    Logger.Log("🚀 Transitioning to main window...");
+                    _mainWindow.Show();
+
+                    Logger.Log("✅ Cycloside main application started successfully!");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"❌ Critical error during welcome to main window transition: {ex.Message}");
+                    Logger.Log($"Stack trace: {ex.StackTrace}");
+
+                    // Try to create a minimal main window as fallback
+                    try
+                    {
+                        Logger.Log("🔄 Attempting emergency main window creation...");
+                        _mainWindow = new MainWindow(null); // Create minimal main window
+                        desktop.MainWindow = _mainWindow;
+                        _mainWindow.Show();
+                        Logger.Log("✅ Emergency main window created");
+                    }
+                    catch (Exception emergencyEx)
+                    {
+                        Logger.Log($"💥 Emergency fallback also failed: {emergencyEx.Message}");
+                        Logger.Log("🚨 Cannot create main window - exiting application");
+                        Environment.Exit(1);
+                    }
+                }
+            };
+
+            // Show welcome window
+            desktop.MainWindow = welcome;
+            welcome.Show();
+
+            Logger.Log("🔔 Welcome window displayed to user");
         }
-        catch (Exception ex)
+        else
         {
-            Logger.Log($"❌ Main window creation failed: {ex.Message}");
-            Logger.Log($"Stack trace: {ex.StackTrace}");
-            throw; // Re-throw to fail fast
+            // Create and show main window directly
+            try
+            {
+                _mainWindow = CreateMainWindow(settings);
+                desktop.MainWindow = _mainWindow;
+                _mainWindow.Show();
+                Logger.Log("🚀 Main window shown successfully - Cycloside is ready!");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"❌ Main window creation failed: {ex.Message}");
+                Logger.Log($"Stack trace: {ex.StackTrace}");
+                throw; // Re-throw to fail fast
+            }
         }
 
         desktop.Exit += (_, _) =>
         {
             SaveSessionState();
+            CleanupResources();
             // Ensure logs are flushed at shutdown
             Services.Logger.Shutdown();
         };
+
+        // Setup periodic cleanup for memory optimization
+        _ = StartPeriodicCleanup();
 
         base.OnFrameworkInitializationCompleted();
     }
@@ -282,17 +551,20 @@ public partial class App : Application
         try
         {
             // Wait for Configuration Manager to be ready
-            await Task.Delay(100); // Brief delay to ensure ConfigurationManager is initialized
+            await Task.Delay(200); // Brief delay to ensure ConfigurationManager is initialized
 
             Logger.Log("🔧 Loading plugins selectively based on configuration...");
 
-            // This will be called when creating the plugin manager
+            // Enable selective loading based on configuration
             _pluginsLoadedSelectively = true;
+
+            Logger.Log($"✅ Selective plugin loading enabled - {ConfigurationManager.CurrentConfig.Plugins.Count} plugins configured");
         }
         catch (Exception ex)
         {
             Logger.Log($"❌ Selective plugin loading setup failed: {ex.Message}");
-            _pluginsLoadedSelectively = true; // Continue anyway
+            Logger.Log($"Stack trace: {ex.StackTrace}");
+            _pluginsLoadedSelectively = true; // Continue anyway with default behavior
         }
     }
 
@@ -341,6 +613,11 @@ public partial class App : Application
         TryAdd(() => new PluginMarketplacePlugin());
         TryAdd(() => new AdvancedCodeEditorPlugin());
         TryAdd(() => new NetworkToolsPlugin());
+        TryAdd(() => new HardwareMonitorPlugin());
+        TryAdd(() => new VulnerabilityScannerPlugin());
+        TryAdd(() => new ExploitDevToolsPlugin());
+        TryAdd(() => new ExploitDatabasePlugin());
+        TryAdd(() => new DigitalForensicsPlugin());
         TryAdd(() => new CharacterMapPlugin());
         TryAdd(() => new FileWatcherPlugin());
         TryAdd(() => new TaskSchedulerPlugin());

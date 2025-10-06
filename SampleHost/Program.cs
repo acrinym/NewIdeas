@@ -11,8 +11,18 @@ var bus = new EventBus();
 bus.Subscribe("*/", m => Console.WriteLine($"BUS {m.Topic}: {m.Payload}"));
 
 // Start MQTT bridge (edit broker/creds as needed)
-await using var mqtt = new MqttBridge(bus, broker: "localhost", port: 1883, username: null, password: null);
-await mqtt.ConnectAsync(new[] { "#" });
+// Note: MQTT broker must be running on localhost:1883 for this to work
+try
+{
+    await using var mqtt = new MqttBridge(bus, broker: "localhost", port: 1883, username: null, password: null);
+    await mqtt.ConnectAsync(new[] { "#" });
+    Console.WriteLine("✅ MQTT bridge connected successfully");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ MQTT bridge failed to connect (broker not running?): {ex.Message}");
+    Console.WriteLine("💡 Install and start an MQTT broker like Mosquitto to enable MQTT features");
+}
 
 // OSC bridge (listen 9000, send 9001)
 using var osc = new OscBridge(bus, 9000, "127.0.0.1", 9001);

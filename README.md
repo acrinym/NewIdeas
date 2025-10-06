@@ -159,7 +159,13 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `EnvironmentEditorPlugin`| Edits environment variables at runtime (Process scope only on Linux/macOS).              |
 | `FileWatcherPlugin`      | Watches a directory and logs file system events.                                         |
 | `FileExplorerPlugin`     | Browse directories with tree and list views, context menu actions. |
-| `NetworkToolsPlugin`     | Ping, traceroute and port scan utilities with export. |
+| `NetworkToolsPlugin`     | Comprehensive network analysis with packet sniffing, port scanning, and MAC/IP spoofing. |
+| `HardwareMonitorPlugin`  | Real-time system monitoring for CPU, memory, disk, and network performance. |
+| `VulnerabilityScannerPlugin` | Automated security scanning for vulnerabilities and exploit suggestions. |
+| `ExploitDevToolsPlugin`  | Metasploit-like interface for exploit development and penetration testing. |
+| `AiAssistantPlugin`      | AI-powered code assistance, cybersecurity guidance, and intelligent features. |
+| `PluginMarketplacePlugin`| Browse and install community plugins from the plugin repository. |
+| `AdvancedCodeEditorPlugin` | Professional IDE with syntax highlighting, IntelliSense, and multi-language support. |
 | `EncryptionPlugin`       | Encrypt text or files using AES/RSA. Accessible from File Explorer. |
 | `JezzballPlugin`         | Arcade game with powerups, visual effects and Original mode.|
 | `LogViewerPlugin`        | Tails a log file and filters lines on the fly.                                           |
@@ -182,8 +188,54 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 
 ## Building
 
-Ensure the .NET 8 SDK is installed (download from https://dotnet.microsoft.com/download or `sudo apt-get install dotnet-sdk-8.0`). Compile the main application with:
+## 🚀 **Multi-Project Solution Complete!**
 
+Cycloside now uses a **modular multi-project architecture** with 7 independent projects:
+
+```
+CyclosideNextFeatures/
+├── Core/           # EventBus, JSON config, message system
+├── Bridge/         # Serial/MQTT/OSC communication protocols
+├── Input/          # MIDI & Gamepad input routing
+├── SSH/            # SSH client management with profiles
+├── Rules/          # Event-driven automation engine
+├── Utils/          # Windows utilities (screenshot, notes, etc.)
+├── SampleHost/     # Console demo wiring everything together
+└── Cycloside/      # Main Avalonia UI application
+```
+
+**Each project can be developed, tested, and deployed independently while communicating through the shared EventBus system.**
+
+**SampleHost console application successfully demonstrates all features working together!** 🎉
+
+---
+
+## Building and Running
+
+Ensure the .NET 8 SDK is installed (download from https://dotnet.microsoft.com/download or `sudo apt-get install dotnet-sdk-8.0`).
+
+### Build Individual Projects
+```bash
+dotnet build Core/Cycloside.Core.csproj
+dotnet build Bridge/Cycloside.Bridge.csproj
+dotnet build Input/Cycloside.Input.csproj
+dotnet build SSH/Cycloside.SSH.csproj
+dotnet build Rules/Cycloside.Rules.csproj
+dotnet build Utils/Cycloside.Utils.csproj
+dotnet build SampleHost/Cycloside.SampleHost.csproj
+```
+
+### Build Main Application
 ```bash
 dotnet build Cycloside/Cycloside.csproj
+```
+
+### Run Main Application
+```bash
+dotnet run --project "Cycloside/Cycloside.csproj" --framework net8.0-windows
+```
+
+### Run SampleHost Demo
+```bash
+cd SampleHost && dotnet run
 ```

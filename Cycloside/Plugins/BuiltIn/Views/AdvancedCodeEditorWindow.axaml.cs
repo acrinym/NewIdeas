@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Platform.Storage.FileIO;
 using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn.Views
@@ -52,38 +53,45 @@ namespace Cycloside.Plugins.BuiltIn.Views
 
         private async void OnOpenFile(object? sender, RoutedEventArgs e)
         {
-            var dialog = new OpenFileDialog
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            var result = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Open File",
                 AllowMultiple = false,
-                Filters = new[] {
-                    new FileDialogFilter { Name = "All Supported Files", Extensions = new[] { "cs", "py", "js", "html", "css", "json" }.ToList() },
-                    new FileDialogFilter { Name = "All Files", Extensions = new[] { "*" }.ToList() }
-                }.ToList()
-            };
+                FileTypeFilter = new[] {
+                    new FilePickerFileType("All Supported Files")
+                    {
+                        Patterns = new[] { "*.cs", "*.py", "*.js", "*.html", "*.css", "*.json" }
+                    },
+                    new FilePickerFileType("All Files") { Patterns = new[] { "*" } }
+                }
+            });
 
-            var result = await dialog.ShowAsync(this);
             if (result != null && result.Any())
             {
-                var filePath = result.First();
-                var content = await File.ReadAllTextAsync(filePath);
+                var file = result.First();
+                var content = await File.ReadAllTextAsync(file.Path.LocalPath);
 
                 // Would load content into editor
-                Logger.Log($"Opened file: {filePath}");
+                Logger.Log($"Opened file: {file.Path.LocalPath}");
             }
         }
 
         private async void OnSaveFile(object? sender, RoutedEventArgs e)
         {
-            var dialog = new SaveFileDialog
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Save File",
-                Filters = new[] {
-                    new FileDialogFilter { Name = "All Files", Extensions = new[] { "*" }.ToList() }
-                }.ToList()
-            };
+                FileTypeChoices = new[] {
+                    new FilePickerFileType("All Files") { Patterns = new[] { "*" } }
+                }
+            });
 
-            var result = await dialog.ShowAsync(this);
             if (result != null)
             {
                 // Would save file content

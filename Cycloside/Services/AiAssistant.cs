@@ -12,6 +12,49 @@ using Avalonia.Threading;
 namespace Cycloside.Services
 {
     /// <summary>
+    /// AI Assistant Event Arguments
+    /// </summary>
+    public class AiResponseEventArgs : EventArgs
+    {
+        public string Response { get; }
+
+        public AiResponseEventArgs(string response)
+        {
+            Response = response;
+        }
+    }
+
+    public class AiErrorEventArgs : EventArgs
+    {
+        public string ErrorMessage { get; }
+
+        public AiErrorEventArgs(string errorMessage)
+        {
+            ErrorMessage = errorMessage;
+        }
+    }
+
+    public class CodeSuggestionEventArgs : EventArgs
+    {
+        public CodeSuggestion Suggestion { get; }
+
+        public CodeSuggestionEventArgs(CodeSuggestion suggestion)
+        {
+            Suggestion = suggestion;
+        }
+    }
+
+    public class SecurityAnalysisEventArgs : EventArgs
+    {
+        public List<SecurityFinding> Findings { get; }
+
+        public SecurityAnalysisEventArgs(List<SecurityFinding> findings)
+        {
+            Findings = findings;
+        }
+    }
+
+    /// <summary>
     /// AI ASSISTANT - Intelligent code assistance and cybersecurity guidance
     /// Provides AI-powered code completion, explanations, security analysis, and learning
     /// </summary>
@@ -24,7 +67,7 @@ namespace Cycloside.Services
 
         private static readonly HttpClient _httpClient = new HttpClient();
         private static readonly string _apiEndpoint = "https://api.openai.com/v1/chat/completions";
-        private static readonly string _apiKey = ""; // Would be loaded from secure config
+        private static string _apiKey = ""; // Would be loaded from secure config
         private static readonly ObservableCollection<ChatMessage> _chatHistory = new();
         private static readonly ObservableCollection<CodeSuggestion> _codeSuggestions = new();
         private static readonly ObservableCollection<SecurityFinding> _securityFindings = new();
@@ -36,7 +79,7 @@ namespace Cycloside.Services
         public static bool IsInitialized => !string.IsNullOrEmpty(_apiKey);
         public static bool IsProcessing => _currentRequest != null;
 
-        private static Task<AiResponse>? _currentRequest;
+        private static Task<string>? _currentRequest;
 
         /// <summary>
         /// Initialize AI Assistant with API configuration
@@ -57,16 +100,19 @@ namespace Cycloside.Services
                 }
 
                 // Test API connectivity
-                var testResponse = await TestApiConnectionAsync();
+                await Task.Run(async () =>
+                {
+                    var isOnline = await TestApiConnectionAsync();
 
-                if (testResponse)
-                {
-                    Logger.Log("✅ AI Assistant initialized successfully");
-                }
-                else
-                {
-                    Logger.Log("❌ AI Assistant: API connection test failed");
-                }
+                    if (isOnline)
+                    {
+                        Logger.Log("✅ AI Assistant initialized successfully");
+                    }
+                    else
+                    {
+                        Logger.Log("❌ AI Assistant: API connection test failed");
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -91,13 +137,7 @@ namespace Cycloside.Services
         {
             try
             {
-                var testMessage = new ChatMessage
-                {
-                    Role = "user",
-                    Content = "Hello, this is a test message. Please respond with 'API connection successful'."
-                };
-
-                var response = await SendChatMessageAsync(testMessage);
+                var response = await SendChatMessageAsync("Hello, this is a test message. Please respond with 'API connection successful'.");
                 return response != null && response.Contains("API connection successful", StringComparison.OrdinalIgnoreCase);
             }
             catch
@@ -183,7 +223,7 @@ namespace Cycloside.Services
                 var requestBody = new
                 {
                     model = "gpt-3.5-turbo",
-                    messages = new[] { message },
+                    messages = new[] { new { role = message.Role, content = message.Content } },
                     max_tokens = 1000,
                     temperature = 0.7
                 };
@@ -644,44 +684,349 @@ Provide specific, actionable recommendations with code examples where applicable
         public string Content { get; set; } = "";
     }
 
-    // Event args
-    public class AiResponseEventArgs : EventArgs
-    {
-        public string Response { get; }
-
-        public AiResponseEventArgs(string response)
+    /// <summary>
+    /// Analyze code for security vulnerabilities in real-time
+    /// </summary>
+    public static async Task<List<SecurityFinding>> AnalyzeCodeRealTimeAsync(string code, string language = "csharp")
         {
-            Response = response;
+            var prompt = $@"Analyze this {language} code for security vulnerabilities and provide detailed findings:
+
+Code:
+{code}
+
+Please provide a JSON response with the following structure:
+{{
+    ""vulnerabilities"": [
+        {{
+            ""type"": ""SQL Injection|Path Traversal|XSS|CSRF|Authentication Bypass|Authorization Bypass|Cryptography|Input Validation|Session Management|Configuration"",
+            ""severity"": ""Critical|High|Medium|Low|Info"",
+            ""line"": number,
+            ""description"": ""detailed explanation"",
+            ""recommendation"": ""how to fix"",
+            ""cwe"": ""CWE-XXX"",
+            ""owasp"": ""OWASP category""
+        }}
+    ],
+    ""overallRisk"": ""Critical|High|Medium|Low|Info"",
+    ""recommendations"": [""general security recommendations""]
+}}";
+
+            try
+            {
+                var response = await SendToAiApiAsync(prompt, "You are a cybersecurity expert analyzing code for security vulnerabilities.");
+                if (response == null) return new List<SecurityFinding>();
+
+                // Parse JSON response and convert to SecurityFinding objects
+                var findings = ParseSecurityFindings(response);
+                return findings;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"❌ AI security analysis failed: {ex.Message}");
+                return new List<SecurityFinding>();
+            }
         }
+
+        /// <summary>
+        /// Analyze code performance and provide optimization suggestions
+        /// </summary>
+        public static async Task<List<PerformanceSuggestion>> AnalyzeCodePerformanceAsync(string code, string language = "csharp")
+        {
+            var prompt = $@"Analyze this {language} code for performance issues and provide optimization suggestions:
+
+Code:
+{code}
+
+Please provide a JSON response with the following structure:
+{{
+    ""performanceIssues"": [
+        {{
+            ""type"": ""Memory|CPU|I/O|Algorithm|Design"",
+            ""severity"": ""Critical|High|Medium|Low|Info"",
+            ""line"": number,
+            ""description"": ""performance issue description"",
+            ""impact"": ""High|Medium|Low"",
+            ""optimization"": ""specific optimization suggestion"",
+            ""estimatedImprovement"": ""percentage or metric""
+        }}
+    ],
+    ""overallPerformance"": ""Excellent|Good|Average|Poor|Critical"",
+    ""recommendations"": [""general performance recommendations""]
+}}";
+
+            try
+            {
+                var response = await SendToAiApiAsync(prompt, "You are a performance optimization expert analyzing code for efficiency.");
+                if (response == null) return new List<PerformanceSuggestion>();
+
+                var suggestions = ParsePerformanceSuggestions(response);
+                return suggestions;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"❌ AI performance analysis failed: {ex.Message}");
+                return new List<PerformanceSuggestion>();
+            }
+        }
+
+        /// <summary>
+        /// Analyze code quality and provide improvement suggestions
+        /// </summary>
+        public static async Task<List<CodeQualitySuggestion>> AnalyzeCodeQualityAsync(string code, string language = "csharp")
+        {
+            var prompt = $@"Analyze this {language} code for quality issues and provide improvement suggestions:
+
+Code:
+{code}
+
+Please provide a JSON response with the following structure:
+{{
+    ""qualityIssues"": [
+        {{
+            ""type"": ""Readability|Maintainability|Testability|Architecture|Design|Documentation"",
+            ""severity"": ""Critical|High|Medium|Low|Info"",
+            ""line"": number,
+            ""description"": ""quality issue description"",
+            ""suggestion"": ""specific improvement suggestion"",
+            ""benefit"": ""expected benefit""
+        }}
+    ],
+    ""overallQuality"": ""Excellent|Good|Average|Poor|Critical"",
+    ""recommendations"": [""general quality recommendations""]
+}}";
+
+            try
+            {
+                var response = await SendToAiApiAsync(prompt, "You are a code quality expert providing detailed analysis and improvement suggestions.");
+                if (response == null) return new List<CodeQualitySuggestion>();
+
+                var suggestions = ParseCodeQualitySuggestions(response);
+                return suggestions;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"❌ AI quality analysis failed: {ex.Message}");
+                return new List<CodeQualitySuggestion>();
+            }
+        }
+
+        /// <summary>
+        /// Get code complexity metrics and refactoring suggestions
+        /// </summary>
+        public static async Task<ComplexityAnalysis> AnalyzeCodeComplexityAsync(string code, string language = "csharp")
+        {
+            var prompt = $@"Analyze this {language} code for complexity and provide refactoring suggestions:
+
+Code:
+{code}
+
+Please provide a JSON response with the following structure:
+{{
+    ""cyclomaticComplexity"": number,
+    ""cognitiveComplexity"": number,
+    ""linesOfCode"": number,
+    ""maintainabilityIndex"": number,
+    ""complexityIssues"": [
+        {{
+            ""method"": ""method name"",
+            ""complexity"": number,
+            ""suggestion"": ""refactoring suggestion""
+        }}
+    ],
+    ""refactoringRecommendations"": [""general refactoring suggestions""],
+    ""riskLevel"": ""Low|Medium|High|Critical""
+}}";
+
+            try
+            {
+                var response = await SendToAiApiAsync(prompt, "You are a software architecture expert analyzing code complexity and providing refactoring guidance.");
+                if (response == null) return new ComplexityAnalysis();
+
+                var analysis = ParseComplexityAnalysis(response);
+                return analysis;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"❌ AI complexity analysis failed: {ex.Message}");
+                return new ComplexityAnalysis();
+            }
+        }
+
+        /// <summary>
+        /// Parse performance suggestions from AI response
+        /// </summary>
+        private static List<PerformanceSuggestion> ParsePerformanceSuggestions(string response)
+        {
+            var suggestions = new List<PerformanceSuggestion>();
+
+            try
+            {
+                // Simple parsing for demo - in production would use proper JSON parsing
+                var lines = response.Split('\n');
+                var currentSuggestion = new PerformanceSuggestion();
+
+                foreach (var line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    if (line.Contains("Performance Issue") || line.Contains("Optimization"))
+                    {
+                        if (currentSuggestion.Description != null)
+                        {
+                            suggestions.Add(currentSuggestion);
+                        }
+
+                        currentSuggestion = new PerformanceSuggestion
+                        {
+                            Description = line.Trim()
+                        };
+                    }
+                    else if (line.Contains("Type:") || line.Contains("Impact:") || line.Contains("Line:"))
+                    {
+                        if (line.Contains("Type:")) currentSuggestion.Type = line.Replace("Type:", "").Trim();
+                        if (line.Contains("Impact:")) currentSuggestion.Impact = line.Replace("Impact:", "").Trim();
+                        if (line.Contains("Line:")) currentSuggestion.Line = int.TryParse(line.Replace("Line:", "").Trim(), out var lineNum) ? lineNum : 0;
+                    }
+                }
+
+                if (currentSuggestion.Description != null)
+                {
+                    suggestions.Add(currentSuggestion);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"⚠️ Failed to parse performance suggestions: {ex.Message}");
+            }
+
+            return suggestions;
+        }
+
+        /// <summary>
+        /// Parse code quality suggestions from AI response
+        /// </summary>
+        private static List<CodeQualitySuggestion> ParseCodeQualitySuggestions(string response)
+        {
+            var suggestions = new List<CodeQualitySuggestion>();
+
+            try
+            {
+                // Simple parsing for demo - in production would use proper JSON parsing
+                var lines = response.Split('\n');
+                var currentSuggestion = new CodeQualitySuggestion();
+
+                foreach (var line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    if (line.Contains("Quality Issue") || line.Contains("Improvement"))
+                    {
+                        if (currentSuggestion.Description != null)
+                        {
+                            suggestions.Add(currentSuggestion);
+                        }
+
+                        currentSuggestion = new CodeQualitySuggestion
+                        {
+                            Description = line.Trim()
+                        };
+                    }
+                    else if (line.Contains("Type:") || line.Contains("Benefit:") || line.Contains("Line:"))
+                    {
+                        if (line.Contains("Type:")) currentSuggestion.Type = line.Replace("Type:", "").Trim();
+                        if (line.Contains("Benefit:")) currentSuggestion.Benefit = line.Replace("Benefit:", "").Trim();
+                        if (line.Contains("Line:")) currentSuggestion.Line = int.TryParse(line.Replace("Line:", "").Trim(), out var lineNum) ? lineNum : 0;
+                    }
+                }
+
+                if (currentSuggestion.Description != null)
+                {
+                    suggestions.Add(currentSuggestion);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"⚠️ Failed to parse code quality suggestions: {ex.Message}");
+            }
+
+            return suggestions;
+        }
+
+        /// <summary>
+        /// Parse complexity analysis from AI response
+        /// </summary>
+        private static ComplexityAnalysis ParseComplexityAnalysis(string response)
+        {
+            var analysis = new ComplexityAnalysis();
+
+            try
+            {
+                // Simple parsing for demo - in production would use proper JSON parsing
+                var lines = response.Split('\n');
+
+                foreach (var line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    if (line.Contains("Complexity:") && line.Contains("Cyclomatic"))
+                        analysis.CyclomaticComplexity = int.TryParse(line.Replace("Cyclomatic Complexity:", "").Trim(), out var cc) ? cc : 0;
+                    else if (line.Contains("Complexity:") && line.Contains("Cognitive"))
+                        analysis.CognitiveComplexity = int.TryParse(line.Replace("Cognitive Complexity:", "").Trim(), out var cc) ? cc : 0;
+                    else if (line.Contains("Lines of Code:"))
+                        analysis.LinesOfCode = int.TryParse(line.Replace("Lines of Code:", "").Trim(), out var loc) ? loc : 0;
+                    else if (line.Contains("Maintainability Index:"))
+                        analysis.MaintainabilityIndex = int.TryParse(line.Replace("Maintainability Index:", "").Trim(), out var mi) ? mi : 0;
+                    else if (line.Contains("Risk Level:"))
+                        analysis.RiskLevel = line.Replace("Risk Level:", "").Trim();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"⚠️ Failed to parse complexity analysis: {ex.Message}");
+            }
+
+            return analysis;
+        }
+
+    /// <summary>
+    /// Performance optimization suggestion
+    /// </summary>
+    public class PerformanceSuggestion
+    {
+        public string Type { get; set; } = "";
+        public string Severity { get; set; } = "";
+        public int Line { get; set; }
+        public string Description { get; set; } = "";
+        public string Impact { get; set; } = "";
+        public string Optimization { get; set; } = "";
+        public string EstimatedImprovement { get; set; } = "";
     }
 
-    public class AiErrorEventArgs : EventArgs
+    /// <summary>
+    /// Code quality improvement suggestion
+    /// </summary>
+    public class CodeQualitySuggestion
     {
-        public string Error { get; }
-
-        public AiErrorEventArgs(string error)
-        {
-            Error = error;
-        }
+        public string Type { get; set; } = "";
+        public string Severity { get; set; } = "";
+        public int Line { get; set; }
+        public string Description { get; set; } = "";
+        public string Suggestion { get; set; } = "";
+        public string Benefit { get; set; } = "";
     }
 
-    public class CodeSuggestionEventArgs : EventArgs
+    /// <summary>
+    /// Code complexity analysis results
+    /// </summary>
+    public class ComplexityAnalysis
     {
-        public CodeSuggestion Suggestion { get; }
-
-        public CodeSuggestionEventArgs(CodeSuggestion suggestion)
-        {
-            Suggestion = suggestion;
-        }
+        public int CyclomaticComplexity { get; set; }
+        public int CognitiveComplexity { get; set; }
+        public int LinesOfCode { get; set; }
+        public int MaintainabilityIndex { get; set; }
+        public string RiskLevel { get; set; } = "";
+        public List<string> RefactoringRecommendations { get; set; } = new();
     }
 
-    public class SecurityAnalysisEventArgs : EventArgs
-    {
-        public List<SecurityFinding> Findings { get; }
-
-        public SecurityAnalysisEventArgs(List<SecurityFinding> findings)
-        {
-            Findings = findings;
-        }
-    }
+}
 }

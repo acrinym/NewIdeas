@@ -39,6 +39,55 @@ namespace Cycloside.Services
         public static event EventHandler<ThemeChangedEventArgs>? ThemeChanged;
 
         /// <summary>
+        /// Preload theme resources for faster switching
+        /// </summary>
+        public static void PreloadThemeResources()
+        {
+            try
+            {
+                Logger.Log("🎨 Preloading theme resources...");
+
+                // Preload common theme files
+                var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes");
+                if (Directory.Exists(themeDir))
+                {
+                    var themeDirs = Directory.GetDirectories(themeDir);
+                    foreach (var themePath in themeDirs)
+                    {
+                        var themeName = Path.GetFileName(themePath);
+                        var tokensPath = Path.Combine(themePath, "Tokens.axaml");
+
+                        if (File.Exists(tokensPath))
+                        {
+                            // Load and cache the theme file
+                            LoadThemeTokensFile(tokensPath, themeName);
+                        }
+                    }
+                }
+
+                Logger.Log($"✅ Preloaded {themeDirs?.Length ?? 0} theme resources");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"❌ Theme resource preloading failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Clear theme cache to free memory
+        /// </summary>
+        public static void ClearThemeCache()
+        {
+            lock (_cacheLock)
+            {
+                _themeCache.Clear();
+                _variantCache.Clear();
+                _fileTimestamps.Clear();
+                Logger.Log("🗑️ Theme cache cleared");
+            }
+        }
+
+        /// <summary>
         /// Initialize theme system from settings
         /// </summary>
         public static void InitializeFromSettings()

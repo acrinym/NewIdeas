@@ -61,7 +61,7 @@ namespace Cycloside.Plugins.BuiltIn
 
                 var statusPanel = new Border
                 {
-                    Background = Brushes.LightGray,
+                    Background = Avalonia.Media.Brushes.LightGray,
                     CornerRadius = new CornerRadius(5),
                     Padding = new Thickness(8, 4),
                     Margin = new Thickness(15, 0, 0, 0)
@@ -93,14 +93,30 @@ namespace Cycloside.Plugins.BuiltIn
                 var generationTab = CreateCodeGenerationTab();
                 _mainTabControl.Items.Add(generationTab);
 
+                // Real-time Analysis Tab
+                var realTimeTab = CreateRealTimeAnalysisTab();
+                _mainTabControl.Items.Add(realTimeTab);
+
+                // Performance Analysis Tab
+                var performanceTab = CreatePerformanceTab();
+                _mainTabControl.Items.Add(performanceTab);
+
+                // Code Quality Tab
+                var qualityTab = CreateQualityTab();
+                _mainTabControl.Items.Add(qualityTab);
+
+                // Complexity Analysis Tab
+                var complexityTab = CreateComplexityTab();
+                _mainTabControl.Items.Add(complexityTab);
+
                 mainPanel.Children.Add(headerPanel);
                 mainPanel.Children.Add(_mainTabControl);
 
                 var border = new Border
                 {
                     Child = mainPanel,
-                    Background = Brushes.White,
-                    BorderBrush = Brushes.LightGray,
+                    Background = Avalonia.Media.Brushes.White,
+                    BorderBrush = Avalonia.Media.Brushes.LightGray,
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(8),
                     Margin = new Thickness(10)
@@ -147,8 +163,8 @@ namespace Cycloside.Plugins.BuiltIn
                 var sendButton = new Button
                 {
                     Content = "📤 Send",
-                    Background = Brushes.DodgerBlue,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.DodgerBlue,
+                    Foreground = Avalonia.Media.Brushes.White,
                     Padding = new Thickness(15, 8)
                 };
                 sendButton.Click += OnSendChatMessage;
@@ -162,8 +178,8 @@ namespace Cycloside.Plugins.BuiltIn
                 var explainButton = new Button
                 {
                     Content = "📖 Explain Code",
-                    Background = Brushes.Green,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.Green,
+                    Foreground = Avalonia.Media.Brushes.White,
                     Padding = new Thickness(10, 5)
                 };
                 explainButton.Click += OnExplainCode;
@@ -171,8 +187,8 @@ namespace Cycloside.Plugins.BuiltIn
                 var securityButton = new Button
                 {
                     Content = "🔒 Security Check",
-                    Background = Brushes.Orange,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.Orange,
+                    Foreground = Avalonia.Media.Brushes.White,
                     Padding = new Thickness(10, 5)
                 };
                 securityButton.Click += OnSecurityCheck;
@@ -180,8 +196,8 @@ namespace Cycloside.Plugins.BuiltIn
                 var clearButton = new Button
                 {
                     Content = "🗑️ Clear Chat",
-                    Background = Brushes.Red,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.Red,
+                    Foreground = Avalonia.Media.Brushes.White,
                     Padding = new Thickness(10, 5)
                 };
                 clearButton.Click += OnClearChat;
@@ -246,17 +262,17 @@ public class UserManager
                 var analyzeButton = new Button
                 {
                     Content = "🔍 Analyze Security",
-                    Background = Brushes.Red,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.Red,
+                    Foreground = Avalonia.Media.Brushes.White,
                     Padding = new Thickness(15, 8)
                 };
-                analyzeButton.Click += OnAnalyzeSecurity;
+                analyzeButton.Click += OnSecurityCheck;
 
                 var suggestionsButton = new Button
                 {
                     Content = "💡 Get Suggestions",
-                    Background = Brushes.Blue,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.Blue,
+                    Foreground = Avalonia.Media.Brushes.White,
                     Padding = new Thickness(15, 8)
                 };
                 suggestionsButton.Click += OnGetSuggestions;
@@ -338,8 +354,8 @@ public class UserManager
                 var generateButton = new Button
                 {
                     Content = "⚡ Generate Code",
-                    Background = Brushes.Green,
-                    Foreground = Brushes.White,
+                    Background = Avalonia.Media.Brushes.Green,
+                    Foreground = Avalonia.Media.Brushes.White,
                     FontWeight = FontWeight.Bold,
                     Padding = new Thickness(15, 8)
                 };
@@ -364,7 +380,7 @@ public class UserManager
                     Text = "// Generated code will appear here...",
                     Height = 300,
                     IsReadOnly = true,
-                    Background = Brushes.FromHex("#f8f9fa"),
+                    Background = new SolidColorBrush(Color.Parse("#f8f9fa")),
                     FontFamily = "Consolas"
                 };
 
@@ -483,11 +499,11 @@ public class UserManager
                         {
                             var severityColor = finding.Severity switch
                             {
-                                "Critical" => Brushes.Red,
-                                "High" => Brushes.Orange,
-                                "Medium" => Brushes.Yellow,
-                                "Low" => Brushes.Green,
-                                _ => Brushes.Gray
+                                "Critical" => Avalonia.Media.Brushes.Red,
+                                "High" => Avalonia.Media.Brushes.Orange,
+                                "Medium" => Avalonia.Media.Brushes.Yellow,
+                                "Low" => Avalonia.Media.Brushes.Green,
+                                _ => Avalonia.Media.Brushes.Gray
                             };
 
                             _securityFindings.Items.Add($"🚨 {finding.Severity}: {finding.Title}");
@@ -584,6 +600,314 @@ public class UserManager
                 }
 
                 Logger.Log($"AI Assistant: {message}");
+            }
+
+            private TabItem CreateRealTimeAnalysisTab()
+            {
+                var tab = new TabItem { Header = "🔍 Real-time Analysis" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                var title = new TextBlock
+                {
+                    Text = "🔍 Real-time Code Security Analysis",
+                    FontSize = 16,
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var codeInput = new TextBox
+                {
+                    Watermark = "Paste code here for real-time security analysis...",
+                    Height = 150,
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var analyzeButton = new Button
+                {
+                    Content = "🔍 Analyze Security",
+                    Background = Avalonia.Media.Brushes.Red,
+                    Foreground = Avalonia.Media.Brushes.White,
+                    Padding = new Thickness(15, 8),
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var resultsList = new ListBox { Height = 200 };
+
+                analyzeButton.Click += async (_, _) =>
+                {
+                    var code = codeInput.Text?.Trim();
+                    if (string.IsNullOrEmpty(code)) return;
+
+                    UpdateStatus("🔍 Analyzing code security...");
+                    resultsList.Items.Clear();
+
+                    try
+                    {
+                        var findings = await AiAssistant.AnalyzeCodeRealTimeAsync(code);
+
+                        if (findings.Any())
+                        {
+                            foreach (var finding in findings)
+                            {
+                                resultsList.Items.Add($"🚨 {finding.Severity}: {finding.Title} (Line {finding.Line})");
+                            }
+                            UpdateStatus($"✅ Found {findings.Count} security issues");
+                        }
+                        else
+                        {
+                            resultsList.Items.Add("✅ No security vulnerabilities detected!");
+                            UpdateStatus("✅ Code is secure");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        resultsList.Items.Add($"❌ Analysis failed: {ex.Message}");
+                        UpdateStatus($"❌ Analysis failed: {ex.Message}");
+                    }
+                };
+
+                panel.Children.Add(title);
+                panel.Children.Add(codeInput);
+                panel.Children.Add(analyzeButton);
+                panel.Children.Add(resultsList);
+
+                tab.Content = panel;
+                return tab;
+            }
+
+            private TabItem CreatePerformanceTab()
+            {
+                var tab = new TabItem { Header = "⚡ Performance" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                var title = new TextBlock
+                {
+                    Text = "⚡ Code Performance Analysis",
+                    FontSize = 16,
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var codeInput = new TextBox
+                {
+                    Watermark = "Paste code here for performance analysis...",
+                    Height = 150,
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var analyzeButton = new Button
+                {
+                    Content = "⚡ Analyze Performance",
+                    Background = Avalonia.Media.Brushes.Blue,
+                    Foreground = Avalonia.Media.Brushes.White,
+                    Padding = new Thickness(15, 8),
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var resultsList = new ListBox { Height = 200 };
+
+                analyzeButton.Click += async (_, _) =>
+                {
+                    var code = codeInput.Text?.Trim();
+                    if (string.IsNullOrEmpty(code)) return;
+
+                    UpdateStatus("⚡ Analyzing code performance...");
+                    resultsList.Items.Clear();
+
+                    try
+                    {
+                        var suggestions = await AiAssistant.AnalyzeCodePerformanceAsync(code);
+
+                        if (suggestions.Any())
+                        {
+                            foreach (var suggestion in suggestions)
+                            {
+                                resultsList.Items.Add($"⚡ {suggestion.Type}: {suggestion.Description} (Impact: {suggestion.Impact})");
+                            }
+                            UpdateStatus($"✅ Found {suggestions.Count} performance issues");
+                        }
+                        else
+                        {
+                            resultsList.Items.Add("✅ No performance issues detected!");
+                            UpdateStatus("✅ Code is well-optimized");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        resultsList.Items.Add($"❌ Analysis failed: {ex.Message}");
+                        UpdateStatus($"❌ Analysis failed: {ex.Message}");
+                    }
+                };
+
+                panel.Children.Add(title);
+                panel.Children.Add(codeInput);
+                panel.Children.Add(analyzeButton);
+                panel.Children.Add(resultsList);
+
+                tab.Content = panel;
+                return tab;
+            }
+
+            private TabItem CreateQualityTab()
+            {
+                var tab = new TabItem { Header = "✨ Code Quality" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                var title = new TextBlock
+                {
+                    Text = "✨ Code Quality Analysis",
+                    FontSize = 16,
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var codeInput = new TextBox
+                {
+                    Watermark = "Paste code here for quality analysis...",
+                    Height = 150,
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var analyzeButton = new Button
+                {
+                    Content = "✨ Analyze Quality",
+                    Background = Avalonia.Media.Brushes.Green,
+                    Foreground = Avalonia.Media.Brushes.White,
+                    Padding = new Thickness(15, 8),
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var resultsList = new ListBox { Height = 200 };
+
+                analyzeButton.Click += async (_, _) =>
+                {
+                    var code = codeInput.Text?.Trim();
+                    if (string.IsNullOrEmpty(code)) return;
+
+                    UpdateStatus("✨ Analyzing code quality...");
+                    resultsList.Items.Clear();
+
+                    try
+                    {
+                        var suggestions = await AiAssistant.AnalyzeCodeQualityAsync(code);
+
+                        if (suggestions.Any())
+                        {
+                            foreach (var suggestion in suggestions)
+                            {
+                                resultsList.Items.Add($"✨ {suggestion.Type}: {suggestion.Description} (Benefit: {suggestion.Benefit})");
+                            }
+                            UpdateStatus($"✅ Found {suggestions.Count} quality improvements");
+                        }
+                        else
+                        {
+                            resultsList.Items.Add("✅ No quality issues detected!");
+                            UpdateStatus("✅ Code quality is excellent");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        resultsList.Items.Add($"❌ Analysis failed: {ex.Message}");
+                        UpdateStatus($"❌ Analysis failed: {ex.Message}");
+                    }
+                };
+
+                panel.Children.Add(title);
+                panel.Children.Add(codeInput);
+                panel.Children.Add(analyzeButton);
+                panel.Children.Add(resultsList);
+
+                tab.Content = panel;
+                return tab;
+            }
+
+            private TabItem CreateComplexityTab()
+            {
+                var tab = new TabItem { Header = "📊 Complexity" };
+
+                var panel = new StackPanel { Margin = new Thickness(15) };
+
+                var title = new TextBlock
+                {
+                    Text = "📊 Code Complexity Analysis",
+                    FontSize = 16,
+                    FontWeight = FontWeight.Bold,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var codeInput = new TextBox
+                {
+                    Watermark = "Paste code here for complexity analysis...",
+                    Height = 150,
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var analyzeButton = new Button
+                {
+                    Content = "📊 Analyze Complexity",
+                    Background = Avalonia.Media.Brushes.Purple,
+                    Foreground = Avalonia.Media.Brushes.White,
+                    Padding = new Thickness(15, 8),
+                    Margin = new Thickness(0, 0, 0, 15)
+                };
+
+                var resultsList = new ListBox { Height = 200 };
+
+                analyzeButton.Click += async (_, _) =>
+                {
+                    var code = codeInput.Text?.Trim();
+                    if (string.IsNullOrEmpty(code)) return;
+
+                    UpdateStatus("📊 Analyzing code complexity...");
+                    resultsList.Items.Clear();
+
+                    try
+                    {
+                        var analysis = await AiAssistant.AnalyzeCodeComplexityAsync(code);
+
+                        resultsList.Items.Add($"🔢 Cyclomatic Complexity: {analysis.CyclomaticComplexity}");
+                        resultsList.Items.Add($"🧠 Cognitive Complexity: {analysis.CognitiveComplexity}");
+                        resultsList.Items.Add($"📏 Lines of Code: {analysis.LinesOfCode}");
+                        resultsList.Items.Add($"📈 Maintainability Index: {analysis.MaintainabilityIndex}");
+                        resultsList.Items.Add($"⚠️ Risk Level: {analysis.RiskLevel}");
+
+                        if (analysis.RefactoringRecommendations.Any())
+                        {
+                            resultsList.Items.Add("");
+                            resultsList.Items.Add("💡 Refactoring Recommendations:");
+                            foreach (var rec in analysis.RefactoringRecommendations)
+                            {
+                                resultsList.Items.Add($"  • {rec}");
+                            }
+                        }
+
+                        UpdateStatus($"✅ Complexity analysis completed");
+                    }
+                    catch (Exception ex)
+                    {
+                        resultsList.Items.Add($"❌ Analysis failed: {ex.Message}");
+                        UpdateStatus($"❌ Analysis failed: {ex.Message}");
+                    }
+                };
+
+                panel.Children.Add(title);
+                panel.Children.Add(codeInput);
+                panel.Children.Add(analyzeButton);
+                panel.Children.Add(resultsList);
+
+                tab.Content = panel;
+                return tab;
             }
         }
 
