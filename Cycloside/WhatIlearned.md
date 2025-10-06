@@ -2,6 +2,68 @@
 
 *This document captures lessons learned, common pitfalls, and best practices discovered during Cycloside development and auditing. Reference this guide at the start of each development session.*
 
+## 🎉 Latest Achievement: Welcome Screen Crash FIXED (October 2025)
+
+**Critical Issue Resolved:** The application now properly transitions from the welcome screen to the main window when "Apply and Continue" is clicked.
+
+### Async Initialization Architecture Fix
+
+**Problem:**
+```csharp
+// ❌ BAD: Race condition between async initialization and welcome screen
+public override void OnFrameworkInitializationCompleted()
+{
+    var settings = SettingsManager.Settings;
+    _ = ConfigurationManager.InitializeAsync(); // Fire-and-forget
+    _ = LoadConfiguredPlugins(); // Fire-and-forget
+    // Welcome screen shows immediately, but initialization not complete
+}
+```
+
+**✅ Solution Applied:**
+```csharp
+// ✅ GOOD: Proper async initialization sequence
+public override async void OnFrameworkInitializationCompleted()
+{
+    var settings = SettingsManager.Settings;
+    ThemeManager.InitializeFromSettings();
+
+    // Initialize core systems synchronously first
+    try
+    {
+        await ConfigurationManager.InitializeAsync();
+        Logger.Log("✅ Configuration Manager initialized successfully");
+    }
+    catch (Exception ex)
+    {
+        Logger.Log($"❌ Configuration Manager initialization failed: {ex.Message}");
+    }
+
+    // Show welcome screen with proper transition handling
+    if (settings.FirstRun || ConfigurationManager.IsWelcomeEnabled)
+    {
+        var welcome = new WelcomeWindow();
+        welcome.Closed += async (_, _) =>
+        {
+            // Wait for initialization, then transition to main window
+            await Task.Delay(100); // Brief delay for config save
+            settings.FirstRun = false;
+            _mainWindow = CreateMainWindow(settings);
+            desktop.MainWindow = _mainWindow;
+            _mainWindow.Show();
+        };
+        desktop.MainWindow = welcome;
+        welcome.Show();
+    }
+}
+```
+
+**📚 Key Learnings:**
+- **Async initialization must complete before showing UI** that depends on it
+- **Event handlers in Avalonia cannot be async** - use proper sequencing instead
+- **ConfigurationManager needs time to initialize** before plugins can load
+- **Welcome screen transitions require careful state management**
+
 ## 🔍 Senior Audit Fixes Applied
 
 ### Nullability Warnings (CS8601, CS8602)
