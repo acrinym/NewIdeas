@@ -618,6 +618,7 @@ public partial class App : Application
         TryAdd(() => new ExploitDevToolsPlugin());
         TryAdd(() => new ExploitDatabasePlugin());
         TryAdd(() => new DigitalForensicsPlugin());
+        TryAdd(() => new DatabaseManagerPlugin());
         TryAdd(() => new CharacterMapPlugin());
         TryAdd(() => new FileWatcherPlugin());
         TryAdd(() => new TaskSchedulerPlugin());
