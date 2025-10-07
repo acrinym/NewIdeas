@@ -38,7 +38,8 @@ public sealed class RuleEngine : IDisposable
                     _watchers.Add(fsw);
                     break;
                 case TriggerType.ProcessStarted:
-                    var timer = new Timer(_ => {
+                    var timer = new Timer(_ =>
+                    {
                         foreach (var p in Process.GetProcessesByName(rule.TriggerExpr))
                             Execute(rule);
                     }, null, 1000, 1000);
@@ -101,7 +102,7 @@ public sealed class RuleEngine : IDisposable
             return (exe, args);
         }
         var sp = s.IndexOf(' ');
-        return sp > 0 ? (s[..sp], s[(sp+1)..]) : (s, "");
+        return sp > 0 ? (s[..sp], s[(sp + 1)..]) : (s, "");
     }
 
     public void Dispose()

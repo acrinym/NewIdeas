@@ -18,7 +18,7 @@ public sealed class SerialBridge : IDisposable
     {
         _bus = bus;
         _topicPrefix = topicPrefix;
-        _port = new SerialPort(portName, baud) { NewLine="\n", Encoding = Encoding.UTF8 };
+        _port = new SerialPort(portName, baud) { NewLine = "\n", Encoding = Encoding.UTF8 };
         _port.Open();
 
         // Use polling instead of DataReceived event for .NET Core compatibility

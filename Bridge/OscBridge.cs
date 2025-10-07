@@ -34,7 +34,8 @@ public sealed class OscBridge : IDisposable
                 var packet = new OscMessage(path!, args.ToArray());
                 var data = packet.ToByteArray();
                 _sender.Send(data, data.Length);
-            } catch { }
+            }
+            catch { }
         });
     }
 

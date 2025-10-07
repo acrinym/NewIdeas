@@ -14,7 +14,8 @@ public sealed class EventBus
     {
         var list = _handlers.GetOrAdd(topicPattern, _ => new List<Action<BusMessage>>());
         lock (list) list.Add(handler);
-        return new BusSubscription(() => {
+        return new BusSubscription(() =>
+        {
             lock (list) list.Remove(handler);
         });
     }

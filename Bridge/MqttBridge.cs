@@ -58,7 +58,8 @@ public sealed class MqttBridge : IAsyncDisposable
                     var appMsg = new MqttApplicationMessageBuilder().WithTopic(topic).WithPayload(text ?? "").Build();
                     _client.PublishAsync(appMsg);
                 }
-            } catch { }
+            }
+            catch { }
         });
     }
 

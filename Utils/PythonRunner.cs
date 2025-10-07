@@ -57,7 +57,7 @@ builtins.__import__ = _guarded_import
         public override bool CanSeek => false;
         public override bool CanWrite => true;
         public override long Length => 0;
-        public override long Position { get => 0; set {} }
+        public override long Position { get => 0; set { } }
         public override void Flush() { }
         public override int Read(byte[] buffer, int offset, int count) => 0;
         public override long Seek(long offset, SeekOrigin origin) => 0;

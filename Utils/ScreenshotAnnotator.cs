@@ -12,7 +12,7 @@ public sealed class ScreenshotAnnotator
     public Image CaptureRegionAndAnnotate()
     {
         Rectangle rect = SelectRegion();
-        if (rect.Width <= 0 || rect.Height <= 0) return new Bitmap(1,1);
+        if (rect.Width <= 0 || rect.Height <= 0) return new Bitmap(1, 1);
 
         using var bmp = new Bitmap(rect.Width, rect.Height);
         using (var g = Graphics.FromImage(bmp))
@@ -35,7 +35,8 @@ public sealed class ScreenshotAnnotator
         overlay.MouseDown += (_, e) => { dragging = true; start = e.Location; };
         overlay.MouseMove += (_, e) => { if (dragging) { end = e.Location; overlay.Invalidate(); } };
         overlay.MouseUp += (_, e) => { dragging = false; end = e.Location; overlay.Close(); };
-        overlay.Paint += (_, e) => {
+        overlay.Paint += (_, e) =>
+        {
             if (dragging)
             {
                 var r = new Rectangle(Math.Min(start.X, end.X), Math.Min(start.Y, end.Y),
@@ -62,7 +63,7 @@ public sealed class ScreenshotAnnotator
         var btnText = new Button { Text = "Text" };
         var btnCopy = new Button { Text = "Copy" };
 
-        tools.Controls.AddRange(new Control[]{ btnSave, btnCopy, btnPen, btnRect, btnText });
+        tools.Controls.AddRange(new Control[] { btnSave, btnCopy, btnPen, btnRect, btnText });
         form.Controls.Add(pb);
         form.Controls.Add(tools);
 
@@ -72,8 +73,9 @@ public sealed class ScreenshotAnnotator
         btnRect.Click += (_, __) => mode = "rect";
         btnText.Click += (_, __) => mode = "text";
         btnCopy.Click += (_, __) => { Clipboard.SetImage(pb.Image); _bus.Publish("screenshot/capture", new { where = "clipboard" }); };
-        btnSave.Click += (_, __) => {
-            using var sfd = new SaveFileDialog(){ Filter = "PNG|*.png" };
+        btnSave.Click += (_, __) =>
+        {
+            using var sfd = new SaveFileDialog() { Filter = "PNG|*.png" };
             if (sfd.ShowDialog() == DialogResult.OK) { pb.Image.Save(sfd.FileName); _bus.Publish("screenshot/capture", new { path = sfd.FileName }); }
         };
 
