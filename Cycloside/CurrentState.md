@@ -51,6 +51,15 @@ Cycloside has evolved from a "desktop widget/rainmeter clone" into a **comprehen
 - **Live code analysis** and error detection
 - **Project management** and file organization
 
+#### **API Testing Tools**
+- **REST Client** - Professional API testing with HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- **Authentication Support** - Bearer tokens, Basic auth, API keys
+- **Response Analysis** - JSON parsing, headers, status codes with pretty formatting
+- **Request Collections** - Organize and manage API endpoints with export/import
+- **Performance Testing** - Response time and size tracking with metrics
+- **Request History** - Track and review previous requests with replay capability
+- **JSON Formatting** - Pretty-printed response display
+
 #### **Hardware Integration**
 - **ESP32/Arduino Bridge** - Serial communication with IoT devices
 - **MIDI Controller** - Musical instrument integration

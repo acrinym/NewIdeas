@@ -163,6 +163,10 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `HardwareMonitorPlugin`  | Real-time system monitoring for CPU, memory, disk, and network performance. |
 | `VulnerabilityScannerPlugin` | Automated security scanning for vulnerabilities and exploit suggestions. |
 | `ExploitDevToolsPlugin`  | Metasploit-like interface for exploit development and penetration testing. |
+| `ExploitDatabasePlugin`  | Local vulnerability and exploit information database with CVE data. |
+| `DigitalForensicsPlugin` | Comprehensive digital evidence analysis and investigation toolkit. |
+| `DatabaseManagerPlugin`  | Professional database management with multi-database support (SQL Server, MySQL, PostgreSQL, SQLite). |
+| `ApiTestingPlugin`       | REST API testing framework with authentication and response analysis. |
 | `AiAssistantPlugin`      | AI-powered code assistance, cybersecurity guidance, and intelligent features. |
 | `PluginMarketplacePlugin`| Browse and install community plugins from the plugin repository. |
 | `AdvancedCodeEditorPlugin` | Professional IDE with syntax highlighting, IntelliSense, and multi-language support. |
