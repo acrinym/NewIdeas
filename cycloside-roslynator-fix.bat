@@ -10,10 +10,10 @@ git push
 
 REM Roslynator operations
 echo Running Roslynator analyze...
-dotnet roslynator analyze CyclosideNextFeatures.sln --output cycloside-roslynator-analysis.sarif --verbosity diagnostic
+"C:\Users\User\.dotnet\tools\roslynator.exe" analyze CyclosideNextFeatures.sln --output cycloside-roslynator-analysis.sarif --verbosity diagnostic
 
 echo Running Roslynator fix...
-dotnet roslynator fix CyclosideNextFeatures.sln --apply --diagnostics IDE*,RCS*,CA* --verbosity diagnostic
+"C:\Users\User\.dotnet\tools\roslynator.exe" fix CyclosideNextFeatures.sln --apply --diagnostics IDE*,RCS*,CA* --verbosity diagnostic
 
 REM Validate build
 echo Validating build...
