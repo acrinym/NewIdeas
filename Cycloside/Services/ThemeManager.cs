@@ -531,19 +531,6 @@ namespace Cycloside.Services
             return new StyleInclude(original.Source!) { Source = original.Source };
         }
 
-        /// <summary>
-        /// Clears all cached themes to free memory
-        /// </summary>
-        public static void ClearThemeCache()
-        {
-            lock (_cacheLock)
-            {
-                _themeCache.Clear();
-                _variantCache.Clear();
-                _fileTimestamps.Clear();
-                Logger.Log("Theme cache cleared");
-            }
-        }
     }
 
     /// <summary>

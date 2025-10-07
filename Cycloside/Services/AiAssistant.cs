@@ -682,7 +682,6 @@ Provide specific, actionable recommendations with code examples where applicable
     {
         public string Role { get; set; } = "";
         public string Content { get; set; } = "";
-    }
 
     /// <summary>
     /// Analyze code for security vulnerabilities in real-time
@@ -1027,6 +1026,5 @@ Please provide a JSON response with the following structure:
         public string RiskLevel { get; set; } = "";
         public List<string> RefactoringRecommendations { get; set; } = new();
     }
-
 }
 }

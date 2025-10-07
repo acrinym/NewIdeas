@@ -15,21 +15,21 @@ namespace Cycloside.Plugins.BuiltIn
     /// Database Manager Plugin - Professional database management and SQL editing toolkit
     /// Supports SQL Server, MySQL, PostgreSQL, and SQLite with query execution and result visualization
     /// </summary>
-    public class DatabaseManagerPlugin : PluginBase
+    public class DatabaseManagerPlugin : IPlugin
     {
-        public override string Name => "Database Manager";
-        public override string Description => "Professional database management and SQL editing toolkit";
-        public override Version Version => new(1, 0, 0);
-        public override bool ForceDefaultTheme => false;
-        public override IWidget? Widget => new DatabaseManagerWidget();
+        public string Name => "Database Manager";
+        public string Description => "Professional database management and SQL editing toolkit";
+        public Version Version => new(1, 0, 0);
+        public bool ForceDefaultTheme => false;
+        public IWidget? Widget => new DatabaseManagerWidget();
 
-        public override void Start()
+        public void Start()
         {
             Logger.Log("🗄️ Database Manager plugin started");
             _ = DatabaseManager.InitializeAsync();
         }
 
-        public override void Stop()
+        public void Stop()
         {
             Logger.Log("🗄️ Database Manager plugin stopped");
         }

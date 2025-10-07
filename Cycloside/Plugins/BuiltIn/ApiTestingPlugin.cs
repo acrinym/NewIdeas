@@ -16,21 +16,21 @@ namespace Cycloside.Plugins.BuiltIn
     /// API TESTING PLUGIN - Comprehensive REST API testing and web service analysis toolkit
     /// Provides HTTP request testing, response analysis, authentication handling, and API documentation
     /// </summary>
-    public class ApiTestingPlugin : PluginBase
+    public class ApiTestingPlugin : IPlugin
     {
-        public override string Name => "API Testing";
-        public override string Description => "Comprehensive REST API testing and web service analysis toolkit";
-        public override Version Version => new(1, 0, 0);
-        public override bool ForceDefaultTheme => false;
-        public override IWidget? Widget => new ApiTestingWidget();
+        public string Name => "API Testing";
+        public string Description => "Comprehensive REST API testing and web service analysis toolkit";
+        public Version Version => new(1, 0, 0);
+        public bool ForceDefaultTheme => false;
+        public IWidget? Widget => new ApiTestingWidget();
 
-        public override void Start()
+        public void Start()
         {
             Logger.Log("🌐 API Testing plugin started");
             _ = ApiTestingService.InitializeAsync();
         }
 
-        public override void Stop()
+        public void Stop()
         {
             Logger.Log("🌐 API Testing plugin stopped");
         }

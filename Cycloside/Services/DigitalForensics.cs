@@ -967,7 +967,6 @@ namespace Cycloside.Services
         {
             Artifacts = artifacts;
         }
-    }
 
     /// <summary>
     /// Generate enhanced timeline analysis with correlation
@@ -1400,5 +1399,4 @@ namespace Cycloside.Services
         public string CorrelationType { get; set; } = "";
         public double Confidence { get; set; }
     }
-}
 }

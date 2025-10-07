@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
-using Microsoft.Data.Sqlite;
-using MySql.Data.MySqlClient;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 
 namespace Cycloside.Services
 {
@@ -34,10 +32,8 @@ namespace Cycloside.Services
         static DatabaseManager()
         {
             // Register database providers
-            _providers["sqlserver"] = SqlClientFactory.Instance;
-            _providers["mysql"] = MySqlClientFactory.Instance;
-            _providers["postgresql"] = NpgsqlFactory.Instance;
-            _providers["sqlite"] = SqliteFactory.Instance;
+            _providers["sqlserver"] = Microsoft.Data.SqlClient.SqlClientFactory.Instance;
+            _providers["sqlite"] = Microsoft.Data.Sqlite.SqliteFactory.Instance;
         }
 
         /// <summary>
