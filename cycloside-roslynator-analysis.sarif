@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Roslynator>
+  <CodeAnalysis>
+    <Summary>
+      <Diagnostic Id="CA1806" Title="Do not ignore method results" Count="1">
+        <Description>A new object is created but never used; or a method that creates and returns a new string is called and the new string is never used; or a COM or P/Invoke method returns an HRESULT or error code that is never used.</Description>
+        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1806</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="CA1822" Title="Mark members as static" Count="1">
+        <Description>Members that do not access instance data or call instance methods can be marked as static. After you mark the methods as static, the compiler will emit nonvirtual call sites to these members. This can give you a measurable performance gain for performance-sensitive code.</Description>
+        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1822</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="CA1835" Title="Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'" Count="1">
+        <Description>'Stream' has a 'ReadAsync' overload that takes a 'Memory&lt;Byte&gt;' as the first argument, and a 'WriteAsync' overload that takes a 'ReadOnlyMemory&lt;Byte&gt;' as the first argument. Prefer calling the memory based overloads, which are more efficient.</Description>
+        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1835</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="CA1861" Title="Avoid constant arrays as arguments" Count="1">
+        <Description>Constant arrays passed as arguments are not reused when called repeatedly, which implies a new array is created each time. Consider extracting them to 'static readonly' fields to improve performance if the passed array is not mutated within the called method.</Description>
+        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1861</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="CA1866" Title="Use char overload" Count="4">
+        <Description>The char overload is a better performing overload than a string with a single char.</Description>
+        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1866</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="CA1869" Title="Cache and reuse 'JsonSerializerOptions' instances" Count="2">
+        <Description>Avoid creating a new 'JsonSerializerOptions' instance for every serialization operation. Cache and reuse instances instead. Single use 'JsonSerializerOptions' instances can substantially degrade the performance of your application.</Description>
+        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1869</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="CS1998" Title="Async method lacks 'await' operators and will run synchronously" Count="2">
+        <HelpLink>https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&amp;k=k(CS1998)</HelpLink>
+      </Diagnostic>
+      <Diagnostic Id="SYSLIB1054" Title="Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time" Count="3">
+        <Description>Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time</Description>
+        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/syslib-diagnostics/syslib1054</HelpLink>
+      </Diagnostic>
+    </Summary>
+    <Projects>
+      <Project Name="Cycloside.Core" FilePath="D:\GitHub\NewIdeas\Core\Cycloside.Core.csproj">
+        <Diagnostics>
+          <Diagnostic Id="CA1869">
+            <Severity>Info</Severity>
+            <Message>Cache and reuse 'JsonSerializerOptions' instances</Message>
+            <FilePath>D:\GitHub\NewIdeas\Core\JsonConfig.cs</FilePath>
+            <Location Line="11" Character="52" />
+          </Diagnostic>
+          <Diagnostic Id="CA1869">
+            <Severity>Info</Severity>
+            <Message>Cache and reuse 'JsonSerializerOptions' instances</Message>
+            <FilePath>D:\GitHub\NewIdeas\Core\JsonConfig.cs</FilePath>
+            <Location Line="16" Character="52" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+      <Project Name="Cycloside.Tests" FilePath="D:\GitHub\NewIdeas\Cycloside.Tests\Cycloside.Tests.csproj">
+        <Diagnostics>
+          <Diagnostic Id="CS1998">
+            <Severity>Warning</Severity>
+            <Message>Async method lacks 'await' operators and will run synchronously</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside.Tests\ExploitDatabaseTests.cs</FilePath>
+            <Location Line="36" Character="27" />
+          </Diagnostic>
+          <Diagnostic Id="CS1998">
+            <Severity>Warning</Severity>
+            <Message>Async method lacks 'await' operators and will run synchronously</Message>
+            <FilePath>D:\GitHub\NewIdeas\Cycloside.Tests\IntegrationTests.cs</FilePath>
+            <Location Line="36" Character="27" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+      <Project Name="Cycloside.Rules" FilePath="D:\GitHub\NewIdeas\Rules\Cycloside.Rules.csproj">
+        <Diagnostics>
+          <Diagnostic Id="CA1866">
+            <Severity>Info</Severity>
+            <Message>Use char overload</Message>
+            <FilePath>D:\GitHub\NewIdeas\Rules\RuleEngine.cs</FilePath>
+            <Location Line="60" Character="26" />
+          </Diagnostic>
+          <Diagnostic Id="CA1866">
+            <Severity>Info</Severity>
+            <Message>Use char overload</Message>
+            <FilePath>D:\GitHub\NewIdeas\Rules\RuleEngine.cs</FilePath>
+            <Location Line="61" Character="26" />
+          </Diagnostic>
+          <Diagnostic Id="CA1866">
+            <Severity>Info</Severity>
+            <Message>Use char overload</Message>
+            <FilePath>D:\GitHub\NewIdeas\Rules\RuleEngine.cs</FilePath>
+            <Location Line="62" Character="26" />
+          </Diagnostic>
+          <Diagnostic Id="CA1866">
+            <Severity>Info</Severity>
+            <Message>Use char overload</Message>
+            <FilePath>D:\GitHub\NewIdeas\Rules\RuleEngine.cs</FilePath>
+            <Location Line="96" Character="25" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+      <Project Name="Cycloside.SampleHost" FilePath="D:\GitHub\NewIdeas\SampleHost\Cycloside.SampleHost.csproj">
+        <Diagnostics>
+          <Diagnostic Id="CA1861">
+            <Severity>Info</Severity>
+            <Message>Avoid constant arrays as arguments</Message>
+            <FilePath>D:\GitHub\NewIdeas\SampleHost\Program.cs</FilePath>
+            <Location Line="18" Character="29" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+      <Project Name="Cycloside.Utils" FilePath="D:\GitHub\NewIdeas\Utils\Cycloside.Utils.csproj">
+        <Diagnostics>
+          <Diagnostic Id="CA1806">
+            <Severity>Info</Severity>
+            <Message>Do not ignore method results</Message>
+            <FilePath>D:\GitHub\NewIdeas\Utils\ColorPicker.cs</FilePath>
+            <Location Line="25" Character="9" />
+          </Diagnostic>
+          <Diagnostic Id="SYSLIB1054">
+            <Severity>Info</Severity>
+            <Message>Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time</Message>
+            <FilePath>D:\GitHub\NewIdeas\Utils\ColorPicker.cs</FilePath>
+            <Location Line="10" Character="52" />
+          </Diagnostic>
+          <Diagnostic Id="SYSLIB1054">
+            <Severity>Info</Severity>
+            <Message>Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time</Message>
+            <FilePath>D:\GitHub\NewIdeas\Utils\ColorPicker.cs</FilePath>
+            <Location Line="11" Character="49" />
+          </Diagnostic>
+          <Diagnostic Id="SYSLIB1054">
+            <Severity>Info</Severity>
+            <Message>Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time</Message>
+            <FilePath>D:\GitHub\NewIdeas\Utils\ColorPicker.cs</FilePath>
+            <Location Line="12" Character="49" />
+          </Diagnostic>
+          <Diagnostic Id="CA1822">
+            <Severity>Info</Severity>
+            <Message>Mark members as static</Message>
+            <FilePath>D:\GitHub\NewIdeas\Utils\PixelRuler.cs</FilePath>
+            <Location Line="8" Character="17" />
+          </Diagnostic>
+          <Diagnostic Id="CA1835">
+            <Severity>Info</Severity>
+            <Message>Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'</Message>
+            <FilePath>D:\GitHub\NewIdeas\Utils\QuickShareServer.cs</FilePath>
+            <Location Line="151" Character="15" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+    </Projects>
+  </CodeAnalysis>
+</Roslynator>
