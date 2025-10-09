@@ -1,4 +1,6 @@
 using Avalonia;
+using Avalonia.Media;
+using Avalonia.Layout;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
@@ -102,7 +104,7 @@ public partial class App : Application
                 Height = 200,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 CanResize = false,
-                Background = Brushes.Black
+                Background = Avalonia.Media.Brushes.Black
             };
 
             var panel = new StackPanel
@@ -116,7 +118,7 @@ public partial class App : Application
             var title = new TextBlock
             {
                 Text = "🚀 Initializing Cycloside Cybersecurity Platform",
-                Foreground = Brushes.White,
+                Foreground = Avalonia.Media.Brushes.White,
                 FontSize = 16,
                 TextAlignment = TextAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 20)
@@ -125,7 +127,7 @@ public partial class App : Application
             var status = new TextBlock
             {
                 Text = "Loading core systems...",
-                Foreground = Brushes.Cyan,
+                Foreground = Avalonia.Media.Brushes.Cyan,
                 FontSize = 12,
                 TextAlignment = TextAlignment.Center
             };
@@ -184,12 +186,12 @@ public partial class App : Application
     /// <summary>
     /// Start periodic cleanup for memory optimization
     /// </summary>
-    private async Task StartPeriodicCleanup()
+    private Task StartPeriodicCleanup()
     {
         try
         {
             // Run cleanup every 30 minutes
-            var timer = new System.Threading.Timer(async _ =>
+            var timer = new System.Threading.Timer(_ =>
             {
                 if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop &&
                     desktop.MainWindow != null)
@@ -199,10 +201,12 @@ public partial class App : Application
             }, null, TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(30));
 
             Logger.Log("⏰ Periodic cleanup scheduled every 30 minutes");
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
             Logger.Log($"❌ Failed to start periodic cleanup: {ex.Message}");
+            return Task.CompletedTask;
         }
     }
 
@@ -313,7 +317,7 @@ public partial class App : Application
                     try
                     {
                         Logger.Log("🔄 Attempting emergency main window creation...");
-                        _mainWindow = new MainWindow(null); // Create minimal main window
+                        _mainWindow = new MainWindow(); // Create minimal main window
                         desktop.MainWindow = _mainWindow;
                         _mainWindow.Show();
                         Logger.Log("✅ Emergency main window created");

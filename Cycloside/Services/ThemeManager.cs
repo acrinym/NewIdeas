@@ -49,9 +49,10 @@ namespace Cycloside.Services
 
                 // Preload common theme files
                 var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes");
+                string[] themeDirs = Array.Empty<string>();
                 if (Directory.Exists(themeDir))
                 {
-                    var themeDirs = Directory.GetDirectories(themeDir);
+                    themeDirs = Directory.GetDirectories(themeDir);
                     foreach (var themePath in themeDirs)
                     {
                         var themeName = Path.GetFileName(themePath);
@@ -520,6 +521,35 @@ namespace Cycloside.Services
             {
                 _themeCache[cacheKey] = CloneStyleInclude(styleInclude);
                 _fileTimestamps[cacheKey] = File.GetLastWriteTime(filePath);
+            }
+        }
+
+        /// <summary>
+        /// Loads a theme tokens file into the cache for faster switching.
+        /// Does not apply the style to the application; warms the cache only.
+        /// </summary>
+        private static void LoadThemeTokensFile(string tokensPath, string themeName)
+        {
+            try
+            {
+                if (!File.Exists(tokensPath))
+                    return;
+
+                var cacheKey = $"theme_tokens_{themeName}_{tokensPath}";
+
+                // If cache is up to date, no need to reload
+                if (IsCachedUpToDate(cacheKey, tokensPath))
+                    return;
+
+                var uri = new Uri($"file:///{tokensPath.Replace('\\', '/')}");
+                var styleInclude = new StyleInclude(uri) { Source = uri };
+
+                CacheStyleInclude(cacheKey, styleInclude, tokensPath);
+                Logger.Log($"Cached theme tokens for '{themeName}'");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to cache theme tokens for '{themeName}': {ex.Message}");
             }
         }
 

@@ -1,0 +1,93 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Cycloside.Visuals.Managed.VisualizerWindow"
+        Width="800" Height="600"
+        Title="Cycloside Visualizer"
+        WindowState="Maximized"
+        Background="Black">
+
+    <Grid>
+        <!-- Visualizer Display Area -->
+        <Border x:Name="VisualizerBorder"
+                Background="Black"
+                Margin="10">
+
+            <!-- This will be filled by the visualizer's rendering -->
+            <Canvas x:Name="VisualizerCanvas"
+                    Background="Black"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch" />
+
+        </Border>
+
+        <!-- Visualizer Controls Overlay (appears on hover or when active) -->
+        <Border x:Name="ControlsOverlay"
+                Background="#80000000"
+                IsVisible="False"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="10"
+                CornerRadius="8"
+                Padding="16">
+
+            <StackPanel Spacing="8" Width="200">
+                <TextBlock Text="🎨 Visualizer Controls"
+                           Foreground="White"
+                           FontSize="14"
+                           FontWeight="SemiBold" />
+
+                <ComboBox x:Name="VisualizerSelector"
+                          ItemsSource="{Binding AvailableVisualizers}"
+                          SelectedItem="{Binding CurrentVisualizerInfo}">
+                    <ComboBox.SelectionBoxItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.SelectionBoxItemTemplate>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding Description}" FontSize="10" Opacity="0.7" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="▶️ Start" Command="{Binding StartVisualizerCommand}"
+                            Background="#4CAF50" Foreground="White" BorderBrush="#4CAF50" />
+                    <Button Content="⏸️ Stop" Command="{Binding StopVisualizerCommand}"
+                            Background="#F44336" Foreground="White" BorderBrush="#F44336" />
+                </StackPanel>
+
+                <TextBlock Text="{Binding StatusMessage}"
+                           Foreground="White"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+
+                <TextBlock x:Name="AudioInfo"
+                           Foreground="#CCCCCC"
+                           FontSize="10"
+                           Text="Waiting for audio..." />
+
+            </StackPanel>
+
+        </Border>
+
+        <!-- Show Controls Toggle Button -->
+        <Button x:Name="ToggleControlsButton"
+                Content="⚙️"
+                Background="#FF9800"
+                Foreground="White"
+                BorderBrush="#FF9800"
+                Width="40"
+                Height="40"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="20"
+                ToolTip.Tip="Toggle Controls" />
+
+    </Grid>
+
+</Window>

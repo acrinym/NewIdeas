@@ -1,0 +1,12 @@
+
+ Select Framework to Run
+=========================
+
+ 1) net8.0-windows (For running the full GUI application)
+ 2) net8.0         (For command-line tools or testing)
+
+Enter your choice (1 or 2): 
+--- Running with net8.0-windows ---
+Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? 
+
+Press any key to continue . . . 

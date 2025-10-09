@@ -404,7 +404,9 @@ public class UserManager
                 if (_chatHistory != null)
                 {
                     _chatHistory.Items.Add($"👤 You: {message}");
-                    _chatHistory.ScrollIntoView(_chatHistory.Items[^1]);
+                    var last = _chatHistory.Items[^1];
+                    if (last != null)
+                        _chatHistory.ScrollIntoView(last);
                 }
 
                 // Clear input
@@ -423,7 +425,9 @@ public class UserManager
                         if (_chatHistory != null)
                         {
                             _chatHistory.Items.Add($"🤖 AI: {response}");
-                            _chatHistory.ScrollIntoView(_chatHistory.Items[^1]);
+                            var last = _chatHistory.Items[^1];
+                            if (last != null)
+                                _chatHistory.ScrollIntoView(last);
                         }
 
                         UpdateStatus("✅ AI responded");
@@ -652,7 +656,8 @@ public class UserManager
                         {
                             foreach (var finding in findings)
                             {
-                                resultsList.Items.Add($"🚨 {finding.Severity}: {finding.Title} (Line {finding.Line})");
+                                var locationInfo = string.IsNullOrWhiteSpace(finding.CodeLocation) ? "" : $" - {finding.CodeLocation}";
+                                resultsList.Items.Add($"🚨 {finding.Severity}: {finding.Title}{locationInfo}");
                             }
                             UpdateStatus($"✅ Found {findings.Count} security issues");
                         }

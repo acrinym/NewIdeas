@@ -58,7 +58,7 @@ namespace Cycloside.Services
     /// AI ASSISTANT - Intelligent code assistance and cybersecurity guidance
     /// Provides AI-powered code completion, explanations, security analysis, and learning
     /// </summary>
-    public static class AiAssistant
+    public static partial class AiAssistant
     {
         public static event EventHandler<AiResponseEventArgs>? AiResponseReceived;
         public static event EventHandler<AiErrorEventArgs>? AiErrorOccurred;
@@ -79,7 +79,7 @@ namespace Cycloside.Services
         public static bool IsInitialized => !string.IsNullOrEmpty(_apiKey);
         public static bool IsProcessing => _currentRequest != null;
 
-        private static Task<string>? _currentRequest;
+        private static Task<string?>? _currentRequest;
 
         /// <summary>
         /// Initialize AI Assistant with API configuration
@@ -123,11 +123,11 @@ namespace Cycloside.Services
         /// <summary>
         /// Load API key from secure configuration
         /// </summary>
-        private static async Task<string> LoadApiKeyAsync()
+        private static Task<string> LoadApiKeyAsync()
         {
             // In production, this would load from encrypted config file
             // For now, return empty string to disable AI features
-            return "";
+            return Task.FromResult("");
         }
 
         /// <summary>
@@ -226,6 +226,47 @@ namespace Cycloside.Services
                     messages = new[] { new { role = message.Role, content = message.Content } },
                     max_tokens = 1000,
                     temperature = 0.7
+                };
+
+                var json = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
+                _httpClient.DefaultRequestHeaders.Add("User-Agent", "Cycloside-AI-Assistant");
+
+                var response = await _httpClient.PostAsync(_apiEndpoint, content);
+                response.EnsureSuccessStatusCode();
+
+                var responseJson = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<AiApiResponse>(responseJson);
+
+                return apiResponse?.Choices?.FirstOrDefault()?.Message?.Content;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"❌ AI API error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Send prompt to AI API with a system role
+        /// </summary>
+        private static async Task<string?> SendToAiApiAsync(string prompt, string systemRole)
+        {
+            try
+            {
+                var requestBody = new
+                {
+                    model = "gpt-3.5-turbo",
+                    messages = new[]
+                    {
+                        new { role = "system", content = systemRole },
+                        new { role = "user", content = prompt }
+                    },
+                    max_tokens = 1500,
+                    temperature = 0.3
                 };
 
                 var json = JsonSerializer.Serialize(requestBody);
@@ -682,11 +723,14 @@ Provide specific, actionable recommendations with code examples where applicable
     {
         public string Role { get; set; } = "";
         public string Content { get; set; } = "";
+    }
 
-    /// <summary>
-    /// Analyze code for security vulnerabilities in real-time
-    /// </summary>
-    public static async Task<List<SecurityFinding>> AnalyzeCodeRealTimeAsync(string code, string language = "csharp")
+    public static partial class AiAssistant
+    {
+        /// <summary>
+        /// Analyze code for security vulnerabilities in real-time
+        /// </summary>
+        public static async Task<List<SecurityFinding>> AnalyzeCodeRealTimeAsync(string code, string language = "csharp")
         {
             var prompt = $@"Analyze this {language} code for security vulnerabilities and provide detailed findings:
 
@@ -986,6 +1030,7 @@ Please provide a JSON response with the following structure:
 
             return analysis;
         }
+    }
 
     /// <summary>
     /// Performance optimization suggestion
@@ -1027,4 +1072,4 @@ Please provide a JSON response with the following structure:
         public List<string> RefactoringRecommendations { get; set; } = new();
     }
 }
-}
+

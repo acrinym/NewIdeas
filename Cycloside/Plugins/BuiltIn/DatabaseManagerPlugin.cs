@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -45,7 +46,6 @@ namespace Cycloside.Plugins.BuiltIn
         private TabControl? _mainTabControl;
         private TextBlock? _statusText;
         private ListBox? _connectionsList;
-        private ListBox? _queryHistory;
         private TextBox? _queryInput;
         private ListBox? _queryResults;
         private TextBox? _connectionStringInput;

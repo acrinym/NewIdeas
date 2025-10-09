@@ -785,7 +785,11 @@ public class NetworkToolsPlugin : IPlugin
                         }
 
                         if (_packetList.Items.Count > 0)
-                            _packetList.ScrollIntoView(_packetList.Items[^1]);
+                        {
+                            var last = _packetList.Items[^1];
+                            if (last != null)
+                                _packetList.ScrollIntoView(last);
+                        }
                     }
                 });
             }
@@ -800,7 +804,11 @@ public class NetworkToolsPlugin : IPlugin
                         _portScanResults.Items.Add(item);
 
                         if (_portScanResults.Items.Count > 0)
-                            _portScanResults.ScrollIntoView(_portScanResults.Items[^1]);
+                        {
+                            var last = _portScanResults.Items[^1];
+                            if (last != null)
+                                _portScanResults.ScrollIntoView(last);
+                        }
                     }
                 });
             }
@@ -821,7 +829,11 @@ public class NetworkToolsPlugin : IPlugin
                         }
 
                         if (_httpRequests.Items.Count > 0)
-                            _httpRequests.ScrollIntoView(_httpRequests.Items[^1]);
+                        {
+                            var last = _httpRequests.Items[^1];
+                            if (last != null)
+                                _httpRequests.ScrollIntoView(last);
+                        }
                     }
                 });
             }

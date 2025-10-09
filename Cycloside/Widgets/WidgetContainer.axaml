@@ -1,0 +1,220 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Cycloside.Widgets"
+             x:Class="Cycloside.Widgets.WidgetContainer"
+             x:Name="WidgetContainerControl">
+    <UserControl.ContextFlyout>
+        <MenuFlyout>
+            <MenuItem Header="Configure"
+                      Command="{Binding DataContext.ConfigureWidgetCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                      CommandParameter="{Binding}" />
+            <MenuItem Header="Auto-Resize"
+                      Command="{Binding DataContext.ResizeWidgetCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                      CommandParameter="{Binding}" />
+            <MenuItem Header="Change Skin"
+                      Command="{Binding DataContext.ChangeWidgetSkinCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                      CommandParameter="{Binding}" />
+            <Separator />
+            <MenuItem Header="Clone"
+                      Command="{Binding DataContext.CloneWidgetCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                      CommandParameter="{Binding}" />
+            <MenuItem Header="Lock/Unlock"
+                      Command="{Binding DataContext.ToggleLockWidgetCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                      CommandParameter="{Binding}" />
+            <Separator />
+            <MenuItem Header="Remove"
+                      Command="{Binding DataContext.RemoveWidgetCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                      CommandParameter="{Binding}" />
+        </MenuFlyout>
+    </UserControl.ContextFlyout>
+
+    <UserControl.Styles>
+        <Style Selector="local|WidgetContainer">
+            <Setter Property="ClipToBounds" Value="False" />
+        </Style>
+
+        <Style Selector="local|WidgetContainer.managementMode">
+            <Setter Property="BorderBrush" Value="#007ACC" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+
+        <Style Selector="local|WidgetContainer.dragging">
+            <Setter Property="Opacity" Value="0.7" />
+        </Style>
+
+        <Style Selector="local|WidgetContainer.resizing">
+            <Setter Property="Cursor" Value="SizeAll" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Main Container Grid -->
+    <Grid x:Name="MainGrid" Background="Transparent">
+        <!-- Widget Content -->
+        <ContentControl x:Name="WidgetContent"
+                       Content="{Binding Widget.BuildView}"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch" />
+
+        <!-- Management Overlay (visible in management mode) -->
+        <Border x:Name="ManagementOverlay"
+                Background="#20000000"
+                BorderBrush="#007ACC"
+                BorderThickness="2"
+                IsVisible="{Binding ShowManagementOverlay}"
+                ZIndex="10">
+
+            <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*,Auto">
+
+                <!-- Top Row: Enhanced Move Handle with Title and Controls -->
+                <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                        Background="#007ACC"
+                        Height="28"
+                        Cursor="SizeAll"
+                        PointerPressed="MoveHandle_PointerPressed"
+                        PointerMoved="MoveHandle_PointerMoved"
+                        PointerReleased="MoveHandle_PointerReleased">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding Widget.Name}"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0" />
+
+                        <!-- Quick Action Buttons in Title Bar -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="4,0">
+                            <!-- Lock/Unlock Button -->
+                            <Button Content="{Binding IsLocked, Converter={StaticResource BoolToIconConverter}, ConverterParameter='🔒:🔓'}"
+                                    Background="Transparent"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    Width="20" Height="20"
+                                    Margin="1,0"
+                                    ToolTip.Tip="{Binding IsLocked, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Unlock Widget:Lock Widget'}"
+                                    Command="{Binding ToggleLockCommand}" />
+
+                            <!-- Clone Button -->
+                            <Button Content="📋"
+                                    Background="Transparent"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    Width="20" Height="20"
+                                    Margin="1,0"
+                                    ToolTip.Tip="Clone Widget"
+                                    Command="{Binding CloneWidgetCommand}" />
+
+                            <!-- Close Button in Title Bar -->
+                            <Button Content="✕"
+                                    Background="#FF4444"
+                                    Foreground="White"
+                                    BorderBrush="#CC0000"
+                                    BorderThickness="1"
+                                    Width="20" Height="20"
+                                    Margin="1,0"
+                                    ToolTip.Tip="Remove Widget"
+                                    Command="{Binding DataContext.RemoveWidgetCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                                    CommandParameter="{Binding}" />
+                        </StackPanel>
+                    </Grid>
+
+                </Border>
+
+                <!-- Left Column: Resize Handle -->
+                <Border Grid.Row="1" Grid.Column="0"
+                        Width="16"
+                        Background="Transparent"
+                        Cursor="SizeWestEast"
+                        PointerPressed="ResizeHandle_PointerPressed"
+                        PointerMoved="ResizeHandle_PointerMoved"
+                        PointerReleased="ResizeHandle_PointerReleased">
+                    <TextBlock Text="‹" Foreground="#007ACC" FontSize="10"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+
+                <!-- Center: Widget Content Area with Drop Shadow -->
+                <Border Grid.Row="1" Grid.Column="1"
+                        Background="#05000000"
+                        Padding="6"
+                        CornerRadius="4">
+                    <!-- Widget content is in the main ContentControl above -->
+                </Border>
+
+                <!-- Right Column: Resize Handle -->
+                <Border Grid.Row="1" Grid.Column="2"
+                        Width="16"
+                        Background="Transparent"
+                        Cursor="SizeWestEast"
+                        PointerPressed="ResizeHandle_PointerPressed"
+                        PointerMoved="ResizeHandle_PointerMoved"
+                        PointerReleased="ResizeHandle_PointerReleased">
+                    <TextBlock Text="›" Foreground="#007ACC" FontSize="10"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+
+                <!-- Bottom Row: Enhanced Controls -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                        Background="#007ACC"
+                        Height="28">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <!-- Widget Info -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8,0">
+                            <TextBlock Text="{Binding Widget.Description, StringFormat='💡 {0}'}"
+                                       Foreground="#CCCCCC"
+                                       FontSize="10"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+
+                        <!-- Action Buttons -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="4,0">
+
+                            <!-- Settings Button -->
+                            <Button Content="⚙️"
+                                    Background="Transparent"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    Width="20" Height="20"
+                                    Margin="2,0"
+                                    ToolTip.Tip="Configure Widget"
+                                    Command="{Binding DataContext.ConfigureWidgetCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                                    CommandParameter="{Binding}" />
+
+                            <!-- Skin Button -->
+                            <Button Content="🎨"
+                                    Background="Transparent"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    Width="20" Height="20"
+                                    Margin="2,0"
+                                    ToolTip.Tip="Change Skin"
+                                    Command="{Binding DataContext.ChangeWidgetSkinCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                                    CommandParameter="{Binding}" />
+
+                            <!-- Resize Button -->
+                            <Button Content="📏"
+                                    Background="Transparent"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    Width="20" Height="20"
+                                    Margin="2,0"
+                                    ToolTip.Tip="Auto-Resize Widget"
+                                    Command="{Binding DataContext.ResizeWidgetCommand, RelativeSource={RelativeSource AncestorType=local:WidgetHostWindow}}"
+                                    CommandParameter="{Binding}" />
+
+                        </StackPanel>
+                    </Grid>
+
+                </Border>
+
+            </Grid>
+
+        </Border>
+
+        <!-- Context menu temporarily disabled due to Avalonia API mismatch; re-enable after refactor -->
+
+    </Grid>
+
+</UserControl>

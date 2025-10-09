@@ -297,7 +297,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Uninstall a locally installed plugin
         /// </summary>
-        public static async Task<bool> UninstallPluginAsync(string pluginName)
+        public static Task<bool> UninstallPluginAsync(string pluginName)
         {
             try
             {
@@ -306,19 +306,19 @@ namespace Cycloside.Services
                 if (!Directory.Exists(pluginPath))
                 {
                     Logger.Log($"⚠️ Plugin not found: {pluginName}");
-                    return false;
+                    return Task.FromResult(false);
                 }
 
                 // Remove plugin directory
                 Directory.Delete(pluginPath, true);
 
                 Logger.Log($"✅ Plugin uninstalled: {pluginName}");
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
                 Logger.Log($"❌ Plugin uninstall failed: {ex.Message}");
-                return false;
+                return Task.FromResult(false);
             }
         }
 

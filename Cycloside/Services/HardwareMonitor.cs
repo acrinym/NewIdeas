@@ -161,7 +161,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Collect process information
         /// </summary>
-        private static async Task CollectProcessDataAsync()
+        private static Task CollectProcessDataAsync()
         {
             try
             {
@@ -196,6 +196,7 @@ namespace Cycloside.Services
             {
                 Logger.Log($"⚠️ Process data collection failed: {ex.Message}");
             }
+            return Task.CompletedTask;
         }
 
         /// <summary>

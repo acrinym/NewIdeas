@@ -131,7 +131,7 @@ namespace Cycloside.Plugins.BuiltIn
                 return border;
             }
 
-            private async void OnBrowseMarketplace(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+            private void OnBrowseMarketplace(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
             {
                 try
                 {
@@ -149,7 +149,7 @@ namespace Cycloside.Plugins.BuiltIn
                 }
             }
 
-            private async void OnManagePlugins(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+            private void OnManagePlugins(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
             {
                 try
                 {

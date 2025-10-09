@@ -153,14 +153,20 @@ namespace Cycloside.Services
 
                 Logger.Log($"🗄️ Executing query on {connection.Name}...");
 
-                if (!_providers.TryGetValue(connection.Provider.ToLower(), out var factory))
+                var providerKey = connection.Provider?.ToLower();
+                if (providerKey == null || !_providers.TryGetValue(providerKey, out var factory))
                 {
                     OnDatabaseError($"Unsupported database provider: {connection.Provider}");
                     return null;
                 }
 
                 using var dbConnection = factory.CreateConnection();
-                dbConnection.ConnectionString = connection.ConnectionString;
+                if (dbConnection == null)
+                {
+                    OnDatabaseError("Failed to create provider connection");
+                    return null;
+                }
+                dbConnection.ConnectionString = connection.ConnectionString ?? string.Empty;
                 await dbConnection.OpenAsync();
 
                 var result = new QueryResult
@@ -253,14 +259,20 @@ namespace Cycloside.Services
 
                 Logger.Log($"🗄️ Getting schema for {connection.Name}...");
 
-                if (!_providers.TryGetValue(connection.Provider.ToLower(), out var factory))
+                var providerKey = connection.Provider?.ToLower();
+                if (providerKey == null || !_providers.TryGetValue(providerKey, out var factory))
                 {
                     OnDatabaseError($"Unsupported database provider: {connection.Provider}");
                     return null;
                 }
 
                 using var dbConnection = factory.CreateConnection();
-                dbConnection.ConnectionString = connection.ConnectionString;
+                if (dbConnection == null)
+                {
+                    OnDatabaseError("Failed to create provider connection");
+                    return null;
+                }
+                dbConnection.ConnectionString = connection.ConnectionString ?? string.Empty;
                 await dbConnection.OpenAsync();
 
                 var schema = new DatabaseSchema
@@ -279,10 +291,10 @@ namespace Cycloside.Services
                 {
                     schema.Tables.Add(new TableInfo
                     {
-                        Name = row["TABLE_NAME"].ToString(),
-                        Schema = row["TABLE_SCHEMA"].ToString(),
-                        Type = row["TABLE_TYPE"].ToString(),
-                        RowCount = await GetTableRowCountAsync(dbConnection, schema.DatabaseName, row["TABLE_NAME"].ToString())
+                        Name = row["TABLE_NAME"]?.ToString() ?? string.Empty,
+                        Schema = row["TABLE_SCHEMA"]?.ToString() ?? string.Empty,
+                        Type = row["TABLE_TYPE"]?.ToString() ?? string.Empty,
+                        RowCount = await GetTableRowCountAsync(dbConnection, schema.DatabaseName ?? string.Empty, row["TABLE_NAME"]?.ToString() ?? string.Empty)
                     });
                 }
 
@@ -294,8 +306,8 @@ namespace Cycloside.Services
                 {
                     schema.Views.Add(new ViewInfo
                     {
-                        Name = row["TABLE_NAME"].ToString(),
-                        Schema = row["TABLE_SCHEMA"].ToString()
+                        Name = row["TABLE_NAME"]?.ToString() ?? string.Empty,
+                        Schema = row["TABLE_SCHEMA"]?.ToString() ?? string.Empty
                     });
                 }
 
@@ -356,7 +368,7 @@ namespace Cycloside.Services
                 }
 
                 _connections.Remove(connection);
-                SaveConnectionsAsync();
+                _ = SaveConnectionsAsync();
                 Logger.Log($"🗄️ Connection removed: {connection.Name}");
             }
         }

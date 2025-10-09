@@ -163,7 +163,7 @@ namespace Cycloside.Plugins.BuiltIn
                 AcceptsReturn = true,
                 TextWrapping = TextWrapping.Wrap,
                 FontFamily = "Consolas",
-                Background = Brushes.FromHex("#f8f9fa")
+                Background = Brush.Parse("#f8f9fa")
             };
 
             bodyPanel.Children.Add(bodyLabel);
@@ -211,7 +211,7 @@ namespace Cycloside.Plugins.BuiltIn
                 IsReadOnly = true,
                 TextWrapping = TextWrapping.Wrap,
                 FontFamily = "Consolas",
-                Background = Brushes.FromHex("#f8f9fa")
+                Background = Brush.Parse("#f8f9fa")
             };
 
             responsePanel.Children.Add(responseLabel);

@@ -373,7 +373,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Download PowerShell installer
         /// </summary>
-        private static async Task<string?> DownloadPowerShellInstallerAsync()
+        private static Task<string?> DownloadPowerShellInstallerAsync()
         {
             try
             {
@@ -386,12 +386,12 @@ namespace Cycloside.Services
                 // 2. Download latest MSI for user's architecture
                 // 3. Save to temp directory
 
-                return null;
+                return Task.FromResult<string?>(null);
             }
             catch (Exception ex)
             {
                 Logger.Log($"Download error: {ex.Message}");
-                return null;
+                return Task.FromResult<string?>(null);
             }
         }
 

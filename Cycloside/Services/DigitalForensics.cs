@@ -10,6 +10,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Microsoft.Win32;
@@ -169,7 +170,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Analyze process memory for forensic evidence
         /// </summary>
-        public static async Task<ProcessMemoryInfo> AnalyzeProcessMemoryAsync(int processId)
+        public static Task<ProcessMemoryInfo> AnalyzeProcessMemoryAsync(int processId)
         {
             var result = new ProcessMemoryInfo
             {
@@ -210,7 +211,7 @@ namespace Cycloside.Services
                 result.Error = ex.Message;
             }
 
-            return result;
+            return Task.FromResult(result);
         }
 
         /// <summary>
@@ -264,7 +265,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Create forensic timeline
         /// </summary>
-        public static async Task<List<TimelineEntry>> CreateForensicTimelineAsync(string targetPath)
+        public static Task<List<TimelineEntry>> CreateForensicTimelineAsync(string targetPath)
         {
             var timeline = new List<TimelineEntry>();
 
@@ -308,14 +309,15 @@ namespace Cycloside.Services
                 Logger.Log($"❌ Forensic timeline creation failed: {ex.Message}");
             }
 
-            return timeline;
+            return Task.FromResult(timeline);
         }
 
         // Helper methods
-        private static async Task InitializeForensicsDatabaseAsync()
+        private static Task InitializeForensicsDatabaseAsync()
         {
             // Initialize known malware signatures, suspicious patterns, etc.
             Logger.Log("📚 Forensics database initialized");
+            return Task.CompletedTask;
         }
 
         private static string GetFilePermissions(string filePath)
@@ -642,7 +644,7 @@ namespace Cycloside.Services
             return registryKeys;
         }
 
-        private static async Task<List<DigitalArtifact>> AnalyzeBrowserHistoryAsync()
+        private static Task<List<DigitalArtifact>> AnalyzeBrowserHistoryAsync()
         {
             var artifacts = new List<DigitalArtifact>();
 
@@ -676,10 +678,10 @@ namespace Cycloside.Services
                 // Browser history analysis failed
             }
 
-            return artifacts;
+            return Task.FromResult(artifacts);
         }
 
-        private static async Task<List<DigitalArtifact>> AnalyzeEventLogsAsync()
+        private static Task<List<DigitalArtifact>> AnalyzeEventLogsAsync()
         {
             var artifacts = new List<DigitalArtifact>();
 
@@ -716,10 +718,10 @@ namespace Cycloside.Services
                 // Event log analysis failed
             }
 
-            return artifacts;
+            return Task.FromResult(artifacts);
         }
 
-        private static async Task<List<DigitalArtifact>> AnalyzeRecentFilesAsync()
+        private static Task<List<DigitalArtifact>> AnalyzeRecentFilesAsync()
         {
             var artifacts = new List<DigitalArtifact>();
 
@@ -754,10 +756,10 @@ namespace Cycloside.Services
                 // Recent files analysis failed
             }
 
-            return artifacts;
+            return Task.FromResult(artifacts);
         }
 
-        private static async Task<List<DigitalArtifact>> AnalyzeNetworkConnectionsAsync()
+        private static Task<List<DigitalArtifact>> AnalyzeNetworkConnectionsAsync()
         {
             var artifacts = new List<DigitalArtifact>();
 
@@ -788,16 +790,19 @@ namespace Cycloside.Services
                 // Network analysis failed
             }
 
-            return artifacts;
+            return Task.FromResult(artifacts);
         }
 
         private static string GetFileOwner(string filePath)
         {
             try
             {
+                if (string.IsNullOrEmpty(filePath)) return "Unknown";
                 var fileSecurity = new FileSecurity(filePath, AccessControlSections.Owner);
                 var owner = fileSecurity.GetOwner(typeof(SecurityIdentifier));
-                return owner.Translate(typeof(NTAccount)).ToString();
+                var ntAccount = owner?.Translate(typeof(NTAccount));
+                var ownerStr = ntAccount?.ToString();
+                return string.IsNullOrEmpty(ownerStr) ? "Unknown" : ownerStr;
             }
             catch
             {
@@ -808,21 +813,25 @@ namespace Cycloside.Services
         // Event handlers
         private static void OnFileAnalysisCompleted(FileAnalysisResult result)
         {
+            if (result == null) return;
             FileAnalysisCompleted?.Invoke(null, new FileAnalysisEventArgs(result));
         }
 
         private static void OnRegistryAnalysisCompleted(List<RegistryKeyInfo> results)
         {
+            if (results == null) return;
             RegistryAnalysisCompleted?.Invoke(null, new RegistryAnalysisEventArgs(results));
         }
 
         private static void OnProcessMemoryAnalyzed(ProcessMemoryInfo result)
         {
+            if (result == null) return;
             ProcessMemoryAnalyzed?.Invoke(null, new ProcessMemoryEventArgs(result));
         }
 
         private static void OnArtifactAnalysisCompleted(List<DigitalArtifact> artifacts)
         {
+            if (artifacts == null) return;
             ArtifactAnalysisCompleted?.Invoke(null, new ArtifactAnalysisEventArgs(artifacts));
         }
     }
@@ -971,7 +980,7 @@ namespace Cycloside.Services
     /// <summary>
     /// Generate enhanced timeline analysis with correlation
     /// </summary>
-    public static async Task<ForensicsTimeline> GenerateEnhancedTimelineAsync(List<DigitalArtifact> artifacts, CancellationToken token = default)
+    public static Task<ForensicsTimeline> GenerateEnhancedTimelineAsync(List<DigitalArtifact> artifacts, CancellationToken token = default)
     {
         var timeline = new ForensicsTimeline
         {
@@ -1007,7 +1016,7 @@ namespace Cycloside.Services
             Logger.Log($"❌ Timeline generation failed: {ex.Message}");
         }
 
-        return timeline;
+        return Task.FromResult(timeline);
     }
 
     /// <summary>
@@ -1019,98 +1028,97 @@ namespace Cycloside.Services
 
         try
         {
+            var source = artifact.Location;
             switch (artifact.Type)
             {
-                case ArtifactType.BrowserHistory:
-                    var historyEvents = artifact.Data as List<BrowserHistoryEntry>;
-                    if (historyEvents != null)
-                    {
-                        foreach (var entry in historyEvents)
-                        {
-                            events.Add(new TimelineEvent
-                            {
-                                Timestamp = entry.LastVisitTime,
-                                EventType = "Browser Activity",
-                                Description = $"Visited: {entry.Url}",
-                                Severity = "Low",
-                                Category = "Web Activity",
-                                Source = artifact.Source,
-                                ArtifactId = artifact.Id,
-                                Metadata = new Dictionary<string, string>
-                                {
-                                    ["Title"] = entry.Title,
-                                    ["Url"] = entry.Url,
-                                    ["VisitCount"] = entry.VisitCount.ToString()
-                                }
-                            });
-                        }
-                    }
-                    break;
-
-                case ArtifactType.EventLogs:
-                    var logEvents = artifact.Data as List<EventLogEntry>;
-                    if (logEvents != null)
-                    {
-                        foreach (var entry in logEvents)
-                        {
-                            events.Add(new TimelineEvent
-                            {
-                                Timestamp = entry.TimeGenerated,
-                                EventType = "System Event",
-                                Description = $"{entry.Source}: {entry.Message}",
-                                Severity = entry.Level,
-                                Category = "System Logs",
-                                Source = artifact.Source,
-                                ArtifactId = artifact.Id,
-                                Metadata = new Dictionary<string, string>
-                                {
-                                    ["EventId"] = entry.EventId.ToString(),
-                                    ["Category"] = entry.Category
-                                }
-                            });
-                        }
-                    }
-                    break;
-
                 case ArtifactType.NetworkConnections:
-                    var connections = artifact.Data as List<NetworkConnection>;
-                    if (connections != null)
-                    {
-                        foreach (var conn in connections)
-                        {
-                            events.Add(new TimelineEvent
-                            {
-                                Timestamp = conn.EstablishedTime,
-                                EventType = "Network Connection",
-                                Description = $"{conn.LocalAddress}:{conn.LocalPort} → {conn.RemoteAddress}:{conn.RemotePort}",
-                                Severity = conn.IsSuspicious ? "High" : "Low",
-                                Category = "Network Activity",
-                                Source = artifact.Source,
-                                ArtifactId = artifact.Id,
-                                Metadata = new Dictionary<string, string>
-                                {
-                                    ["Protocol"] = conn.Protocol,
-                                    ["State"] = conn.State,
-                                    ["ProcessId"] = conn.ProcessId.ToString()
-                                }
-                            });
-                        }
-                    }
-                    break;
+                {
+                    var md = artifact.Metadata ?? new Dictionary<string, string>();
+                    md.TryGetValue("LocalAddress", out var localAddr);
+                    md.TryGetValue("RemoteAddress", out var remoteAddr);
+                    md.TryGetValue("State", out var state);
 
-                default:
-                    // Generic timeline event for other artifacts
                     events.Add(new TimelineEvent
                     {
-                        Timestamp = artifact.DiscoveredAt,
-                        EventType = artifact.Type.ToString(),
-                        Description = $"Artifact discovered: {artifact.Description}",
-                        Severity = "Medium",
-                        Category = artifact.Type.ToString(),
-                        Source = artifact.Source,
-                        ArtifactId = artifact.Id
+                        Timestamp = artifact.Timestamp,
+                        EventType = "Network Connection",
+                        Description = $"{localAddr} → {remoteAddr} ({state})",
+                        Severity = string.Equals(state, "Established", StringComparison.OrdinalIgnoreCase) ? "Low" : "Medium",
+                        Category = "Network Activity",
+                        Source = source,
+                        ArtifactId = "",
+                        Metadata = md
                     });
                     break;
+                }
+
+                case ArtifactType.BrowserHistory:
+                {
+                    events.Add(new TimelineEvent
+                    {
+                        Timestamp = artifact.Timestamp,
+                        EventType = "Browser History",
+                        Description = artifact.Description,
+                        Severity = "Low",
+                        Category = "Web Activity",
+                        Source = source,
+                        ArtifactId = "",
+                        Metadata = artifact.Metadata ?? new Dictionary<string, string>()
+                    });
+                    break;
+                }
+
+                case ArtifactType.EventLogs:
+                {
+                    events.Add(new TimelineEvent
+                    {
+                        Timestamp = artifact.Timestamp,
+                        EventType = "System Event Log",
+                        Description = artifact.Description,
+                        Severity = "Medium",
+                        Category = "System Logs",
+                        Source = source,
+                        ArtifactId = "",
+                        Metadata = artifact.Metadata ?? new Dictionary<string, string>()
+                    });
+                    break;
+                }
+
+                case ArtifactType.RecentFiles:
+                {
+                    events.Add(new TimelineEvent
+                    {
+                        Timestamp = artifact.Timestamp,
+                        EventType = "Recent File",
+                        Description = artifact.Description,
+                        Severity = "Low",
+                        Category = "File Activity",
+                        Source = source,
+                        ArtifactId = "",
+                        Metadata = new Dictionary<string, string>
+                        {
+                            ["Path"] = artifact.Location,
+                            ["Size"] = artifact.Size.ToString()
+                        }
+                    });
+                    break;
+                }
+
+                default:
+                {
+                    events.Add(new TimelineEvent
+                    {
+                        Timestamp = artifact.Timestamp,
+                        EventType = artifact.Type.ToString(),
+                        Description = $"Artifact: {artifact.Description}",
+                        Severity = "Medium",
+                        Category = artifact.Type.ToString(),
+                        Source = source,
+                        ArtifactId = "",
+                        Metadata = artifact.Metadata ?? new Dictionary<string, string>()
+                    });
+                    break;
+                }
             }
         }
         catch (Exception ex)

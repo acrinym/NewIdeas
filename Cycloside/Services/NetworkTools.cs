@@ -54,6 +54,16 @@ namespace Cycloside.Services
             try
             {
                 await DiscoverNetworkInterfacesAsync();
+                // Subscribe to system network change notifications
+                try
+                {
+                    NetworkChange.NetworkAddressChanged += OnSystemNetworkAddressChanged;
+                    NetworkChange.NetworkAvailabilityChanged += OnSystemNetworkAvailabilityChanged;
+                }
+                catch (Exception subEx)
+                {
+                    Logger.Log($"⚠️ Failed to subscribe to network change events: {subEx.Message}");
+                }
                 Logger.Log("✅ Network Tools initialized successfully");
             }
             catch (Exception ex)
@@ -65,7 +75,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Discover available network interfaces
         /// </summary>
-        private static async Task DiscoverNetworkInterfacesAsync()
+        private static Task DiscoverNetworkInterfacesAsync()
         {
             try
             {
@@ -96,6 +106,7 @@ namespace Cycloside.Services
             {
                 Logger.Log($"❌ Failed to discover network interfaces: {ex.Message}");
             }
+            return Task.CompletedTask;
         }
 
         private static string? GetIPv4Address(NetworkInterface ni)
@@ -195,7 +206,7 @@ namespace Cycloside.Services
 
                     await Task.Delay(100); // Simulate network delay
 
-                    Dispatcher.UIThread.InvokeAsync(() =>
+                    Dispatcher.UIThread.Post(() =>
                     {
                         _capturedPackets.Add(packet);
                         OnPacketCaptured(packet);
@@ -337,7 +348,7 @@ namespace Cycloside.Services
                     var result = await CheckPortAsync(targetHost, port);
                     results.Add(result);
 
-                    Dispatcher.UIThread.InvokeAsync(() =>
+                    Dispatcher.UIThread.Post(() =>
                     {
                         _portScanResults.Add(result);
                         OnPortScanCompleted(result);
@@ -496,7 +507,7 @@ namespace Cycloside.Services
 
                     await Task.Delay(2000); // Simulate request interval
 
-                    Dispatcher.UIThread.InvokeAsync(() =>
+                    Dispatcher.UIThread.Post(() =>
                     {
                         _httpRequests.Add(request);
                         OnHttpRequestCaptured(request);
@@ -606,7 +617,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Restore original MAC address
         /// </summary>
-        public static async Task<bool> RestoreMacAddressAsync(string interfaceName)
+        public static Task<bool> RestoreMacAddressAsync(string interfaceName)
         {
             try
             {
@@ -615,12 +626,12 @@ namespace Cycloside.Services
                 // For demonstration, we'll simulate the restoration
                 // In production, this would restore from backup
                 Logger.Log($"✅ MAC address restored for {interfaceName}");
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
                 Logger.Log($"❌ MAC address restoration failed: {ex.Message}");
-                return false;
+                return Task.FromResult(false);
             }
         }
 
@@ -704,7 +715,7 @@ namespace Cycloside.Services
         /// <summary>
         /// Restore original IP configuration
         /// </summary>
-        public static async Task<bool> RestoreIpConfigurationAsync(string interfaceName)
+        public static Task<bool> RestoreIpConfigurationAsync(string interfaceName)
         {
             try
             {
@@ -713,12 +724,12 @@ namespace Cycloside.Services
                 // For demonstration, we'll simulate the restoration
                 // In production, this would restore from backup
                 Logger.Log($"✅ IP configuration restored for {interfaceName}");
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
                 Logger.Log($"❌ IP configuration restoration failed: {ex.Message}");
-                return false;
+                return Task.FromResult(false);
             }
         }
 
@@ -827,6 +838,43 @@ namespace Cycloside.Services
         private static void OnIpAddressChanged(string interfaceName, string? oldIp, string newIp)
         {
             IpAddressChanged?.Invoke(null, new IpChangeEventArgs(interfaceName, oldIp, newIp));
+        }
+
+        private static void OnNetworkInterfaceChanged(NetworkInterfaceInfo info)
+        {
+            NetworkInterfaceChanged?.Invoke(null, new NetworkInterfaceEventArgs(info));
+        }
+
+        private static void OnSystemNetworkAddressChanged(object? sender, EventArgs e)
+        {
+            // Refresh interfaces off-UI thread, then notify subscribers on UI thread
+            Task.Run(async () =>
+            {
+                await DiscoverNetworkInterfacesAsync();
+                Dispatcher.UIThread.Post(() =>
+                {
+                    foreach (var iface in _networkInterfaces)
+                    {
+                        OnNetworkInterfaceChanged(iface);
+                    }
+                });
+            });
+        }
+
+        private static void OnSystemNetworkAvailabilityChanged(object? sender, NetworkAvailabilityEventArgs e)
+        {
+            // Refresh interfaces off-UI thread, then notify subscribers on UI thread
+            Task.Run(async () =>
+            {
+                await DiscoverNetworkInterfacesAsync();
+                Dispatcher.UIThread.Post(() =>
+                {
+                    foreach (var iface in _networkInterfaces)
+                    {
+                        OnNetworkInterfaceChanged(iface);
+                    }
+                });
+            });
         }
     }
 

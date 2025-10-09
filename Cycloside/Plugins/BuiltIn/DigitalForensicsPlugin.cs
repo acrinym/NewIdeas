@@ -525,7 +525,8 @@ namespace Cycloside.Plugins.BuiltIn
                 if (result != null && result.Any())
                 {
                     var file = result.First();
-                    _filePathInput.Text = file.Path.LocalPath;
+                    if (_filePathInput != null)
+                        _filePathInput.Text = file.Path.LocalPath;
                 }
             }
 

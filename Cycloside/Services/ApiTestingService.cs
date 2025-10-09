@@ -204,7 +204,7 @@ namespace Cycloside.Services
             {
                 request.CollectionId = collectionId;
                 collection.Requests.Add(request);
-                SaveCollectionsAsync();
+                _ = SaveCollectionsAsync();
                 OnApiCollectionUpdated();
             }
         }
@@ -218,7 +218,7 @@ namespace Cycloside.Services
             if (collection != null)
             {
                 collection.Requests.RemoveAll(r => r.Id == requestId);
-                SaveCollectionsAsync();
+                _ = SaveCollectionsAsync();
                 OnApiCollectionUpdated();
             }
         }
@@ -232,7 +232,7 @@ namespace Cycloside.Services
             if (collection != null)
             {
                 _collections.Remove(collection);
-                SaveCollectionsAsync();
+                _ = SaveCollectionsAsync();
                 OnApiCollectionUpdated();
                 Logger.Log($"✅ API collection deleted: {collection.Name}");
             }
