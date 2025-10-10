@@ -20,10 +20,7 @@ public class GlideOpenEffect : IWindowEffect
         window.Opened -= Window_Opened;
     }
 
-    public void ApplyEvent(Window window, string eventName)
-    {
-        // Not used in this effect; behavior is handled in Opened.
-    }
+    public void ApplyEvent(WindowEventType type, object? args) { }
 
     private void Window_Opened(object? sender, EventArgs e)
     {

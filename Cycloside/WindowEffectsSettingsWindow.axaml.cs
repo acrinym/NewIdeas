@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using Cycloside.Plugins;
 using Cycloside.Services;
 using Cycloside.Effects;
@@ -58,7 +59,7 @@ public partial class WindowEffectsSettingsWindow : Window
         if (_componentBox == null) return;
         var items = new List<string> { "Global (*)", "MainWindow" };
         items.AddRange(_manager.Plugins.Select(p => p.Name));
-        _componentBox.Items = items.Distinct().OrderBy(x => x == "Global (*)" ? string.Empty : x).ToList();
+        _componentBox.ItemsSource = items.Distinct().OrderBy(x => x == "Global (*)" ? string.Empty : x).ToList();
     }
 
     private void BuildEffects()
