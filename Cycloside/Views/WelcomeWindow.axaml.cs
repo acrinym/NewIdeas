@@ -20,7 +20,19 @@ namespace Cycloside.Views
 
         public WelcomeWindow()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
+            }
+            catch (NullReferenceException nre)
+            {
+                Cycloside.Services.Logger.Error($"💥 WelcomeWindow XAML load NullReference handled: {nre.Message}");
+            }
+            catch (Exception ex)
+            {
+                Cycloside.Services.Logger.Error($"💥 WelcomeWindow XAML load error: {ex.Message}");
+            }
+
             InitializeConfiguration();
             SetupEventHandlers();
         }
@@ -32,6 +44,19 @@ namespace Cycloside.Views
 
         private void LoadPluginsConfiguration()
         {
+            // Ensure tri-state controls start from a known state
+            try
+            {
+                if (PowerShellRadio != null) PowerShellRadio.IsChecked = false;
+                if (HackerTerminalRadio != null) HackerTerminalRadio.IsChecked = false;
+                if (DontShowAgainCheckBox != null)
+                    DontShowAgainCheckBox.IsChecked = !ConfigurationManager.IsWelcomeEnabled;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"⚠️ Welcome control pre-init failed: {ex.Message}");
+            }
+
             var availablePlugins = new[]
             {
                 new PluginInfo { Name = "HackerTerminalPlugin", Description = "Professional CMD terminal with hacker tools", IsEnabled = true, LoadOnStartup = false },
@@ -53,23 +78,30 @@ namespace Cycloside.Views
                 plugin.LoadOnStartup = config.LoadOnStartup;
             }
 
-            // Clear existing items and add new ones
-            PluginListControl.Items.Clear();
-            foreach (var plugin in availablePlugins)
+            // Clear and repopulate list if control is present
+            if (PluginListControl != null)
             {
-                var item = CreatePluginItem(plugin);
-                PluginListControl.Items.Add(item);
-            }
-
-            // Set terminal preference
-            var preferredTerminal = ConfigurationManager.CurrentConfig.PreferredTerminal;
-            if (preferredTerminal.Equals("PowerShell", StringComparison.OrdinalIgnoreCase))
-            {
-                PowerShellRadio.IsChecked = true;
+                PluginListControl.Items.Clear();
+                foreach (var plugin in availablePlugins)
+                {
+                    var item = CreatePluginItem(plugin);
+                    PluginListControl.Items.Add(item);
+                }
             }
             else
             {
-                HackerTerminalRadio.IsChecked = true;
+                Logger.Log("⚠️ PluginListControl not found in WelcomeWindow layout");
+            }
+
+            // Set terminal preference
+            var preferredTerminal = ConfigurationManager.CurrentConfig?.PreferredTerminal ?? "PowerShell";
+            if (string.Equals(preferredTerminal, "PowerShell", StringComparison.OrdinalIgnoreCase))
+            {
+                if (PowerShellRadio != null) PowerShellRadio.IsChecked = true;
+            }
+            else
+            {
+                if (HackerTerminalRadio != null) HackerTerminalRadio.IsChecked = true;
             }
         }
 

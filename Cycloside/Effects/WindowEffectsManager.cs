@@ -23,6 +23,19 @@ public class WindowEffectsManager
         RegisterEffect(new WobblyWindowEffect());
         RegisterEffect(new TransparencyEffect());
         RegisterEffect(new ShadowEffect());
+        RegisterEffect(new GlideOpenEffect());
+        RegisterEffect(new BurnCloseEffect());
+        RegisterEffect(new DodgeFocusEffect());
+        RegisterEffect(new BlurInactiveEffect());
+        RegisterEffect(new GlideRightOpenEffect());
+        RegisterEffect(new GlideDownOpenEffect());
+        RegisterEffect(new GlideUpOpenEffect());
+        RegisterEffect(new GlideLeftOpenEffect());
+        RegisterEffect(new BlurWindowsEffect());
+        RegisterEffect(new MagicLampMinimizeEffect());
+        RegisterEffect(new BeamUpMinimizeEffect());
+        RegisterEffect(new DreamOpenEffect());
+        RegisterEffect(new ExplodeCloseEffectV2());
 
         var path = Path.Combine(AppContext.BaseDirectory, "Effects");
         LoadEffectPlugins(path);
@@ -31,6 +44,11 @@ public class WindowEffectsManager
     public void RegisterEffect(IWindowEffect effect)
     {
         _registered[effect.Name] = effect;
+    }
+
+    public IEnumerable<string> GetRegisteredEffectNames()
+    {
+        return _registered.Keys.OrderBy(n => n).ToArray();
     }
 
     public void LoadEffectPlugins(string directory)

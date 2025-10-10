@@ -6,6 +6,18 @@
         Width="400" Height="300"
         Title="Cycloside Control Panel">
     <TabControl>
+        <TabItem Header="Profiles">
+            <DockPanel Margin="10" LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Apply" Command="{Binding ApplyProfileCommand}"/>
+                    <Button Content="Edit" Command="{Binding EditProfilesCommand}"/>
+                    <Button Content="New" Command="{Binding NewProfileCommand}"/>
+                    <Button Content="Delete" Command="{Binding DeleteProfileCommand}"/>
+                </StackPanel>
+                <ListBox ItemsSource="{Binding ProfileNames}"
+                         SelectedItem="{Binding SelectedProfile}"/>
+            </DockPanel>
+        </TabItem>
         <TabItem Header="General">
             <StackPanel Margin="10" Spacing="8">
                 <CheckBox Content="Launch at Startup"
@@ -24,6 +36,8 @@
             <StackPanel Margin="10" Spacing="8">
                 <Button Content="Open Plugin Manager..."
                         Command="{Binding OpenPluginManagerCommand}"/>
+                <Button Content="Attach Enabled Workspace Plugins"
+                        Command="{Binding AttachAllToWorkspaceCommand}"/>
             </StackPanel>
         </TabItem>
         <TabItem Header="Appearance">
@@ -32,6 +46,9 @@
                         Command="{Binding OpenThemeSettingsCommand}"/>
                 <Button Content="Skin/Theme Editor..."
                         Command="{Binding OpenSkinEditorCommand}"/>
+                <Separator/>
+                <Button Content="Window Effects Settings..."
+                        Command="{Binding OpenWindowEffectsSettingsCommand}"/>
             </StackPanel>
         </TabItem>
         <TabItem Header="Runtime">

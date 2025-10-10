@@ -29,11 +29,34 @@ namespace Cycloside.Services
         public static ObservableCollection<DatabaseConnection> Connections => _connections;
         public static ObservableCollection<QueryResult> QueryHistory => _queryHistory;
 
-        static DatabaseManager()
+        // Lazy provider registration to avoid type-load crashes during static initialization
+        private static bool _providersRegistered;
+        private static readonly object _providersLock = new();
+
+        private static void EnsureProvidersRegistered()
         {
-            // Register database providers
-            _providers["sqlserver"] = Microsoft.Data.SqlClient.SqlClientFactory.Instance;
-            _providers["sqlite"] = Microsoft.Data.Sqlite.SqliteFactory.Instance;
+            if (_providersRegistered) return;
+            lock (_providersLock)
+            {
+                if (_providersRegistered) return;
+                try
+                {
+                    _providers["sqlserver"] = Microsoft.Data.SqlClient.SqlClientFactory.Instance;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"❌ SqlClient factory registration failed: {ex.Message}");
+                }
+                try
+                {
+                    _providers["sqlite"] = Microsoft.Data.Sqlite.SqliteFactory.Instance;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"❌ Sqlite factory registration failed: {ex.Message}");
+                }
+                _providersRegistered = true;
+            }
         }
 
         /// <summary>
@@ -45,6 +68,8 @@ namespace Cycloside.Services
 
             try
             {
+                // Ensure provider factories are registered in a controlled, catchable context
+                EnsureProvidersRegistered();
                 // Load saved connections
                 await LoadConnectionsAsync();
 
@@ -111,6 +136,7 @@ namespace Cycloside.Services
         {
             try
             {
+                EnsureProvidersRegistered();
                 if (!_providers.TryGetValue(connection.Provider.ToLower(), out var factory))
                 {
                     Logger.Log($"❌ Unsupported database provider: {connection.Provider}");
@@ -154,6 +180,7 @@ namespace Cycloside.Services
                 Logger.Log($"🗄️ Executing query on {connection.Name}...");
 
                 var providerKey = connection.Provider?.ToLower();
+                EnsureProvidersRegistered();
                 if (providerKey == null || !_providers.TryGetValue(providerKey, out var factory))
                 {
                     OnDatabaseError($"Unsupported database provider: {connection.Provider}");
@@ -260,6 +287,7 @@ namespace Cycloside.Services
                 Logger.Log($"🗄️ Getting schema for {connection.Name}...");
 
                 var providerKey = connection.Provider?.ToLower();
+                EnsureProvidersRegistered();
                 if (providerKey == null || !_providers.TryGetValue(providerKey, out var factory))
                 {
                     OnDatabaseError($"Unsupported database provider: {connection.Provider}");

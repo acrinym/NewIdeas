@@ -11,6 +11,25 @@ the main window's **Settings** menu.
 - Access runtime settings for plugin isolation and crash logging.
 - Enable Safe Mode per built-in plugin when needed.
 
+### Window Effects Settings
+
+The Appearance tab includes **Window Effects Settings…** to configure Compiz‑style effects.
+
+- Target selection: choose **Global (*)** to apply effects to all windows, or a specific component like `MainWindow` or a plugin name.
+- Effects list: check any available effect (e.g., `RollUp`, `Wobbly`, `Transparency`, `Shadow`, `ZoomOpen`, `ExplodeOnClose`).
+- Save applies changes to `SettingsManager.Settings.WindowEffects` and persists to `settings.json`.
+
+Example configuration in `settings.json`:
+
+```
+"WindowEffects": {
+  "*": ["Transparency", "Shadow"],
+  "MainWindow": ["Wobbly"],
+  "PluginDevWizard": ["ZoomOpen"],
+  "VolatileRunnerWindow": ["ExplodeOnClose"]
+}
+```
+
 Changes are saved back to `settings.json` when you press **Save**.
 
 Note: Managed Visual Host options (native colors, preset theme, sensitivity, and per‑visualizer settings)

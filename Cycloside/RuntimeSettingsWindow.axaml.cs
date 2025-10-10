@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Cycloside.Services;
+using Avalonia.Threading;
 
 namespace Cycloside;
 
@@ -35,6 +36,14 @@ public partial class RuntimeSettingsWindow : Window
             }
         }
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(RuntimeSettingsWindow));
+
+        // Hook PowerShell status updates to UI
+        var statusBlock = this.FindControl<TextBlock>("PwshStatusBlock");
+        PowerShellManager.StatusChanged += (_, msg) =>
+        {
+            if (statusBlock != null)
+                Dispatcher.UIThread.Post(() => statusBlock.Text = msg);
+        };
     }
 
     // Parameterless constructor for designer support
@@ -68,5 +77,39 @@ public partial class RuntimeSettingsWindow : Window
         }
         SettingsManager.Save();
         Close();
+    }
+
+    private async void OnInstallPowerShell(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var installBtn = this.FindControl<Button>("InstallPwshButton");
+        var updateBtn = this.FindControl<Button>("UpdatePwshButton");
+        var status = this.FindControl<TextBlock>("PwshStatusBlock");
+        var arg = this.FindControl<TextBox>("IexArgsBox")?.Text;
+
+        if (installBtn != null) installBtn.IsEnabled = false;
+        if (updateBtn != null) updateBtn.IsEnabled = false;
+        if (status != null) status.Text = "📥 Installing PowerShell...";
+
+        await PowerShellManager.InstallPowerShellViaIexAsync(string.IsNullOrWhiteSpace(arg) ? null : arg);
+
+        if (installBtn != null) installBtn.IsEnabled = true;
+        if (updateBtn != null) updateBtn.IsEnabled = true;
+    }
+
+    private async void OnUpdatePowerShell(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var installBtn = this.FindControl<Button>("InstallPwshButton");
+        var updateBtn = this.FindControl<Button>("UpdatePwshButton");
+        var status = this.FindControl<TextBlock>("PwshStatusBlock");
+        var arg = this.FindControl<TextBox>("IexArgsBox")?.Text;
+
+        if (installBtn != null) installBtn.IsEnabled = false;
+        if (updateBtn != null) updateBtn.IsEnabled = false;
+        if (status != null) status.Text = "🔄 Updating PowerShell...";
+
+        await PowerShellManager.UpdatePowerShellAsync(string.IsNullOrWhiteSpace(arg) ? null : arg);
+
+        if (installBtn != null) installBtn.IsEnabled = true;
+        if (updateBtn != null) updateBtn.IsEnabled = true;
     }
 }

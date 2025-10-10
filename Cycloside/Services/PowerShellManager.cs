@@ -139,7 +139,7 @@ namespace Cycloside.Services
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = path,
-                    Arguments = "-Command \"$PSVersionTable.PSVersion\"",
+                    Arguments = "-NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command \"$PSVersionTable.PSVersion\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -233,7 +233,7 @@ namespace Cycloside.Services
             var startInfo = new ProcessStartInfo
             {
                 FileName = executable,
-                Arguments = $"-Command \"{command}\"",
+                Arguments = $"-NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command \"{command}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -371,6 +371,112 @@ namespace Cycloside.Services
         }
 
         /// <summary>
+        /// Install PowerShell using iex or a provided script/URL, saving assets to %appdata%\..\Local\Temp
+        /// </summary>
+        /// <param name="iexScriptOrUrl">Optional script or URL to pipe to iex. If URL ends with .msi, downloads to temp and installs via msiexec.</param>
+        public static async Task<bool> InstallPowerShellViaIexAsync(string? iexScriptOrUrl = null)
+        {
+            try
+            {
+                LogStatus("📥 Installing PowerShell via iex...");
+
+                var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var tempTarget = Path.GetFullPath(Path.Combine(roaming, "..", "Local", "Temp"));
+                Directory.CreateDirectory(tempTarget);
+
+                var ps1Path = Path.Combine(tempTarget, "install-pwsh.ps1");
+
+                var scriptBuilder = new StringBuilder();
+                scriptBuilder.AppendLine("$ErrorActionPreference = 'Stop'");
+                scriptBuilder.AppendLine("$ProgressPreference = 'SilentlyContinue'");
+                scriptBuilder.AppendLine("$temp = [IO.Path]::GetFullPath((Join-Path $env:APPDATA '..\\Local\\Temp'))");
+                scriptBuilder.AppendLine("New-Item -ItemType Directory -Force -Path $temp | Out-Null");
+
+                if (!string.IsNullOrWhiteSpace(iexScriptOrUrl))
+                {
+                    if (iexScriptOrUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (iexScriptOrUrl.EndsWith(".msi", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Download MSI to temp and install silently
+                            scriptBuilder.AppendLine($"$msi = Join-Path $temp 'PowerShellSetup.msi'");
+                            scriptBuilder.AppendLine($"Invoke-WebRequest -Uri '{iexScriptOrUrl}' -OutFile $msi");
+                            scriptBuilder.AppendLine("Start-Process 'msiexec.exe' -ArgumentList \"/i `\"$msi`\" /quiet /norestart\" -Verb RunAs -Wait");
+                        }
+                        else
+                        {
+                            // Pipe remote script to iex
+                            scriptBuilder.AppendLine($"Invoke-WebRequest -UseBasicParsing '{iexScriptOrUrl}' | Invoke-Expression");
+                        }
+                    }
+                    else
+                    {
+                        // Treat as inline script/command
+                        var escaped = iexScriptOrUrl.Replace("'", "''");
+                        scriptBuilder.AppendLine($"Invoke-Expression '{escaped}'");
+                    }
+                }
+                else
+                {
+                    // Default: fetch latest MSI from GitHub Releases and install
+                    scriptBuilder.AppendLine("$arch = if ([Environment]::Is64BitOperatingSystem) { 'win-x64' } else { 'win-x86' }");
+                    scriptBuilder.AppendLine("$release = Invoke-RestMethod -Uri 'https://api.github.com/repos/PowerShell/PowerShell/releases/latest' -Headers @{ 'User-Agent' = 'Cycloside' }");
+                    scriptBuilder.AppendLine("$asset = $release.assets | Where-Object { $_.name -match \"PowerShell-.*-$arch\\.msi$\" } | Select-Object -First 1");
+                    scriptBuilder.AppendLine("if (-not $asset) { Write-Error 'No MSI asset found for architecture.' }");
+                    scriptBuilder.AppendLine("$msiOut = Join-Path $temp $asset.name");
+                    scriptBuilder.AppendLine("Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $msiOut");
+                    scriptBuilder.AppendLine("Start-Process 'msiexec.exe' -ArgumentList \"/i `\"$msiOut`\" /quiet /norestart\" -Verb RunAs -Wait");
+                }
+
+                await File.WriteAllTextAsync(ps1Path, scriptBuilder.ToString());
+
+                // Prefer Windows PowerShell to run the installer script (available by default)
+                var winPs = @"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+                var runner = File.Exists(winPs) ? winPs : _powerShellPath ?? "powershell.exe";
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = runner,
+                    Arguments = $"-NoLogo -NoProfile -ExecutionPolicy Bypass -File \"{ps1Path}\"",
+                    UseShellExecute = true,
+                    Verb = "runas",
+                    WorkingDirectory = tempTarget,
+                };
+
+                using var proc = Process.Start(startInfo)!;
+                await proc.WaitForExitAsync();
+
+                var ok = proc.ExitCode == 0;
+                if (ok)
+                {
+                    LogStatus("✅ PowerShell installation via iex completed");
+                    await DetectPowerShellAsync();
+                }
+                else
+                {
+                    LogStatus($"❌ PowerShell installation via iex failed (exit code {proc.ExitCode})");
+                }
+
+                return ok;
+            }
+            catch (Exception ex)
+            {
+                LogStatus($"❌ PowerShell iex installation error: {ex.Message}");
+                Logger.Log($"IEX Installation error: {ex}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update PowerShell by fetching latest release and installing (same logic as install)
+        /// </summary>
+        public static Task<bool> UpdatePowerShellAsync(string? iexScriptOrUrl = null)
+        {
+            LogStatus("🔄 Updating PowerShell...");
+            return InstallPowerShellViaIexAsync(iexScriptOrUrl);
+        }
+
+        /// <summary>
         /// Download PowerShell installer
         /// </summary>
         private static Task<string?> DownloadPowerShellInstallerAsync()
@@ -456,7 +562,7 @@ namespace Cycloside.Services
                 return null;
             }
 
-            var command = $"-File \"{scriptPath}\"";
+            var command = $"& \"{scriptPath}\"";
             return await ExecutePowerShellCommandAsync(command, requireElevation);
         }
 
@@ -471,8 +577,8 @@ namespace Cycloside.Services
                 return null;
             }
 
-            var command = $"-Command \"{scriptContent.Replace("\"", "\\\"").Replace("\n", "; ")}\"";
-            return await ExecutePowerShellCommandAsync(command, requireElevation);
+            var commandText = $"{scriptContent.Replace("\"", "\\\"").Replace("\n", "; ")}";
+            return await ExecutePowerShellCommandAsync(commandText, requireElevation);
         }
 
         /// <summary>

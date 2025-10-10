@@ -1,13 +1,24 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Cycloside.RuntimeSettingsWindow"
-        Width="300" Height="400"
+        Width="300" Height="460"
         Title="Runtime Settings">
     <StackPanel Margin="10" Spacing="8">
         <CheckBox x:Name="IsolationBox" Content="Plugin Isolation"/>
         <CheckBox x:Name="CrashLogBox" Content="Crash Logging"/>
         <CheckBox x:Name="BuiltInBox" Content="Disable Built-in Plugins (Safe Mode)"/>
         <StackPanel x:Name="SafePanel"/>
+
+        <Separator/>
+        <TextBlock Text="PowerShell"/>
+        <TextBox x:Name="IexArgsBox" Watermark="Install script or URL (optional)"/>
+        <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button x:Name="InstallPwshButton" Content="Install PowerShell" Click="OnInstallPowerShell"/>
+            <Button x:Name="UpdatePwshButton" Content="Update PowerShell" Click="OnUpdatePowerShell"/>
+        </StackPanel>
+        <TextBlock x:Name="PwshStatusBlock" TextWrapping="Wrap"/>
+
+        <Separator/>
         <Button Content="Save" HorizontalAlignment="Right" Click="OnSave"/>
     </StackPanel>
 </Window>

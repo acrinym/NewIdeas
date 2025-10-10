@@ -229,7 +229,16 @@ namespace Cycloside.Plugins
         {
             lock (_pluginLock)
             {
-                var instance = factory();
+                IPlugin instance;
+                try
+                {
+                    instance = factory();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"Failed to instantiate built-in plugin: {ex}");
+                    return; // Skip faulty plugin
+                }
                 if (!_builtInFactories.ContainsKey(instance.Name))
                 {
                     _builtInFactories[instance.Name] = factory;
@@ -244,7 +253,14 @@ namespace Cycloside.Plugins
         {
             foreach (var factory in _builtInFactories.Values)
             {
-                AddPlugin(factory());
+                try
+                {
+                    AddPlugin(factory());
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"Failed to load built-in plugin during reload: {ex}");
+                }
             }
         }
 

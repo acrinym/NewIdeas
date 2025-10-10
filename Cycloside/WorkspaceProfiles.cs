@@ -13,6 +13,8 @@ public class WorkspaceProfile
     public Dictionary<string, bool> Plugins { get; set; } = new();
     public string Wallpaper { get; set; } = string.Empty;
     public string Theme { get; set; } = string.Empty;
+    // Names of plugins currently open as workspace tabs for this profile
+    public List<string> WorkspaceTabs { get; set; } = new();
 }
 
 public static class WorkspaceProfiles
@@ -98,5 +100,30 @@ public static class WorkspaceProfiles
 
         profile.Plugins[pluginName] = enabled;
         Save();
+    }
+
+    /// <summary>
+    /// Updates the saved list of workspace tab plugin names for a profile.
+    /// </summary>
+    public static void UpdateWorkspaceTabs(string profileName, IEnumerable<string> pluginNames)
+    {
+        if (!_profiles.TryGetValue(profileName, out var profile))
+            return;
+
+        profile.WorkspaceTabs = new List<string>(pluginNames);
+        Save();
+    }
+
+    /// <summary>
+    /// Gets the saved workspace tab plugin names for a profile.
+    /// Returns empty list if none saved.
+    /// </summary>
+    public static IReadOnlyList<string> GetWorkspaceTabs(string profileName)
+    {
+        if (_profiles.TryGetValue(profileName, out var profile) && profile.WorkspaceTabs != null)
+        {
+            return profile.WorkspaceTabs;
+        }
+        return Array.Empty<string>();
     }
 }

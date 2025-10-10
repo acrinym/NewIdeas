@@ -37,7 +37,19 @@ public partial class App : Application
 
     public override void Initialize()
     {
-        AvaloniaXamlLoader.Load(this);
+        try
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
+        catch (NullReferenceException nre)
+        {
+            // Guard against instacrash if XAML triggers a null unboxing during app-level resource load
+            Services.Logger.Error($"💥 App.Initialize XAML load NullReference handled: {nre.Message}");
+        }
+        catch (Exception ex)
+        {
+            Services.Logger.Error($"💥 App.Initialize XAML load error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -255,6 +267,28 @@ public partial class App : Application
             return;
         }
 
+        // Prevent instant exit when no window is open (e.g., tray-only start)
+        try
+        {
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            Logger.Log("🛡️ ShutdownMode set to OnExplicitShutdown to keep app alive without windows");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"⚠️ Failed to set ShutdownMode: {ex.Message}");
+        }
+
+        // Hook UI dispatcher exception events to capture and log crash details
+        try
+        {
+            Avalonia.Threading.Dispatcher.UIThread.UnhandledExceptionFilter += OnDispatcherUnhandledExceptionFilter;
+            Avalonia.Threading.Dispatcher.UIThread.UnhandledException += OnDispatcherUnhandledException;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"⚠️ Failed to register UI exception handlers: {ex.Message}");
+        }
+
         var settings = SettingsManager.Settings;
         ThemeManager.InitializeFromSettings();
 
@@ -351,7 +385,38 @@ public partial class App : Application
             {
                 Logger.Log($"❌ Main window creation failed: {ex.Message}");
                 Logger.Log($"Stack trace: {ex.StackTrace}");
-                throw; // Re-throw to fail fast
+                try
+                {
+                    Logger.Log("🔄 Attempting emergency main window creation...");
+                    _mainWindow = new MainWindow();
+                    desktop.MainWindow = _mainWindow;
+                    _mainWindow.Show();
+                    Logger.Log("✅ Emergency main window created");
+                }
+                catch (Exception emergencyEx)
+                {
+                    Logger.Log($"💥 Emergency fallback also failed: {emergencyEx.Message}");
+                    Logger.Log("🚨 Cannot create main window - exiting application");
+                    Environment.Exit(1);
+                }
+            }
+        }
+
+        // Final safeguard: ensure a desktop window is present to keep lifetime active
+        if (desktop.MainWindow == null)
+        {
+            try
+            {
+                Logger.Log("🛡️ No MainWindow detected after initialization, creating fallback window");
+                _mainWindow = new MainWindow();
+                desktop.MainWindow = _mainWindow;
+                _mainWindow.Show();
+                Logger.Log("✅ Fallback main window created and shown");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"💥 Fallback creation failed: {ex.Message}");
+                Environment.Exit(1);
             }
         }
 
@@ -367,6 +432,57 @@ public partial class App : Application
         _ = StartPeriodicCleanup();
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void OnDispatcherUnhandledExceptionFilter(object? sender, Avalonia.Threading.DispatcherUnhandledExceptionFilterEventArgs args)
+    {
+        try
+        {
+            var ex = args.Exception;
+            Logger.Log($"🚨 UI first-chance exception: {ex.Message}");
+            Logger.Log($"Stack trace: {ex.StackTrace}");
+            // Request catching so UnhandledException event can log details without crashing immediately
+            args.RequestCatch = true;
+        }
+        catch (Exception logEx)
+        {
+            Logger.Log($"⚠️ Failed logging UI first-chance exception: {logEx.Message}");
+        }
+    }
+
+    private void OnDispatcherUnhandledException(object? sender, Avalonia.Threading.DispatcherUnhandledExceptionEventArgs args)
+    {
+        try
+        {
+            var ex = args.Exception;
+            Logger.Log($"💥 UI unhandled exception: {ex}");
+
+            // Prevent instacrash when Avalonia/internal binding unboxes null to value type.
+            // Handle only the known NullReference at CastHelpers.Unbox to keep app stable.
+            try
+            {
+                var target = ex.TargetSite;
+                var declaring = target?.DeclaringType?.FullName ?? string.Empty;
+                var name = target?.Name ?? string.Empty;
+                var isKnownNullRef = ex is NullReferenceException &&
+                                     (declaring.Contains("System.Runtime.CompilerServices.CastHelpers") || name.Contains("Unbox") ||
+                                      (ex.StackTrace?.Contains("CastHelpers.Unbox") ?? false));
+
+                if (isKnownNullRef)
+                {
+                    Logger.Log("🛡️ Handled known UI NullReference from CastHelpers.Unbox to prevent crash");
+                    args.Handled = true;
+                }
+            }
+            catch (Exception guardEx)
+            {
+                Logger.Log($"⚠️ Failed to evaluate UI exception for handling: {guardEx.Message}");
+            }
+        }
+        catch (Exception logEx)
+        {
+            Logger.Log($"⚠️ Failed logging UI unhandled exception: {logEx.Message}");
+        }
     }
 
     private MainWindow CreateMainWindow(AppSettings settings)
@@ -576,7 +692,17 @@ public partial class App : Application
     {
         void TryAdd(Func<IPlugin> factory)
         {
-            var plugin = factory();
+            IPlugin? plugin = null;
+            try
+            {
+                plugin = factory();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"⚠️ Plugin factory threw during inspection: {ex.Message}");
+                Logger.Log($"Stack trace: {ex.StackTrace}");
+                return; // Skip broken plugin to keep app running
+            }
 
             // Check if plugin should be loaded based on configuration
             bool shouldLoad = false;
@@ -595,8 +721,15 @@ public partial class App : Application
 
             if (shouldLoad)
             {
-                manager.AddBuiltInPlugin(factory);
-                Logger.Log($"✅ Loading plugin: {plugin.Name}");
+                try
+                {
+                    manager.AddBuiltInPlugin(factory);
+                    Logger.Log($"✅ Loading plugin: {plugin.Name}");
+                }
+                catch (Exception addEx)
+                {
+                    Logger.Log($"❌ Failed to add plugin {plugin.Name}: {addEx.Message}");
+                }
             }
             else
             {
@@ -695,30 +828,43 @@ public partial class App : Application
     private void SaveSessionState()
     {
         if (_mainViewModel == null) return;
-        var names = string.Join(';', _mainViewModel.WorkspaceItems.Select(w => w.Plugin.Name));
-        StateManager.Set("LastWorkspace", names);
+        try
+        {
+            var names = _mainViewModel.WorkspaceItems.Select(w => w.Plugin.Name).ToList();
+            WorkspaceProfiles.UpdateWorkspaceTabs(SettingsManager.Settings.ActiveProfile, names);
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"⚠️ Failed to save workspace layout: {ex.Message}");
+        }
     }
 
     private void RestoreSessionState(MainWindowViewModel vm)
     {
         if (_pluginManager == null) return;
-        var data = StateManager.Get("LastWorkspace");
-        if (string.IsNullOrWhiteSpace(data)) return;
-        foreach (var name in data.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        try
         {
-            var plugin = _pluginManager.Plugins.FirstOrDefault(p => p.Name == name);
-            if (plugin is IWorkspaceItem ws)
+            var tabs = WorkspaceProfiles.GetWorkspaceTabs(SettingsManager.Settings.ActiveProfile);
+            foreach (var name in tabs)
             {
-                ws.UseWorkspace = true;
-                _pluginManager.EnablePlugin(plugin);
-                var view = ws.BuildWorkspaceView();
-                var vmItem = new WorkspaceItemViewModel(plugin.Name, view, plugin, DetachWorkspaceItem);
-                vm.WorkspaceItems.Add(vmItem);
+                var plugin = _pluginManager.Plugins.FirstOrDefault(p => p.Name == name);
+                if (plugin is IWorkspaceItem ws)
+                {
+                    ws.UseWorkspace = true;
+                    _pluginManager.EnablePlugin(plugin);
+                    var view = ws.BuildWorkspaceView();
+                    var vmItem = new WorkspaceItemViewModel(plugin.Name, view, plugin, DetachWorkspaceItem);
+                    vm.WorkspaceItems.Add(vmItem);
+                }
+                else if (plugin != null)
+                {
+                    _pluginManager.EnablePlugin(plugin);
+                }
             }
-            else if (plugin != null)
-            {
-                _pluginManager.EnablePlugin(plugin);
-            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"⚠️ Failed to restore workspace layout: {ex.Message}");
         }
     }
 

@@ -1,6 +1,7 @@
 using Avalonia;
 using System;
 using System.IO;
+using System.Runtime.ExceptionServices;
 
 namespace Cycloside;
 
@@ -23,6 +24,59 @@ class Program
         {
             if (e.ExceptionObject is Exception ex)
                 Logger.Log($"Unhandled: {ex}");
+        };
+        AppDomain.CurrentDomain.FirstChanceException += (_, e) =>
+        {
+            var ex = e.Exception;
+            // Early exception tracing to catch type-load and static ctor issues
+            try
+            {
+                var typeName = ex.GetType().FullName ?? ex.GetType().Name;
+                var addl = ex is NullReferenceException ? " [NullRef]" : string.Empty;
+
+                // Build log message defensively to avoid property access exceptions
+                var msg = $"FirstChance{addl}: {typeName}: {ex.Message}";
+
+                // Source (safe)
+                try
+                {
+                    var src = ex.Source;
+                    if (!string.IsNullOrWhiteSpace(src))
+                        msg += $"\nSource: {src}";
+                }
+                catch { /* ignore */ }
+
+                // TargetSite (safe) — method and declaring type
+                try
+                {
+                    var site = ex.TargetSite;
+                    if (site != null)
+                    {
+                        string decl = "<unknown>";
+                        string name = "<unknown>";
+                        try { decl = site.DeclaringType?.FullName ?? "<unknown>"; } catch { }
+                        try { name = site.Name ?? "<unknown>"; } catch { }
+                        msg += $"\nTargetSite: {decl}.{name}";
+                    }
+                }
+                catch { /* ignore */ }
+
+                // Stack trace (safe)
+                try
+                {
+                    var st = ex.StackTrace;
+                    if (!string.IsNullOrWhiteSpace(st))
+                        msg += $"\n{st}";
+                }
+                catch { /* ignore */ }
+
+                Logger.Log(msg);
+            }
+            catch
+            {
+                // Fallback to original logging if enhanced details fail
+                Logger.Log($"FirstChance: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+            }
         };
         System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, e) =>
         {
