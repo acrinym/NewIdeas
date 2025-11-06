@@ -796,7 +796,7 @@ public partial class App : Application
         TryAdd(() => new NotificationCenterPlugin());
         TryAdd(() => new EnvironmentEditorPlugin());
         TryAdd(() => new FileExplorerPlugin());
-        TryAdd(() => new QuickLauncherPlugin());
+        TryAdd(() => new QuickLauncherPlugin(manager));
         TryAdd(() => new JezzballPlugin());
         TryAdd(() => new QBasicRetroIDEPlugin());
         TryAdd(() => new ScreenSaverPlugin());
@@ -887,7 +887,7 @@ public partial class App : Application
         TryAdd(() => new NotificationCenterPlugin());
         TryAdd(() => new EnvironmentEditorPlugin());
         TryAdd(() => new FileExplorerPlugin());
-        TryAdd(() => new QuickLauncherPlugin());
+        TryAdd(() => new QuickLauncherPlugin(manager));
         TryAdd(() => new JezzballPlugin());
         TryAdd(() => new QBasicRetroIDEPlugin());
         TryAdd(() => new ScreenSaverPlugin());
