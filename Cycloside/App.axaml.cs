@@ -526,6 +526,10 @@ public partial class App : Application
 
         var volatileManager = new VolatilePluginManager();
 
+        // Initialize window positioning service with startup configuration
+        Services.WindowPositioningService.Instance.Initialize(settings.StartupConfig);
+        Logger.Log("✅ WindowPositioningService initialized");
+
         // Load plugins based on saved startup configuration
         LoadPluginsFromConfiguration(_pluginManager, settings);
         _pluginManager.StartWatching();
@@ -844,7 +848,10 @@ public partial class App : Application
                     manager.AddBuiltInPlugin(factory);
                     Logger.Log($"✅ Loading enabled plugin: {plugin.Name}");
 
-                    // TODO: Apply window position from config.GetPluginPosition(plugin.Name)
+                    // Window positions are applied automatically when plugins call
+                    // WindowEffectsManager.Instance.ApplyConfiguredEffects(window, pluginName)
+                    // in their Start() methods. The WindowPositioningService reads from
+                    // the startup configuration and applies saved positions seamlessly.
                 }
                 catch (Exception addEx)
                 {
