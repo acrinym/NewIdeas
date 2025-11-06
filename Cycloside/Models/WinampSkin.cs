@@ -39,8 +39,23 @@ public class WinampSkin
     /// <summary>Volume/Balance slider bitmaps</summary>
     public Bitmap? VolumeBitmap { get; set; }
 
+    /// <summary>Balance slider bitmap</summary>
+    public Bitmap? BalanceBitmap { get; set; }
+
+    /// <summary>Control buttons bitmap (play/pause/stop/etc)</summary>
+    public Bitmap? ControlButtonsBitmap { get; set; }
+
+    /// <summary>Shuffle/Repeat buttons bitmap</summary>
+    public Bitmap? ShuffleRepeatBitmap { get; set; }
+
     /// <summary>Numbers bitmap (time display)</summary>
     public Bitmap? NumbersBitmap { get; set; }
+
+    /// <summary>Extended numbers bitmap (alternative time display)</summary>
+    public Bitmap? NumbersExBitmap { get; set; }
+
+    /// <summary>Text/title bar font bitmap</summary>
+    public Bitmap? TextBitmap { get; set; }
 
     /// <summary>PlayPause indicator bitmap</summary>
     public Bitmap? PlayPauseBitmap { get; set; }
@@ -71,19 +86,20 @@ public class WinampSkinParser
 {
     private static readonly string[] KnownBitmapFiles = new[]
     {
-        "main.bmp",      // Main window
+        "main.bmp",      // Main window (275x116 for classic skins)
         "pledit.bmp",    // Playlist editor
-        "eqmain.bmp",    // Equalizer
-        "posbar.bmp",    // Position bar
-        "volume.bmp",    // Volume slider
-        "numbers.bmp",   // Time display numbers
-        "playpaus.bmp",  // Play/Pause indicator
-        "monoster.bmp",  // Mono/Stereo indicator
-        "titlebar.bmp",  // Window titlebar
-        "shufrep.bmp",   // Shuffle/Repeat buttons
-        "text.bmp",      // Text font
-        "cbuttons.bmp",  // Control buttons
-        "balance.bmp",   // Balance slider
+        "eqmain.bmp",    // Equalizer window
+        "posbar.bmp",    // Position/seek bar (16,72 position, 248x10 size)
+        "volume.bmp",    // Volume slider (107,57 position, 68x13 size)
+        "balance.bmp",   // Balance slider (177,57 position, 38x13 size)
+        "cbuttons.bmp",  // Control buttons (16,88 position, 114x18 size)
+        "shufrep.bmp",   // Shuffle/Repeat buttons (164,89 and 211,89 positions)
+        "numbers.bmp",   // Time display numbers (48,26; 60,26; 78,26; 90,26 positions, 9x13 each)
+        "nums_ex.bmp",   // Extended/alternative numbers
+        "text.bmp",      // Song title text font (111,24 position, 154x12 size)
+        "playpaus.bmp",  // Play/Pause indicator (24,28 and 27,28 positions)
+        "monoster.bmp",  // Mono/Stereo indicator (239,41 position, 29x12 size)
+        "titlebar.bmp",  // Window titlebar (0,0 position, 275x14 size)
         "avs.bmp",       // AVS preset button
         "mb.bmp"         // Minibrowser
     };
@@ -140,8 +156,23 @@ public class WinampSkinParser
                         case "volume.bmp":
                             skin.VolumeBitmap = bitmap;
                             break;
+                        case "balance.bmp":
+                            skin.BalanceBitmap = bitmap;
+                            break;
+                        case "cbuttons.bmp":
+                            skin.ControlButtonsBitmap = bitmap;
+                            break;
+                        case "shufrep.bmp":
+                            skin.ShuffleRepeatBitmap = bitmap;
+                            break;
                         case "numbers.bmp":
                             skin.NumbersBitmap = bitmap;
+                            break;
+                        case "nums_ex.bmp":
+                            skin.NumbersExBitmap = bitmap;
+                            break;
+                        case "text.bmp":
+                            skin.TextBitmap = bitmap;
                             break;
                         case "playpaus.bmp":
                             skin.PlayPauseBitmap = bitmap;
@@ -229,8 +260,23 @@ public class WinampSkinParser
                     case "volume.bmp":
                         skin.VolumeBitmap = bitmap;
                         break;
+                    case "balance.bmp":
+                        skin.BalanceBitmap = bitmap;
+                        break;
+                    case "cbuttons.bmp":
+                        skin.ControlButtonsBitmap = bitmap;
+                        break;
+                    case "shufrep.bmp":
+                        skin.ShuffleRepeatBitmap = bitmap;
+                        break;
                     case "numbers.bmp":
                         skin.NumbersBitmap = bitmap;
+                        break;
+                    case "nums_ex.bmp":
+                        skin.NumbersExBitmap = bitmap;
+                        break;
+                    case "text.bmp":
+                        skin.TextBitmap = bitmap;
                         break;
                     case "playpaus.bmp":
                         skin.PlayPauseBitmap = bitmap;

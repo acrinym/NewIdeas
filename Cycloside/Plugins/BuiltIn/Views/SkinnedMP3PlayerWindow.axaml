@@ -33,52 +33,53 @@
         <!-- Clickable UI Elements (positioned over the skin) -->
         <Canvas Name="UICanvas">
 
-            <!-- Previous Button (Classic Winamp position: 16,88) -->
+            <!-- Control Buttons Area (cbuttons.bmp renders here: 16,88, 114x18) -->
+            <!-- Previous Button -->
             <Button Name="PrevButton"
                     Canvas.Left="16" Canvas.Top="88"
                     Width="23" Height="18"
                     ToolTip.Tip="Previous"
                     Command="{Binding PreviousCommand}"/>
 
-            <!-- Play Button (Classic position: 39,88) -->
+            <!-- Play Button -->
             <Button Name="PlayButton"
                     Canvas.Left="39" Canvas.Top="88"
                     Width="23" Height="18"
                     ToolTip.Tip="Play"
                     Command="{Binding PlayCommand}"/>
 
-            <!-- Pause Button (Classic position: 62,88) -->
+            <!-- Pause Button -->
             <Button Name="PauseButton"
                     Canvas.Left="62" Canvas.Top="88"
                     Width="23" Height="18"
                     ToolTip.Tip="Pause"
                     Command="{Binding PauseCommand}"/>
 
-            <!-- Stop Button (Classic position: 85,88) -->
+            <!-- Stop Button -->
             <Button Name="StopButton"
                     Canvas.Left="85" Canvas.Top="88"
                     Width="23" Height="18"
                     ToolTip.Tip="Stop"
                     Command="{Binding StopPlaybackCommand}"/>
 
-            <!-- Next Button (Classic position: 108,88) -->
+            <!-- Next Button -->
             <Button Name="NextButton"
                     Canvas.Left="108" Canvas.Top="88"
                     Width="23" Height="18"
                     ToolTip.Tip="Next"
                     Command="{Binding NextCommand}"/>
 
-            <!-- Eject/Open File Button (Classic position: 136,89) -->
+            <!-- Eject/Open File Button (Classic Winamp position from wszview: 137,89) -->
             <Button Name="OpenButton"
-                    Canvas.Left="136" Canvas.Top="89"
-                    Width="22" Height="16"
+                    Canvas.Left="137" Canvas.Top="89"
+                    Width="22" Height="15"
                     ToolTip.Tip="Open Files"
                     Command="{Binding AddFilesCommand}"/>
 
-            <!-- Time Display Area (Classic position: 36,26) -->
+            <!-- Time Display Area (numbers.bmp digits at: 48,26; 60,26; 78,26; 90,26 - 9x13 each) -->
             <Border Name="TimeDisplay"
-                    Canvas.Left="36" Canvas.Top="26"
-                    Width="60" Height="13"
+                    Canvas.Left="48" Canvas.Top="26"
+                    Width="54" Height="13"
                     Background="#000000">
                 <TextBlock Name="TimeText"
                            Text="{Binding CurrentTime, StringFormat='mm\\:ss'}"
@@ -90,10 +91,10 @@
                            VerticalAlignment="Center"/>
             </Border>
 
-            <!-- Track Title Display (Classic position: 111,27) -->
+            <!-- Track Title Display (text.bmp area: 111,24, 154x12) -->
             <Border Name="TitleDisplay"
-                    Canvas.Left="111" Canvas.Top="27"
-                    Width="152" Height="11"
+                    Canvas.Left="111" Canvas.Top="24"
+                    Width="154" Height="12"
                     Background="#000000">
                 <TextBlock Name="TitleText"
                            Text="{Binding CurrentTrackName}"
@@ -104,16 +105,25 @@
                            Margin="2,0"/>
             </Border>
 
-            <!-- Volume Slider (Vertical, Classic position: 107,58) -->
+            <!-- Volume Slider (volume.bmp at: 107,57, 68x13 with slider at 146,58) -->
             <Slider Name="VolumeSlider"
-                    Canvas.Left="107" Canvas.Top="58"
+                    Canvas.Left="107" Canvas.Top="57"
                     Width="68" Height="13"
                     Orientation="Horizontal"
                     Minimum="0" Maximum="1"
                     Value="{Binding Volume}"
                     ToolTip.Tip="Volume"/>
 
-            <!-- Position/Seek Bar (Classic position: 16,72) -->
+            <!-- Balance Slider (balance.bmp at: 177,57, 38x13 with slider at 189,58) -->
+            <Slider Name="BalanceSlider"
+                    Canvas.Left="177" Canvas.Top="57"
+                    Width="38" Height="13"
+                    Orientation="Horizontal"
+                    Minimum="-1" Maximum="1"
+                    Value="0"
+                    ToolTip.Tip="Balance"/>
+
+            <!-- Position/Seek Bar (posbar.bmp at: 16,72, 248x10 with thumb at 35,72) -->
             <Slider Name="SeekSlider"
                     Canvas.Left="16" Canvas.Top="72"
                     Width="248" Height="10"
