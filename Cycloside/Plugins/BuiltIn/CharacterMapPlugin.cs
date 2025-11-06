@@ -24,6 +24,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new Version(1, 0, 0);
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.Utilities;
 
         // --- Observable collections ---
         public ObservableCollection<string> FontNames { get; } = new();

@@ -27,6 +27,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new Version(1, 0, 0); // Version reset for new architecture
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.Utilities;
 
         // --- Observable Properties for UI Binding ---
         [ObservableProperty]

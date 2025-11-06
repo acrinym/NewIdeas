@@ -44,6 +44,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new Version(0, 5, 0); // Version bump for new features
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.RetroComputing;
 
         public void Start()
         {

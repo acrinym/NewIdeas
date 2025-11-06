@@ -128,6 +128,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new(1, 7, 0);
         public Widgets.IWidget? Widget => new Widgets.BuiltIn.Mp3Widget(this);
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.Entertainment;
         public bool UseWorkspace { get; set; }
 
         // --- Observable Properties ---
