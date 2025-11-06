@@ -1,0 +1,193 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="275" d:DesignHeight="116"
+        x:Class="Cycloside.Plugins.BuiltIn.Views.SkinnedMP3PlayerWindow"
+        Title="Cycloside MP3 Player"
+        Width="275" Height="116"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
+
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button:pointerover">
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Name="RootGrid">
+        <!-- Background: Render the skin's main.bmp -->
+        <Image Name="SkinBackground"
+               Stretch="None"
+               HorizontalAlignment="Left"
+               VerticalAlignment="Top"/>
+
+        <!-- Clickable UI Elements (positioned over the skin) -->
+        <Canvas Name="UICanvas">
+
+            <!-- Previous Button (Classic Winamp position: 16,88) -->
+            <Button Name="PrevButton"
+                    Canvas.Left="16" Canvas.Top="88"
+                    Width="23" Height="18"
+                    ToolTip.Tip="Previous"
+                    Command="{Binding PreviousCommand}"/>
+
+            <!-- Play Button (Classic position: 39,88) -->
+            <Button Name="PlayButton"
+                    Canvas.Left="39" Canvas.Top="88"
+                    Width="23" Height="18"
+                    ToolTip.Tip="Play"
+                    Command="{Binding PlayCommand}"/>
+
+            <!-- Pause Button (Classic position: 62,88) -->
+            <Button Name="PauseButton"
+                    Canvas.Left="62" Canvas.Top="88"
+                    Width="23" Height="18"
+                    ToolTip.Tip="Pause"
+                    Command="{Binding PauseCommand}"/>
+
+            <!-- Stop Button (Classic position: 85,88) -->
+            <Button Name="StopButton"
+                    Canvas.Left="85" Canvas.Top="88"
+                    Width="23" Height="18"
+                    ToolTip.Tip="Stop"
+                    Command="{Binding StopPlaybackCommand}"/>
+
+            <!-- Next Button (Classic position: 108,88) -->
+            <Button Name="NextButton"
+                    Canvas.Left="108" Canvas.Top="88"
+                    Width="23" Height="18"
+                    ToolTip.Tip="Next"
+                    Command="{Binding NextCommand}"/>
+
+            <!-- Eject/Open File Button (Classic position: 136,89) -->
+            <Button Name="OpenButton"
+                    Canvas.Left="136" Canvas.Top="89"
+                    Width="22" Height="16"
+                    ToolTip.Tip="Open Files"
+                    Command="{Binding AddFilesCommand}"/>
+
+            <!-- Time Display Area (Classic position: 36,26) -->
+            <Border Name="TimeDisplay"
+                    Canvas.Left="36" Canvas.Top="26"
+                    Width="60" Height="13"
+                    Background="#000000">
+                <TextBlock Name="TimeText"
+                           Text="{Binding CurrentTime, StringFormat='mm\\:ss'}"
+                           Foreground="#00FF00"
+                           FontFamily="Consolas, Courier New"
+                           FontSize="11"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Track Title Display (Classic position: 111,27) -->
+            <Border Name="TitleDisplay"
+                    Canvas.Left="111" Canvas.Top="27"
+                    Width="152" Height="11"
+                    Background="#000000">
+                <TextBlock Name="TitleText"
+                           Text="{Binding CurrentTrackName}"
+                           Foreground="#00FF00"
+                           FontFamily="Arial"
+                           FontSize="9"
+                           VerticalAlignment="Center"
+                           Margin="2,0"/>
+            </Border>
+
+            <!-- Volume Slider (Vertical, Classic position: 107,58) -->
+            <Slider Name="VolumeSlider"
+                    Canvas.Left="107" Canvas.Top="58"
+                    Width="68" Height="13"
+                    Orientation="Horizontal"
+                    Minimum="0" Maximum="1"
+                    Value="{Binding Volume}"
+                    ToolTip.Tip="Volume"/>
+
+            <!-- Position/Seek Bar (Classic position: 16,72) -->
+            <Slider Name="SeekSlider"
+                    Canvas.Left="16" Canvas.Top="72"
+                    Width="248" Height="10"
+                    Orientation="Horizontal"
+                    Minimum="0"
+                    Maximum="{Binding TotalTime.TotalSeconds}"
+                    Value="{Binding CurrentTime.TotalSeconds}"/>
+
+            <!-- Minimize Button (Top right area) -->
+            <Button Name="MinimizeButton"
+                    Canvas.Left="244" Canvas.Top="3"
+                    Width="9" Height="9"
+                    ToolTip.Tip="Minimize"
+                    Click="OnMinimize"/>
+
+            <!-- Close Button (Top right area) -->
+            <Button Name="CloseButton"
+                    Canvas.Left="264" Canvas.Top="3"
+                    Width="9" Height="9"
+                    ToolTip.Tip="Close"
+                    Click="OnClose"/>
+
+            <!-- Skin Selector Button (bottom right) -->
+            <Button Name="SkinButton"
+                    Canvas.Left="220" Canvas.Top="88"
+                    Width="44" Height="18"
+                    Content="Skin"
+                    FontSize="9"
+                    ToolTip.Tip="Change Skin"
+                    Command="{Binding ChangeSkinCommand}"/>
+
+        </Canvas>
+
+        <!-- Fallback UI for when no skin is loaded -->
+        <Border Name="FallbackUI"
+                IsVisible="False"
+                Background="#333333"
+                BorderBrush="#666666"
+                BorderThickness="1"
+                CornerRadius="4"
+                Padding="10">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Cycloside MP3 Player"
+                           FontSize="14" FontWeight="Bold"
+                           Foreground="White"
+                           HorizontalAlignment="Center"/>
+
+                <TextBlock Text="{Binding CurrentTrackName}"
+                           Foreground="#AAAAAA"
+                           HorizontalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="240"/>
+
+                <TextBlock Foreground="#AAAAAA"
+                           HorizontalAlignment="Center">
+                    <Run Text="{Binding CurrentTime, StringFormat='mm\\:ss'}"/>
+                    <Run Text=" / "/>
+                    <Run Text="{Binding TotalTime, StringFormat='mm\\:ss'}"/>
+                </TextBlock>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                    <Button Content="⏮" Command="{Binding PreviousCommand}" Width="40"/>
+                    <Button Content="▶" Command="{Binding PlayCommand}" Width="40"/>
+                    <Button Content="⏸" Command="{Binding PauseCommand}" Width="40"/>
+                    <Button Content="⏹" Command="{Binding StopPlaybackCommand}" Width="40"/>
+                    <Button Content="⏭" Command="{Binding NextCommand}" Width="40"/>
+                </StackPanel>
+
+                <Slider Value="{Binding Volume}" Minimum="0" Maximum="1" Width="240"/>
+
+                <Button Content="Load Winamp Skin"
+                        Command="{Binding ChangeSkinCommand}"
+                        HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

@@ -112,7 +112,7 @@ namespace Cycloside.Plugins.BuiltIn
         private AudioFileReader? _audioReader;
         private float _volumeBeforeMute;
         private SpectrumAnalyzer? _spectrumAnalyzer;
-        private Views.MP3PlayerWindow? _window; // Using explicit namespace to avoid ambiguity
+        private Window? _window; // Can be MP3PlayerWindow or SkinnedMP3PlayerWindow
         // Switched from WinampVisHostPlugin to the managed visualizer host.
         // We keep a reference to the plugin instance and the manager that controls enablement.
         private IPlugin? _visHost;
@@ -142,6 +142,7 @@ namespace Cycloside.Plugins.BuiltIn
         [ObservableProperty][NotifyCanExecuteChangedFor(nameof(ToggleMuteCommand))] private float _volume = 1.0f;
         [ObservableProperty] private bool _isMuted;
         [ObservableProperty] private string _visualizationStatus = "Disabled";
+        [ObservableProperty] private bool _useSkinned = false; // Toggle between skinned and modern UI
 
         public MP3PlayerPlugin()
         {
@@ -163,8 +164,19 @@ namespace Cycloside.Plugins.BuiltIn
                 return;
             }
 
-            _window = new Views.MP3PlayerWindow { DataContext = this };
-            ThemeManager.ApplyForPlugin(_window, this);
+            // Choose between skinned (Winamp-style) or modern UI
+            if (UseSkinned)
+            {
+                _window = new Views.SkinnedMP3PlayerWindow { DataContext = this };
+                Logger.Log("🎨 Using Winamp-skinned MP3 player");
+            }
+            else
+            {
+                _window = new Views.MP3PlayerWindow { DataContext = this };
+                ThemeManager.ApplyForPlugin(_window, this);
+                Logger.Log("Using modern MP3 player UI");
+            }
+
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, Name);
             _window.Closed += (_, _) => _window = null;
             _window.Show();
@@ -247,6 +259,35 @@ namespace Cycloside.Plugins.BuiltIn
                 _visHostManager.DisablePlugin(_visHost);
                 UpdateVisualizationStatus();
             }
+        }
+
+        // --- Winamp Skin Commands ---
+        [RelayCommand]
+        private async Task ChangeSkin()
+        {
+            await this.ChangeSkin(_window);
+        }
+
+        [RelayCommand]
+        private async Task ImportSkin()
+        {
+            await this.ImportSkin(_window);
+        }
+
+        [RelayCommand]
+        private void ToggleSkinned()
+        {
+            UseSkinned = !UseSkinned;
+
+            // Close current window and reopen with new style
+            if (_window != null)
+            {
+                _window.Close();
+                _window = null;
+            }
+
+            Start(); // Reopen with the new style
+            Logger.Log($"Switched to {(UseSkinned ? "skinned" : "modern")} MP3 player UI");
         }
 
         // --- Private Methods ---
