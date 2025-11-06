@@ -778,17 +778,17 @@ public partial class App : Application
         TryAdd(() => new TextEditorPlugin());
         TryAdd(() => new WallpaperPlugin());
         TryAdd(() => new ClipboardManagerPlugin());
-        TryAdd(() => new HackersParadisePlugin());
+        // Archived: HackersParadisePlugin - moved to Plugins/Archived/Security/ (not aligned with desktop customization vision)
         TryAdd(() => new HackerTerminalPlugin());
         TryAdd(() => new PowerShellTerminalPlugin());
         TryAdd(() => new PluginMarketplacePlugin());
         TryAdd(() => new AdvancedCodeEditorPlugin());
-        TryAdd(() => new NetworkToolsPlugin());
+        // Archived: NetworkToolsPlugin - moved to Plugins/Archived/Security/
         TryAdd(() => new HardwareMonitorPlugin());
-        TryAdd(() => new VulnerabilityScannerPlugin());
-        TryAdd(() => new ExploitDevToolsPlugin());
-        TryAdd(() => new ExploitDatabasePlugin());
-        TryAdd(() => new DigitalForensicsPlugin());
+        // Archived: VulnerabilityScannerPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDevToolsPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDatabasePlugin - moved to Plugins/Archived/Security/
+        // Archived: DigitalForensicsPlugin - moved to Plugins/Archived/Security/
         TryAdd(() => new DatabaseManagerPlugin());
         TryAdd(() => new ApiTestingPlugin());
         TryAdd(() => new CharacterMapPlugin());
@@ -872,17 +872,17 @@ public partial class App : Application
         TryAdd(() => new TextEditorPlugin());
         TryAdd(() => new WallpaperPlugin());
         TryAdd(() => new ClipboardManagerPlugin());
-        TryAdd(() => new HackersParadisePlugin());
+        // Archived: HackersParadisePlugin - moved to Plugins/Archived/Security/ (not aligned with desktop customization vision)
         TryAdd(() => new HackerTerminalPlugin());
         TryAdd(() => new PowerShellTerminalPlugin());
         TryAdd(() => new PluginMarketplacePlugin());
         TryAdd(() => new AdvancedCodeEditorPlugin());
-        TryAdd(() => new NetworkToolsPlugin());
+        // Archived: NetworkToolsPlugin - moved to Plugins/Archived/Security/
         TryAdd(() => new HardwareMonitorPlugin());
-        TryAdd(() => new VulnerabilityScannerPlugin());
-        TryAdd(() => new ExploitDevToolsPlugin());
-        TryAdd(() => new ExploitDatabasePlugin());
-        TryAdd(() => new DigitalForensicsPlugin());
+        // Archived: VulnerabilityScannerPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDevToolsPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDatabasePlugin - moved to Plugins/Archived/Security/
+        // Archived: DigitalForensicsPlugin - moved to Plugins/Archived/Security/
         TryAdd(() => new DatabaseManagerPlugin());
         TryAdd(() => new ApiTestingPlugin());
         TryAdd(() => new CharacterMapPlugin());
@@ -973,17 +973,17 @@ public partial class App : Application
         TryAdd(() => new TextEditorPlugin());
         TryAdd(() => new WallpaperPlugin());
         TryAdd(() => new ClipboardManagerPlugin());
-        TryAdd(() => new HackersParadisePlugin());
+        // Archived: HackersParadisePlugin - moved to Plugins/Archived/Security/ (not aligned with desktop customization vision)
         TryAdd(() => new HackerTerminalPlugin());
         TryAdd(() => new PowerShellTerminalPlugin());
         TryAdd(() => new PluginMarketplacePlugin());
         TryAdd(() => new AdvancedCodeEditorPlugin());
-        TryAdd(() => new NetworkToolsPlugin());
+        // Archived: NetworkToolsPlugin - moved to Plugins/Archived/Security/
         TryAdd(() => new HardwareMonitorPlugin());
-        TryAdd(() => new VulnerabilityScannerPlugin());
-        TryAdd(() => new ExploitDevToolsPlugin());
-        TryAdd(() => new ExploitDatabasePlugin());
-        TryAdd(() => new DigitalForensicsPlugin());
+        // Archived: VulnerabilityScannerPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDevToolsPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDatabasePlugin - moved to Plugins/Archived/Security/
+        // Archived: DigitalForensicsPlugin - moved to Plugins/Archived/Security/
         TryAdd(() => new DatabaseManagerPlugin());
         TryAdd(() => new ApiTestingPlugin());
         TryAdd(() => new CharacterMapPlugin());
