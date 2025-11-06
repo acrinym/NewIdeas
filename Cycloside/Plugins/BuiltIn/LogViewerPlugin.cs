@@ -37,6 +37,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new Version(0, 6, 0); // Incremented for new features
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.Utilities;
 
         private string GetLogDirectory()
         {

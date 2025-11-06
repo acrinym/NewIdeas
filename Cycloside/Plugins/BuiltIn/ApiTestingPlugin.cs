@@ -22,6 +22,7 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Comprehensive REST API testing and web service analysis toolkit";
         public Version Version => new(1, 0, 0);
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.Development;
         public IWidget? Widget => new ApiTestingWidget();
 
         public void Start()

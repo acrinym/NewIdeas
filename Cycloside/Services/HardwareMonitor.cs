@@ -225,6 +225,7 @@ namespace Cycloside.Services
         {
             try
             {
+#if WINDOWS
                 var memoryInfo = new Microsoft.VisualBasic.Devices.ComputerInfo();
                 var totalMemory = (double)memoryInfo.TotalPhysicalMemory;
                 var availableMemory = (double)memoryInfo.AvailablePhysicalMemory;
@@ -236,21 +237,51 @@ namespace Cycloside.Services
                     UsedBytes = (long)(totalMemory - availableMemory),
                     UsagePercent = Math.Round(((totalMemory - availableMemory) / totalMemory) * 100, 2)
                 };
+#else
+                // Linux/Unix: Read from /proc/meminfo
+                if (File.Exists("/proc/meminfo"))
+                {
+                    var lines = File.ReadAllLines("/proc/meminfo");
+                    long totalKb = 0, availableKb = 0;
+
+                    foreach (var line in lines)
+                    {
+                        if (line.StartsWith("MemTotal:"))
+                            totalKb = long.Parse(line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                        else if (line.StartsWith("MemAvailable:"))
+                            availableKb = long.Parse(line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                    }
+
+                    var totalBytes = totalKb * 1024;
+                    var availableBytes = availableKb * 1024;
+                    var usedBytes = totalBytes - availableBytes;
+
+                    return new MemoryUsage
+                    {
+                        TotalBytes = totalBytes,
+                        AvailableBytes = availableBytes,
+                        UsedBytes = usedBytes,
+                        UsagePercent = Math.Round((usedBytes / (double)totalBytes) * 100, 2)
+                    };
+                }
+#endif
             }
             catch
             {
-                // Fallback to simulated data
-                var total = 16L * 1024 * 1024 * 1024; // 16GB
-                var used = (long)(total * new Random().NextDouble() * 0.8);
-
-                return new MemoryUsage
-                {
-                    TotalBytes = total,
-                    AvailableBytes = total - used,
-                    UsedBytes = used,
-                    UsagePercent = Math.Round((used / (double)total) * 100, 2)
-                };
+                // Exception during platform-specific memory reading
             }
+
+            // Fallback to simulated data
+            var total = 16L * 1024 * 1024 * 1024; // 16GB
+            var used = (long)(total * new Random().NextDouble() * 0.8);
+
+            return new MemoryUsage
+            {
+                TotalBytes = total,
+                AvailableBytes = total - used,
+                UsedBytes = used,
+                UsagePercent = Math.Round((used / (double)total) * 100, 2)
+            };
         }
 
         /// <summary>
