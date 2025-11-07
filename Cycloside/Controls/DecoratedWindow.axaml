@@ -1,0 +1,159 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Cycloside.Controls.DecoratedWindow"
+        Title="Cycloside"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0">
+
+    <Grid Name="RootGrid">
+        <!-- Custom Window Chrome -->
+        <Canvas Name="ChromeCanvas"
+                ZIndex="100"
+                IsHitTestVisible="True">
+
+            <!-- Top-Left Corner -->
+            <Image Name="CornerTopLeftImage"
+                   Canvas.Left="0" Canvas.Top="0"
+                   Stretch="None"
+                   IsHitTestVisible="False"/>
+
+            <!-- Top-Right Corner -->
+            <Image Name="CornerTopRightImage"
+                   Canvas.Top="0"
+                   Stretch="None"
+                   IsHitTestVisible="False"/>
+
+            <!-- Bottom-Left Corner -->
+            <Image Name="CornerBottomLeftImage"
+                   Canvas.Left="0"
+                   Stretch="None"
+                   IsHitTestVisible="False"/>
+
+            <!-- Bottom-Right Corner -->
+            <Image Name="CornerBottomRightImage"
+                   Stretch="None"
+                   IsHitTestVisible="False"/>
+
+            <!-- Title Bar -->
+            <Border Name="TitleBar"
+                    Canvas.Left="0" Canvas.Top="0"
+                    Height="30"
+                    Background="Transparent"
+                    IsHitTestVisible="True">
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/> <!-- Left edge -->
+                        <ColumnDefinition Width="*"/>    <!-- Center fill -->
+                        <ColumnDefinition Width="Auto"/> <!-- Right edge -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Title Bar Left -->
+                    <Image Name="TitleBarLeftImage"
+                           Grid.Column="0"
+                           Stretch="None"
+                           IsHitTestVisible="False"/>
+
+                    <!-- Title Bar Center (tiled) -->
+                    <Image Name="TitleBarCenterImage"
+                           Grid.Column="1"
+                           Stretch="Fill"
+                           IsHitTestVisible="False"/>
+
+                    <!-- Title Bar Right -->
+                    <Image Name="TitleBarRightImage"
+                           Grid.Column="2"
+                           Stretch="None"
+                           IsHitTestVisible="False"/>
+
+                    <!-- Title Text -->
+                    <TextBlock Name="TitleText"
+                               Grid.Column="0" Grid.ColumnSpan="3"
+                               Text="{Binding $parent[Window].Title}"
+                               VerticalAlignment="Center"
+                               Margin="10,0,150,0"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               FontSize="12"/>
+
+                    <!-- Window Buttons -->
+                    <StackPanel Grid.Column="2"
+                                Name="ButtonPanel"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="0,0,5,0">
+
+                        <!-- Minimize Button -->
+                        <Button Name="MinimizeButton"
+                                Width="46" Height="30"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Click="OnMinimize">
+                            <Image Name="MinimizeButtonImage"
+                                   Stretch="Uniform"/>
+                        </Button>
+
+                        <!-- Maximize/Restore Button -->
+                        <Button Name="MaximizeButton"
+                                Width="46" Height="30"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Click="OnMaximize">
+                            <Image Name="MaximizeButtonImage"
+                                   Stretch="Uniform"/>
+                        </Button>
+
+                        <!-- Close Button -->
+                        <Button Name="CloseButton"
+                                Width="46" Height="30"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Click="OnClose">
+                            <Image Name="CloseButtonImage"
+                                   Stretch="Uniform"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Left Border -->
+            <Image Name="BorderLeftImage"
+                   Canvas.Left="0"
+                   Stretch="Fill"
+                   IsHitTestVisible="False"/>
+
+            <!-- Right Border -->
+            <Image Name="BorderRightImage"
+                   Stretch="Fill"
+                   IsHitTestVisible="False"/>
+
+            <!-- Top Border -->
+            <Image Name="BorderTopImage"
+                   Canvas.Top="0"
+                   Stretch="Fill"
+                   IsHitTestVisible="False"/>
+
+            <!-- Bottom Border -->
+            <Image Name="BorderBottomImage"
+                   Stretch="Fill"
+                   IsHitTestVisible="False"/>
+        </Canvas>
+
+        <!-- Content Area -->
+        <Border Name="ContentBorder"
+                Margin="4,34,4,4"
+                Background="White">
+            <ContentPresenter Name="ContentPresenter"
+                              Content="{Binding $parent[Window].Content}"/>
+        </Border>
+    </Grid>
+</Window>
