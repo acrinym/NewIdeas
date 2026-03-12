@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "cycloside",
+  "project_id": "4566039f-a010-4a76-990b-51f318b8cb7f"
+}
