@@ -130,6 +130,9 @@ npx ctx7 docs /wieslawsoltes/dock "document tool docking layout"
 ```powershell
 dotnet build Cycloside/Cycloside.csproj
 ```
+- Before any commit or push to GitHub, the current branch must build with **0 errors and 0 warnings**.
+- Do not commit warning cleanup as follow-up work later; fix warnings first.
+- If achieving a zero-warning build is blocked by dependency, SDK, or external-environment issues, stop and ask Justin before committing.
 
 ---
 

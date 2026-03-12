@@ -19,14 +19,14 @@ namespace Cycloside.Plugins.BuiltIn.Controls
     /// </summary>
     public class CodeEditor : UserControl
     {
-        private Grid _mainGrid;
-        private TextBox _lineNumbersBox;
-        private Canvas _foldingGutter;
-        private ScrollViewer _editorScrollViewer;
-        private TextBox _editorTextBox;
-        private Canvas _highlightCanvas;
-        private ListBox _autocompleteListBox;
-        private Popup _autocompletePopup;
+        private Grid _mainGrid = null!;
+        private TextBox _lineNumbersBox = null!;
+        private Canvas _foldingGutter = null!;
+        private ScrollViewer _editorScrollViewer = null!;
+        private TextBox _editorTextBox = null!;
+        private Canvas _highlightCanvas = null!;
+        private ListBox _autocompleteListBox = null!;
+        private Popup _autocompletePopup = null!;
         private string _currentLanguage = "C#";
         private readonly Dictionary<string, SyntaxHighlighter> _highlighters;
         private readonly Dictionary<string, List<string>> _autocompleteSuggestions;
@@ -36,20 +36,20 @@ namespace Cycloside.Plugins.BuiltIn.Controls
         private Dictionary<int, int> _foldableRegions = new Dictionary<int, int>(); // start line -> end line
         
         // Minimap
-        private Canvas _minimap;
+        private Canvas _minimap = null!;
         
         // Find and Replace
-        private Grid _findReplacePanel;
-        private TextBox _findTextBox;
-        private TextBox _replaceTextBox;
-        private Button _findNextButton;
-        private Button _findPreviousButton;
-        private Button _replaceButton;
-        private Button _replaceAllButton;
-        private Button _closeFindButton;
-        private CheckBox _regexCheckBox;
-        private CheckBox _caseSensitiveCheckBox;
-        private CheckBox _wholeWordCheckBox;
+        private Grid _findReplacePanel = null!;
+        private TextBox _findTextBox = null!;
+        private TextBox _replaceTextBox = null!;
+        private Button _findNextButton = null!;
+        private Button _findPreviousButton = null!;
+        private Button _replaceButton = null!;
+        private Button _replaceAllButton = null!;
+        private Button _closeFindButton = null!;
+        private CheckBox _regexCheckBox = null!;
+        private CheckBox _caseSensitiveCheckBox = null!;
+        private CheckBox _wholeWordCheckBox = null!;
         private List<(int start, int length)> _searchResults = new List<(int, int)>();
         private int _currentSearchIndex = -1;
 
@@ -1197,7 +1197,7 @@ namespace Cycloside.Plugins.BuiltIn.Controls
                     ScrollToSearchResult();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle regex errors gracefully
                 _searchResults.Clear();

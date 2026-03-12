@@ -250,12 +250,22 @@ public class SystemMonitorWidget : BaseWidget
         }
         
         // Rebuild view if visibility settings changed
-        var view = BuildView(_context);
-        if (_container?.Parent is Panel parent && _container != null)
+        var context = _context;
+        var existingContainer = _container;
+        if (context == null)
         {
-            var index = parent.Children.IndexOf(_container);
-            parent.Children.RemoveAt(index);
-            parent.Children.Insert(index, view);
+            return;
+        }
+
+        var view = BuildView(context);
+        if (existingContainer?.Parent is Panel parent)
+        {
+            var index = parent.Children.IndexOf(existingContainer);
+            if (index >= 0)
+            {
+                parent.Children.RemoveAt(index);
+                parent.Children.Insert(index, view);
+            }
         }
     }
     
