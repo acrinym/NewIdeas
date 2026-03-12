@@ -33,6 +33,7 @@ namespace Cycloside.Plugins.BuiltIn
         public class DigitalForensicsWidget : IWidget
         {
             public string Name => "Digital Forensics";
+            public string Description => "Digital forensics analysis and investigation tools";
 
             private TabControl? _mainTabControl;
             private TextBlock? _statusText;
@@ -525,7 +526,7 @@ namespace Cycloside.Plugins.BuiltIn
                 if (result != null && result.Any())
                 {
                     var file = result.First();
-                    if (_filePathInput != null)
+                    if (_filePathInput != null && file.Path != null)
                         _filePathInput.Text = file.Path.LocalPath;
                 }
             }

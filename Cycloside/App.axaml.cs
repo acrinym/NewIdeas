@@ -129,7 +129,7 @@ public partial class App : Application
 
             var title = new TextBlock
             {
-                Text = "🚀 Initializing Cycloside Cybersecurity Platform",
+                Text = "🚀 Initializing Cycloside Personal Desktop Shell",
                 Foreground = Avalonia.Media.Brushes.White,
                 FontSize = 16,
                 TextAlignment = TextAlignment.Center,
@@ -149,7 +149,8 @@ public partial class App : Application
                 Width = 300,
                 Height = 4,
                 Margin = new Thickness(0, 20, 0, 0),
-                IsIndeterminate = true
+                IsIndeterminate = true,
+                Classes = { "magical" }
             };
 
             panel.Children.Add(title);
@@ -291,6 +292,7 @@ public partial class App : Application
 
         var settings = SettingsManager.Settings;
         ThemeManager.InitializeFromSettings();
+        SkinManager.InitializeFromSettings();
 
         // Optimize startup with parallel initialization
         var initializationTasks = new List<Task>
@@ -766,6 +768,8 @@ public partial class App : Application
         TryAdd(() => new NotificationCenterPlugin());
         TryAdd(() => new EnvironmentEditorPlugin());
         TryAdd(() => new JezzballPlugin());
+        TryAdd(() => new GweledPlugin());
+        TryAdd(() => new TileWorldPlugin());
         TryAdd(() => new QuickLauncherPlugin(manager));
         TryAdd(() => new WidgetHostPlugin(manager));
         // Switched from legacy Winamp-based visual host to the fully managed visualizer host.

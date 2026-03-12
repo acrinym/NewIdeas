@@ -1,41 +1,39 @@
-# Example Theme
+# Example Theme Pack
 
-This example shows a simple Avalonia theme file that covers the common resources used by Cycloside. Save the file in `Cycloside/Themes/` with a `.axaml` extension and select it from **Settings → Theme Settings**.
+Create a theme pack under `Cycloside/Themes/MyTheme/`.
+
+## `Tokens.axaml`
 
 ```xml
-<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Styles.Resources>
-    <!-- Global colors used throughout the UI -->
-    <Color x:Key="ThemeBackgroundColor">#202020</Color>
-    <Color x:Key="ThemeForegroundColor">#FFFFFF</Color>
-    <Color x:Key="EditorRed">#FF5555</Color>
-    <Color x:Key="EditorBlue">#55AAFF</Color>
+<Style xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <Color x:Key="SystemAccent">#3D8A5F</Color>
+    <Color x:Key="SystemHighlight">#62A97C</Color>
+    <Color x:Key="CanvasBackground">#F2EFE4</Color>
+    <Color x:Key="CardBackground">#FCF8EC</Color>
+    <Color x:Key="PanelBackground">#E6DFC9</Color>
+    <Color x:Key="PrimaryText">#1F2A22</Color>
+    <Color x:Key="BorderDefault">#9AA686</Color>
+  </Style.Resources>
+</Style>
+```
 
-    <SolidColorBrush x:Key="ThemeBackgroundBrush" Color="{StaticResource ThemeBackgroundColor}"/>
-    <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{StaticResource ThemeForegroundColor}"/>
-    <SolidColorBrush x:Key="EditorRedBrush" Color="{StaticResource EditorRed}"/>
-    <SolidColorBrush x:Key="EditorBlueBrush" Color="{StaticResource EditorBlue}"/>
-  </Styles.Resources>
+## `Styles.axaml`
 
-  <!-- Default window look and cursor -->
-  <Style Selector="Window">
-    <Setter Property="Background" Value="{StaticResource ThemeBackgroundBrush}"/>
-    <Setter Property="Foreground" Value="{StaticResource ThemeForegroundBrush}"/>
-    <Setter Property="Cursor" Value="Arrow"/>
+```xml
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
   </Style>
 
-  <!-- Basic control styling -->
-  <Style Selector="Button">
-    <Setter Property="Foreground" Value="Black"/>
-    <Setter Property="Cursor" Value="Hand"/>
-  </Style>
-
-  <Style Selector="TextBox">
-    <Setter Property="Background" Value="{StaticResource ThemeBackgroundBrush}"/>
-    <Setter Property="Foreground" Value="Black"/>
-    <Setter Property="Cursor" Value="Ibeam"/>
+  <Style Selector="TabItem:selected">
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,2"/>
   </Style>
 </Styles>
 ```
 
-Save this file as `DarkExample.axaml` and pick it as the global theme. Specific plugins can apply their own skins via `ComponentSkins` in `settings.json`.
+Pick the pack from **Settings -> Theme Settings** as the global theme. Add `RequestedThemeVariant` if you want to force `Light` or `Dark`.

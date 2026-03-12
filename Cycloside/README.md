@@ -1,7 +1,8 @@
 # Cycloside
 
-Cycloside lets you pin tiny, useful tools and visualizations right onto your desktop without the bloat of a full-blown shell replacement. Built with Avalonia, it's cross-platform by design and aims to stay fast and friendly for plugin developers.
-Cycloside is a background tray application built with Avalonia. It supports a simple plugin system that loads `*.dll` files from the `Plugins` folder at runtime. The tray menu exposes built‑in modules and any external plugins you drop into that directory. Hot reload is provided via file watching so there is no need to restart the app when you update a plugin.
+Cycloside is a personal OS shell for people who want their desktop to feel custom, alive, and a little weird in the best way. It mixes tray control, workspace tabs, widgets, theming, cursors, window effects, media tools, utilities, and retro-capable modules without trying to replace the operating system underneath.
+
+Built with Avalonia, Cycloside stays cross-platform and plugin-first. You can pin useful tools and visualizations onto the desktop, script the environment, hot-reload modules, and shape the machine into a gadget bench, coding cockpit, Netwatch surface, or retro playroom.
 
 The tray icon image is embedded as a base64 string to keep the repository free of binary assets.
 
@@ -17,11 +18,14 @@ dotnet run
 ## 🔌 Plugins
 
 Drop any assemblies implementing `Cycloside.Plugins.IPlugin` into the `Plugins` directory and they will be loaded automatically. The tray menu includes a **Plugins** submenu to toggle modules on or off.
+See [docs/plugin-api.md](docs/plugin-api.md) for the current plugin contracts and [docs/plugin-lifecycle.md](docs/plugin-lifecycle.md) for host behavior.
 
 Built-in examples:
 - **Date/Time Overlay** – always-on-top clock overlay
 - **MP3 Player** – choose songs and control playback with a widget
+- **Managed Visual Host** – audio-reactive visuals rendered in pure C#
 - **Macro Engine** – record and replay simple keyboard macros
+- **Netwatch / Network Tools** – keep an eye on interfaces, traffic, and connectivity
 - **Text Editor** – small editor for notes or Markdown
 - **File Explorer** – browse directories with basic operations
 - **Quick Launcher** – one-click bar to open built-in tools
@@ -29,6 +33,9 @@ Built-in examples:
 - **ModPlug Tracker** – play `.mod`, `.it`, `.s3m` or `.xm` music modules
 - **Notification Center** – view messages from plugins and the core app
 - **Jezzball** – arcade game with powerups and Original Mode
+- **Gweled** – native jewel-swap puzzle board with Normal, Timed, and Endless modes
+- **Tile World** – native Chip's Challenge style puzzle boards plus a local Tile World DAT/DAC pack browser for compatible community levels
+- **QBasic Retro IDE** – old-school coding corner for QB-style experiments
 - **ScreenSaver Host** – run vintage 3D text and flower box screensavers
 - **Terminal** - console with ANSI colour and scrollback
 - **Widget Host** – surface plugins as dockable widgets
@@ -58,7 +65,7 @@ When isolation is enabled, crashes won't take down the entire app and are simply
 
 ## 🧰 Plugin Template Generator
 
-Run `dotnet run -- --newplugin MyPlugin` to create a boilerplate class, or use **Settings → Generate New Plugin** from the tray menu.
+Run `dotnet run -- --newplugin MyPlugin` from the `Cycloside/` directory to generate a working sample plugin under `Plugins/MyPlugin/src`. Add `--with-tests` to also create `Plugins/MyPlugin/tests`.
 
 ## 📣 Plugin Bus and Remote API
 
@@ -92,7 +99,7 @@ The helper source lives in `Hotkeys/HotkeyMonitor.swift` and should be built as
 `libHotkeyMonitor.dylib` placed next to the application binary.
 
 ## 🎨 Theming
-See [docs/theming-skinning.md](../docs/theming-skinning.md) for details on applying themes, skins and custom cursors. A Skin Preview window lets you test styles before saving. Example files live in [docs/examples](../docs/examples).
+See [docs/theming-skinning.md](../docs/theming-skinning.md) for the current appearance model. In short: themes are app-wide palette packs, skins are the window and control treatment layered on top, and animated backdrops can now drive windows from media files or managed visualizers. The built-in packs now include `Dockside`, `AmberCRT`, `OrchardPaper`, `SynthwaveDream`, `Cyberpunk`, `Magical`, `Workbench`, `Classic`, `GlassDeck`, `Win98`, `AfterDark`, and `ProgramManager31`. Cycloside also now ships a native `MagicalProgressBar` control plus `ProgressBar.magical` styling for ritual/arcane progress surfaces. The editor window can browse real theme and skin assets, and the preview window can now render style sheets against a sample shell surface.
 
 ## 🧪 GUI Plugin Manager
 
@@ -114,8 +121,8 @@ install them directly into your `Plugins/` directory. Each download is verified
 with a SHA256 hash before it is placed on disk.
 
 ## 🎨 Skins
-Place Avalonia style files inside the `Skins` folder to customize the interface.
-Assign skins to specific plugins using the `ComponentSkins` section of `settings.json`.
+Place manifest-based skin packs under `Skins/<SkinName>/` or legacy flat `.axaml` files directly under `Skins/`.
+Use `GlobalSkin` for the shell-wide skin and `PluginSkins` for per-plugin window overrides in `settings.json`.
 
 ## 🌀 Window Effects
 Try out wobbly windows, drop shadows and more via **Settings → Runtime Settings**.
@@ -126,10 +133,10 @@ An optional helper lets Cycloside download and swap in updates when provided
 with a download URL and expected checksum.
 
 ## 🌟 Why Cycloside?
-Cycloside focuses on simplicity. Plugins are regular .NET classes, so you can tap into the entire ecosystem without learning a custom scripting language. Because it's built on Avalonia, the same setup runs on Windows and Linux alike.
+Cycloside focuses on making the desktop feel personal. Plugins are regular .NET classes, so you can tap into the .NET ecosystem without learning a custom DSL, while themes, skins, cursors, widgets, and effects let the machine look and behave like your space instead of a stock workstation.
 
 ## 🖼️ Widgets
-See [docs/widget-interface.md](docs/widget-interface.md) for the current design of our dockable, skinnable widget system. Any plugin can expose a widget surface simply by returning one from the `Widget` property. The built-in `Widget Host` plugin demonstrates this with sample Clock, MP3 and Weather widgets. The goal is to surface plugin features directly on your desktop with minimal fuss. See also [docs/plugin-lifecycle.md](docs/plugin-lifecycle.md) for lifecycle hooks, [docs/skin-api.md](docs/skin-api.md) for information on creating new skins, and [docs/windowfx-design.md](docs/windowfx-design.md) for an overview of the planned compositor effects system.
+See [docs/widget-interface.md](docs/widget-interface.md) for the current widget split. The stable plugin-facing path is `IPlugin.Widget` plus `IWidget`; a richer `IWidgetV2` stack also exists under `Cycloside/Widgets/`, but it is not the default plugin widget host path yet. See also [docs/plugin-api.md](docs/plugin-api.md), [docs/plugin-lifecycle.md](docs/plugin-lifecycle.md), [docs/skin-api.md](docs/skin-api.md), and [docs/windowfx-design.md](docs/windowfx-design.md).
 
 
 ## 🚧 Cycloside vs Rainmeter

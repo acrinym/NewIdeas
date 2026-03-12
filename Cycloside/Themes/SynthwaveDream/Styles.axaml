@@ -1,0 +1,37 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <LinearGradientBrush x:Key="SynthwaveWindowBrush" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#16081F" Offset="0.0"/>
+      <GradientStop Color="#241039" Offset="0.45"/>
+      <GradientStop Color="#0C1C39" Offset="1.0"/>
+    </LinearGradientBrush>
+  </Styles.Resources>
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource SynthwaveWindowBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="#33101932"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="#3A183F"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+  </Style>
+
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="#E0161027"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+  </Style>
+
+</Styles>

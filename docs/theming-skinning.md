@@ -1,272 +1,253 @@
 # Dynamic Theming and Skinning
 
-Cycloside now features a **dynamic theming and skinning system** built on Avalonia's FluentTheme with semantic tokens and selector-driven skins.
+Cycloside uses a two-layer appearance model:
 
-## Architecture Overview
+- **Theme**: the app-wide semantic palette, typography, spacing, and overall color system.
+- **Skin**: the surface treatment layered on top of the current theme for windows, controls, cursors, and optional window replacements.
 
-The system operates on a hierarchical merge order (bottom to top):
+That split matches the original intent of the shell: themes define the whole desktop mood, skins reshape how the shell presents it.
 
-1. **FluentTheme** (base Avalonia theme)
-2. **App Base Tokens** (semantic resources from `Tokens.axaml`)
-3. **Theme Variant Overrides** (Light/Dark/HighContrast specific tokens)
-4. **Subtheme Pack** (theme-specific styling)
-5. **Skin Global Styles** (application-wide skin overrides)
-6. **Skin Per-Component/Window Overrides** (selector-based skin application)
+Animated backdrops sit alongside that split: they are optional media or managed-visualizer layers shown behind windows that opt into the appearance pipeline.
 
-## Semantic Tokens
+## Merge Order
 
-All styling uses semantic tokens defined in `Cycloside/Themes/Tokens.axaml`:
+Cycloside applies appearance resources in this order:
 
-### Color Tokens
-```xml
-<Color x:Key="SystemBackground">#FFFFFF</Color>
-<Color x:Key="SystemForeground">#000000</Color>
-<Color x:Key="SystemAccent">#0078D4</Color>
-<Color x:Key="CanvasBackground">#FFFFFF</Color>
-<Color x:Key="CardBackground">#F8F9FA</Color>
-<Color x:Key="PrimaryText">#000000</Color>
-<Color x:Key="SecondaryText">#666666</Color>
-```
+1. `FluentTheme`
+2. `Cycloside/Themes/Tokens.axaml`
+3. Theme variant tokens from `Themes/LightTheme` or `Themes/DarkTheme`
+4. Selected theme pack from `Themes/<ThemeName>/`
+5. Selected global skin from `Skins/<SkinName>/` or `Skins/<SkinName>.axaml`
+6. Optional per-plugin window skin from `settings.json`
+7. Optional animated backdrop from `GlobalAnimatedBackground`, component overrides, or plugin overrides
 
-### Brush Tokens
-```xml
-<SolidColorBrush x:Key="SystemBackgroundBrush" Color="{DynamicResource SystemBackground}"/>
-<SolidColorBrush x:Key="PrimaryTextBrush" Color="{DynamicResource PrimaryText}"/>
-<SolidColorBrush x:Key="InteractiveHoverBrush" Color="{DynamicResource InteractiveHover}"/>
-```
+## Built-In Theme Packs
 
-### Typography Tokens
-```xml
-<FontFamily x:Key="FontFamilyPrimary">Segoe UI</FontFamily>
-<FontSize x:Key="FontSizeBody">13</FontSize>
-<FontSize x:Key="FontSizeHeader">20</FontSize>
-```
+Structured theme packs live in `Cycloside/Themes/<ThemeName>/`.
 
-### Spacing Tokens
-```xml
-<Thickness x:Key="SpacingXS">2</Thickness>
-<Thickness x:Key="SpacingM">8</Thickness>
-<Thickness x:Key="SpacingXL">16</Thickness>
-```
+- `Dockside`: dark teal shell with cool accents
+- `AmberCRT`: warm monochrome retro terminal palette
+- `OrchardPaper`: softer paper-and-ink desktop palette
+- `SynthwaveDream`: neon magenta-and-cyan late-night desktop palette
+- `Cyberpunk`: sharper neon-city palette for pairing with darker skins
+- `Magical`: moonlit violet-and-gold ritual desktop palette with Cycloside-native magical progress surfaces
 
-## Theme System
+Legacy flat themes in `Cycloside/Themes/Global/` still load for compatibility.
 
-### Theme Variants
+## Theme Variants
 
-The system supports three built-in theme variants with automatic token switching:
+Cycloside currently supports:
 
-- **Light Theme** (`Cycloside/Themes/LightTheme/Tokens.axaml`)
-- **Dark Theme** (`Cycloside/Themes/DarkTheme/Tokens.axaml`)  
-- **High Contrast Theme** (`Cycloside/Themes/HighContrastTheme/Tokens.axaml`)
+- `Default`: follow the OS theme variant
+- `Light`
+- `Dark`
 
-### Dynamic Theme Switching
+Runtime switching:
 
 ```csharp
-// Apply theme variant
-await ThemeManager.ApplyVariantAsync(ThemeVariant.Dark);
-
-// Apply subtheme pack
-await ThemeManager.ApplySubthemeAsync("MyCustomTheme");
-
-// Apply both simultaneously
-await ThemeManager.ApplyThemeAsync("MyCustomTheme", ThemeVariant.Light);
-
-// Initialize from settings
+await ThemeManager.ApplyThemeAsync("Dockside", ThemeVariant.Dark);
+await ThemeManager.ApplySubthemeAsync("OrchardPaper");
+await ThemeManager.ApplyVariantAsync(ThemeVariant.Light);
 ThemeManager.InitializeFromSettings();
 ```
 
-### Available Themes
-```csharp
-var themes = ThemeManager.GetAvailableThemes();
-var variants = ThemeManager.GetAvailableVariants();
+## Theme Pack Layout
 
-// Listen for theme changes
-ThemeManager.ThemeChanged += (sender, args) => {
-    Console.WriteLine($"Theme changed to {args.ThemeName} ({args.Variant})");
-};
+Create a theme directory:
+
+```text
+Cycloside/Themes/MyTheme/
+├── Tokens.axaml
+└── Styles.axaml
 ```
 
-## Skin System
+`Tokens.axaml` should override semantic resources:
 
-### Skin Manifest Format
+```xml
+<Style xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <Color x:Key="SystemAccent">#3D8A5F</Color>
+    <Color x:Key="CanvasBackground">#F2EFE4</Color>
+    <Color x:Key="CardBackground">#FCF8EC</Color>
+    <Color x:Key="PrimaryText">#1F2A22</Color>
+    <Color x:Key="BorderDefault">#9AA686</Color>
+  </Style.Resources>
+</Style>
+```
 
-Skins are defined by JSON manifests (e.g., `Cycloside/Skins/Classic/skin.json`):
+`Styles.axaml` can add app-wide style selectors:
+
+```xml
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+  </Style>
+</Styles>
+```
+
+## Skin Packs
+
+Manifest-based skins live in `Cycloside/Skins/<SkinName>/`.
+
+- `Workbench`: squared tinkerer shell
+- `Classic`: sharper Win9x-style shell treatment
+- `GlassDeck`: softer floating glass treatment
+- `Win98`: gray beveled shell treatment
+- `AfterDark`: dark neon screensaver-style shell treatment
+- `ProgramManager31`: square early-Windows shell treatment
+
+Legacy flat skins in `Cycloside/Skins/*.axaml` still load.
+
+## Skin Manifest
 
 ```json
 {
-  "name": "Classic",
+  "name": "Workbench",
   "version": 1,
   "contract": "v1",
   "overlays": {
     "global": ["Styles/Global.axaml"],
     "bySelector": [
-      { 
-        "type": "MainWindow", 
-        "classes": ["primary"], 
-        "styles": ["Styles/MainWindow.Primary.axaml"] 
-      },
-      { 
-        "xName": "ApplyButton", 
-        "styles": ["Styles/ApplyButton.axaml"] 
+      {
+        "type": "MainWindow",
+        "classes": ["primary"],
+        "styles": ["Styles/MainWindow.Primary.axaml"]
       },
       {
-        "type": "Button",
-        "classes": ["danger"],
-        "styles": ["Styles/DangerButton.axaml"]
+        "xName": "ApplyButton",
+        "styles": ["Styles/ApplyButton.axaml"]
       }
     ]
   },
-  "replaceWindows": {
-    "MainWindow": "Components/MainWindow.axaml"
-  }
+  "replaceWindows": {}
 }
 ```
 
-### Skin Selectors
+Notes:
 
-Skins support multiple selector types:
+- Global overlay styles affect the whole app when the skin is selected globally.
+- Selector-targeted files are still ordinary Avalonia style sheets; the manifest keeps the pack organized.
+- `replaceWindows` is optional. Use `UserControl` replacement files when you need full window-content swaps.
 
-1. **By Type**: `"type": "Button"` targets all Button controls
-2. **By Classes**: `"classes": ["primary"]` targets elements with specific classes
-3. **By Name**: `"xName": "ApplyButton"` targets specific named elements
-4. **Combined**: Mix types, classes, and names for precise targeting
+## Skin Style Files
 
-### Dynamic Skin Application
-
-```csharp
-// Apply skin to application
-await SkinManager.ApplySkinAsync("Classic");
-
-// Apply skin to specific element
-SkinManager.ApplySkinTo(window, "Classic");
-
-// Check available skins
-var skins = SkinManager.GetAvailableSkins();
-
-// Check if skin supports window replacement
-bool supportsReplacement = await SkinManager.SupportsWindowReplacementAsync("Classic", "MainWindow");
-
-// Listen for skin changes
-SkinManager.SkinChanged += (sender, args) => {
-    Console.WriteLine($"Skin changed to {args.SkinName}");
-};
-```
-
-### Skin Styles
-
-Skin style files use semantic tokens and can override any control:
+Skin style sheets must use a `<Styles>` root when they contain multiple selectors:
 
 ```xml
-<!-- Styles/Global.axaml -->
-<Style xmlns="https://github.com/avaloniaui">
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Style Selector="Button">
-    <Setter Property="Padding" Value="{DynamicResource SpacingM}"/>
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusS}"/>
+    <Setter Property="Padding" Value="12,6"/>
     <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
-    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="Cursor" Value="Hand"/>
   </Style>
-  
+
   <Style Selector="Button.danger">
     <Setter Property="Background" Value="{DynamicResource SystemErrorBrush}"/>
     <Setter Property="Foreground" Value="White"/>
-    <Setter Property="FontWeight" Value="Bold"/>
   </Style>
-</Style>
+</Styles>
 ```
 
-## Building Custom Themes and Skins
+## Animated Backdrops
 
-### Creating a Theme
+Cycloside can render animated window backdrops in three modes:
 
-1. **Create theme directory**: `Cycloside/Themes/MyTheme/`
-2. **Add Tokens.axaml**: Override semantic tokens for your theme
-3. **Add *.axaml files**: Define additional styles as needed
-4. **Test**: Use `ThemeManager.ApplySubthemeAsync("MyTheme")`
+- `None`: no animated backdrop
+- `Media`: still images, animated GIFs, or video files such as `mp4`, `m4v`, `avi`, `mov`, `wmv`, `mkv`, `webm`, `ogv`, `ogg`, and `flv`
+- `Visualizer`: any built-in managed visualizer rendered behind the window content
 
-### Creating a Skin
+The theme settings window exposes a global backdrop selector. The underlying settings model also supports component and plugin overrides through `ComponentAnimatedBackgrounds` and `PluginAnimatedBackgrounds`.
 
-1. **Create skin directory**: `Cycloside/Skins/MySkin/`
-2. **Create skin.json**: Define manifest with selectors and overlays
-3. **Add Styles/**: Create overlay style files as referenced in manifest
-4. **Add Components/**: Create full window replacement files (optional)
-5. **Test**: Use `SkinManager.ApplySkinAsync("MySkin")`
-
-### Element Targeting
-
-Add classes and names to XAML for skin targeting:
-
-```xml
-<!-- MainWindow.axaml -->
-<Window Classes="primary" Background="{DynamicResource CanvasBackgroundBrush}">
-  <Button x:Name="ApplyButton" Classes="danger primary">Apply</Button>
-  <Grid Classes="main-content">
-    <!-- content -->
-  </Grid>
-</Window>
-```
-
-## Settings Integration
-
-Theme and skin preferences are stored in `settings.json`:
+Appearance settings are stored in `Cycloside/settings.json`:
 
 ```json
 {
-  "GlobalTheme": "MyCustomTheme",
+  "GlobalTheme": "Dockside",
   "RequestedThemeVariant": "Dark",
+  "GlobalSkin": "Workbench",
+  "GlobalAnimatedBackground": {
+    "Mode": "Visualizer",
+    "Visualizer": "Starfield",
+    "Opacity": 0.55,
+    "Loop": true,
+    "MuteVideo": true
+  },
+  "ComponentAnimatedBackgrounds": {
+    "MainWindow": {
+      "Mode": "Media",
+      "Source": "D:/Media/after-dark-loop.mp4",
+      "Opacity": 0.48,
+      "Loop": true,
+      "MuteVideo": true
+    }
+  },
   "PluginSkins": {
-    "ProcessMonitor": "Classic",
-    "TextEditor": "Minimal"
+    "Text Editor": "GlassDeck",
+    "Notification Center": "Classic"
   }
 }
 ```
 
-## Plugin Integration
-
-Plugins can access theming through standardized interfaces:
+## Runtime APIs
 
 ```csharp
-// Apply theme to plugin window
-ThemeManager.ApplyForPlugin(myWindow, myPlugin);
+var themes = ThemeManager.GetAvailableThemes();
+var variants = ThemeManager.GetAvailableVariants();
+var skins = SkinManager.GetAvailableSkins();
+var visualizers = AnimatedBackgroundManager.GetAvailableVisualizers();
 
-// Apply skin specifically
-SkinManager.ApplySkinTo(myWindow, "PluginSpecificSkin");
+await ThemeManager.ApplyThemeAsync("Dockside", ThemeVariant.Dark);
+await SkinManager.ApplySkinAsync("Workbench");
+SkinManager.ApplySkinTo(myPluginWindow, "GlassDeck");
+AnimatedBackgroundManager.ReapplyAllWindows();
 ```
 
-Plugins should use semantic tokens in their XAML rather than hard-coded colors:
+## Code-Built UI
 
-```xml
-<!-- Use semantic tokens -->
-<Button Background="{DynamicResource SystemAccentBrush}"/>
+Older plugins in Cycloside still build parts of their UI in C# instead of XAML. Those controls should participate in themes and skins through semantic classes, not local hard-coded brushes.
 
-<!-- Instead of hard-coded colors -->
-<Button Background="#0078D4"/>
+Use `Cycloside.Services.AppearanceHelper` for code-built UI:
+
+```csharp
+AppearanceHelper.ApplyCardSurface(containerBorder);
+AppearanceHelper.ApplyStatusChip(statusBorder);
+AppearanceHelper.ApplyButtonRole(runButton, SemanticButtonRole.Accent);
+AppearanceHelper.ApplyButtonRole(stopButton, SemanticButtonRole.Danger);
+AppearanceHelper.ApplyCodeEditor(editor);
 ```
 
-## Migration from Legacy System
+Shared semantic classes currently include:
 
-### Legacy Theme Files
+- `surface-card`
+- `status-chip`
+- `warning-panel`
+- `accent-strip`
+- `accent`
+- `success`
+- `danger`
+- `warning`
+- `neutral`
+- `secondary`
+- `inverse`
+- `code-editor`
 
-Old theme files in `Cycloside/Themes/Global/` are still supported but should migrate to the new token system:
+Cycloside also ships a native `Cycloside.Controls.MagicalProgressBar` control, and standard `ProgressBar` controls can opt into the same look with the `magical` class.
 
-```xml
-<!-- Legacy (still works) -->
-<Setter Property="Background" Value="{StaticResource ThemeBackgroundBrush}"/>
+## Authoring Guidance
 
-<!-- New (preferred) -->
-<Setter Property="Background" Value="{DynamicResource SystemBackgroundBrush}"/>
-```
-
-### Legacy Skin Files
-
-Old skin files in `Cycloside/Skins/` continue to work but should be migrated to manifest-based skins for better organization and targeting.
-
-## Performance Notes
-
-- Themes and skins are cached after first load
-- Dynamically switching themes applies to all open windows without restart
-- Resource dictionaries are properly cleaned up to prevent memory leaks
-- Manifest-driven skins are validated on load with error handling
-
-## Cross-Platform Support
-
-The entire theming system is platform-agnostic and works identically on Windows, Linux, and macOS. All theme resources are applied via Avalonia's cross-platform styling system.
+- Use semantic tokens with `DynamicResource`; do not hard-code production colors into plugin XAML.
+- Use `AppearanceHelper` and semantic classes for code-built UI; do not set production brushes directly in plugin C#.
+- Keep theme packs responsible for palette and broad shell identity.
+- Keep skins responsible for treatment, chrome, cursor feel, and per-window flavor.
+- Animated backdrops work best when the relevant window surface is partially translucent instead of fully opaque.
+- Preserve legacy flat files only for compatibility. Prefer structured theme and skin packs for new work.

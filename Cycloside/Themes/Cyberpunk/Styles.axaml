@@ -1,0 +1,46 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <LinearGradientBrush x:Key="CyberpunkWindowBrush" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#090B12" Offset="0.0"/>
+      <GradientStop Color="#101528" Offset="0.55"/>
+      <GradientStop Color="#1A0C21" Offset="1.0"/>
+    </LinearGradientBrush>
+  </Styles.Resources>
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource CyberpunkWindowBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="#D20E121D"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemHighlightBrush}"/>
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+  </Style>
+
+  <Style Selector="TextBox:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="#1A2030"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+  </Style>
+
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="#EB111723"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+  </Style>
+
+</Styles>

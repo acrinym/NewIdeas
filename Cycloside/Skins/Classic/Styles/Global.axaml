@@ -1,15 +1,18 @@
-<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  
-  <!-- Global Classic Skin Styles -->
-  
-  <!-- Button Classic Style -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
   <Style Selector="Button">
-    <Setter Property="Padding" Value="{DynamicResource SpacingM}"/>
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusS}"/>
+    <Setter Property="Padding" Value="10,4"/>
+    <Setter Property="CornerRadius" Value="0"/>
     <Setter Property="BorderThickness" Value="1"/>
     <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
     <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="Cursor" Value="Hand"/>
   </Style>
 
   <Style Selector="Button:pointerover">
@@ -18,28 +21,47 @@
 
   <Style Selector="Button:pressed">
     <Setter Property="Background" Value="{DynamicResource InteractivePressedBrush}"/>
-    <Setter Property="RenderTransform" Value="scale(0.98)"/>
   </Style>
 
-  <!-- Classic TextBox -->
   <Style Selector="TextBox">
-    <Setter Property="Padding" Value="{DynamicResource SpacingM}"/>
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusS}"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="CornerRadius" Value="0"/>
     <Setter Property="BorderThickness" Value="1"/>
     <Setter Property="Background" Value="{DynamicResource SystemBackgroundBrush}"/>
     <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
     <Setter Property="CaretBrush" Value="{DynamicResource SystemAccentBrush}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="Cursor" Value="IBeam"/>
   </Style>
 
-  <Style Selector="TextBox:focus">
-    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+  <Style Selector="ComboBox">
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Background" Value="{DynamicResource SystemBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
   </Style>
 
-  <!-- Classic Window styling -->
-  <Style Selector="Window">
-    <Setter Property="Background" Value="{DynamicResource CanvasBackgroundBrush}"/>
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
     <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
   </Style>
 
-</Style>
+  <Style Selector="TabControl">
+    <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+  </Style>
+
+  <Style Selector="TabItem">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+  </Style>
+
+</Styles>

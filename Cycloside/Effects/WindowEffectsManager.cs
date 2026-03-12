@@ -36,6 +36,10 @@ public class WindowEffectsManager
         RegisterEffect(new BeamUpMinimizeEffect());
         RegisterEffect(new DreamOpenEffect());
         RegisterEffect(new ExplodeCloseEffectV2());
+        RegisterEffect(new ScaleEffect());
+        RegisterEffect(new FadeEffect());
+        RegisterEffect(new SlideEffect());
+        RegisterEffect(new CubeDesktopEffect());
 
         var path = Path.Combine(AppContext.BaseDirectory, "Effects");
         LoadEffectPlugins(path);

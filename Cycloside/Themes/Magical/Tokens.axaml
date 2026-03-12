@@ -1,0 +1,61 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <Color x:Key="SystemAccent">#F6C774</Color>
+    <Color x:Key="SystemHighlight">#E7A7FF</Color>
+    <Color x:Key="SystemError">#FF8093</Color>
+    <Color x:Key="SystemWarning">#FFD27F</Color>
+    <Color x:Key="SystemSuccess">#9FE8B1</Color>
+
+    <Color x:Key="CanvasBackground">#0F0A17</Color>
+    <Color x:Key="PopupBackground">#1A1125</Color>
+    <Color x:Key="CardBackground">#241733</Color>
+    <Color x:Key="PanelBackground">#181022</Color>
+
+    <Color x:Key="PrimaryText">#FFF7E8</Color>
+    <Color x:Key="SecondaryText">#D9C6E9</Color>
+    <Color x:Key="DisabledText">#8E7CA1</Color>
+    <Color x:Key="PlaceholderText">#9A88AE</Color>
+
+    <Color x:Key="InteractiveHover">#311D46</Color>
+    <Color x:Key="InteractivePressed">#45285F</Color>
+    <Color x:Key="InteractiveSelected">#5D357B</Color>
+    <Color x:Key="InteractiveFocusRing">#F6C774</Color>
+
+    <Color x:Key="BorderDefault">#7A56A1</Color>
+    <Color x:Key="BorderStrong">#F6C774</Color>
+    <Color x:Key="BorderSubtle">#372048</Color>
+    <Color x:Key="Separator">#4A2D61</Color>
+
+    <FontFamily x:Key="FontFamilyPrimary">Palatino Linotype</FontFamily>
+    <FontFamily x:Key="FontFamilyMono">Cascadia Code</FontFamily>
+    <CornerRadius x:Key="RadiusM">10</CornerRadius>
+    <CornerRadius x:Key="RadiusL">16</CornerRadius>
+    <CornerRadius x:Key="RadiusXL">22</CornerRadius>
+    <BoxShadow x:Key="ShadowStandard">0 8 20 0 rgba(12,6,20,0.65)</BoxShadow>
+    <BoxShadow x:Key="ShadowElevated">0 12 30 0 rgba(12,6,20,0.78)</BoxShadow>
+
+    <LinearGradientBrush x:Key="MagicalWindowBrush" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#0F0A17" Offset="0.0"/>
+      <GradientStop Color="#1A1125" Offset="0.42"/>
+      <GradientStop Color="#241733" Offset="0.78"/>
+      <GradientStop Color="#341A40" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="MagicalProgressFrameBrush" StartPoint="0,0" EndPoint="1,0">
+      <GradientStop Color="#E7A7FF" Offset="0.0"/>
+      <GradientStop Color="#F6C774" Offset="0.55"/>
+      <GradientStop Color="#FCE7B2" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="MagicalProgressFillBrush" StartPoint="0,0" EndPoint="1,0">
+      <GradientStop Color="#8D58D8" Offset="0.0"/>
+      <GradientStop Color="#C56FFF" Offset="0.38"/>
+      <GradientStop Color="#F6C774" Offset="0.78"/>
+      <GradientStop Color="#FFF0C6" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="MagicalProgressTrackBrush" Color="#241733" Opacity="0.92"/>
+    <SolidColorBrush x:Key="MagicalProgressSparkleBrush" Color="#FFF7E8"/>
+    <SolidColorBrush x:Key="MagicalProgressTextBrush" Color="#FFF7E8"/>
+  </Style.Resources>
+</Style>

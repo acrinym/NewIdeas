@@ -94,7 +94,9 @@ class Program
 
     internal static void GeneratePluginTemplate(string name, bool withTests)
     {
-        var baseDir = Path.Combine("Plugins", name);
+        var projectRoot = ResolvePluginScaffoldRoot();
+        var baseDir = Path.Combine(projectRoot, "Plugins", name);
+        var targetFramework = OperatingSystem.IsWindows() ? "net8.0-windows" : "net8.0";
         Directory.CreateDirectory(baseDir);
 
         var srcDir = Path.Combine(baseDir, "src");
@@ -103,24 +105,75 @@ class Program
         var path = Path.Combine(srcDir, $"{name}.cs");
         if (!File.Exists(path))
         {
-            var content = $@"using Cycloside.Plugins;
+            var content = $@"using System;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Cycloside.Plugins;
 
-public class {name} : IPlugin
+public sealed class {name} : IPlugin
 {{
+    private PluginWindowBase? _window;
+
     public string Name => ""{name}"";
-    public string Description => ""Describe your plugin."";
+    public string Description => ""{name} plugin for the Cycloside shell."";
     public Version Version => new(1, 0, 0);
     public Cycloside.Widgets.IWidget? Widget => null;
     public bool ForceDefaultTheme => false;
 
     public void Start()
     {{
-        // Plugin startup logic here
+        if (_window != null)
+        {{
+            _window.Activate();
+            return;
+        }}
+
+        var message = new TextBlock
+        {{
+            Text = ""{name} is running inside Cycloside."",
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 16
+        }};
+
+        _window = new PluginWindowBase
+        {{
+            Title = Name,
+            Width = 520,
+            Height = 320,
+            CanResize = true,
+            Content = new Border
+            {{
+                Padding = new Thickness(24),
+                Child = message
+            }}
+        }};
+
+        _window.Plugin = this;
+        _window.ApplyPluginThemeAndSkin(this);
+        _window.Closed += OnWindowClosed;
+        _window.Show();
     }}
 
     public void Stop()
     {{
-        // Plugin shutdown logic here
+        if (_window == null)
+        {{
+            return;
+        }}
+
+        _window.Closed -= OnWindowClosed;
+        _window.Close();
+        _window = null;
+    }}
+
+    private void OnWindowClosed(object? sender, EventArgs e)
+    {{
+        if (_window != null)
+        {{
+            _window.Closed -= OnWindowClosed;
+            _window = null;
+        }}
     }}
 }}";
             File.WriteAllText(path, content);
@@ -131,10 +184,11 @@ public class {name} : IPlugin
         {
             var csproj = $@"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>{targetFramework}</TargetFramework>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include=""..\..\Cycloside.csproj"" />
+    <ProjectReference Include=""..\..\..\Cycloside.csproj"" />
   </ItemGroup>
 </Project>";
             File.WriteAllText(csprojPath, csproj);
@@ -150,7 +204,8 @@ public class {name} : IPlugin
             {
                 var testProj = $@"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>{targetFramework}</TargetFramework>
+    <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
@@ -166,7 +221,6 @@ public class {name} : IPlugin
             if (!File.Exists(testFile))
             {
                 var testContent = $@"using Xunit;
-using {name};
 
 public class BasicTests
 {{
@@ -188,4 +242,46 @@ public class BasicTests
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
+
+    private static string ResolvePluginScaffoldRoot()
+    {
+        var candidates = new[]
+        {
+            Directory.GetCurrentDirectory(),
+            AppContext.BaseDirectory
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var resolved = TryFindCyclosideProjectRoot(candidate);
+            if (!string.IsNullOrWhiteSpace(resolved))
+            {
+                return resolved;
+            }
+        }
+
+        return Directory.GetCurrentDirectory();
+    }
+
+    private static string? TryFindCyclosideProjectRoot(string startPath)
+    {
+        if (string.IsNullOrWhiteSpace(startPath))
+        {
+            return null;
+        }
+
+        var current = new DirectoryInfo(startPath);
+        while (current != null)
+        {
+            var projectFilePath = Path.Combine(current.FullName, "Cycloside.csproj");
+            if (File.Exists(projectFilePath))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
+    }
 }

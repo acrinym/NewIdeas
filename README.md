@@ -1,19 +1,18 @@
 # Cycloside
 
-Cycloside is a comprehensive cross-platform desktop application built for tinkerers, developers, and cybersecurity professionals. It hosts plugins, custom window effects, live theming, and provides a complete development and hacking toolkit.
+Cycloside is a cross-platform personal OS shell for tinkerers, developers, gadget lovers, and retro desktop obsessives. It layers plugins, widgets, custom window effects, live theming, automation, terminals, and visualizers over your desktop so the machine feels more like a lab, toybox, and workbench than a stock app launcher.
 
 ---
 
 ## Why Cycloside?
 
-* **Complete Plugin Ecosystem**: Browse, install, and manage community plugins from a built-in marketplace
-* **Professional Development Environment**: Advanced code editor with syntax highlighting, IntelliSense, and multi-language support
-* **Comprehensive Cybersecurity Toolkit**: Network analysis, packet sniffing, port scanning, MAC/IP spoofing
+* **Personal Desktop Shell**: Tray-resident control layer with workspace tabs, widgets, profiles, and plugin windows
+* **Theme and Cursor Engine**: Live themes, per-window skins, cursors, wallpapers, and window effects
+* **Gadget and Widget Bench**: Desktop mini tools for clocks, notes, media, monitoring, and quick utilities
+* **Retro and Visual Playground**: MP3 playback, managed visualizers, Jezzball, screensavers, and QBasic-style experimentation
+* **Workbench Tools**: Code editor, terminals, database and API tools, automation, and scripting
+* **Netwatch and Utility Views**: Network monitoring, logs, notifications, clipboard history, and file watchers
 * **Communication Bridges**: Serial, MQTT, OSC protocol support for IoT and automation
-* **Input Device Integration**: MIDI and gamepad input routing for creative applications
-* **Remote Management**: SSH client with command execution and file monitoring
-* **Automation Engine**: Event-driven rule processing for workflow automation
-* **Windows Utilities**: Screenshot annotation, sticky notes, color picker, pixel ruler
 * **Cross-Platform**: Works on Windows, Linux, and macOS using the Avalonia UI framework
 
 ---
@@ -50,7 +49,7 @@ Each project can be developed, tested, and deployed independently while communic
 Detailed instructions for creating your own look are in
 [`docs/theming-skinning.md`](docs/theming-skinning.md).
 
-For plugin development details see [`docs/plugin-dev.md`](docs/plugin-dev.md).
+For plugin development details see [`Cycloside/docs/plugin-api.md`](Cycloside/docs/plugin-api.md) and [`Cycloside/docs/plugin-lifecycle.md`](Cycloside/docs/plugin-lifecycle.md).
 For details on the new fully managed visualization system (no native deps), see
 [`docs/managed-visuals.md`](docs/managed-visuals.md).
 Examples live under [`docs/examples/`](docs/examples/).
@@ -137,7 +136,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 
 </details>
 
-<details><summary>Network Security</summary>
+<details><summary>Diagnostics and Security Modules</summary>
 
 * **Packet Sniffer**: Real-time network packet capture and protocol analysis
 * **Port Scanner**: Comprehensive port scanning for vulnerability assessment
@@ -159,7 +158,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `EnvironmentEditorPlugin`| Edits environment variables at runtime (Process scope only on Linux/macOS).              |
 | `FileWatcherPlugin`      | Watches a directory and logs file system events.                                         |
 | `FileExplorerPlugin`     | Browse directories with tree and list views, context menu actions. |
-| `NetworkToolsPlugin`     | Comprehensive network analysis with packet sniffing, port scanning, and MAC/IP spoofing. |
+| `NetworkToolsPlugin`     | Network watch and analysis utilities, from interface monitoring to traffic and port inspection. |
 | `HardwareMonitorPlugin`  | Real-time system monitoring for CPU, memory, disk, and network performance. |
 | `VulnerabilityScannerPlugin` | Automated security scanning for vulnerabilities and exploit suggestions. |
 | `ExploitDevToolsPlugin`  | Metasploit-like interface for exploit development and penetration testing. |
@@ -167,7 +166,7 @@ For volatile scripting see [`docs/volatile-scripting.md`](docs/volatile-scriptin
 | `DigitalForensicsPlugin` | Comprehensive digital evidence analysis and investigation toolkit. |
 | `DatabaseManagerPlugin`  | Professional database management with multi-database support (SQL Server, MySQL, PostgreSQL, SQLite). |
 | `ApiTestingPlugin`       | REST API testing framework with authentication and response analysis. |
-| `AiAssistantPlugin`      | AI-powered code assistance, cybersecurity guidance, and intelligent features. |
+| `AiAssistantPlugin`      | AI-powered code help, workflow guidance, and optional security analysis. |
 | `PluginMarketplacePlugin`| Browse and install community plugins from the plugin repository. |
 | `AdvancedCodeEditorPlugin` | Professional IDE with syntax highlighting, IntelliSense, and multi-language support. |
 | `EncryptionPlugin`       | Encrypt text or files using AES/RSA. Accessible from File Explorer. |

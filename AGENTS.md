@@ -1,176 +1,139 @@
 # Repository Guidelines for Agents
 
-This repository hosts the **Cycloside** project along with related documentation.  
-When making changes, follow these binding rules:
+This repository hosts the **Cycloside** project along with related documentation.
+When making changes, follow these binding rules.
 
 ---
 
 ## 🔒 Absolute Directives
-- **NO PLACEHOLDERS EVER.**  
-  - Do not generate stubs, dummy methods, TODO comments, empty XAML tags, or incomplete scaffolding. 
-  - The TODO file(s) and documentation are the **ONLY** exception.  
-  - Every output must be **fully runnable** and compile cleanly.  
-  - **Exception:** a placeholder is allowed **only if Justin explicitly authorizes it**.  
-    - The agent must *ask permission first* before inserting any placeholder.  
+- **NO PLACEHOLDERS EVER.**
+  - Do not generate stubs, dummy methods, TODO comments, empty XAML tags, or incomplete scaffolding.
+  - The TODO file(s) and documentation are the **ONLY** exception.
+  - Every output must be **fully runnable** and compile cleanly.
+  - **Exception:** a placeholder is allowed **only if Justin explicitly authorizes it**.
+    - The agent must ask permission first before inserting any placeholder.
 
-## MUST OBEY LAW ##
-##  -Never use REGEX for ANYTHING. It is outdated, outmoded, and destroys lives, code, marriages and AIS, wasting time. 
-    ** Build your own functions to find, replace, edit, delete, modify, or copy/move/etc. 
-    ** Better yet, use specific blocks of code to provide exact functionality, replacing ReGex 100% ##
+## MUST OBEY LAW
+- Never use regex for repo edits, search/replace flows, or code transforms.
+- Prefer exact string matching, explicit parsing, or block-aware edits.
+- If a tool supports fixed-string search, use fixed-string mode.
 
-- **Output Format**  
-  - No filler text — output code first.  
-  - Explanations must appear as **inline comments inside the code**, never as prose outside.  
+- **Output Format**
+  - No filler text.
+  - Explanations belong inside code comments when code is being generated.
 
-- **Completeness**  
-   - If you cannot guarantee correctness, refine until you can — never emit broken code.  
+- **Completeness**
+  - If you cannot guarantee correctness, refine until you can.
 
 ---
 
 ## 🖼 Avalonia / SkiaSharp Specific Rules
-- **XAML/CS Must Be Complete**  
-  - Do not emit `<Control />` or unimplemented event hooks.  
-  - All event handlers referenced in XAML must exist and be wired in C#.  
-  - Bindings must point to real view models or properties — never dummies.  
+- **XAML/CS Must Be Complete**
+  - Do not emit `<Control />` or unimplemented event hooks.
+  - All event handlers referenced in XAML must exist and be wired in C#.
+  - Bindings must point to real view models or properties.
 
-- **UI Components**  
-  - Always generate **working Avalonia UI components** with SkiaSharp rendering fully functional.  
-  - Use established Avalonia idioms (e.g., `ReactiveUI`, `DataContext`) — never leave “to be implemented.”  
-  - If UI requires graphics, provide working SkiaSharp draw calls with defaults that render visibly.  
+- **UI Components**
+  - Always generate working Avalonia UI components.
+  - Use established Avalonia idioms such as `ReactiveUI` and `DataContext`.
+  - If UI requires graphics, provide working draw calls with visible defaults.
 
-- **Minimalism Over Gaps**  
-  - If uncertain, generate a simple but runnable implementation and then ask about how to continue.  
-  - Never leave unfinished UI fragments.  
+- **Minimalism Over Gaps**
+  - If uncertain, generate a simple runnable implementation and then ask how to continue.
+  - Never leave unfinished UI fragments.
 
 ---
 
 ## 🛠 Environment Setup
-- Ensure the **.NET SDK 8** (`dotnet-sdk-8.0`) is installed before running builds or linters.  
-- Verify with `dotnet --version` before proceeding.  
+- Cycloside uses **.NET 8 LTS**, not .NET 9.
+- Verify with `dotnet --version` before builds and make sure the result is `8.x`.
+- The repo root `global.json` pins the SDK. If `dotnet --version` resolves to `9.x`, fix SDK resolution before continuing.
+- Use Windows / PowerShell commands in this repo.
 
 ---
 
 ## 📐 Coding Style
-- Use **4 spaces** for indentation in all C#.  
-- Keep C# files under `Cycloside/` organized by the existing folder structure.  
-- Follow Avalonia conventions when working with `Avalonia-master/`.  
+- Use **4 spaces** for indentation in all C#.
+- Keep C# files under `Cycloside/` organized by the existing folder structure.
+- Follow Avalonia conventions when working with `Avalonia-master/`.
+- Put repo-level helper scripts under `tools/` instead of scattering them in the root.
+
+---
+
+## 🧠 Shared Agent Memory
+- Read [agentmemory.md](agentmemory.md) at the start of every session after reading this file.
+- `agentmemory.md` is the shared continuity file between agents working in this repo.
+- Add short dated bullets when something important is learned, completed, or decided.
+- Never store secrets, tokens, or private keys in memory.
+
+---
+
+## 📿 Beads Workflow
+- This repo now uses **bd / beads** for issue tracking and handoff work.
+- Run `bd status` at the start of every session.
+- The current repo prefix is `cycloside`.
+- Use bd for discovered follow-up work instead of creating extra markdown task trackers, except for existing intentional TODO docs already in the repo.
+
+### Core Commands
+```powershell
+bd status
+bd quickstart
+bd ready
+bd list
+bd create "Issue title"
+bd update <id> --claim
+bd close <id> --reason "Completed"
+```
+
+### Important Notes
+- Do not use `bd sync`; it is not part of the current installed CLI flow here.
+- If you need a git-visible snapshot of issue state, use:
+```powershell
+bd export -o .beads/issues.jsonl
+```
+- Use `bd ready` before asking what is unblocked.
+
+---
+
+## 🔐 Local MCP / Secret Handling
+- [secrets.json](secrets.json) and [mcp.json](mcp.json) are **local-only** files and must **never** be committed.
+- They are intentionally ignored. Keep secrets out of tracked files under all circumstances.
+- If you need to rebuild the local MCP configuration, run:
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/setup-local-mcp.ps1
+```
+- The local MCP config should stay scoped to this repo and use `D:/GitHub/NewIdeas` as its filesystem root.
+- If copying MCP configuration from `D:\GitHub\PhoenixVisualizer`, copy only the relevant server definitions and move secrets into `secrets.json`.
+- Never inline API keys into tracked JSON, markdown, source, or agent memory files.
+
+---
+
+## 📚 Context7
+- Use Context7 when local code is not enough and you need framework or vendor documentation, especially for Avalonia, Dock, and related desktop shell work.
+- CLI examples:
+```powershell
+npx ctx7 library avalonia
+npx ctx7 docs /avaloniaui/avalonia-docs "styles themes resources"
+npx ctx7 docs /websites/api-docs_avaloniaui_net "Window StorageProvider"
+npx ctx7 docs /wieslawsoltes/dock "document tool docking layout"
+```
+
+### Known Good Library IDs
+- Avalonia docs: `/avaloniaui/avalonia-docs`
+- Avalonia API docs: `/websites/api-docs_avaloniaui_net`
+- Dock docs/source: `/wieslawsoltes/dock`
 
 ---
 
 ## 📦 Programmatic Checks
-- After modifying potential app-breaking C# code, run:  
-  ```sh
-  dotnet build Cycloside/Cycloside.csproj to check for build issues. 
-
-<!-- BEGIN BEADS INTEGRATION -->
-## Issue Tracking with bd (beads)
-
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
-
-### Why bd?
-
-- Dependency-aware: Track blockers and relationships between issues
-- Git-friendly: Dolt-powered version control with native sync
-- Agent-optimized: JSON output, ready work detection, discovered-from links
-- Prevents duplicate tracking systems and confusion
-
-### Quick Start
-
-**Check for ready work:**
-
-```bash
-bd ready --json
+- After modifying potential app-breaking C# code, run:
+```powershell
+dotnet build Cycloside/Cycloside.csproj
 ```
 
-**Create new issues:**
+---
 
-```bash
-bd create "Issue title" --description="Detailed context" -t bug|feature|task -p 0-4 --json
-bd create "Issue title" --description="What this issue is about" -p 1 --deps discovered-from:bd-123 --json
-```
-
-**Claim and update:**
-
-```bash
-bd update <id> --claim --json
-bd update bd-42 --priority 1 --json
-```
-
-**Complete work:**
-
-```bash
-bd close bd-42 --reason "Completed" --json
-```
-
-### Issue Types
-
-- `bug` - Something broken
-- `feature` - New functionality
-- `task` - Work item (tests, docs, refactoring)
-- `epic` - Large feature with subtasks
-- `chore` - Maintenance (dependencies, tooling)
-
-### Priorities
-
-- `0` - Critical (security, data loss, broken builds)
-- `1` - High (major features, important bugs)
-- `2` - Medium (default, nice-to-have)
-- `3` - Low (polish, optimization)
-- `4` - Backlog (future ideas)
-
-### Workflow for AI Agents
-
-1. **Check ready work**: `bd ready` shows unblocked issues
-2. **Claim your task atomically**: `bd update <id> --claim`
-3. **Work on it**: Implement, test, document
-4. **Discover new work?** Create linked issue:
-   - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `bd close <id> --reason "Done"`
-
-### Auto-Sync
-
-bd automatically syncs via Dolt:
-
-- Each write auto-commits to Dolt history
-- Use `bd dolt push`/`bd dolt pull` for remote sync
-- No manual export/import needed!
-
-### Important Rules
-
-- ✅ Use bd for ALL task tracking
-- ✅ Always use `--json` flag for programmatic use
-- ✅ Link discovered work with `discovered-from` dependencies
-- ✅ Check `bd ready` before asking "what should I work on?"
-- ❌ Do NOT create markdown TODO lists
-- ❌ Do NOT use external issue trackers
-- ❌ Do NOT duplicate tracking systems
-
-For more details, see README.md and docs/QUICKSTART.md.
-
-## Landing the Plane (Session Completion)
-
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
-
-**MANDATORY WORKFLOW:**
-
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
-
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
-
-<!-- END BEADS INTEGRATION -->
+## 🎯 Product Direction Reminder
+- Cycloside is a **personal desktop shell** first.
+- The strongest product direction is themes, cursors, colors, wallpapers, widgets, Netwatch-style utilities, retro-capable tools, Jezzball, and eventually Tile World / Chip's Challenge style integrations.
+- Security, database, API, and dev tools are modules inside the shell, not the product identity.

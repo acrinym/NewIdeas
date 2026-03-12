@@ -1,0 +1,17 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector="Window.primary">
+    <Setter Property="Padding" Value="0"/>
+  </Style>
+
+  <Style Selector="Window.primary Canvas#DesktopCanvas">
+    <Setter Property="Opacity" Value="0.92"/>
+  </Style>
+
+  <Style Selector="Window.primary TabControl">
+    <Setter Property="Margin" Value="14"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+  </Style>
+
+</Styles>

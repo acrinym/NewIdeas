@@ -25,6 +25,7 @@ namespace Cycloside.Widgets.BuiltIn
         }
 
         public string Name => "MP3 Player";
+        public string Description => "A simple MP3 music player widget";
 
         public Control BuildView()
         {

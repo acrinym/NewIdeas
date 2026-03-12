@@ -19,10 +19,18 @@
   <ItemGroup>
     <!-- Include resources like images or fonts from the Resources folder -->
     <AvaloniaResource Include="Resources\**" />
-    <AvaloniaResource Include="Themes\Global\*.axaml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Themes\Global\*.axaml">
+    <Compile Remove="Plugins\**\src\**\*.cs" />
+    <Compile Remove="Plugins\**\tests\**\*.cs" />
+    <AvaloniaXaml Remove="Plugins\**\src\**\*.axaml" />
+    <AvaloniaXaml Remove="Plugins\**\tests\**\*.axaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Themes\**\*.axaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Skins\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -39,6 +47,8 @@
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="LibVLCSharp.Avalonia" Version="3.9.6" Condition="'$(OS)' == 'Windows_NT'" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23" Condition="'$(OS)' == 'Windows_NT'" />
     
     <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.3.0" />
     <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.3.0" />
@@ -47,6 +57,7 @@
     
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="NAudio.Vorbis" Version="1.5.0" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.9.2" />

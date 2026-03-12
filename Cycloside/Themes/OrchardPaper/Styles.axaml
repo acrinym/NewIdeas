@@ -1,0 +1,23 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource CanvasBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+  </Style>
+
+  <Style Selector="Border">
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+  </Style>
+
+</Styles>

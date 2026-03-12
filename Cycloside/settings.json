@@ -1,0 +1,47 @@
+{
+  "LaunchAtStartup": false,
+  "PluginEnabled": {},
+  "PluginVersions": {},
+  "PluginIsolation": true,
+  "PluginCrashLogging": true,
+  "DisableBuiltInPlugins": false,
+  "SafeBuiltInPlugins": {},
+  "GlobalTheme": "Dockside",
+  "RequestedThemeVariant": "Dark",
+  "GlobalSkin": "Workbench",
+  "QB64Path": "qb64",
+  "WindowEffects": {
+    "*": [
+      "Scale",
+      "Fade"
+    ],
+    "MainWindow": [
+      "Scale",
+      "Fade",
+      "Slide"
+    ]
+  },
+  "WindowEffectParameters": {
+    "MagicLampMinimize": {
+      "DurationMs": "280",
+      "SquashFactor": "0.80",
+      "MinHeight": "36"
+    },
+    "BeamUpMinimize": {
+      "DurationMs": "260",
+      "OffsetY": "150"
+    }
+  },
+  "GlobalHotkeys": {
+    "Terminal": "Ctrl+Alt+T",
+    "FileExplorer": "Ctrl+Alt+E",
+    "TextEditor": "Ctrl+Alt+N",
+    "QuickLauncher": "Ctrl+Alt+Q"
+  },
+  "WeatherLatitude": 35,
+  "WeatherLongitude": 139,
+  "WeatherCity": "",
+  "ActiveProfile": "default",
+  "RemoteApiToken": "secret",
+  "FirstRun": true
+}

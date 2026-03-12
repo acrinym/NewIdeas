@@ -44,7 +44,7 @@
 
         <!-- === Main Content Area === -->
         <Grid>
-            <Canvas Name="DesktopCanvas">
+            <Canvas Name="DesktopCanvas" Opacity="0.78">
                 <Canvas.Background>
                     <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="70%" RadiusY="70%">
                         <GradientStop Color="{DynamicResource SystemAccent}" Offset="0" />

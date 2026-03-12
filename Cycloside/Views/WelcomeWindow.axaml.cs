@@ -12,7 +12,7 @@ using Cycloside.Services;
 namespace Cycloside.Views
 {
     /// <summary>
-    /// Welcome to Cycloside - Ultimate Configuration Experience
+    /// First-run setup for Cycloside's personal desktop shell.
     /// </summary>
     public partial class WelcomeWindow : Window
     {
@@ -59,16 +59,19 @@ namespace Cycloside.Views
 
             var availablePlugins = new[]
             {
-                new PluginInfo { Name = "HackerTerminalPlugin", Description = "Professional CMD terminal with hacker tools", IsEnabled = true, LoadOnStartup = false },
-                new PluginInfo { Name = "PowerShellTerminalPlugin", Description = "Advanced PowerShell integration with elevation", IsEnabled = true, LoadOnStartup = false },
-                new PluginInfo { Name = "HackersParadisePlugin", Description = "Dashboard for hacker paradise tools and features", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "TextEditorPlugin", Description = "Multi-language code editor", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "NotificationCenterPlugin", Description = "System notifications and alerts", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "WallpaperPlugin", Description = "Dynamic wallpaper management", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "ClipboardManagerPlugin", Description = "Enhanced clipboard management", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "FileWatcherPlugin", Description = "File system monitoring", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "MacroPlugin", Description = "Automation and macro management", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "TaskSchedulerPlugin", Description = "Advanced task scheduling", IsEnabled = false, LoadOnStartup = false }
+                new PluginInfo { Name = "WidgetHostPlugin", DisplayName = "Widget Host", Description = "Dockable desktop gadgets and mini tools", IsEnabled = true, LoadOnStartup = false },
+                new PluginInfo { Name = "NetworkToolsPlugin", DisplayName = "Netwatch", Description = "Keep an eye on network activity from a desktop utility view", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "WallpaperPlugin", DisplayName = "Wallpaper Studio", Description = "Dynamic wallpaper, backdrop, and desktop mood control", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "ManagedVisHostPlugin", DisplayName = "Visual Playground", Description = "Managed audio visualizers, starfields, matrix rain, and more", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "MP3PlayerPlugin", DisplayName = "MP3 Player", Description = "Music playback with widget and visualization hooks", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "JezzballPlugin", DisplayName = "Jezzball", Description = "Retro arcade energy built into the desktop", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "GweledPlugin", DisplayName = "Gweled", Description = "Small jewel-swap puzzle sessions for the retro shell", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "TileWorldPlugin", DisplayName = "Tile World", Description = "Chip's Challenge style puzzle boards for the retro shell", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "QBasicRetroIDEPlugin", DisplayName = "QBasic Retro IDE", Description = "QB-style coding corner for old-school experiments", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "PowerShellTerminalPlugin", DisplayName = "PowerShell Terminal", Description = "Automation shell and system tooling", IsEnabled = true, LoadOnStartup = false },
+                new PluginInfo { Name = "HackerTerminalPlugin", DisplayName = "Classic Command Terminal", Description = "Quick old-school command shell workflow", IsEnabled = true, LoadOnStartup = false },
+                new PluginInfo { Name = "TextEditorPlugin", DisplayName = "Text Editor", Description = "Scratchpad for notes, scripts, and snippets", IsEnabled = false, LoadOnStartup = false },
+                new PluginInfo { Name = "ClipboardManagerPlugin", DisplayName = "Clipboard Manager", Description = "Clipboard history and quick snippet reuse", IsEnabled = false, LoadOnStartup = false }
             };
 
             foreach (var plugin in availablePlugins)
@@ -120,7 +123,7 @@ namespace Cycloside.Views
             // Plugin name and description
             var nameText = new TextBlock
             {
-                Text = plugin.Name,
+                Text = string.IsNullOrWhiteSpace(plugin.DisplayName) ? plugin.Name : plugin.DisplayName,
                 FontWeight = FontWeight.SemiBold,
                 FontSize = 14
             };
@@ -269,6 +272,7 @@ namespace Cycloside.Views
     public class PluginInfo
     {
         public string Name { get; set; } = "";
+        public string DisplayName { get; set; } = "";
         public string Description { get; set; } = "";
         public bool IsEnabled { get; set; } = true;
         public bool LoadOnStartup { get; set; } = false;

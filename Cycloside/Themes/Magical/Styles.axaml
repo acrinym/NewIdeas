@@ -1,0 +1,73 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource MagicalWindowBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="#D61A1125"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
+  </Style>
+
+  <Style Selector="Border.surface-card">
+    <Setter Property="Background" Value="#D8241733"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BoxShadow" Value="{DynamicResource ShadowStandard}"/>
+  </Style>
+
+  <Style Selector="Button">
+    <Setter Property="Background" Value="#C1241733"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+  </Style>
+
+  <Style Selector="Button.accent">
+    <Setter Property="Background" Value="{DynamicResource MagicalProgressFillBrush}"/>
+    <Setter Property="Foreground" Value="#140B1D"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource MagicalProgressFrameBrush}"/>
+  </Style>
+
+  <Style Selector="TextBox:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="#D2241733"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+  </Style>
+
+  <Style Selector="ListBoxItem:selected">
+    <Setter Property="Background" Value="#AA311D46"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="ProgressBar">
+    <Setter Property="Background" Value="{DynamicResource MagicalProgressTrackBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
+  </Style>
+
+  <Style Selector="ProgressBar /template/ Border#PART_Indicator">
+    <Setter Property="Background" Value="{DynamicResource MagicalProgressFillBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource MagicalProgressFrameBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+  </Style>
+
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="#EE1A1125"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+</Styles>

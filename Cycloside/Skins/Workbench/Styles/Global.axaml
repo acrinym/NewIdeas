@@ -1,0 +1,68 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource CanvasBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="Button">
+    <Setter Property="Padding" Value="12,6"/>
+    <Setter Property="CornerRadius" Value="2"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+  </Style>
+
+  <Style Selector="Button:pressed">
+    <Setter Property="Background" Value="{DynamicResource InteractivePressedBrush}"/>
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="Padding" Value="10,6"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="2"/>
+    <Setter Property="Background" Value="{DynamicResource SystemBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="Cursor" Value="IBeam"/>
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="Padding" Value="10,6"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="2"/>
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+  </Style>
+
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+  </Style>
+
+  <Style Selector="TabItem">
+    <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="12,6"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+  </Style>
+
+</Styles>

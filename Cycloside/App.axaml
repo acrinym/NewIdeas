@@ -9,6 +9,7 @@
         <FluentTheme />
         <!-- Base semantic tokens loaded first -->
         <StyleInclude Source="avares://Cycloside/Themes/Tokens.axaml"/>
+        <StyleInclude Source="avares://Cycloside/Themes/BaseStyles.axaml"/>
     </Application.Styles>
 
     <Application.Resources>

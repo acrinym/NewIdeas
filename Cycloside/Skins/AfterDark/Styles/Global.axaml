@@ -1,0 +1,77 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <LinearGradientBrush x:Key="AfterDarkWindowBrush" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#020208" Offset="0.0"/>
+      <GradientStop Color="#09061A" Offset="0.55"/>
+      <GradientStop Color="#041B21" Offset="1.0"/>
+    </LinearGradientBrush>
+  </Styles.Resources>
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource AfterDarkWindowBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="#CC06060C"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+  </Style>
+
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="#1A1B31"/>
+  </Style>
+
+  <Style Selector="Button">
+    <Setter Property="Background" Value="#0F1324"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="Padding" Value="12,6"/>
+    <Setter Property="Cursor" Value="Hand"/>
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="#161A32"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="#070A14"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="Padding" Value="10,6"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="Cursor" Value="IBeam"/>
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="Background" Value="#070A14"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="Padding" Value="10,6"/>
+  </Style>
+
+  <Style Selector="TabItem">
+    <Setter Property="Background" Value="#0B1020"/>
+    <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="#1C2747"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="10,10,0,0"/>
+    <Setter Property="Padding" Value="12,6"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="#101731"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+  </Style>
+
+</Styles>

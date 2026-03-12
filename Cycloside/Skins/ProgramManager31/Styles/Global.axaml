@@ -1,0 +1,80 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <SolidColorBrush x:Key="Win31FaceBrush" Color="#C0C0C0"/>
+    <SolidColorBrush x:Key="Win31PanelBrush" Color="#E6E6E6"/>
+    <SolidColorBrush x:Key="Win31TextBrush" Color="#000000"/>
+    <SolidColorBrush x:Key="Win31BlueBrush" Color="#0000A8"/>
+    <SolidColorBrush x:Key="Win31TealBrush" Color="#008080"/>
+    <SolidColorBrush x:Key="Win31EdgeBrush" Color="#5A5A5A"/>
+  </Styles.Resources>
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource Win31FaceBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win31TextBrush}"/>
+    <Setter Property="FontFamily" Value="Segoe UI"/>
+  </Style>
+
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{StaticResource Win31FaceBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win31TextBrush}"/>
+  </Style>
+
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="{StaticResource Win31BlueBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+  </Style>
+
+  <Style Selector="Button">
+    <Setter Property="Background" Value="{StaticResource Win31PanelBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win31TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win31EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="10,4"/>
+    <Setter Property="Cursor" Value="Hand"/>
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="#F4F4F4"/>
+  </Style>
+
+  <Style Selector="Button:pressed">
+    <Setter Property="Background" Value="#D0D0D0"/>
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="White"/>
+    <Setter Property="Foreground" Value="{StaticResource Win31TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win31EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="CaretBrush" Value="{StaticResource Win31TextBrush}"/>
+    <Setter Property="Cursor" Value="IBeam"/>
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="Background" Value="White"/>
+    <Setter Property="Foreground" Value="{StaticResource Win31TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win31EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="8,4"/>
+  </Style>
+
+  <Style Selector="TabItem">
+    <Setter Property="Background" Value="{StaticResource Win31PanelBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win31TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win31EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="10,4"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="White"/>
+    <Setter Property="Foreground" Value="{StaticResource Win31BlueBrush}"/>
+  </Style>
+
+</Styles>

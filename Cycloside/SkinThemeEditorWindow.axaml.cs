@@ -1,23 +1,28 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using AvaloniaEdit;
 using AvaloniaEdit.Highlighting;
+using Cycloside.Services;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Cycloside.Services;
 
 namespace Cycloside;
 
 public partial class SkinThemeEditorWindow : Window
 {
-    private ComboBox? _fileBox;
-    private TextEditor? _editor;
+    private const string ThemeScopeLabel = "Theme Packs";
+    private const string SkinScopeLabel = "Skin Packs";
 
-    // FIX: The path now correctly points to the "Global" subdirectory where themes are stored.
-    private string _themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
+    private readonly Dictionary<string, string> _filePaths = new(StringComparer.OrdinalIgnoreCase);
+
+    private ComboBox? _scopeBox;
+    private ComboBox? _fileBox;
+    private TextBlock? _selectedPathBlock;
+    private TextEditor? _editor;
+    private SkinPreviewWindow? _previewWindow;
 
     public SkinThemeEditorWindow()
     {
@@ -25,12 +30,26 @@ public partial class SkinThemeEditorWindow : Window
         CursorManager.ApplyFromSettings(this, "Plugins");
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(SkinThemeEditorWindow));
 
+        _scopeBox = this.FindControl<ComboBox>("ScopeBox");
         _fileBox = this.FindControl<ComboBox>("FileBox");
+        _selectedPathBlock = this.FindControl<TextBlock>("SelectedPathBlock");
         _editor = this.FindControl<TextEditor>("Editor");
 
         if (_editor != null)
         {
             _editor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("XML");
+        }
+
+        if (_scopeBox != null)
+        {
+            _scopeBox.ItemsSource = new[] { ThemeScopeLabel, SkinScopeLabel };
+            _scopeBox.SelectedItem = ThemeScopeLabel;
+            _scopeBox.SelectionChanged += ScopeChanged;
+        }
+
+        if (_fileBox != null)
+        {
+            _fileBox.SelectionChanged += FileChanged;
         }
 
         BuildFileList();
@@ -41,92 +60,165 @@ public partial class SkinThemeEditorWindow : Window
         AvaloniaXamlLoader.Load(this);
     }
 
+    private void ScopeChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        BuildFileList();
+    }
+
+    private void FileChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        LoadFile(null, null);
+    }
+
     private void BuildFileList()
     {
-        if (_fileBox == null) return;
-
-        _fileBox.Items.Clear();
-        if (!Directory.Exists(_themeDir))
+        if (_fileBox == null)
         {
-            // If the directory doesn't exist, create it. This prevents a crash on first run.
-            try
-            {
-                Directory.CreateDirectory(_themeDir);
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"Failed to create theme directory at '{_themeDir}': {ex.Message}");
-                return;
-            }
+            return;
         }
 
-        try
+        _filePaths.Clear();
+
+        var scopeLabel = _scopeBox?.SelectedItem as string ?? ThemeScopeLabel;
+        var rootDirectory = string.Equals(scopeLabel, SkinScopeLabel, StringComparison.OrdinalIgnoreCase)
+            ? Path.Combine(AppContext.BaseDirectory, "Skins")
+            : Path.Combine(AppContext.BaseDirectory, "Themes");
+
+        if (!Directory.Exists(rootDirectory))
         {
-            foreach (var file in Directory.GetFiles(_themeDir, "*.axaml"))
+            Directory.CreateDirectory(rootDirectory);
+        }
+
+        foreach (var entry in GetScopedFiles(rootDirectory))
+        {
+            _filePaths[entry.Key] = entry.Value;
+        }
+
+        _fileBox.ItemsSource = _filePaths.Keys.ToArray();
+        _fileBox.SelectedItem = _filePaths.Keys.FirstOrDefault();
+
+        if (_fileBox.SelectedItem == null)
+        {
+            if (_editor != null)
             {
-                _fileBox.Items.Add(Path.GetFileName(file));
+                _editor.Text = string.Empty;
             }
 
-            if (_fileBox.ItemCount > 0)
+            if (_selectedPathBlock != null)
             {
-                _fileBox.SelectedIndex = 0;
-                // Automatically load the first file when the window opens.
-                LoadFile(null, null);
+                _selectedPathBlock.Text = "No theme or skin files found in the selected scope.";
             }
         }
-        catch (Exception ex)
+    }
+
+    private IEnumerable<KeyValuePair<string, string>> GetScopedFiles(string rootDirectory)
+    {
+        var extensionSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            Logger.Log($"Failed to list theme files in '{_themeDir}': {ex.Message}");
+            ".axaml",
+            ".json"
+        };
+
+        var filePaths = Directory.GetFiles(rootDirectory, "*", SearchOption.AllDirectories)
+            .Where(path => extensionSet.Contains(Path.GetExtension(path)))
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var filePath in filePaths)
+        {
+            var relativePath = Path.GetRelativePath(rootDirectory, filePath)
+                .Replace('\\', '/');
+            yield return new KeyValuePair<string, string>(relativePath, filePath);
         }
     }
 
     private string? GetSelectedPath()
     {
-        if (_fileBox?.SelectedItem is not string fileName)
+        if (_fileBox?.SelectedItem is not string displayPath)
         {
             return null;
         }
-        return Path.Combine(_themeDir, fileName);
+
+        return _filePaths.TryGetValue(displayPath, out var fullPath) ? fullPath : null;
     }
 
     private void LoadFile(object? sender, RoutedEventArgs? e)
     {
+        _ = sender;
+        _ = e;
+
         var path = GetSelectedPath();
-        if (path != null && File.Exists(path) && _editor != null)
+        if (path == null || _editor == null)
         {
-            try
+            return;
+        }
+
+        try
+        {
+            _editor.SyntaxHighlighting = string.Equals(Path.GetExtension(path), ".json", StringComparison.OrdinalIgnoreCase)
+                ? HighlightingManager.Instance.GetDefinition("JavaScript")
+                : HighlightingManager.Instance.GetDefinition("XML");
+
+            _editor.Text = File.ReadAllText(path);
+
+            if (_selectedPathBlock != null)
             {
-                _editor.Text = File.ReadAllText(path);
+                _selectedPathBlock.Text = path;
             }
-            catch (Exception ex)
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"SkinThemeEditorWindow: failed to load '{path}': {ex.Message}");
+            _editor.Text = ex.Message;
+
+            if (_selectedPathBlock != null)
             {
-                Logger.Log($"Failed to read theme file '{path}': {ex.Message}");
-                if (_editor != null) _editor.Text = $"Error: Could not load file.\n\n{ex.Message}";
+                _selectedPathBlock.Text = path;
             }
         }
     }
 
     private void SaveFile(object? sender, RoutedEventArgs e)
     {
+        _ = sender;
+        _ = e;
+
         var path = GetSelectedPath();
-        if (path != null && _editor != null)
+        if (path == null || _editor == null)
         {
-            try
-            {
-                File.WriteAllText(path, _editor.Text ?? string.Empty);
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"Failed to save theme file '{path}': {ex.Message}");
-            }
+            return;
+        }
+
+        try
+        {
+            File.WriteAllText(path, _editor.Text ?? string.Empty);
+            Logger.Log($"SkinThemeEditorWindow: saved '{path}'");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"SkinThemeEditorWindow: failed to save '{path}': {ex.Message}");
         }
     }
 
-    private SkinPreviewWindow? _previewWindow;
-
     private void PreviewSkin(object? sender, RoutedEventArgs e)
     {
-        if (_editor == null) return;
+        _ = sender;
+        _ = e;
+
+        var path = GetSelectedPath();
+        if (path == null || _editor == null)
+        {
+            return;
+        }
+
+        if (!string.Equals(Path.GetExtension(path), ".axaml", StringComparison.OrdinalIgnoreCase))
+        {
+            Logger.Log("SkinThemeEditorWindow: preview is only available for .axaml files");
+            return;
+        }
 
         _previewWindow ??= new SkinPreviewWindow();
         _previewWindow.LoadPreview(_editor.Text ?? string.Empty);

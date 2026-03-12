@@ -1,0 +1,35 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <Color x:Key="SystemAccent">#3D8A5F</Color>
+    <Color x:Key="SystemHighlight">#62A97C</Color>
+    <Color x:Key="SystemError">#C85B55</Color>
+    <Color x:Key="SystemWarning">#D6A84A</Color>
+    <Color x:Key="SystemSuccess">#3D8A5F</Color>
+
+    <Color x:Key="CanvasBackground">#F2EFE4</Color>
+    <Color x:Key="PopupBackground">#FBF8EE</Color>
+    <Color x:Key="CardBackground">#FCF8EC</Color>
+    <Color x:Key="PanelBackground">#E6DFC9</Color>
+
+    <Color x:Key="PrimaryText">#1F2A22</Color>
+    <Color x:Key="SecondaryText">#516155</Color>
+    <Color x:Key="DisabledText">#7B857B</Color>
+    <Color x:Key="PlaceholderText">#8A9388</Color>
+
+    <Color x:Key="InteractiveHover">#E2EBD9</Color>
+    <Color x:Key="InteractivePressed">#D0DEC3</Color>
+    <Color x:Key="InteractiveSelected">#C1D5B2</Color>
+    <Color x:Key="InteractiveFocusRing">#3D8A5F</Color>
+
+    <Color x:Key="BorderDefault">#9AA686</Color>
+    <Color x:Key="BorderStrong">#6E7E61</Color>
+    <Color x:Key="BorderSubtle">#D7D1BF</Color>
+    <Color x:Key="Separator">#C9C3AE</Color>
+
+    <FontFamily x:Key="FontFamilyPrimary">Trebuchet MS</FontFamily>
+    <FontFamily x:Key="FontFamilyMono">Cascadia Code</FontFamily>
+    <CornerRadius x:Key="RadiusM">8</CornerRadius>
+    <CornerRadius x:Key="RadiusL">12</CornerRadius>
+    <CornerRadius x:Key="RadiusXL">16</CornerRadius>
+  </Style.Resources>
+</Style>

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using NAudio.Wave;
+using NAudio.Vorbis;
 
 namespace Cycloside.Services;
 
@@ -26,8 +27,9 @@ public static class AudioService
                 return;
             }
 
-            var reader = new AudioFileReader(path);
+            using var readerFactory = CreateReader(path);
             var output = new WaveOutEvent();
+            var reader = readerFactory.DetachReader();
             output.Init(reader);
             output.Play();
             output.PlaybackStopped += (_, _) =>
@@ -41,6 +43,43 @@ public static class AudioService
         {
             Logger.Log($"Audio playback error for {path}: {ex.Message}");
             System.Threading.Interlocked.Decrement(ref _active);
+        }
+    }
+
+    private static ReaderLease CreateReader(string path)
+    {
+        if (path.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase))
+        {
+            return new ReaderLease(new VorbisWaveReader(path));
+        }
+
+        return new ReaderLease(new AudioFileReader(path));
+    }
+
+    private sealed class ReaderLease : IDisposable
+    {
+        private WaveStream? _reader;
+
+        public ReaderLease(WaveStream reader)
+        {
+            _reader = reader;
+        }
+
+        public WaveStream DetachReader()
+        {
+            if (_reader == null)
+            {
+                throw new InvalidOperationException("Audio reader was already detached.");
+            }
+
+            var reader = _reader;
+            _reader = null;
+            return reader;
+        }
+
+        public void Dispose()
+        {
+            _reader?.Dispose();
         }
     }
 }

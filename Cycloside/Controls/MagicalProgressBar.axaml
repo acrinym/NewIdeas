@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Cycloside.Controls.MagicalProgressBar"
+             x:Name="Root">
+  <Grid MinHeight="18">
+    <Border CornerRadius="10"
+            BorderThickness="2"
+            Background="{DynamicResource MagicalProgressTrackBrush}"
+            BorderBrush="{DynamicResource MagicalProgressFrameBrush}"
+            Padding="3"
+            BoxShadow="{DynamicResource ShadowSubtle}">
+      <Grid x:Name="PART_TrackHost" ClipToBounds="True">
+        <Border x:Name="PART_Fill"
+                Width="0"
+                HorizontalAlignment="Left"
+                CornerRadius="7"
+                Background="{DynamicResource MagicalProgressFillBrush}">
+          <Border.Transitions>
+            <Transitions>
+              <DoubleTransition Property="Width" Duration="0:0:0.45"/>
+            </Transitions>
+          </Border.Transitions>
+        </Border>
+
+        <Canvas x:Name="PART_SparkleCanvas"
+                ClipToBounds="True"
+                IsHitTestVisible="False">
+          <Ellipse x:Name="PART_Sparkle1"
+                   Width="7"
+                   Height="7"
+                   Fill="{DynamicResource MagicalProgressSparkleBrush}"
+                   Opacity="0.45" />
+          <Ellipse x:Name="PART_Sparkle2"
+                   Width="5"
+                   Height="5"
+                   Fill="{DynamicResource MagicalProgressSparkleBrush}"
+                   Opacity="0.35" />
+          <Ellipse x:Name="PART_Sparkle3"
+                   Width="4"
+                   Height="4"
+                   Fill="{DynamicResource MagicalProgressSparkleBrush}"
+                   Opacity="0.3" />
+          <Ellipse x:Name="PART_Sparkle4"
+                   Width="6"
+                   Height="6"
+                   Fill="{DynamicResource MagicalProgressSparkleBrush}"
+                   Opacity="0.4" />
+          <Ellipse x:Name="PART_Sparkle5"
+                   Width="4"
+                   Height="4"
+                   Fill="{DynamicResource MagicalProgressSparkleBrush}"
+                   Opacity="0.28" />
+        </Canvas>
+      </Grid>
+    </Border>
+
+    <TextBlock HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               FontWeight="Bold"
+               Foreground="{DynamicResource MagicalProgressTextBrush}"
+               IsVisible="{Binding ShowPercentage, ElementName=Root}"
+               Text="{Binding Progress, ElementName=Root, StringFormat='{}{0:F0}%'}" />
+  </Grid>
+</UserControl>

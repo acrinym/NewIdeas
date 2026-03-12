@@ -27,6 +27,7 @@ public class NetworkToolsPlugin : IPlugin
         public class NetworkToolsWidget : IWidget
         {
             public string Name => "Network Tools";
+            public string Description => "Network analysis and monitoring tools";
 
             private TabControl? _mainTabControl;
             private TextBlock? _statusText;
@@ -61,17 +62,17 @@ public class NetworkToolsPlugin : IPlugin
 
                 var statusPanel = new Border
                 {
-                    Background = Brushes.LightGray,
-                    CornerRadius = new CornerRadius(5),
                     Padding = new Thickness(8, 4),
                     Margin = new Thickness(15, 0, 0, 0)
                 };
+                AppearanceHelper.ApplyStatusChip(statusPanel);
 
                 _statusText = new TextBlock
                 {
                     Text = "Ready",
                     FontSize = 12
                 };
+                AppearanceHelper.ApplySecondaryText(_statusText);
 
                 statusPanel.Child = _statusText;
 
@@ -107,14 +108,29 @@ public class NetworkToolsPlugin : IPlugin
                 var border = new Border
                 {
                     Child = mainPanel,
-                    Background = Brushes.White,
-                    BorderBrush = Brushes.LightGray,
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(8),
                     Margin = new Thickness(10)
                 };
+                AppearanceHelper.ApplyCardSurface(border);
 
                 return border;
+            }
+
+            private static Button CreateActionButton(string content, SemanticButtonRole role, EventHandler<RoutedEventArgs> handler, Thickness? margin = null)
+            {
+                var button = new Button
+                {
+                    Content = content,
+                    Padding = new Thickness(10, 5)
+                };
+
+                if (margin.HasValue)
+                {
+                    button.Margin = margin.Value;
+                }
+
+                AppearanceHelper.ApplyButtonRole(button, role);
+                button.Click += handler;
+                return button;
             }
 
             private TabItem CreatePacketSnifferTab()
@@ -142,32 +158,9 @@ public class NetworkToolsPlugin : IPlugin
 
                 var buttonsPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
 
-                var startButton = new Button
-                {
-                    Content = "▶️ Start Capture",
-                    Background = Brushes.Green,
-                    Foreground = Brushes.White,
-                    Padding = new Thickness(10, 5)
-                };
-                startButton.Click += OnStartPacketCapture;
-
-                var stopButton = new Button
-                {
-                    Content = "⏹️ Stop Capture",
-                    Background = Brushes.Red,
-                    Foreground = Brushes.White,
-                    Padding = new Thickness(10, 5)
-                };
-                stopButton.Click += OnStopPacketCapture;
-
-                var clearButton = new Button
-                {
-                    Content = "🗑️ Clear",
-                    Background = Brushes.Gray,
-                    Foreground = Brushes.White,
-                    Padding = new Thickness(10, 5)
-                };
-                clearButton.Click += OnClearPackets;
+                var startButton = CreateActionButton("▶️ Start Capture", SemanticButtonRole.Success, OnStartPacketCapture);
+                var stopButton = CreateActionButton("⏹️ Stop Capture", SemanticButtonRole.Danger, OnStopPacketCapture);
+                var clearButton = CreateActionButton("🗑️ Clear", SemanticButtonRole.Neutral, OnClearPackets);
 
                 buttonsPanel.Children.Add(startButton);
                 buttonsPanel.Children.Add(stopButton);
@@ -229,16 +222,7 @@ public class NetworkToolsPlugin : IPlugin
                 targetPanel.Children.Add(_portRangeInput);
 
                 // Scan button
-                var scanButton = new Button
-                {
-                    Content = "🔍 Start Scan",
-                    Background = Brushes.Blue,
-                    Foreground = Brushes.White,
-                    FontWeight = FontWeight.Bold,
-                    Padding = new Thickness(15, 8),
-                    Margin = new Thickness(0, 15, 0, 0)
-                };
-                scanButton.Click += OnStartPortScan;
+                var scanButton = CreateActionButton("🔍 Start Scan", SemanticButtonRole.Accent, OnStartPortScan, new Thickness(0, 15, 0, 0));
 
                 // Results
                 var resultsPanel = new StackPanel { Margin = new Thickness(0, 20, 0, 0) };
@@ -272,24 +256,8 @@ public class NetworkToolsPlugin : IPlugin
                 // Controls
                 var controlsPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 15) };
 
-                var monitorButton = new Button
-                {
-                    Content = "▶️ Start Monitoring",
-                    Background = Brushes.Green,
-                    Foreground = Brushes.White,
-                    Padding = new Thickness(15, 8)
-                };
-                monitorButton.Click += OnStartHttpMonitoring;
-
-                var stopButton = new Button
-                {
-                    Content = "⏹️ Stop Monitoring",
-                    Background = Brushes.Red,
-                    Foreground = Brushes.White,
-                    Padding = new Thickness(15, 8),
-                    Margin = new Thickness(10, 0, 0, 0)
-                };
-                stopButton.Click += OnStopHttpMonitoring;
+                var monitorButton = CreateActionButton("▶️ Start Monitoring", SemanticButtonRole.Success, OnStartHttpMonitoring);
+                var stopButton = CreateActionButton("⏹️ Stop Monitoring", SemanticButtonRole.Danger, OnStopHttpMonitoring, new Thickness(10, 0, 0, 0));
 
                 controlsPanel.Children.Add(monitorButton);
                 controlsPanel.Children.Add(stopButton);
@@ -398,21 +366,17 @@ public class NetworkToolsPlugin : IPlugin
                 // Warning panel
                 var warningPanel = new Border
                 {
-                    Background = Brushes.Orange,
-                    BorderBrush = Brushes.DarkOrange,
-                    BorderThickness = new Thickness(2),
-                    CornerRadius = new CornerRadius(5),
                     Margin = new Thickness(0, 0, 0, 20),
                     Padding = new Thickness(10)
                 };
+                AppearanceHelper.ApplyWarningPanel(warningPanel);
 
                 var warningText = new TextBlock
                 {
                     Text = "⚠️ WARNING: MAC and IP spoofing can violate network policies, break connectivity, and may be illegal in some jurisdictions. Use only for authorized testing and educational purposes.",
-                    TextWrapping = TextWrapping.Wrap,
-                    Foreground = Brushes.DarkRed,
-                    FontWeight = FontWeight.Bold
+                    TextWrapping = TextWrapping.Wrap
                 };
+                AppearanceHelper.ApplyWarningText(warningText);
 
                 warningPanel.Child = warningText;
                 panel.Children.Add(warningPanel);
@@ -453,10 +417,9 @@ public class NetworkToolsPlugin : IPlugin
                 var generateMacButton = new Button
                 {
                     Content = "🎲 Random",
-                    Background = Brushes.Blue,
-                    Foreground = Brushes.White,
                     Padding = new Thickness(8, 4)
                 };
+                AppearanceHelper.ApplyButtonRole(generateMacButton, SemanticButtonRole.Accent);
                 generateMacButton.Click += (_, _) =>
                 {
                     macInput.Text = NetworkTools.GenerateRandomMacAddress();
@@ -470,10 +433,9 @@ public class NetworkToolsPlugin : IPlugin
                 var changeMacButton = new Button
                 {
                     Content = "🔄 Change MAC",
-                    Background = Brushes.Green,
-                    Foreground = Brushes.White,
                     Padding = new Thickness(10, 5)
                 };
+                AppearanceHelper.ApplyButtonRole(changeMacButton, SemanticButtonRole.Success);
                 changeMacButton.Click += async (_, _) =>
                 {
                     var interfaceName = macInterfaceCombo.SelectedItem?.ToString();
@@ -501,10 +463,9 @@ public class NetworkToolsPlugin : IPlugin
                 var restoreMacButton = new Button
                 {
                     Content = "🔄 Restore MAC",
-                    Background = Brushes.Orange,
-                    Foreground = Brushes.White,
                     Padding = new Thickness(10, 5)
                 };
+                AppearanceHelper.ApplyButtonRole(restoreMacButton, SemanticButtonRole.Warning);
                 restoreMacButton.Click += async (_, _) =>
                 {
                     var interfaceName = macInterfaceCombo.SelectedItem?.ToString();
@@ -596,10 +557,9 @@ public class NetworkToolsPlugin : IPlugin
                 var spoofIpButton = new Button
                 {
                     Content = "🌐 Spoof IP",
-                    Background = Brushes.Green,
-                    Foreground = Brushes.White,
                     Padding = new Thickness(10, 5)
                 };
+                AppearanceHelper.ApplyButtonRole(spoofIpButton, SemanticButtonRole.Success);
                 spoofIpButton.Click += async (_, _) =>
                 {
                     var interfaceName = ipInterfaceCombo.SelectedItem?.ToString();
@@ -629,10 +589,9 @@ public class NetworkToolsPlugin : IPlugin
                 var restoreIpButton = new Button
                 {
                     Content = "🔄 Restore IP",
-                    Background = Brushes.Orange,
-                    Foreground = Brushes.White,
                     Padding = new Thickness(10, 5)
                 };
+                AppearanceHelper.ApplyButtonRole(restoreIpButton, SemanticButtonRole.Warning);
                 restoreIpButton.Click += async (_, _) =>
                 {
                     var interfaceName = ipInterfaceCombo.SelectedItem?.ToString();
@@ -788,7 +747,7 @@ public class NetworkToolsPlugin : IPlugin
                         {
                             var last = _packetList.Items[^1];
                             if (last != null)
-                                _packetList.ScrollIntoView(last);
+                                _packetList.ScrollIntoView(last!);
                         }
                     }
                 });
@@ -807,7 +766,7 @@ public class NetworkToolsPlugin : IPlugin
                         {
                             var last = _portScanResults.Items[^1];
                             if (last != null)
-                                _portScanResults.ScrollIntoView(last);
+                                _portScanResults.ScrollIntoView(last!);
                         }
                     }
                 });
@@ -832,7 +791,7 @@ public class NetworkToolsPlugin : IPlugin
                         {
                             var last = _httpRequests.Items[^1];
                             if (last != null)
-                                _httpRequests.ScrollIntoView(last);
+                                _httpRequests.ScrollIntoView(last!);
                         }
                     }
                 });

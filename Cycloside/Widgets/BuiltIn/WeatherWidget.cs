@@ -23,6 +23,7 @@ public class WeatherWidget : IWidget
     }
 
     public string Name => "Weather";
+    public string Description => "A weather information widget";
 
     public Control BuildView()
     {

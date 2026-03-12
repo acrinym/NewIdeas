@@ -18,6 +18,7 @@ public partial class WindowEffectsSettingsWindow : Window
     private ComboBox? _componentBox;
     private StackPanel? _effectPanel;
     private readonly Dictionary<string, CheckBox> _effectBoxes = new();
+    private readonly Dictionary<string, Dictionary<string, TextBox>> _paramInputs = new();
 
     // Parameterless constructor for designer/XAML loader
     public WindowEffectsSettingsWindow() : this(new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify))
@@ -70,10 +71,34 @@ public partial class WindowEffectsSettingsWindow : Window
 
         foreach (var name in WindowEffectsManager.Instance.GetRegisteredEffectNames())
         {
+            var container = new StackPanel { Spacing = 4 };
             var cb = new CheckBox { Content = name };
-            _effectPanel.Children.Add(cb);
+            container.Children.Add(cb);
             _effectBoxes[name] = cb;
+
+            // Known parameters for specific effects
+            var fields = new Dictionary<string, TextBox>();
+            if (name == "MagicLampMinimize")
+            {
+                fields["DurationMs"] = CreateParamRow(container, "DurationMs", "220");
+                fields["SquashFactor"] = CreateParamRow(container, "SquashFactor", "0.75");
+                fields["MinHeight"] = CreateParamRow(container, "MinHeight", "40");
+            }
+            else if (name == "BeamUpMinimize")
+            {
+                fields["DurationMs"] = CreateParamRow(container, "DurationMs", "220");
+                fields["OffsetY"] = CreateParamRow(container, "OffsetY", "-80");
+            }
+
+            if (fields.Count > 0)
+            {
+                _paramInputs[name] = fields;
+            }
+            _effectPanel.Children.Add(container);
         }
+
+        // Preload parameter values from global settings
+        LoadGlobalEffectParameters();
     }
 
     private string? GetSelectedKey()
@@ -94,6 +119,24 @@ public partial class WindowEffectsSettingsWindow : Window
         }
     }
 
+    private void LoadGlobalEffectParameters()
+    {
+        var global = SettingsManager.Settings.WindowEffectParameters;
+        foreach (var effect in _paramInputs)
+        {
+            if (global.TryGetValue(effect.Key, out var pmap))
+            {
+                foreach (var field in effect.Value)
+                {
+                    if (pmap.TryGetValue(field.Key, out var val))
+                    {
+                        field.Value.Text = val;
+                    }
+                }
+            }
+        }
+    }
+
     private void SaveButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         var key = GetSelectedKey();
@@ -109,6 +152,21 @@ public partial class WindowEffectsSettingsWindow : Window
         else
         {
             map[key] = selected;
+        }
+
+        // Save global parameters
+        var global = SettingsManager.Settings.WindowEffectParameters;
+        foreach (var effect in _paramInputs)
+        {
+            if (!global.TryGetValue(effect.Key, out var pmap))
+            {
+                pmap = new Dictionary<string, string>();
+                global[effect.Key] = pmap;
+            }
+            foreach (var field in effect.Value)
+            {
+                pmap[field.Key] = field.Value.Text ?? string.Empty;
+            }
         }
 
         SettingsManager.Save();
@@ -152,5 +210,16 @@ public partial class WindowEffectsSettingsWindow : Window
             });
             Content = panel;
         }
+    }
+
+    private TextBox CreateParamRow(Panel container, string name, string placeholder)
+    {
+        var row = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 6 };
+        var label = new TextBlock { Text = name, Width = 120 };
+        var tb = new TextBox { Watermark = placeholder, Width = 140 };
+        row.Children.Add(label);
+        row.Children.Add(tb);
+        container.Children.Add(row);
+        return tb;
     }
 }

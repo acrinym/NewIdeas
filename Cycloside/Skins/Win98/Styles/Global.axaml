@@ -1,0 +1,92 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <SolidColorBrush x:Key="Win98FaceBrush" Color="#C0C0C0"/>
+    <SolidColorBrush x:Key="Win98PanelBrush" Color="#D4D0C8"/>
+    <SolidColorBrush x:Key="Win98FieldBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Win98TextBrush" Color="#000000"/>
+    <SolidColorBrush x:Key="Win98EdgeBrush" Color="#808080"/>
+    <SolidColorBrush x:Key="Win98ActiveBrush" Color="#0A246A"/>
+    <SolidColorBrush x:Key="Win98HoverBrush" Color="#E6E6E6"/>
+    <SolidColorBrush x:Key="Win98PressedBrush" Color="#B0B0B0"/>
+  </Styles.Resources>
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource Win98FaceBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win98TextBrush}"/>
+    <Setter Property="FontFamily" Value="Tahoma"/>
+  </Style>
+
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{StaticResource Win98FaceBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win98TextBrush}"/>
+  </Style>
+
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="{StaticResource Win98ActiveBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+  </Style>
+
+  <Style Selector="Button">
+    <Setter Property="Background" Value="{StaticResource Win98FaceBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win98TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win98EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="10,4"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FontFamily" Value="Tahoma"/>
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="{StaticResource Win98HoverBrush}"/>
+  </Style>
+
+  <Style Selector="Button:pressed">
+    <Setter Property="Background" Value="{StaticResource Win98PressedBrush}"/>
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="{StaticResource Win98FieldBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win98TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win98EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="CaretBrush" Value="{StaticResource Win98TextBrush}"/>
+    <Setter Property="Cursor" Value="IBeam"/>
+    <Setter Property="FontFamily" Value="Tahoma"/>
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="Background" Value="{StaticResource Win98FieldBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win98TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win98EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="FontFamily" Value="Tahoma"/>
+  </Style>
+
+  <Style Selector="ListBox">
+    <Setter Property="Background" Value="{StaticResource Win98FieldBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win98TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win98EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+  </Style>
+
+  <Style Selector="TabItem">
+    <Setter Property="Background" Value="{StaticResource Win98PanelBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource Win98TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Win98EdgeBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="10,4"/>
+    <Setter Property="FontFamily" Value="Tahoma"/>
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Background" Value="{StaticResource Win98FieldBrush}"/>
+  </Style>
+
+</Styles>

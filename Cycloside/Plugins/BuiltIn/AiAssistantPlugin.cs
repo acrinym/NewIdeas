@@ -14,19 +14,19 @@ using Cycloside.Widgets;
 namespace Cycloside.Plugins.BuiltIn
 {
     /// <summary>
-    /// AI ASSISTANT - Intelligent code assistance and cybersecurity guidance
-    /// Provides AI-powered code completion, explanations, security analysis, and learning
+    /// AI assistant for code help, workflow guidance, and optional security review.
     /// </summary>
     public class AiAssistantPlugin : IPlugin
     {
         public string Name => "AI Assistant";
-        public string Description => "Intelligent code assistance and cybersecurity guidance";
+        public string Description => "Intelligent code help, workflow guidance, and optional security analysis";
         public Version Version => new(1, 0, 0);
         public bool ForceDefaultTheme => false;
 
         public class AiAssistantWidget : IWidget
         {
             public string Name => "AI Assistant";
+            public string Description => "AI-powered assistant for code help and chat";
 
             private TabControl? _mainTabControl;
             private TextBlock? _statusText;
@@ -144,7 +144,7 @@ namespace Cycloside.Plugins.BuiltIn
                 _chatHistory = new ListBox { Height = 300 };
 
                 // Add sample chat messages
-                _chatHistory.Items.Add("🤖 AI: Hello! I'm your AI assistant. I can help with code explanations, security analysis, and development guidance.");
+                _chatHistory.Items.Add("🤖 AI: Hello! I'm your AI assistant. I can help with code explanations, tool ideas, workflow automation, and security analysis.");
                 _chatHistory.Items.Add("👤 You: Can you explain how async/await works in C#?");
 
                 chatPanel.Children.Add(chatLabel);
@@ -155,7 +155,7 @@ namespace Cycloside.Plugins.BuiltIn
 
                 _chatInput = new TextBox
                 {
-                    Watermark = "Ask me anything about code, security, or development...",
+                    Watermark = "Ask me anything about code, tools, workflows, or debugging...",
                     Width = 400,
                     Margin = new Thickness(0, 0, 10, 0)
                 };
@@ -406,7 +406,7 @@ public class UserManager
                     _chatHistory.Items.Add($"👤 You: {message}");
                     var last = _chatHistory.Items[^1];
                     if (last != null)
-                        _chatHistory.ScrollIntoView(last);
+                        _chatHistory.ScrollIntoView(last!);
                 }
 
                 // Clear input
@@ -427,7 +427,7 @@ public class UserManager
                             _chatHistory.Items.Add($"🤖 AI: {response}");
                             var last = _chatHistory.Items[^1];
                             if (last != null)
-                                _chatHistory.ScrollIntoView(last);
+                                _chatHistory.ScrollIntoView(last!);
                         }
 
                         UpdateStatus("✅ AI responded");

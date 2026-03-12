@@ -1,0 +1,22 @@
+{
+  "name": "AfterDark",
+  "version": 1,
+  "contract": "v1",
+  "overlays": {
+    "global": [
+      "Styles/Global.axaml"
+    ],
+    "bySelector": [
+      {
+        "type": "MainWindow",
+        "classes": [
+          "primary"
+        ],
+        "styles": [
+          "Styles/MainWindow.Primary.axaml"
+        ]
+      }
+    ]
+  },
+  "replaceWindows": {}
+}

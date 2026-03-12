@@ -24,6 +24,7 @@ namespace Cycloside.Plugins.BuiltIn
         public class AdvancedCodeEditorWidget : IWidget
         {
             public string Name => "Advanced Code Editor";
+            public string Description => "Professional code editor with syntax highlighting and IntelliSense";
 
             private AdvancedCodeEditorWindow? _editorWindow;
 

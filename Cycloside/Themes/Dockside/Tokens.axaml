@@ -1,0 +1,37 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <Color x:Key="SystemAccent">#2CB6D6</Color>
+    <Color x:Key="SystemHighlight">#6CE5EF</Color>
+    <Color x:Key="SystemError">#FF7272</Color>
+    <Color x:Key="SystemWarning">#F6C85F</Color>
+    <Color x:Key="SystemSuccess">#68D7A2</Color>
+
+    <Color x:Key="CanvasBackground">#071A24</Color>
+    <Color x:Key="PopupBackground">#0D2634</Color>
+    <Color x:Key="CardBackground">#102A38</Color>
+    <Color x:Key="PanelBackground">#0B1F2B</Color>
+
+    <Color x:Key="PrimaryText">#F0FBFF</Color>
+    <Color x:Key="SecondaryText">#A8C9D6</Color>
+    <Color x:Key="DisabledText">#6D8995</Color>
+    <Color x:Key="PlaceholderText">#6E919E</Color>
+
+    <Color x:Key="InteractiveHover">#12384A</Color>
+    <Color x:Key="InteractivePressed">#0C4E66</Color>
+    <Color x:Key="InteractiveSelected">#1B617A</Color>
+    <Color x:Key="InteractiveFocusRing">#6CE5EF</Color>
+
+    <Color x:Key="BorderDefault">#245F76</Color>
+    <Color x:Key="BorderStrong">#3B89A3</Color>
+    <Color x:Key="BorderSubtle">#163A4B</Color>
+    <Color x:Key="Separator">#1B4C60</Color>
+
+    <FontFamily x:Key="FontFamilyPrimary">Segoe UI</FontFamily>
+    <FontFamily x:Key="FontFamilyMono">Cascadia Code</FontFamily>
+    <CornerRadius x:Key="RadiusM">6</CornerRadius>
+    <CornerRadius x:Key="RadiusL">10</CornerRadius>
+    <CornerRadius x:Key="RadiusXL">14</CornerRadius>
+    <BoxShadow x:Key="ShadowStandard">0 4 10 0 rgba(2,18,26,0.45)</BoxShadow>
+    <BoxShadow x:Key="ShadowElevated">0 8 18 0 rgba(2,18,26,0.55)</BoxShadow>
+  </Style.Resources>
+</Style>

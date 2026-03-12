@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Platform.Storage.FileIO;
 using Cycloside.Services;
+using Cycloside.Plugins.BuiltIn.Controls;
 
 namespace Cycloside.Plugins.BuiltIn.Views
 {
@@ -21,13 +22,13 @@ namespace Cycloside.Plugins.BuiltIn.Views
         public AdvancedCodeEditorWindow()
         {
             InitializeComponent();
-            SetupEventHandlers();
             InitializeEditor();
+            SetupEventHandlers();
         }
 
         private void InitializeEditor()
         {
-            // Editor is initialized in XAML - no code-behind initialization needed
+            // MainEditor is automatically generated from XAML
         }
 
         private void SetupEventHandlers()
@@ -47,82 +48,128 @@ namespace Cycloside.Plugins.BuiltIn.Views
 
         private void OnNewFile(object? sender, RoutedEventArgs e)
         {
-            // New file functionality - would reset editor content
-            Logger.Log("New file created");
+            if (MainEditor != null)
+            {
+                MainEditor.Text = string.Empty;
+                Title = "💻 Advanced Code Editor - Untitled";
+            }
         }
 
         private async void OnOpenFile(object? sender, RoutedEventArgs e)
         {
-            var topLevel = TopLevel.GetTopLevel(this);
-            if (topLevel == null) return;
-
-            var result = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            try
             {
-                Title = "Open File",
-                AllowMultiple = false,
-                FileTypeFilter = new[] {
-                    new FilePickerFileType("All Supported Files")
+                var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Open File",
+                    AllowMultiple = false
+                });
+
+                if (files.Count > 0 && MainEditor != null)
+                {
+                    var file = files[0];
+                    var content = await File.ReadAllTextAsync(file.Path.LocalPath);
+                    
+                    MainEditor.Text = content;
+                    
+                    // Detect language based on file extension
+                    var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+                    MainEditor.Language = extension switch
                     {
-                        Patterns = new[] { "*.cs", "*.py", "*.js", "*.html", "*.css", "*.json" }
-                    },
-                    new FilePickerFileType("All Files") { Patterns = new[] { "*" } }
+                        ".cs" => "CSharp",
+                        ".js" => "JavaScript",
+                        ".ts" => "TypeScript",
+                        ".py" => "Python",
+                        ".java" => "Java",
+                        ".cpp" or ".cc" or ".cxx" => "Cpp",
+                        ".c" => "C",
+                        ".html" or ".htm" => "Html",
+                        ".css" => "Css",
+                        ".xml" => "Xml",
+                        ".json" => "Json",
+                        _ => "PlainText"
+                    };
+                    
+                    Title = $"💻 Advanced Code Editor - {file.Name}";
                 }
-            });
-
-            if (result != null && result.Any())
+            }
+            catch (Exception ex)
             {
-                var file = result.First();
-                var content = await File.ReadAllTextAsync(file.Path.LocalPath);
-
-                // Would load content into editor
-                Logger.Log($"Opened file: {file.Path.LocalPath}");
+                Title = "💻 Advanced Code Editor - Error opening file";
+                NotificationCenter.Notify($"Error: Failed to open file: {ex.Message}");
             }
         }
 
         private async void OnSaveFile(object? sender, RoutedEventArgs e)
         {
-            var topLevel = TopLevel.GetTopLevel(this);
-            if (topLevel == null) return;
-
-            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            try
             {
-                Title = "Save File",
-                FileTypeChoices = new[] {
-                    new FilePickerFileType("All Files") { Patterns = new[] { "*" } }
+                var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "Save File",
+                    FileTypeChoices = new[]
+                    {
+                        new FilePickerFileType("C# Files") { Patterns = new[] { "*.cs" } },
+                        new FilePickerFileType("JavaScript Files") { Patterns = new[] { "*.js" } },
+                        new FilePickerFileType("TypeScript Files") { Patterns = new[] { "*.ts" } },
+                        new FilePickerFileType("Python Files") { Patterns = new[] { "*.py" } },
+                        new FilePickerFileType("Java Files") { Patterns = new[] { "*.java" } },
+                        new FilePickerFileType("C++ Files") { Patterns = new[] { "*.cpp" } },
+                        new FilePickerFileType("C Files") { Patterns = new[] { "*.c" } },
+                        new FilePickerFileType("HTML Files") { Patterns = new[] { "*.html" } },
+                        new FilePickerFileType("CSS Files") { Patterns = new[] { "*.css" } },
+                        new FilePickerFileType("XML Files") { Patterns = new[] { "*.xml" } },
+                        new FilePickerFileType("JSON Files") { Patterns = new[] { "*.json" } },
+                        new FilePickerFileType("Text Files") { Patterns = new[] { "*.txt" } },
+                        new FilePickerFileType("All Files") { Patterns = new[] { "*" } }
+                    }
+                });
+
+                if (file != null && MainEditor != null)
+                {
+                    await File.WriteAllTextAsync(file.Path.LocalPath, MainEditor.Text);
+                    Title = $"💻 Advanced Code Editor - {file.Name}";
+                    NotificationCenter.Notify("File saved successfully");
                 }
-            });
-
-            if (result != null)
+            }
+            catch (Exception ex)
             {
-                // Would save file content
-                Logger.Log($"Saved file: {result}");
+                Title = "💻 Advanced Code Editor - Error saving file";
+                NotificationCenter.Notify($"Error: Failed to save file: {ex.Message}");
             }
         }
 
         private void OnLanguageChanged(object? sender, SelectionChangedEventArgs e)
         {
-            if (LanguageComboBox.SelectedItem is ComboBoxItem item)
+            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem item && MainEditor != null)
             {
-                var language = item.Content?.ToString() ?? "C#";
-                // Update editor styling based on language
-                ApplyLanguageStyling(language);
+                var language = item.Content?.ToString();
+                if (!string.IsNullOrEmpty(language))
+                {
+                    MainEditor.Language = language;
+                }
             }
         }
 
-        private void ApplyLanguageStyling(string language)
-        {
-            // Language-specific styling would be applied to editor
-            Logger.Log($"Language changed to: {language}");
-        }
+
 
         private void OnWordWrapToggle(object? sender, RoutedEventArgs e)
         {
-            Logger.Log($"Word wrap: {(WordWrapToggle.IsChecked ?? false ? "Enabled" : "Disabled")}");
+            if (sender is ToggleButton toggleButton && MainEditor != null)
+            {
+                var isEnabled = toggleButton.IsChecked == true;
+                // Note: Word wrap functionality would need to be implemented in CodeEditor
+                // For now, this is a placeholder
+            }
         }
 
         private void OnLineNumbersToggle(object? sender, RoutedEventArgs e)
         {
-            Logger.Log($"Line numbers: {(LineNumbersToggle.IsChecked ?? true ? "Enabled" : "Disabled")}");
+            if (sender is ToggleButton toggleButton && MainEditor != null)
+            {
+                var isEnabled = toggleButton.IsChecked == true;
+                MainEditor.ShowLineNumbers = isEnabled;
+            }
         }
     }
 }

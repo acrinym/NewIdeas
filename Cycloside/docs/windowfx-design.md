@@ -25,6 +25,19 @@ Extend the settings file with a dictionary where the key is the component name a
 public Dictionary<string, List<string>> WindowEffects { get; set; }
 ```
 
+Optional global per‑effect parameters can be provided. These are keyed by effect name, then parameter name → value (string‑typed for simplicity):
+```csharp
+public Dictionary<string, Dictionary<string, string>> WindowEffectParameters { get; set; }
+```
+
+Example:
+```
+"WindowEffectParameters": {
+  "MagicLampMinimize": { "DurationMs": "280", "SquashFactor": "0.80", "MinHeight": "36" },
+  "BeamUpMinimize": { "DurationMs": "260", "OffsetY": "150" }
+}
+```
+
 ## III. Built-In Effects
 The system is designed to replicate many classic desktop effects. Planned samples include:
 - Roll‑up / shade (collapse to titlebar)

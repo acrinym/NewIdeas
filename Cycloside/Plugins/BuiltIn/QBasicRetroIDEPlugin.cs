@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cycloside.Plugins;
 using Cycloside.Services;
 
 namespace Cycloside.Plugins.BuiltIn
@@ -55,12 +56,10 @@ namespace Cycloside.Plugins.BuiltIn
             {
                 ShowLineNumbers = true,
                 SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("VBNET") ?? HighlightingManager.Instance.GetDefinition("C#"),
-                Background = new SolidColorBrush(Color.FromRgb(0, 0, 128)),
-                Foreground = Brushes.White,
-                FontFamily = new FontFamily("Consolas"),
                 FontSize = 14,
                 IsReadOnly = false
             };
+            AppearanceHelper.ApplyCodeEditor(_editor);
 
             // --- FIX: Force focus on click to solve the input issue ---
             _editor.PointerPressed += (s, e) => _editor?.Focus();
@@ -84,16 +83,20 @@ namespace Cycloside.Plugins.BuiltIn
             // Initialize commands *before* building the menu
             InitializeCommands();
 
-            _status = new TextBlock { Foreground = Brushes.White, Margin = new Thickness(5, 0), VerticalAlignment = VerticalAlignment.Center };
+            _status = new TextBlock { Margin = new Thickness(5, 0), VerticalAlignment = VerticalAlignment.Center };
+            AppearanceHelper.ApplyInverseText(_status);
             var menu = BuildMenu();
-            var statusBar = new DockPanel { Height = 24, Background = Brushes.DarkSlateBlue };
+            var statusBarPanel = new DockPanel { Height = 24 };
+            statusBarPanel.Children.Add(_status);
+            var statusBar = new Border { Child = statusBarPanel };
+            AppearanceHelper.ApplyAccentStrip(statusBar);
             DockPanel.SetDock(statusBar, Dock.Bottom);
-            statusBar.Children.Add(_status);
 
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
             grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-            var splitter = new GridSplitter { Width = 2, Background = Brushes.DarkSlateBlue, HorizontalAlignment = HorizontalAlignment.Right };
+            var splitter = new GridSplitter { Width = 2, HorizontalAlignment = HorizontalAlignment.Right };
+            AppearanceHelper.ApplyAccentDivider(splitter);
             grid.Children.Add(_projectTree);
             grid.Children.Add(splitter);
             grid.Children.Add(_editor);
@@ -107,14 +110,15 @@ namespace Cycloside.Plugins.BuiltIn
             dock.Children.Add(statusBar);
             dock.Children.Add(grid);
 
-            _window = new Window
+            _window = new PluginWindowBase
             {
                 Title = "QBasic Retro IDE",
                 WindowState = WindowState.Maximized,
                 Content = dock,
-                DataContext = this // Set DataContext for command bindings
+                DataContext = this,
+                Plugin = this
             };
-            ThemeManager.ApplyForPlugin(_window, this);
+            ((PluginWindowBase)_window).ApplyPluginThemeAndSkin(this);
             WindowEffectsManager.Instance.ApplyConfiguredEffects(_window, nameof(QBasicRetroIDEPlugin));
             _window.KeyDown += Window_KeyDown;
             _window.Opened += (_, _) => _editor?.Focus();
@@ -297,7 +301,7 @@ Features:
 - The Command Palette gives you quick access to all major actions.
 ";
 
-            var helpWindow = new Window
+            var helpWindow = new PluginWindowBase
             {
                 Title = "QBasic IDE Help",
                 Width = 450,
@@ -309,9 +313,10 @@ Features:
                     AcceptsReturn = true,
                     TextWrapping = TextWrapping.Wrap,
                     Margin = new Thickness(10)
-                }
+                },
+                Plugin = this
             };
-            ThemeManager.ApplyForPlugin(helpWindow, this);
+            helpWindow.ApplyPluginThemeAndSkin(this);
             helpWindow.ShowDialog(_window);
             return Task.CompletedTask;
         }
@@ -320,7 +325,7 @@ Features:
         private async Task OpenCommandPalette()
         {
             if (_window == null) return;
-            var paletteWindow = new CommandPaletteWindow(_ideCommands);
+            var paletteWindow = new CommandPaletteWindow(this, _ideCommands);
             var selectedCommand = await paletteWindow.ShowDialog<IdeCommand?>(_window);
 
             if (selectedCommand?.Command.CanExecute(null) ?? false)
@@ -504,7 +509,7 @@ NEXT i
         private void OpenSettings()
         {
             if (_window == null || _editor == null) return;
-            var settingsWindow = new IdeSettingsWindow(_qb64Path, _editor.FontSize);
+            var settingsWindow = new IdeSettingsWindow(this, _qb64Path, _editor.FontSize);
             settingsWindow.ShowDialog(_window);
 
             if (settingsWindow.Result)
@@ -519,7 +524,7 @@ NEXT i
         private async Task<bool> ConfirmDiscard()
         {
             if (_window == null) return false;
-            var confirm = new ConfirmationWindow("Unsaved Changes", "Discard current changes?");
+            var confirm = new ConfirmationWindow(this, "Unsaved Changes", "Discard current changes?");
             return await confirm.ShowDialog<bool>(_window);
         }
 
@@ -534,13 +539,13 @@ NEXT i
 
         #region Helper Windows
         // This is a new helper window for the Command Palette feature
-        private class CommandPaletteWindow : Window
+        private class CommandPaletteWindow : PluginWindowBase
         {
             private readonly ListBox _listBox;
             private readonly TextBox _searchBox;
             private readonly List<IdeCommand> _allCommands;
 
-            public CommandPaletteWindow(List<IdeCommand> commands)
+            public CommandPaletteWindow(QBasicRetroIDEPlugin plugin, List<IdeCommand> commands)
             {
                 _allCommands = commands;
 
@@ -569,6 +574,7 @@ NEXT i
                 panel.Children.Add(_listBox);
 
                 Content = panel;
+                ApplyPluginThemeAndSkin(plugin);
 
                 FilterList(); // Initial population
                 this.Opened += (s, e) => _searchBox.Focus();
@@ -600,12 +606,12 @@ NEXT i
         }
 
         // Settings window remains largely the same
-        private class IdeSettingsWindow : Window
+        private class IdeSettingsWindow : PluginWindowBase
         {
             private readonly TextBox _pathBox;
             private readonly TextBox _fontSizeBox;
             public bool Result { get; private set; } = false;
-            public IdeSettingsWindow(string path, double fontSize)
+            public IdeSettingsWindow(QBasicRetroIDEPlugin plugin, string path, double fontSize)
             {
                 Title = "IDE Settings";
                 Width = 400;
@@ -645,15 +651,16 @@ NEXT i
                 buttonPanel.Children.Add(cancel);
                 panel.Children.Add(buttonPanel);
                 Content = panel;
+                ApplyPluginThemeAndSkin(plugin);
             }
 
             public string QB64Path => _pathBox.Text ?? "qb64pe";
             public new double FontSize => double.TryParse(_fontSizeBox.Text, out var f) && f > 0 ? f : 14;
         }
 
-        private class ConfirmationWindow : Window
+        private class ConfirmationWindow : PluginWindowBase
         {
-            public ConfirmationWindow(string title, string message)
+            public ConfirmationWindow(QBasicRetroIDEPlugin plugin, string title, string message)
             {
                 Title = title;
                 Width = 350;
@@ -671,6 +678,7 @@ NEXT i
                 mainPanel.Children.Add(messageBlock);
                 mainPanel.Children.Add(buttonPanel);
                 Content = mainPanel;
+                ApplyPluginThemeAndSkin(plugin);
             }
         }
         #endregion

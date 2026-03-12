@@ -9,6 +9,7 @@ namespace Cycloside.Widgets.BuiltIn;
 public class ClockWidget : IWidget
 {
     public string Name => "Clock";
+    public string Description => "A simple digital clock widget";
 
     public Control BuildView()
     {

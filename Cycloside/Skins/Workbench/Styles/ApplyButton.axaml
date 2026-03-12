@@ -1,0 +1,10 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector="Button#ApplyButton">
+    <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+</Styles>

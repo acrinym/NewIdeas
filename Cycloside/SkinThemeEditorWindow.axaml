@@ -6,13 +6,17 @@
         Title="Theme Editor">
     <DockPanel Margin="10" LastChildFill="True">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4">
-            <ComboBox x:Name="FileBox" Width="250"/>
+            <ComboBox x:Name="ScopeBox" Width="160"/>
+            <ComboBox x:Name="FileBox" Width="280"/>
             <Button Content="Load" Click="LoadFile"/>
             <Button Content="Save" Click="SaveFile"/>
             <Button Content="Preview" Click="PreviewSkin"/>
         </StackPanel>
+        <TextBlock x:Name="SelectedPathBlock"
+                   DockPanel.Dock="Top"
+                   Margin="0,6,0,0"
+                   TextWrapping="Wrap"/>
         
-        <!-- Replaced TextBox with AvaloniaEdit for syntax highlighting -->
         <ae:TextEditor x:Name="Editor" Margin="0,8,0,0" FontFamily="monospace"/>
         
     </DockPanel>

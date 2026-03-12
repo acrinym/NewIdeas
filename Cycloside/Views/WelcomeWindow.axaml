@@ -22,16 +22,16 @@
                        FontWeight="Bold" 
                        HorizontalAlignment="Center"
                        Margin="0, 0, 0, 10"/>
-            <TextBlock Text="Configure your ultimate hacker desktop workspace" 
+            <TextBlock Text="Configure your personal desktop lab" 
                        FontSize="14" 
                        HorizontalAlignment="Center"
                        Margin="0, 0, 0, 15"/>
             <Border Background="#e8f4f8" CornerRadius="8" Padding="15">
                 <StackPanel>
-                    <TextBlock Text="🎯 Setup your preferences:" FontWeight="Bold" Margin="0, 0, 0, 5"/>
-                    <TextBlock Text="• Choose which plugins to load on startup" Margin="0, 2"/>
-                    <TextBlock Text="• Select your preferred terminal (PowerShell vs CMD)" Margin="0, 2"/>
-                    <TextBlock Text="• Configure themes and layout options" Margin="0, 2"/>
+                    <TextBlock Text="🎯 Shape your shell:" FontWeight="Bold" Margin="0, 0, 0, 5"/>
+                    <TextBlock Text="• Choose which modules to load on startup" Margin="0, 2"/>
+                    <TextBlock Text="• Pick your preferred command surface" Margin="0, 2"/>
+                    <TextBlock Text="• Tune themes, cursors, widgets, and layout options" Margin="0, 2"/>
                 </StackPanel>
             </Border>
         </StackPanel>
@@ -39,7 +39,7 @@
         <!-- Configuration -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="10">
-                <TextBlock Text="🔌 Available Plugins:" 
+                <TextBlock Text="🔌 Starter Modules:" 
                            FontSize="16" 
                            FontWeight="Bold" 
                            Margin="0, 0, 0, 15"/>
@@ -49,18 +49,18 @@
                 </ListBox>
 
                 <StackPanel Margin="0, 20, 0, 0">
-                    <TextBlock Text="💻 Terminal Preference:" 
+                    <TextBlock Text="💻 Command Surface:" 
                                FontSize="14" 
                                FontWeight="Bold" 
                                Margin="0, 0, 0, 10"/>
                     
                     <RadioButton GroupName="Terminal" 
-                                Content="PowerShell Terminal (Advanced PowerShell integration)"
+                                Content="PowerShell Terminal (automation and system tooling)"
                                 Name="PowerShellRadio" 
                                 Margin="0, 5"/>
                     
                     <RadioButton GroupName="Terminal" 
-                                Content="Hacker Terminal (CMD with hacker tools)"
+                                Content="Classic Command Terminal (old-school shell vibe)"
                                 Name="HackerTerminalRadio" 
                                 Margin="0, 5"/>
                 </StackPanel>
@@ -83,8 +83,8 @@
                    Foreground="White"/>
             
             <Button Name="ApplyButton"
-                   Content="✅ Apply and Continue" 
-                   Width="140"
+                   Content="✅ Apply and Enter Cycloside" 
+                   Width="180"
                    Background="#51cf66" 
                    Foreground="White"
                    FontWeight="Bold"/>

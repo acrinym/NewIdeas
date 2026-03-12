@@ -1,18 +1,64 @@
 # Skinning API
 
-Skins are Avalonia resource dictionaries stored in the `Skins/` folder with the extension `.axaml`. You can assign one or more skins to a plugin or component in `settings.json` under `ComponentSkins`.
+Skins are the surface layer on top of the active theme. Use them to change window treatment, control styling, cursor feel, and optional window-specific presentation without redefining the whole app palette.
 
-Use `SkinManager.ApplySkinTo(element, "MySkin")` to layer a skin on top of the global theme at runtime.
+## Global Skin
 
-A minimal skin file looks like this:
-
-```xml
-<ResourceDictionary xmlns="https://github.com/avaloniaui">
-    <Style Selector="Window">
-        <Setter Property="Background" Value="#222" />
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-</ResourceDictionary>
+```csharp
+await SkinManager.ApplySkinAsync("Workbench");
+await SkinManager.ApplySkinAsync("GlassDeck");
+await SkinManager.ClearSkinAsync();
 ```
 
-Styles cascade like regular Avalonia themes so widgets and plugin windows automatically adopt the new look.
+Global skin choice is stored in `settings.json` under `GlobalSkin`.
+
+## Per-Window Skin
+
+```csharp
+SkinManager.ApplySkinTo(window, "Classic");
+```
+
+Per-plugin overrides are stored in `settings.json` under `PluginSkins`.
+
+## Supported Skin Formats
+
+- Legacy flat skin: `Cycloside/Skins/MySkin.axaml`
+- Manifest-based skin pack:
+
+```text
+Cycloside/Skins/MySkin/
+├── skin.json
+└── Styles/
+    ├── Global.axaml
+    └── MainWindow.Primary.axaml
+```
+
+## Minimal Manifest Example
+
+```json
+{
+  "name": "MySkin",
+  "version": 1,
+  "contract": "v1",
+  "overlays": {
+    "global": ["Styles/Global.axaml"],
+    "bySelector": []
+  },
+  "replaceWindows": {}
+}
+```
+
+## Minimal Style Example
+
+```xml
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Button">
+    <Setter Property="Background" Value="#333333"/>
+    <Setter Property="Foreground" Value="#F0F0F0"/>
+    <Setter Property="Cursor" Value="Hand"/>
+  </Style>
+</Styles>
+```
+
+Prefer structured packs for new work. Legacy flat `.axaml` skins still load for compatibility.

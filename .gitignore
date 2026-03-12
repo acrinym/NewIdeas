@@ -18,6 +18,12 @@ Cycloside/CombinedCode.txt
 Cycloside/export_codebase.ps1
 Cycloside/outsource.txt
 
+# Local-only agent and MCP secrets
+mcp.json
+mcp.local.json
+secrets.json
+secrets.local.json
+
 # Dolt database files (added by bd init)
 .dolt/
 *.db

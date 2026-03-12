@@ -1,42 +1,72 @@
-# Cycloside Widget Interface
+# Widget Interface
 
-Cycloside aims to provide a lightweight and flexible widget system alongside its tray-based plugin model. This document explains the goals for the widget interface and how it differs from other solutions such as Microsoft Widgets or Rainmeter. The `WidgetHost` plugin in the main project demonstrates the current implementation.
+Cycloside currently has two widget layers in the repo.
+They are related, but they are not the same host path.
 
+## Stable plugin widget path
 
-## Purpose
+The stable path for plugins is `Cycloside.Widgets.IWidget`.
 
-Widgets allow small, skinnable user interface components to live on the desktop. They can display information or provide quick controls without opening full windows. In Cycloside, widgets are an extension of the existing plugin system and let you surface plugin features directly on your desktop.
+```csharp
+public interface IWidget
+{
+    string Name { get; }
+    string Description { get; }
+    Control BuildView();
+}
+```
 
-## What It Offers
+This is the contract exposed by `IPlugin.Widget`, and it is the path the built-in `WidgetHostPlugin` uses today.
 
-- **Dockable and Movable:** Widgets can float freely or snap to each other. Users can arrange them anywhere and create stacks of related widgets.
-- **Resizable:** Each widget supports live resizing, letting you pick the perfect footprint on your desktop.
-- **Skinning:** We plan to leverage Avalonia's styling engine so themes can be shared. Developers can bundle default styles or ship a library of skins.
-- **Plugin Integration:** Built-in modules such as the MP3 player or future weather plugins can expose a widget, providing quick access without opening menus.
+### Current host behavior
 
-## How It's Different from Rainmeter
+- `WidgetHostPlugin` creates a `WidgetHostWindow`
+- it loads built-in widgets through `WidgetManager.LoadBuiltIn()`
+- it also asks each loaded plugin for `plugin.Widget`
+- each widget view is placed on a canvas and can be dragged around
 
-Rainmeter is a powerful, scriptable desktop customization tool focusing primarily on Windows. Cycloside shares the idea of modular widgets but takes a cross-platform approach using Avalonia. Instead of the Lua-based scripting found in Rainmeter, Cycloside relies on compiled plugins (or volatile C# and Lua scripts) to provide functionality. The goal is to remain lightweight while still allowing deeper integration with existing .NET libraries.
+If you want a plugin widget that works with the default shell right now, target `IWidget`.
 
-## Implementation Sketch
+## Enhanced widget path
 
-The widget system is built as a plugin host:
+The repo also contains `IWidgetV2`, `BaseWidget`, `EnhancedWidgetHostViewModel`, and related classes under `Cycloside/Widgets/`.
+That stack adds:
 
-1. **WidgetHostWindow:** an always-on-top container that manages a set of widget controls.
-2. **IWidget** interface for widget plugins to implement.
-3. **WidgetManager:** responsible for loading widget assemblies from a `Widgets` folder, similar to `Plugins`.
-4. **Docking Layout:** uses Avalonia's layout panels to allow snapping widgets next to each other.
+- lifecycle methods like `OnInitializeAsync()`, `OnActivateAsync()`, and `OnDestroyAsync()`
+- configuration schema support
+- theme notifications
+- export and import hooks
+- command routing
+- richer sizing metadata
 
-This is currently a design document and serves as a guide for future development. Community contributions and feedback are welcome!
+### Important limitation
 
-## Built-in Widgets
+The enhanced stack exists in code, but the built-in `WidgetHostPlugin` does not currently instantiate `EnhancedWidgetHostViewModel`.
+That means `IWidgetV2` is available for advanced work and internal evolution, but it is not the default plugin widget host path yet.
 
-The repository includes a handful of sample widgets to show how the interface works:
+## Recommendation
 
-- **ClockWidget** – simple digital clock
-- **Mp3Widget** – pick MP3 files and control playback
-- **WeatherWidget** – fetches temperature data from Open‑Meteo
+- For general plugin development, implement `IWidget`
+- For experiments or future-facing widget work, derive from `BaseWidget` and implement `IWidgetV2`
+- If you need both, keep `BuildView()` in the legacy path usable and let your richer host path call `BuildView(WidgetContext context)`
 
-Double‑click the Weather widget to set your city or latitude and longitude. The values
-are stored in `settings.json` and used when requesting weather data.
+## Built-in examples
 
+Simple `IWidget` examples exposed through plugins:
+
+- MP3 player widget
+- plugin marketplace widget
+- any plugin returning a value from `IPlugin.Widget`
+
+Enhanced `IWidgetV2` examples under `Cycloside/Widgets/`:
+
+- `SystemMonitorWidget`
+- `NetworkMonitorWidget`
+- `QuickNotesWidget`
+- `CalculatorWidget`
+
+## Theme and skin considerations
+
+- simple widgets should build visibly with no special skin assumptions
+- enhanced widgets can use `WidgetContext` and the widget theme manager
+- if you need full plugin-window theming hooks, use `PluginWindowBase` for the plugin itself and treat widgets as secondary surfaces

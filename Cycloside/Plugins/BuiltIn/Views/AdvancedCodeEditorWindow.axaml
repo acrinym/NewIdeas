@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Cycloside.Plugins.BuiltIn.Views"
+        xmlns:controls="clr-namespace:Cycloside.Plugins.BuiltIn.Controls"
         x:Class="Cycloside.Plugins.BuiltIn.Views.AdvancedCodeEditorWindow"
         Title="💻 Advanced Code Editor"
         Width="1000" Height="700"
@@ -50,13 +51,15 @@
 
             <!-- Editor -->
             <Border Grid.Column="0" Background="White" BorderBrush="#e1e5e9" BorderThickness="0,0,1,0">
-                <TextBox Name="MainEditor"
-                         FontFamily="Consolas"
-                         FontSize="14"
-                         AcceptsReturn="True"
-                         TextWrapping="Wrap"
-                         VerticalAlignment="Stretch"
-                         HorizontalAlignment="Stretch"/>
+                <controls:CodeEditor Name="MainEditor"
+                                     FontFamily="Consolas"
+                                     FontSize="14"
+                                     Background="#1E1E1E"
+                                     Foreground="White"
+                                     BorderThickness="0"
+                                     Padding="10"
+                                     ShowLineNumbers="True"
+                                     Language="CSharp" />
             </Border>
 
             <!-- Sidebar -->

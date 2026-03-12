@@ -55,6 +55,7 @@ namespace Cycloside.Plugins.BuiltIn
     public class HackerDashboardWidget : IWidget
     {
         public string Name => "🔮 Hacker's Paradise";
+        public string Description => "Cybersecurity dashboard with hacker-themed interface";
 
         public Control BuildView()
         {

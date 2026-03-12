@@ -21,7 +21,5 @@
       }
     ]
   },
-  "replaceWindows": {
-    "MainWindow": "Components/MainWindow.axaml"
-  }
+  "replaceWindows": {}
 }

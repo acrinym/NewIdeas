@@ -1,0 +1,37 @@
+{
+  "name": "Workbench",
+  "version": 1,
+  "contract": "v1",
+  "overlays": {
+    "global": [
+      "Styles/Global.axaml"
+    ],
+    "bySelector": [
+      {
+        "type": "MainWindow",
+        "classes": [
+          "primary"
+        ],
+        "styles": [
+          "Styles/MainWindow.Primary.axaml"
+        ]
+      },
+      {
+        "type": "Button",
+        "classes": [
+          "danger"
+        ],
+        "styles": [
+          "Styles/DangerButton.axaml"
+        ]
+      },
+      {
+        "xName": "ApplyButton",
+        "styles": [
+          "Styles/ApplyButton.axaml"
+        ]
+      }
+    ]
+  },
+  "replaceWindows": {}
+}

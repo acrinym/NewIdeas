@@ -1,16 +1,18 @@
-<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- MainWindow specific styling when using Primary class -->
-  
-  <Style Selector="Window.primary Grid">
-    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
-    <Setter Property="Margin" Value="{DynamicResource SpacingL}"/>
+  <Style Selector="Window.primary">
+    <Setter Property="Background" Value="{DynamicResource CanvasBackgroundBrush}"/>
   </Style>
 
-  <Style Selector="Window.primary Border">
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusM}"/>
-    <Setter Property="BorderThickness" Value="2"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+  <Style Selector="Window.primary Menu">
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,1"/>
   </Style>
 
-</Style>
+  <Style Selector="Window.primary TabControl">
+    <Setter Property="Margin" Value="10"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+  </Style>
+
+</Styles>

@@ -28,9 +28,23 @@ Example configuration in `settings.json`:
   "PluginDevWizard": ["ZoomOpen"],
   "VolatileRunnerWindow": ["ExplodeOnClose"]
 }
+,
+"WindowEffectParameters": {
+  "MagicLampMinimize": {
+    "DurationMs": "280",
+    "SquashFactor": "0.80",
+    "MinHeight": "36"
+  },
+  "BeamUpMinimize": {
+    "DurationMs": "260",
+    "OffsetY": "150"
+  }
+}
 ```
 
 Changes are saved back to `settings.json` when you press **Save**.
+
+To fine‑tune behaviors, `WindowEffectParameters` lets you set global per‑effect parameters. The UI currently manages enable/disable; parameters can be edited in `settings.json`.
 
 Note: Managed Visual Host options (native colors, preset theme, sensitivity, and per‑visualizer settings)
 are available directly in the visualizer window and persist automatically; they do not appear in the Control Panel.

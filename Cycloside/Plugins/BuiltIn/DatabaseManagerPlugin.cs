@@ -42,6 +42,7 @@ namespace Cycloside.Plugins.BuiltIn
     public class DatabaseManagerWidget : IWidget
     {
         public string Name => "Database Manager";
+        public string Description => "Database connection and query management tool";
 
         private TabControl? _mainTabControl;
         private TextBlock? _statusText;

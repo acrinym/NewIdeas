@@ -20,11 +20,14 @@ public class AppSettings
     public bool DisableBuiltInPlugins { get; set; } = false;
     public Dictionary<string, bool> SafeBuiltInPlugins { get; set; } = new();
 
-    // RENAMED: This is now the single, application-wide theme.
-    public string GlobalTheme { get; set; } = "MintGreen";
+    // Application-wide semantic theme pack.
+    public string GlobalTheme { get; set; } = "Dockside";
 
-    // Theme variant (Light/Dark/HighContrast/Default)
-    public string RequestedThemeVariant { get; set; } = "Default";
+    // Theme variant (Light/Dark/Default)
+    public string RequestedThemeVariant { get; set; } = "Dark";
+
+    // Application-wide skin layered on top of the current theme.
+    public string GlobalSkin { get; set; } = "Workbench";
 
     // Path to the QB64 executable for the QBasic IDE plugin.
     public string QB64Path { get; set; } = "qb64";
@@ -32,7 +35,10 @@ public class AppSettings
     // Path to the dotnet executable used by plugins or scripts.
     public string DotNetPath { get; set; } = "dotnet";
 
-    // RENAMED: This maps components (like plugin names) to specific skins.
+    // Optional local Tile World library root containing data/ and sets/.
+    public string TileWorldLibraryPath { get; set; } = string.Empty;
+
+    // Legacy component theme overrides. Prefer GlobalTheme plus PluginSkins.
     public Dictionary<string, string> ComponentThemes { get; set; } = new();
 
     // Theme used by game logic inside plugins such as Jezzball
@@ -41,12 +47,26 @@ public class AppSettings
     // Optional skin applied to plugin windows
     public Dictionary<string, string> PluginSkins { get; set; } = new();
 
+    // Default animated backdrop applied to windows that opt into appearance management.
+    public AnimatedBackgroundSettings GlobalAnimatedBackground { get; set; } = new();
+
+    // Optional component-specific animated backdrop overrides.
+    public Dictionary<string, AnimatedBackgroundSettings> ComponentAnimatedBackgrounds { get; set; } = new();
+
+    // Optional plugin window animated backdrop overrides.
+    public Dictionary<string, AnimatedBackgroundSettings> PluginAnimatedBackgrounds { get; set; } = new();
+
     // Sound effect files mapped by plugin name then event key
     public Dictionary<string, Dictionary<string, string>> PluginSoundEffects { get; set; } = new();
+
+    public JezzballSettings Jezzball { get; set; } = new();
 
     public string Cursor { get; set; } = "Arrow";
     public Dictionary<string, string> ComponentCursors { get; set; } = new();
     public Dictionary<string, List<string>> WindowEffects { get; set; } = new();
+    // Optional per-effect parameters (global). Keyed by effect name, then parameter name → value.
+    // Example: { "MagicLampMinimize": { "DurationMs": "280", "SquashFactor": "0.8", "MinHeight": "36" } }
+    public Dictionary<string, Dictionary<string, string>> WindowEffectParameters { get; set; } = new();
     public Dictionary<string, ThemeSnapshot> SavedThemes { get; set; } = new();
     /// <summary>
     /// Mapping of hotkey action names to gesture strings (e.g. "Ctrl+Alt+W").
@@ -77,6 +97,7 @@ public static class SettingsManager
     private static readonly string SettingsPath = Path.Combine(AppContext.BaseDirectory, "settings.json");
     private static AppSettings _settings = Load();
     private static Timer? _saveTimer;
+    public static event Action? SettingsSaved;
 
     public static AppSettings Settings => _settings;
 
@@ -120,6 +141,7 @@ public static class SettingsManager
         {
             var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(SettingsPath, json);
+            NotifySettingsSaved();
         }
         catch (Exception ex)
         {
@@ -151,5 +173,26 @@ public static class SettingsManager
         var bytes = new byte[32];
         RandomNumberGenerator.Fill(bytes);
         return Convert.ToHexString(bytes);
+    }
+
+    private static void NotifySettingsSaved()
+    {
+        var handlers = SettingsSaved;
+        if (handlers == null)
+        {
+            return;
+        }
+
+        foreach (var handler in handlers.GetInvocationList())
+        {
+            try
+            {
+                ((Action)handler)();
+            }
+            catch (Exception ex)
+            {
+                Services.Logger.Log($"SettingsSaved handler error: {ex.Message}");
+            }
+        }
     }
 }

@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using System;
 using System.Collections.Generic;
@@ -12,289 +11,408 @@ using System.Threading.Tasks;
 
 namespace Cycloside.Services
 {
-    /// <summary>
-    /// SkinData model for JSON deserialization
-    /// </summary>
     public class SkinManifest
     {
         public string Name { get; set; } = string.Empty;
+
         public int Version { get; set; } = 1;
+
         public string Contract { get; set; } = "v1";
+
         public SkinOverlays Overlays { get; set; } = new();
+
         public Dictionary<string, string> ReplaceWindows { get; set; } = new();
     }
 
     public class SkinOverlays
     {
         public List<string> Global { get; set; } = new();
+
         public List<SkinSelector> BySelector { get; set; } = new();
     }
 
     public class SkinSelector
     {
         public string? Type { get; set; }
+
         public List<string> Classes { get; set; } = new();
+
         public string? XName { get; set; }
+
         public List<string> Styles { get; set; } = new();
     }
 
     /// <summary>
-    /// Manages skin application with selector-based overlays and window replacement.
-    /// Supports the new skin manifest format with JSON-based configuration.
+    /// Manages app-wide skins and per-window skin overlays layered on top of themes.
     /// </summary>
     public static class SkinManager
     {
-        private static readonly Dictionary<string, SkinManifest> _manifestCache = new();
-        private static readonly Dictionary<string, Dictionary<string, StyleInclude>> _skinCache = new();
+        private static readonly object SyncLock = new();
+        private static readonly Dictionary<string, SkinManifest> ManifestCache = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly List<IStyle> ApplicationSkinStyles = new();
+        private static readonly Dictionary<StyledElement, List<IStyle>> ElementSkinStyles = new();
 
-        /// <summary>
-        /// Current active skin name
-        /// </summary>
+        private static string SkinDirectory => Path.Combine(AppContext.BaseDirectory, "Skins");
+
         public static string CurrentSkin { get; private set; } = string.Empty;
 
-        /// <summary>
-        /// Event fired when skin changes
-        /// </summary>
         public static event EventHandler<SkinChangedEventArgs>? SkinChanged;
 
-        private static string SkinDir => Path.Combine(AppContext.BaseDirectory, "Skins");
-
-        /// <summary>
-        /// Apply a skin with selector-based overlays and optional window replacement
-        /// </summary>
-        public static async Task<bool> ApplySkinAsync(string skinName, StyledElement? element = null)
+        public static void InitializeFromSettings()
         {
-            if (string.IsNullOrEmpty(skinName))
+            var skinName = SettingsManager.Settings.GlobalSkin;
+            if (string.IsNullOrWhiteSpace(skinName))
             {
-                await ClearSkinAsync(element);
-                return true;
+                CurrentSkin = string.Empty;
+                return;
             }
 
-            try
-            {
-                var manifest = await LoadSkinManifestAsync(skinName);
-                if (manifest == null)
-                {
-                    Logger.Log($"Skin manifest not found: {skinName}");
-                    return false;
-                }
-
-                // Clear existing skins first
-                if (element != null)
-                {
-                    RemoveAllSkinsFrom(element);
-                }
-                else
-                {
-                    ClearApplicationSkins();
-                }
-
-                // Apply global overlays first
-                if (manifest.Overlays.Global.Any())
-                {
-                    await ApplyGlobalOverlaysAsync(manifest.Overlays.Global, element);
-                }
-
-                // Apply selector-based overlays
-                if (manifest.Overlays.BySelector.Any())
-                {
-                    await ApplySelectorOverlaysAsync(manifest.Overlays.BySelector, element);
-                }
-
-                // Handle window replacements
-                if (manifest.ReplaceWindows.Any())
-                {
-                    await ApplyWindowReplacementsAsync(manifest.ReplaceWindows);
-                }
-
-                CurrentSkin = skinName;
-                SkinChanged?.Invoke(null, new SkinChangedEventArgs(skinName));
-
-                Logger.Log($"Successfully applied skin: {skinName}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"Error applying skin '{skinName}': {ex.Message}");
-                return false;
-            }
+            ApplyGlobalSkinAsync(skinName, false, false).GetAwaiter().GetResult();
         }
 
-        /// <summary>
-        /// Apply skin to specific element (legacy compatibility)
-        /// </summary>
+        public static Task<bool> ApplySkinAsync(string skinName, StyledElement? element = null)
+        {
+            if (element == null)
+            {
+                return ApplyGlobalSkinAsync(skinName, true, true);
+            }
+
+            return ApplyElementSkinAsync(skinName, element);
+        }
+
         public static void ApplySkinTo(StyledElement element, string skinName)
         {
-            _ = ApplySkinAsync(skinName, element);
+            _ = ApplyElementSkinAsync(skinName, element);
         }
 
-        /// <summary>
-        /// Clear all skins from element or application
-        /// </summary>
         public static Task ClearSkinAsync(StyledElement? element = null)
         {
-            if (element != null)
+            if (element == null)
             {
-                RemoveAllSkinsFrom(element);
+                return ApplyGlobalSkinAsync(string.Empty, true, true);
             }
-            else
-            {
-                ClearApplicationSkins();
-                CurrentSkin = string.Empty;
-            }
+
+            RemoveAllSkinsFrom(element);
             return Task.CompletedTask;
         }
 
-        /// <summary>
-        /// Get available skin names
-        /// </summary>
         public static IEnumerable<string> GetAvailableSkins()
         {
-            if (!Directory.Exists(SkinDir)) return Enumerable.Empty<string>();
+            var skinNames = new List<string>();
 
-            return Directory.GetDirectories(SkinDir)
-                .Select(dir => Path.GetFileName(dir)!)
-                .Where(name => File.Exists(Path.Combine(SkinDir, name, "skin.json")))
-                .OrderBy(name => name);
+            if (Directory.Exists(SkinDirectory))
+            {
+                foreach (var directory in Directory.GetDirectories(SkinDirectory))
+                {
+                    var name = Path.GetFileName(directory);
+                    if (!string.IsNullOrWhiteSpace(name) &&
+                        File.Exists(Path.Combine(directory, "skin.json")))
+                    {
+                        skinNames.Add(name);
+                    }
+                }
+
+                foreach (var filePath in Directory.GetFiles(SkinDirectory, "*.axaml"))
+                {
+                    var name = Path.GetFileNameWithoutExtension(filePath);
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        skinNames.Add(name);
+                    }
+                }
+            }
+
+            return skinNames
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase);
         }
 
-        /// <summary>
-        /// Check if skin supports window replacement
-        /// </summary>
         public static async Task<bool> SupportsWindowReplacementAsync(string skinName, string windowType)
         {
             var manifest = await LoadSkinManifestAsync(skinName);
             return manifest?.ReplaceWindows.ContainsKey(windowType) == true;
         }
 
+        public static async Task<bool> ReapplyCurrentSkinAsync(bool notifyListeners = false)
+        {
+            if (string.IsNullOrWhiteSpace(CurrentSkin))
+            {
+                return true;
+            }
+
+            return await ApplyGlobalSkinAsync(CurrentSkin, false, notifyListeners);
+        }
+
+        private static async Task<bool> ApplyGlobalSkinAsync(string skinName, bool saveSettings, bool notifyListeners)
+        {
+            try
+            {
+                ClearApplicationSkins();
+
+                if (string.IsNullOrWhiteSpace(skinName))
+                {
+                    CurrentSkin = string.Empty;
+
+                    if (saveSettings)
+                    {
+                        SettingsManager.Settings.GlobalSkin = string.Empty;
+                        SettingsManager.Save();
+                    }
+
+                    if (notifyListeners)
+                    {
+                        SkinChanged?.Invoke(null, new SkinChangedEventArgs(CurrentSkin));
+                    }
+
+                    return true;
+                }
+
+                if (!await ApplySkinDefinitionAsync(skinName, null))
+                {
+                    return false;
+                }
+
+                CurrentSkin = skinName;
+
+                if (saveSettings)
+                {
+                    SettingsManager.Settings.GlobalSkin = skinName;
+                    SettingsManager.Save();
+                }
+
+                if (notifyListeners)
+                {
+                    SkinChanged?.Invoke(null, new SkinChangedEventArgs(CurrentSkin));
+                }
+
+                AnimatedBackgroundManager.ReapplyAllWindows();
+                Logger.Log($"SkinManager: applied global skin '{skinName}'");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"SkinManager: failed to apply global skin '{skinName}': {ex.Message}");
+                return false;
+            }
+        }
+
+        private static async Task<bool> ApplyElementSkinAsync(string skinName, StyledElement element)
+        {
+            try
+            {
+                RemoveAllSkinsFrom(element);
+
+                if (string.IsNullOrWhiteSpace(skinName))
+                {
+                    return true;
+                }
+
+                var applied = await ApplySkinDefinitionAsync(skinName, element);
+                if (applied)
+                {
+                    AnimatedBackgroundManager.ReapplyAllWindows();
+                    Logger.Log($"SkinManager: applied skin '{skinName}' to '{element.GetType().Name}'");
+                }
+
+                return applied;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"SkinManager: failed to apply skin '{skinName}' to '{element.GetType().Name}': {ex.Message}");
+                return false;
+            }
+        }
+
+        private static async Task<bool> ApplySkinDefinitionAsync(string skinName, StyledElement? element)
+        {
+            var manifest = await LoadSkinManifestAsync(skinName);
+            if (manifest != null)
+            {
+                return await ApplyManifestSkinAsync(skinName, manifest, element);
+            }
+
+            var legacyPath = Path.Combine(SkinDirectory, $"{skinName}.axaml");
+            if (File.Exists(legacyPath))
+            {
+                return AddStyleToTarget(legacyPath, element);
+            }
+
+            Logger.Log($"SkinManager: skin '{skinName}' was not found");
+            return false;
+        }
+
+        private static async Task<bool> ApplyManifestSkinAsync(string skinName, SkinManifest manifest, StyledElement? element)
+        {
+            var skinRoot = Path.Combine(SkinDirectory, skinName);
+
+            foreach (var relativePath in manifest.Overlays.Global)
+            {
+                var stylePath = Path.Combine(skinRoot, relativePath);
+                if (!AddStyleToTarget(stylePath, element))
+                {
+                    return false;
+                }
+            }
+
+            foreach (var selector in manifest.Overlays.BySelector)
+            {
+                foreach (var relativePath in selector.Styles)
+                {
+                    var stylePath = Path.Combine(skinRoot, relativePath);
+                    if (!AddStyleToTarget(stylePath, element))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            if (manifest.ReplaceWindows.Count > 0)
+            {
+                if (element is Window singleWindow)
+                {
+                    await ApplyWindowReplacementAsync(singleWindow, skinRoot, manifest.ReplaceWindows);
+                }
+                else
+                {
+                    await ApplyWindowReplacementsAsync(skinRoot, manifest.ReplaceWindows);
+                }
+            }
+
+            return true;
+        }
+
+        private static bool AddStyleToTarget(string stylePath, StyledElement? element)
+        {
+            try
+            {
+                if (!File.Exists(stylePath))
+                {
+                    Logger.Log($"SkinManager: style file not found: {stylePath}");
+                    return false;
+                }
+
+                var xaml = File.ReadAllText(stylePath);
+                var parsed = AvaloniaRuntimeXamlLoader.Parse(xaml, typeof(App).Assembly);
+                if (parsed is not IStyle style)
+                {
+                    Logger.Log($"SkinManager: '{stylePath}' does not contain a style root");
+                    return false;
+                }
+
+                if (element == null)
+                {
+                    if (Application.Current == null)
+                    {
+                        return false;
+                    }
+
+                    Application.Current.Styles.Add(style);
+
+                    lock (SyncLock)
+                    {
+                        ApplicationSkinStyles.Add(style);
+                    }
+                }
+                else
+                {
+                    element.Styles.Add(style);
+
+                    lock (SyncLock)
+                    {
+                        if (!ElementSkinStyles.TryGetValue(element, out var styles))
+                        {
+                            styles = new List<IStyle>();
+                            ElementSkinStyles[element] = styles;
+                        }
+
+                        styles.Add(style);
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"SkinManager: failed to parse '{stylePath}': {ex.Message}");
+                return false;
+            }
+        }
+
         private static async Task<SkinManifest?> LoadSkinManifestAsync(string skinName)
         {
-            if (_manifestCache.TryGetValue(skinName, out var cached))
+            if (ManifestCache.TryGetValue(skinName, out var cached))
+            {
                 return cached;
+            }
+
+            var manifestPath = Path.Combine(SkinDirectory, skinName, "skin.json");
+            if (!File.Exists(manifestPath))
+            {
+                return null;
+            }
 
             try
             {
-                var manifestPath = Path.Combine(SkinDir, skinName, "skin.json");
-                if (!File.Exists(manifestPath))
-                {
-                    Logger.Log($"Skin manifest not found: {manifestPath}");
-                    return null;
-                }
-
                 var json = await File.ReadAllTextAsync(manifestPath);
-                var manifest = JsonSerializer.Deserialize<SkinManifest>(json);
+                var manifest = JsonSerializer.Deserialize<SkinManifest>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
                 if (manifest != null)
                 {
-                    _manifestCache[skinName] = manifest;
+                    ManifestCache[skinName] = manifest;
                 }
 
                 return manifest;
             }
             catch (Exception ex)
             {
-                Logger.Log($"Failed to load skin manifest '{skinName}': {ex.Message}");
+                Logger.Log($"SkinManager: failed to load manifest '{manifestPath}': {ex.Message}");
                 return null;
             }
         }
 
-        private static async Task ApplyGlobalOverlaysAsync(List<string> globalStyles, StyledElement? element)
+        private static async Task ApplyWindowReplacementsAsync(string skinRoot, Dictionary<string, string> replacements)
         {
-            var skinDir = Path.Combine(SkinDir, CurrentSkin);
-
-            foreach (var styleFile in globalStyles)
+            if (Application.Current?.ApplicationLifetime is not Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
             {
-                var stylePath = Path.Combine(skinDir, styleFile);
-                if (!File.Exists(stylePath))
-                {
-                    Logger.Log($"Global style file not found: {stylePath}");
-                    continue;
-                }
+                return;
+            }
 
-                await ApplyStyleFileAsync(stylePath, element);
+            foreach (var window in desktop.Windows.ToArray())
+            {
+                await ApplyWindowReplacementAsync(window, skinRoot, replacements);
             }
         }
 
-        private static async Task ApplySelectorOverlaysAsync(List<SkinSelector> selectors, StyledElement? element)
+        private static Task ApplyWindowReplacementAsync(Window window, string skinRoot, Dictionary<string, string> replacements)
         {
-            var skinDir = Path.Combine(SkinDir, CurrentSkin);
-
-            foreach (var selector in selectors)
+            if (!replacements.TryGetValue(window.GetType().Name, out var relativePath))
             {
-                foreach (var styleFile in selector.Styles)
-                {
-                    var stylePath = Path.Combine(skinDir, styleFile);
-                    if (!File.Exists(stylePath))
-                    {
-                        Logger.Log($"Selector style file not found: {stylePath}");
-                        continue;
-                    }
-
-                    await ApplyStyleFileAsync(stylePath, element);
-                }
+                return Task.CompletedTask;
             }
-        }
 
-        private static Task ApplyStyleFileAsync(string stylePath, StyledElement? element)
-        {
-            try
-            {
-                var uri = new Uri($"file:///{stylePath.Replace('\\', '/')}");
-                var styleInclude = new StyleInclude(uri) { Source = uri };
-
-                if (element != null)
-                {
-                    element.Styles.Add(styleInclude);
-                }
-                else if (Application.Current != null)
-                {
-                    Application.Current.Styles.Add(styleInclude);
-                }
-
-                Logger.Log($"Applied style file: {stylePath}");
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"Failed to apply style file '{stylePath}': {ex.Message}");
-            }
-            return Task.CompletedTask;
-        }
-
-        private static async Task ApplyWindowReplacementsAsync(Dictionary<string, string> replacements)
-        {
-            foreach (var kvp in replacements)
-            {
-                var windowType = kvp.Key;
-                var replacementFile = kvp.Value;
-
-                Logger.Log($"Window replacement configuration: {windowType} -> {replacementFile}");
-
-                // Apply window replacements to any open windows of the specified type
-                if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
-                {
-                    foreach (var window in desktop.Windows)
-                    {
-                        if (window.GetType().Name == windowType)
-                        {
-                            var skinDir = Path.Combine(AppContext.BaseDirectory, "Skins", CurrentSkin);
-                            var replacementPath = Path.Combine(skinDir, replacementFile);
-
-                            await WindowReplacementManager.ReplaceWindowContentAsync(window, replacementPath);
-                        }
-                    }
-                }
-            }
+            var replacementPath = Path.Combine(skinRoot, relativePath);
+            return WindowReplacementManager.ReplaceWindowContentAsync(window, replacementPath);
         }
 
         private static void ClearApplicationSkins()
         {
-            if (Application.Current?.Styles == null) return;
+            if (Application.Current == null)
+            {
+                return;
+            }
 
-            var skinStyles = Application.Current.Styles.OfType<StyleInclude>()
-                .Where(s => s.Source?.OriginalString.Contains("/Skins/") == true)
-                .ToList();
+            List<IStyle> stylesToRemove;
 
-            foreach (var style in skinStyles)
+            lock (SyncLock)
+            {
+                stylesToRemove = ApplicationSkinStyles.ToList();
+                ApplicationSkinStyles.Clear();
+            }
+
+            foreach (var style in stylesToRemove)
             {
                 Application.Current.Styles.Remove(style);
             }
@@ -302,53 +420,40 @@ namespace Cycloside.Services
 
         public static void RemoveAllSkinsFrom(StyledElement element)
         {
-            if (element?.Styles == null) return;
-
-            var skinStyles = element.Styles.OfType<StyleInclude>()
-                .Where(s => s.Source?.OriginalString.Contains("/Skins/") == true)
-                .ToList();
-
-            foreach (var skin in skinStyles)
+            try
             {
-                element.Styles.Remove(skin);
+                List<IStyle>? styles;
+
+                lock (SyncLock)
+                {
+                    if (!ElementSkinStyles.TryGetValue(element, out styles))
+                    {
+                        return;
+                    }
+
+                    ElementSkinStyles.Remove(element);
+                }
+
+                foreach (var style in styles)
+                {
+                    element.Styles.Remove(style);
+                }
             }
-
-            if (skinStyles.Count > 0)
+            catch (Exception ex)
             {
-                Logger.Log($"Removed {skinStyles.Count} skins from element");
+                Logger.Log($"SkinManager: failed to clear element skins: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Legacy compatibility methods
-        /// </summary>
         public static void ApplySkinsTo(StyledElement element, IEnumerable<string> skinNames)
         {
-            // Legacy method - convert to new async system
             foreach (var skinName in skinNames)
             {
                 ApplySkinTo(element, skinName);
             }
         }
-
-        private static bool IsFileATheme(string path)
-        {
-            try
-            {
-                var content = File.ReadAllText(path);
-                return content.Contains("ApplicationBackgroundBrush") || content.Contains("ThemeForegroundColor");
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"Error checking if file is a theme: {ex.Message}");
-                return false;
-            }
-        }
     }
 
-    /// <summary>
-    /// Event args for skin changed events
-    /// </summary>
     public class SkinChangedEventArgs : EventArgs
     {
         public string SkinName { get; }

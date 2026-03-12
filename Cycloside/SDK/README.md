@@ -1,22 +1,25 @@
 # Cycloside Plugin SDK
 
-This folder contains the minimal interfaces needed to build external plugins.
-Reference `Cycloside.dll` and implement `Cycloside.Plugins.IPlugin`.
-The interface exposes metadata, lifecycle methods and an optional `Widget`
-surface for dockable controls. Set `ForceDefaultTheme` to `true` if your
-plugin should ignore component skins. For advanced hooks implement
-`IPluginExtended`.
+This folder contains the public contracts external plugins are expected to compile against.
 
-## Getting Started
+## Files
 
-1. Run `dotnet run -- --newplugin MyPlugin` from the repository root to generate
-   a template plugin inside `Plugins/`. Add `--with-tests` to include a test
-   project.
-2. Implement the methods in the generated class and compile it into its own DLL.
-3. Place the compiled DLL back in the `Plugins/` folder and use **Settings →
-   Plugin Manager** to enable or disable it. Dependencies should sit beside the
-   DLL.
+- `IPlugin.cs`: required base plugin contract
+- `IPluginExtended.cs`: optional settings-saved and crash callbacks
+- `IWorkspaceItem.cs`: optional workspace-tab contract
 
-See `docs/plugin-dev.md` for more details on the plugin lifecycle, bus and
-marketplace.
+## Recommended development flow
 
+1. Change into `Cycloside/`.
+2. Run `dotnet run -- --newplugin MyPlugin`.
+3. Build the generated project under `Cycloside/Plugins/MyPlugin/src`.
+4. Copy the built DLL and any dependencies into the runtime `Plugins/` folder if you are testing outside the repo build output.
+
+The generated sample is a working plugin window, not an empty shell.
+
+## Docs
+
+- `../docs/plugin-api.md`
+- `../docs/plugin-lifecycle.md`
+- `../docs/widget-interface.md`
+- `../docs/skin-api.md`

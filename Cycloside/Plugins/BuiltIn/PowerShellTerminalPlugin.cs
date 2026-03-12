@@ -29,6 +29,7 @@ namespace Cycloside.Plugins.BuiltIn
         public class PowerShellTerminalWidget : IWidget
         {
             public string Name => "PowerShell Terminal";
+            public string Description => "Advanced PowerShell terminal with elevation and auto-detection";
 
             private TextBox? _outputEditor;
             private TextBox? _commandInput;

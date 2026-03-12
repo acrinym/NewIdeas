@@ -27,6 +27,7 @@ namespace Cycloside.Plugins.BuiltIn
         public class PluginMarketplaceWidget : IWidget
         {
             public string Name => "Plugin Marketplace";
+            public string Description => "Browse and install plugins from the marketplace";
 
             private PluginMarketplaceWindow? _marketplaceWindow;
 

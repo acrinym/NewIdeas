@@ -57,6 +57,7 @@ namespace Cycloside.Plugins.BuiltIn
     public class HackerTerminalWidget : IWidget
     {
         public string Name => "💻 Hacker Terminal";
+        public string Description => "Advanced terminal with hacker-style interface and command execution";
         private TextBox? _terminalOutput;
         private TextBox? _commandInput;
         private int _commandHistoryIndex = 0;

@@ -1,0 +1,149 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit">
+
+  <Style Selector="Border.surface-card">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusL}"/>
+    <Setter Property="BoxShadow" Value="{DynamicResource ShadowSubtle}"/>
+  </Style>
+
+  <Style Selector="Border.status-chip">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusM}"/>
+  </Style>
+
+  <Style Selector="Border.warning-panel">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemWarningBrush}"/>
+    <Setter Property="BorderThickness" Value="2"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusM}"/>
+  </Style>
+
+  <Style Selector="Border.accent-strip">
+    <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+  </Style>
+
+  <Style Selector="TextBlock.secondary">
+    <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+  </Style>
+
+  <Style Selector="TextBlock.warning">
+    <Setter Property="Foreground" Value="{DynamicResource SystemWarningBrush}"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="TextBlock.inverse">
+    <Setter Property="Foreground" Value="{DynamicResource SystemBackgroundBrush}"/>
+  </Style>
+
+  <Style Selector="Button.accent">
+    <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="Button.accent:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SystemHighlightBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemHighlightBrush}"/>
+  </Style>
+
+  <Style Selector="Button.accent:pressed">
+    <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="Button.success">
+    <Setter Property="Background" Value="{DynamicResource SystemSuccessBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemSuccessBrush}"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="Button.success:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SystemSuccessBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="Button.success:pressed">
+    <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="Button.danger">
+    <Setter Property="Background" Value="{DynamicResource SystemErrorBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemErrorBrush}"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="Button.danger:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SystemErrorBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="Button.danger:pressed">
+    <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="Button.warning">
+    <Setter Property="Background" Value="{DynamicResource SystemWarningBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource SystemWarningBrush}"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="Button.warning:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SystemWarningBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="Button.warning:pressed">
+    <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="Button.neutral">
+    <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="Button.neutral:pointerover">
+    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+  </Style>
+
+  <Style Selector="Button.neutral:pressed">
+    <Setter Property="Background" Value="{DynamicResource InteractivePressedBrush}"/>
+  </Style>
+
+  <Style Selector="GridSplitter.accent-divider">
+    <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}"/>
+  </Style>
+
+  <Style Selector="ProgressBar.magical">
+    <Setter Property="Background" Value="{DynamicResource MagicalProgressTrackBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
+  </Style>
+
+  <Style Selector="ProgressBar.magical /template/ Border#PART_Indicator">
+    <Setter Property="Background" Value="{DynamicResource MagicalProgressFillBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource MagicalProgressFrameBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+  </Style>
+
+  <Style Selector="ae|TextEditor.code-editor">
+    <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource FontFamilyMono}"/>
+  </Style>
+
+</Styles>

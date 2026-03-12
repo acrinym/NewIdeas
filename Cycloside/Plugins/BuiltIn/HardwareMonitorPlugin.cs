@@ -26,6 +26,7 @@ namespace Cycloside.Plugins.BuiltIn
         public class HardwareMonitorWidget : IWidget
         {
             public string Name => "Hardware Monitor";
+            public string Description => "System hardware monitoring and performance tracking";
 
             private TabControl? _mainTabControl;
             private TextBlock? _statusText;

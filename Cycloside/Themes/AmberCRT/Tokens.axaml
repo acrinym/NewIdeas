@@ -1,0 +1,35 @@
+<Style xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style.Resources>
+    <Color x:Key="SystemAccent">#FFB347</Color>
+    <Color x:Key="SystemHighlight">#FFD98B</Color>
+    <Color x:Key="SystemError">#FF8B6E</Color>
+    <Color x:Key="SystemWarning">#FFC766</Color>
+    <Color x:Key="SystemSuccess">#F1C46A</Color>
+
+    <Color x:Key="CanvasBackground">#120D07</Color>
+    <Color x:Key="PopupBackground">#1B1209</Color>
+    <Color x:Key="CardBackground">#24180B</Color>
+    <Color x:Key="PanelBackground">#191006</Color>
+
+    <Color x:Key="PrimaryText">#FFD38A</Color>
+    <Color x:Key="SecondaryText">#C89F63</Color>
+    <Color x:Key="DisabledText">#7E6542</Color>
+    <Color x:Key="PlaceholderText">#8A704B</Color>
+
+    <Color x:Key="InteractiveHover">#36210C</Color>
+    <Color x:Key="InteractivePressed">#523313</Color>
+    <Color x:Key="InteractiveSelected">#5B3914</Color>
+    <Color x:Key="InteractiveFocusRing">#FFD98B</Color>
+
+    <Color x:Key="BorderDefault">#7E5B2A</Color>
+    <Color x:Key="BorderStrong">#C88C3D</Color>
+    <Color x:Key="BorderSubtle">#3A2710</Color>
+    <Color x:Key="Separator">#5D421D</Color>
+
+    <FontFamily x:Key="FontFamilyPrimary">Cascadia Mono</FontFamily>
+    <FontFamily x:Key="FontFamilyMono">Cascadia Mono</FontFamily>
+    <CornerRadius x:Key="RadiusS">1</CornerRadius>
+    <CornerRadius x:Key="RadiusM">2</CornerRadius>
+    <CornerRadius x:Key="RadiusL">4</CornerRadius>
+  </Style.Resources>
+</Style>

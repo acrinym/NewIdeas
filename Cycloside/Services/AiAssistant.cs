@@ -55,8 +55,7 @@ namespace Cycloside.Services
     }
 
     /// <summary>
-    /// AI ASSISTANT - Intelligent code assistance and cybersecurity guidance
-    /// Provides AI-powered code completion, explanations, security analysis, and learning
+    /// AI assistant service for code help, workflow guidance, and optional security review.
     /// </summary>
     public static partial class AiAssistant
     {

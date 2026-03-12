@@ -73,6 +73,7 @@ namespace Cycloside.Plugins
             // Assuming SettingsManager is available
             IsolationEnabled = SettingsManager.Settings.PluginIsolation;
             CrashLoggingEnabled = SettingsManager.Settings.PluginCrashLogging;
+            SettingsManager.SettingsSaved += OnSettingsSaved;
         }
 
         public void StartWatching()
@@ -283,6 +284,7 @@ namespace Cycloside.Plugins
                 {
                     Logger.Log($"{plugin.Name} crashed on start: {ex}");
                 }
+                NotifyExtendedCrashHandler(plugin, ex);
                 _notify?.Invoke($"[{plugin.Name}] crashed and was disabled.");
             }
         }
@@ -306,6 +308,7 @@ namespace Cycloside.Plugins
                 {
                     Logger.Log($"Error stopping {plugin.Name}: {ex}");
                 }
+                NotifyExtendedCrashHandler(plugin, ex);
             }
             finally
             {
@@ -325,6 +328,51 @@ namespace Cycloside.Plugins
                 {
                     EnablePlugin(info.Instance);
                 }
+            }
+        }
+
+        private void OnSettingsSaved()
+        {
+            lock (_pluginLock)
+            {
+                foreach (var info in _pluginInfos)
+                {
+                    if (!info.IsEnabled)
+                    {
+                        continue;
+                    }
+
+                    if (info.Instance is not IPluginExtended extended)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        extended.OnSettingsSaved();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"Error notifying {info.Instance.Name} about settings save: {ex}");
+                    }
+                }
+            }
+        }
+
+        private void NotifyExtendedCrashHandler(IPlugin plugin, Exception ex)
+        {
+            if (plugin is not IPluginExtended extended)
+            {
+                return;
+            }
+
+            try
+            {
+                extended.OnCrash(ex);
+            }
+            catch (Exception callbackEx)
+            {
+                Logger.Log($"Error in crash callback for {plugin.Name}: {callbackEx}");
             }
         }
     }

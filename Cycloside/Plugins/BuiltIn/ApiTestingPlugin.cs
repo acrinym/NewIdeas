@@ -42,6 +42,7 @@ namespace Cycloside.Plugins.BuiltIn
     public class ApiTestingWidget : IWidget
     {
         public string Name => "API Testing";
+        public string Description => "REST API testing and debugging tool";
 
         private TabControl? _mainTabControl;
         private TextBlock? _statusText;

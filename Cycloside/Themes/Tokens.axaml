@@ -98,5 +98,20 @@
     <BoxShadow x:Key="ShadowStandard">0 2 6 0 rgba(0,0,0,0.15)</BoxShadow>
     <BoxShadow x:Key="ShadowElevated">0 4 12 0 rgba(0,0,0,0.2)</BoxShadow>
     <BoxShadow x:Key="ShadowFloating">0 8 24 0 rgba(0,0,0,0.25)</BoxShadow>
+
+    <!-- Magical progress resources give custom controls and themed progress bars a shared fallback language -->
+    <LinearGradientBrush x:Key="MagicalProgressFrameBrush" StartPoint="0,0" EndPoint="1,0">
+      <GradientStop Color="{DynamicResource SystemHighlight}" Offset="0.0"/>
+      <GradientStop Color="{DynamicResource SystemAccent}" Offset="0.6"/>
+      <GradientStop Color="{DynamicResource SystemSuccess}" Offset="1.0"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="MagicalProgressFillBrush" StartPoint="0,0" EndPoint="1,0">
+      <GradientStop Color="{DynamicResource SystemAccent}" Offset="0.0"/>
+      <GradientStop Color="{DynamicResource SystemHighlight}" Offset="0.55"/>
+      <GradientStop Color="{DynamicResource SystemSuccess}" Offset="1.0"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="MagicalProgressTrackBrush" Color="{DynamicResource InteractiveHover}" Opacity="0.88"/>
+    <SolidColorBrush x:Key="MagicalProgressSparkleBrush" Color="{DynamicResource PrimaryText}" />
+    <SolidColorBrush x:Key="MagicalProgressTextBrush" Color="{DynamicResource PrimaryText}" />
   </Style.Resources>
 </Style>
