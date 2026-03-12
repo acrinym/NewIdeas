@@ -16,6 +16,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new Version(1, 0, 0);
         public string Description => "Ultimate Cycloside showcase: Live Code Canvas, Hardware Bridge, Network Tools";
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.Security;
         public IWidget? Widget => CreateHackerDashboardWidget();
 
         public void Start()

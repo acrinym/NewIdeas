@@ -26,6 +26,7 @@ public class ManagedVisHostPlugin : IPlugin, IDisposable
     public Version Version => new(0, 1, 0);
     public Widgets.IWidget? Widget => null;
     public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.DesktopCustomization;
 
     public void Start()
     {

@@ -6,6 +6,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
+using Cycloside.Models;
 using Cycloside.Plugins;
 using Cycloside.Plugins.BuiltIn;
 using Cycloside.Services;
@@ -318,68 +319,78 @@ public partial class App : Application
             progressWindow?.Close();
         }
 
-        // Show welcome modal if needed (first run or user preference)
-        if (settings.FirstRun || ConfigurationManager.IsWelcomeEnabled)
+        // Check if first-launch setup is needed
+        bool needsFirstLaunchSetup = settings.StartupConfig == null || !settings.StartupConfig.HasCompletedFirstLaunch;
+
+        if (needsFirstLaunchSetup)
         {
-            var welcome = new WelcomeWindow();
+            // First launch - show startup configuration wizard
+            Logger.Log("🎯 First launch detected - showing startup configuration wizard...");
 
-            // Set up the transition handler (non-async for Avalonia compatibility)
-            welcome.Closed += (_, _) =>
+            try
             {
-                Logger.Log("🔄 Welcome window closed - transitioning to main window...");
+                // Create plugin manager early for the wizard
+                _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify);
+                LoadAllPluginsForInspection(_pluginManager, settings);
 
-                try
+                var startupWindow = new StartupConfigurationWindow(_pluginManager, config =>
                 {
-                    // Mark first run as completed
+                    // Save the configuration
+                    settings.StartupConfig = config;
                     settings.FirstRun = false;
+                    SettingsManager.Save();
+
+                    Logger.Log("✅ Startup configuration saved - creating main window...");
 
                     // Create and show main window
-                    _mainWindow = CreateMainWindow(settings);
-                    desktop.MainWindow = _mainWindow;
-
-                    Logger.Log("🚀 Transitioning to main window...");
-                    _mainWindow.Show();
-
-                    Logger.Log("✅ Cycloside main application started successfully!");
-                }
-                catch (Exception ex)
-                {
-                    Logger.Log($"❌ Critical error during welcome to main window transition: {ex.Message}");
-                    Logger.Log($"Stack trace: {ex.StackTrace}");
-
-                    // Try to create a minimal main window as fallback
                     try
                     {
-                        Logger.Log("🔄 Attempting emergency main window creation...");
-                        _mainWindow = new MainWindow(); // Create minimal main window
+                        _mainWindow = CreateMainWindowWithConfig(settings);
                         desktop.MainWindow = _mainWindow;
                         _mainWindow.Show();
-                        Logger.Log("✅ Emergency main window created");
+                        Logger.Log("🚀 Main window shown with configured plugins!");
                     }
-                    catch (Exception emergencyEx)
+                    catch (Exception ex)
                     {
-                        Logger.Log($"💥 Emergency fallback also failed: {emergencyEx.Message}");
-                        Logger.Log("🚨 Cannot create main window - exiting application");
-                        Environment.Exit(1);
+                        Logger.Log($"❌ Failed to create main window after configuration: {ex.Message}");
+                        CreateEmergencyMainWindow(desktop);
                     }
+                });
+
+                desktop.MainWindow = startupWindow;
+                startupWindow.Show();
+                Logger.Log("✅ Startup configuration wizard displayed");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"❌ Failed to show startup configuration wizard: {ex.Message}");
+                Logger.Log($"Stack trace: {ex.StackTrace}");
+
+                // Fallback to creating main window with defaults
+                try
+                {
+                    _mainWindow = CreateMainWindow(settings);
+                    desktop.MainWindow = _mainWindow;
+                    _mainWindow.Show();
                 }
-            };
-
-            // Show welcome window
-            desktop.MainWindow = welcome;
-            welcome.Show();
-
-            Logger.Log("🔔 Welcome window displayed to user");
+                catch (Exception fallbackEx)
+                {
+                    Logger.Log($"💥 Fallback also failed: {fallbackEx.Message}");
+                    CreateEmergencyMainWindow(desktop);
+                }
+            }
         }
         else
         {
-            // Create and show main window directly
+            // Normal launch with saved configuration
+            Logger.Log("🚀 Loading saved startup configuration...");
+
             try
             {
-                _mainWindow = CreateMainWindow(settings);
+                _mainWindow = CreateMainWindowWithConfig(settings);
                 desktop.MainWindow = _mainWindow;
                 _mainWindow.Show();
-                Logger.Log("🚀 Main window shown successfully - Cycloside is ready!");
+                Logger.Log("✅ Main window shown with saved configuration!");
             }
             catch (Exception ex)
             {
@@ -483,6 +494,60 @@ public partial class App : Application
         {
             Logger.Log($"⚠️ Failed logging UI unhandled exception: {logEx.Message}");
         }
+    }
+
+    private void CreateEmergencyMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        try
+        {
+            Logger.Log("🚨 Creating emergency main window...");
+            _mainWindow = new MainWindow();
+            desktop.MainWindow = _mainWindow;
+            _mainWindow.Show();
+            Logger.Log("✅ Emergency main window created");
+        }
+        catch (Exception emergencyEx)
+        {
+            Logger.Log($"💥 Emergency fallback also failed: {emergencyEx.Message}");
+            Logger.Log("🚨 Cannot create main window - exiting application");
+            Environment.Exit(1);
+        }
+    }
+
+    private MainWindow CreateMainWindowWithConfig(AppSettings settings)
+    {
+        if (_pluginManager == null)
+        {
+            _pluginManager = new PluginManager(Path.Combine(AppContext.BaseDirectory, "Plugins"), Services.NotificationCenter.Notify);
+        }
+
+        // Subscribe to plugin reloads to update the UI when plugins are refreshed.
+        _pluginManager.PluginsReloaded += OnPluginsReloaded;
+
+        var volatileManager = new VolatilePluginManager();
+
+        // Initialize window positioning service with startup configuration
+        Services.WindowPositioningService.Instance.Initialize(settings.StartupConfig);
+        Logger.Log("✅ WindowPositioningService initialized");
+
+        // Load plugins based on saved startup configuration
+        LoadPluginsFromConfiguration(_pluginManager, settings);
+        _pluginManager.StartWatching();
+
+        var viewModel = new MainWindowViewModel(_pluginManager.Plugins);
+        _mainViewModel = viewModel;
+        var mainWindow = new MainWindow(_pluginManager)
+        {
+            DataContext = viewModel
+        };
+        _mainWindow = mainWindow;
+
+        viewModel.ExitCommand = new ServicesRelayCommand(() => Shutdown());
+
+        // Setup plugin commands
+        SetupPluginCommands(viewModel);
+
+        return mainWindow;
     }
 
     private MainWindow CreateMainWindow(AppSettings settings)
@@ -688,6 +753,170 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// Loads all plugins without starting them - for inspection by the startup wizard
+    /// </summary>
+    private void LoadAllPluginsForInspection(PluginManager manager, AppSettings settings)
+    {
+        void TryAdd(Func<IPlugin> factory)
+        {
+            try
+            {
+                manager.AddBuiltInPlugin(factory);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"⚠️ Plugin factory threw during inspection: {ex.Message}");
+            }
+        }
+
+        // Add ALL plugins for inspection (don't start them yet)
+        TryAdd(() => new DateTimeOverlayPlugin());
+        TryAdd(() => new MP3PlayerPlugin());
+        TryAdd(() => new ManagedVisHostPlugin());
+        TryAdd(() => new MacroPlugin());
+        TryAdd(() => new TextEditorPlugin());
+        TryAdd(() => new WallpaperPlugin());
+        TryAdd(() => new ClipboardManagerPlugin());
+        // Archived: HackersParadisePlugin - moved to Plugins/Archived/Security/ (not aligned with desktop customization vision)
+        TryAdd(() => new HackerTerminalPlugin());
+        TryAdd(() => new PowerShellTerminalPlugin());
+        TryAdd(() => new PluginMarketplacePlugin());
+        TryAdd(() => new AdvancedCodeEditorPlugin());
+        // Archived: NetworkToolsPlugin - moved to Plugins/Archived/Security/
+        TryAdd(() => new HardwareMonitorPlugin());
+        // Archived: VulnerabilityScannerPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDevToolsPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDatabasePlugin - moved to Plugins/Archived/Security/
+        // Archived: DigitalForensicsPlugin - moved to Plugins/Archived/Security/
+        TryAdd(() => new DatabaseManagerPlugin());
+        TryAdd(() => new ApiTestingPlugin());
+        TryAdd(() => new CharacterMapPlugin());
+        TryAdd(() => new FileWatcherPlugin());
+        TryAdd(() => new TaskSchedulerPlugin());
+        TryAdd(() => new DiskUsagePlugin());
+        TryAdd(() => new TerminalPlugin());
+        TryAdd(() => new LogViewerPlugin());
+        TryAdd(() => new NotificationCenterPlugin());
+        TryAdd(() => new EnvironmentEditorPlugin());
+        TryAdd(() => new FileExplorerPlugin());
+        TryAdd(() => new QuickLauncherPlugin(manager));
+        TryAdd(() => new JezzballPlugin());
+        TryAdd(() => new QBasicRetroIDEPlugin());
+        TryAdd(() => new ScreenSaverPlugin());
+        TryAdd(() => new WidgetHostPlugin(manager));
+        TryAdd(() => new EncryptionPlugin());
+        TryAdd(() => new ModTrackerPlugin());
+        TryAdd(() => new AiAssistantPlugin());
+
+        Logger.Log($"✅ Loaded {manager.Plugins.Count()} plugins for inspection");
+    }
+
+    /// <summary>
+    /// Loads plugins based on saved startup configuration
+    /// </summary>
+    private void LoadPluginsFromConfiguration(PluginManager manager, AppSettings settings)
+    {
+        var config = settings.StartupConfig;
+        if (config == null)
+        {
+            Logger.Log("⚠️ No startup configuration found - loading defaults");
+            LoadAllPlugins(manager, settings);
+            return;
+        }
+
+        void TryAdd(Func<IPlugin> factory)
+        {
+            IPlugin? plugin = null;
+            try
+            {
+                plugin = factory();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"⚠️ Plugin factory threw during inspection: {ex.Message}");
+                return;
+            }
+
+            // Check if plugin is enabled in configuration
+            bool isEnabled = config.IsPluginEnabled(plugin.Name);
+
+            if (isEnabled)
+            {
+                try
+                {
+                    manager.AddBuiltInPlugin(factory);
+                    Logger.Log($"✅ Loading enabled plugin: {plugin.Name}");
+
+                    // Window positions are applied automatically when plugins call
+                    // WindowEffectsManager.Instance.ApplyConfiguredEffects(window, pluginName)
+                    // in their Start() methods. The WindowPositioningService reads from
+                    // the startup configuration and applies saved positions seamlessly.
+                }
+                catch (Exception addEx)
+                {
+                    Logger.Log($"❌ Failed to add plugin {plugin.Name}: {addEx.Message}");
+                }
+            }
+            else
+            {
+                Logger.Log($"⏭️ Skipping disabled plugin: {plugin.Name}");
+            }
+        }
+
+        // Try to add all plugins (configuration determines which load)
+        TryAdd(() => new DateTimeOverlayPlugin());
+        TryAdd(() => new MP3PlayerPlugin());
+        TryAdd(() => new ManagedVisHostPlugin());
+        TryAdd(() => new MacroPlugin());
+        TryAdd(() => new TextEditorPlugin());
+        TryAdd(() => new WallpaperPlugin());
+        TryAdd(() => new ClipboardManagerPlugin());
+        // Archived: HackersParadisePlugin - moved to Plugins/Archived/Security/ (not aligned with desktop customization vision)
+        TryAdd(() => new HackerTerminalPlugin());
+        TryAdd(() => new PowerShellTerminalPlugin());
+        TryAdd(() => new PluginMarketplacePlugin());
+        TryAdd(() => new AdvancedCodeEditorPlugin());
+        // Archived: NetworkToolsPlugin - moved to Plugins/Archived/Security/
+        TryAdd(() => new HardwareMonitorPlugin());
+        // Archived: VulnerabilityScannerPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDevToolsPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDatabasePlugin - moved to Plugins/Archived/Security/
+        // Archived: DigitalForensicsPlugin - moved to Plugins/Archived/Security/
+        TryAdd(() => new DatabaseManagerPlugin());
+        TryAdd(() => new ApiTestingPlugin());
+        TryAdd(() => new CharacterMapPlugin());
+        TryAdd(() => new FileWatcherPlugin());
+        TryAdd(() => new TaskSchedulerPlugin());
+        TryAdd(() => new DiskUsagePlugin());
+        TryAdd(() => new TerminalPlugin());
+        TryAdd(() => new LogViewerPlugin());
+        TryAdd(() => new NotificationCenterPlugin());
+        TryAdd(() => new EnvironmentEditorPlugin());
+        TryAdd(() => new FileExplorerPlugin());
+        TryAdd(() => new QuickLauncherPlugin(manager));
+        TryAdd(() => new JezzballPlugin());
+        TryAdd(() => new QBasicRetroIDEPlugin());
+        TryAdd(() => new ScreenSaverPlugin());
+        TryAdd(() => new WidgetHostPlugin(manager));
+        TryAdd(() => new EncryptionPlugin());
+        TryAdd(() => new ModTrackerPlugin());
+        TryAdd(() => new AiAssistantPlugin());
+
+        Logger.Log($"✅ Loaded {manager.Plugins.Count()} plugins from configuration");
+    }
+
+    /// <summary>
+    /// Extracts plugin command setup logic for reuse
+    /// </summary>
+    private void SetupPluginCommands(MainWindowViewModel viewModel)
+    {
+        viewModel.ExitCommand = new ServicesRelayCommand(() => Shutdown());
+
+        // Toggle plugin enablement from the main window - handled in MainWindowViewModel already
+        // Just kept as placeholder for future enhancements
+    }
+
     private void LoadAllPlugins(PluginManager manager, AppSettings settings)
     {
         void TryAdd(Func<IPlugin> factory)
@@ -744,17 +973,17 @@ public partial class App : Application
         TryAdd(() => new TextEditorPlugin());
         TryAdd(() => new WallpaperPlugin());
         TryAdd(() => new ClipboardManagerPlugin());
-        TryAdd(() => new HackersParadisePlugin());
+        // Archived: HackersParadisePlugin - moved to Plugins/Archived/Security/ (not aligned with desktop customization vision)
         TryAdd(() => new HackerTerminalPlugin());
         TryAdd(() => new PowerShellTerminalPlugin());
         TryAdd(() => new PluginMarketplacePlugin());
         TryAdd(() => new AdvancedCodeEditorPlugin());
-        TryAdd(() => new NetworkToolsPlugin());
+        // Archived: NetworkToolsPlugin - moved to Plugins/Archived/Security/
         TryAdd(() => new HardwareMonitorPlugin());
-        TryAdd(() => new VulnerabilityScannerPlugin());
-        TryAdd(() => new ExploitDevToolsPlugin());
-        TryAdd(() => new ExploitDatabasePlugin());
-        TryAdd(() => new DigitalForensicsPlugin());
+        // Archived: VulnerabilityScannerPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDevToolsPlugin - moved to Plugins/Archived/Security/
+        // Archived: ExploitDatabasePlugin - moved to Plugins/Archived/Security/
+        // Archived: DigitalForensicsPlugin - moved to Plugins/Archived/Security/
         TryAdd(() => new DatabaseManagerPlugin());
         TryAdd(() => new ApiTestingPlugin());
         TryAdd(() => new CharacterMapPlugin());

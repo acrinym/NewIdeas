@@ -3,7 +3,9 @@ using Cycloside.Bridge;
 using Cycloside.Input;
 using Cycloside.SSH;
 using Cycloside.Rules;
+#if WINDOWS
 using Cycloside.Utils;
+#endif
 
 var bus = new EventBus();
 
@@ -53,7 +55,8 @@ var rules = new List<Rule>
 };
 using var engine = new RuleEngine(bus, rules);
 
-// Utils
+#if WINDOWS
+// Utils (Windows-only features)
 var screenshot = new ScreenshotAnnotator(bus);
 var notes = new StickyNotesManager(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CyclosideNotes"));
 var color = new ColorPickerTool(bus);
@@ -65,6 +68,11 @@ qs.Start();
 
 Console.WriteLine("Cycloside SampleHost running. Commands:");
 Console.WriteLine(" s = screenshot+annotate; n = new note; N = load notes; c = pick color; r = ruler; h = open markdown (README.md); p = run python; q = quit");
+#else
+Console.WriteLine("Cycloside SampleHost running on Linux. Commands:");
+Console.WriteLine(" q = quit");
+Console.WriteLine(" Note: Windows-specific features (screenshot, notes, color picker) are not available on this platform.");
+#endif
 
 bool running = true;
 while (running)
@@ -72,6 +80,7 @@ while (running)
     var key = Console.ReadKey(true).KeyChar;
     switch (key)
     {
+#if WINDOWS
         case 's':
             var img = screenshot.CaptureRegionAndAnnotate();
             Console.WriteLine("Screenshot captured + annotated.");
@@ -98,6 +107,7 @@ while (running)
             var outp = py.Run("print('hello from ironpython')\\nfor i in range(3): print(i)");
             Console.WriteLine(outp);
             break;
+#endif
         case 'q':
             running = false;
             break;

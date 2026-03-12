@@ -24,6 +24,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new Version(1, 0, 0);
         public string Description => "Professional command-line terminal for advanced hacking operations";
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.Development;
         public IWidget? Widget => new HackerTerminalWidget();
 
         public void Start()

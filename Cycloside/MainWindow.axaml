@@ -40,6 +40,9 @@
                 <MenuItem Header="Theme _Settings..." Click="OpenThemeSettings"/>
                 <MenuItem Header="Skin/Theme _Editor..." Click="OpenSkinEditor"/>
             </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_Customize Startup..." Click="OpenStartupCustomization"/>
+            </MenuItem>
         </Menu>
 
         <!-- === Main Content Area === -->

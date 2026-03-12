@@ -23,6 +23,7 @@ public class NetworkToolsPlugin : IPlugin
         public string Description => "Comprehensive network analysis and security toolkit";
         public Version Version => new(1, 0, 0);
     public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.Security;
 
         public class NetworkToolsWidget : IWidget
         {

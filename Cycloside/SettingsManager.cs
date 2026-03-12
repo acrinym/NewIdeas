@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Security.Cryptography;
 using System.Threading;
+using Cycloside.Models;
 
 namespace Cycloside;
 
@@ -66,6 +67,11 @@ public class AppSettings
     public string ActiveProfile { get; set; } = "default";
     public string RemoteApiToken { get; set; } = "secret";
     public bool FirstRun { get; set; } = true;
+
+    /// <summary>
+    /// Startup configuration for plugins (positions, enabled state)
+    /// </summary>
+    public StartupConfiguration? StartupConfig { get; set; }
 }
 
 /// <summary>

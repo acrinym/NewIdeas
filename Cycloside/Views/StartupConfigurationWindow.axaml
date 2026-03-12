@@ -1,0 +1,196 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Cycloside.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+        x:Class="Cycloside.Views.StartupConfigurationWindow"
+        x:DataType="vm:StartupConfigurationViewModel"
+        Title="Welcome to Cycloside - First Launch Setup"
+        Width="900" Height="700"
+        WindowStartupLocation="CenterScreen"
+        CanResize="false"
+        Background="{DynamicResource CanvasBackgroundBrush}">
+
+    <DockPanel Margin="20">
+
+        <!-- Header -->
+        <Border DockPanel.Dock="Top"
+                Padding="20"
+                Margin="0,0,0,20"
+                Background="{DynamicResource SystemAccentBrush}"
+                CornerRadius="8">
+            <StackPanel>
+                <TextBlock Text="🎨 Welcome to Cycloside!"
+                          FontSize="28"
+                          FontWeight="Bold"
+                          Foreground="White"/>
+                <TextBlock Text="Let's customize your desktop experience"
+                          FontSize="16"
+                          Foreground="White"
+                          Opacity="0.9"
+                          Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Footer Buttons -->
+        <Border DockPanel.Dock="Bottom"
+                Padding="20,15"
+                Margin="0,20,0,0"
+                Background="{DynamicResource CardBackgroundBrush}"
+                CornerRadius="8">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Text="💡 Tip: You can change these settings later in Help → Customize Startup"
+                          VerticalAlignment="Center"
+                          Margin="0,0,20,0"
+                          Opacity="0.7"
+                          FontSize="12"/>
+                <Button Content="Select All Core Plugins"
+                        Command="{Binding SelectAllCoreCommand}"
+                        Margin="0,0,10,0"
+                        Padding="15,8"/>
+                <Button Content="Use Defaults"
+                        Command="{Binding UseDefaultsCommand}"
+                        Margin="0,0,10,0"
+                        Padding="15,8"/>
+                <Button Content="Continue →"
+                        Command="{Binding ContinueCommand}"
+                        Classes="primary"
+                        Padding="20,8"
+                        FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="15">
+
+                <!-- Instructions -->
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        Padding="20"
+                        CornerRadius="8">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Choose which plugins to start automatically:"
+                                  FontSize="16"
+                                  FontWeight="SemiBold"/>
+                        <TextBlock Text="• Core plugins are recommended for the best experience"
+                                  Opacity="0.8"/>
+                        <TextBlock Text="• You can configure where each plugin window appears"
+                                  Opacity="0.8"/>
+                        <TextBlock Text="• Advanced tools can be enabled later from the plugin manager"
+                                  Opacity="0.8"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Plugin Categories -->
+                <ItemsControl ItemsSource="{Binding PluginCategories}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource CardBackgroundBrush}"
+                                    Padding="20"
+                                    Margin="0,0,0,10"
+                                    CornerRadius="8">
+                                <StackPanel Spacing="10">
+
+                                    <!-- Category Header -->
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <TextBlock Text="{Binding Icon}"
+                                                  FontSize="20"/>
+                                        <TextBlock Text="{Binding CategoryName}"
+                                                  FontSize="18"
+                                                  FontWeight="Bold"
+                                                  VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Description}"
+                                                  Opacity="0.7"
+                                                  VerticalAlignment="Center"
+                                                  Margin="10,0,0,0"/>
+                                        <CheckBox Content="Enable All"
+                                                 IsChecked="{Binding AllEnabled}"
+                                                 Margin="10,0,0,0"
+                                                 VerticalAlignment="Center"
+                                                 FontWeight="SemiBold"/>
+                                    </StackPanel>
+
+                                    <!-- Plugins in Category -->
+                                    <ItemsControl ItemsSource="{Binding Plugins}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="10"
+                                                       Margin="5,0,0,5"
+                                                       Background="{DynamicResource SystemControlBackgroundAltMediumBrush}"
+                                                       CornerRadius="4">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+
+                                                        <!-- Enable Checkbox -->
+                                                        <CheckBox Grid.Column="0"
+                                                                 IsChecked="{Binding IsEnabled}"
+                                                                 VerticalAlignment="Center"
+                                                                 Margin="0,0,10,0"/>
+
+                                                        <!-- Plugin Info -->
+                                                        <StackPanel Grid.Column="1"
+                                                                   VerticalAlignment="Center"
+                                                                   Spacing="2">
+                                                            <TextBlock Text="{Binding PluginName}"
+                                                                      FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding Description}"
+                                                                      FontSize="11"
+                                                                      Opacity="0.6"/>
+                                                        </StackPanel>
+
+                                                        <!-- Position Preset -->
+                                                        <StackPanel Grid.Column="2"
+                                                                   Orientation="Horizontal"
+                                                                   Spacing="5"
+                                                                   VerticalAlignment="Center"
+                                                                   Margin="10,0,10,0"
+                                                                   IsVisible="{Binding IsEnabled}">
+                                                            <TextBlock Text="📍"
+                                                                      VerticalAlignment="Center"/>
+                                                            <ComboBox SelectedItem="{Binding PositionPreset}"
+                                                                     ItemsSource="{Binding AvailablePresets}"
+                                                                     MinWidth="120">
+                                                                <ComboBox.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <TextBlock Text="{Binding}"/>
+                                                                    </DataTemplate>
+                                                                </ComboBox.ItemTemplate>
+                                                            </ComboBox>
+                                                        </StackPanel>
+
+                                                        <!-- Monitor Selection -->
+                                                        <StackPanel Grid.Column="3"
+                                                                   Orientation="Horizontal"
+                                                                   Spacing="5"
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding IsEnabled}">
+                                                            <TextBlock Text="🖥️"
+                                                                      VerticalAlignment="Center"/>
+                                                            <ComboBox SelectedIndex="{Binding MonitorIndex}"
+                                                                     ItemsSource="{Binding AvailableMonitors}"
+                                                                     MinWidth="100">
+                                                                <ComboBox.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <TextBlock Text="{Binding}"/>
+                                                                    </DataTemplate>
+                                                                </ComboBox.ItemTemplate>
+                                                            </ComboBox>
+                                                        </StackPanel>
+
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </DockPanel>
+</Window>

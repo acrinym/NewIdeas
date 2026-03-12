@@ -11,6 +11,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Cycloside.Plugins;
+using Cycloside.Helpers;
 
 namespace Cycloside.Plugins.BuiltIn
 {
@@ -24,21 +25,24 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new(2, 0);
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.RetroComputing;
 
         public void Start()
         {
             _control = new JezzballControl();
 
-            _window = new Window
-            {
-                Title = "Jezzball",
-                Width = 800,
-                Height = 630,
-                CanResize = true,
-                MinWidth = 640,
-                MinHeight = 480,
-                Content = _control
-            };
+            // Create themed window using WindowBlinds-style decoration
+            _window = WindowDecorationHelper.CreatePluginWindow(
+                pluginName: "Jezzball",
+                title: "Jezzball",
+                content: _control,
+                width: 800,
+                height: 630
+            );
+
+            _window.CanResize = true;
+            _window.MinWidth = 640;
+            _window.MinHeight = 480;
 
             _window.KeyDown += OnWindowKeyDown;
             _window.Show();
@@ -77,16 +81,11 @@ namespace Cycloside.Plugins.BuiltIn
 
         private void ShowHelp()
         {
-            var helpWindow = new Window
+            var helpContent = new ScrollViewer
             {
-                Title = "Jezzball Help",
-                Width = 500,
-                Height = 400,
-                Content = new ScrollViewer
+                Content = new TextBlock
                 {
-                    Content = new TextBlock
-                    {
-                        Text = @"Jezzball Help
+                    Text = @"Jezzball Help
 
 Goal: Build walls to capture at least 75% of the area while avoiding balls.
 
@@ -110,11 +109,19 @@ Tips:
 - Watch ball trajectories
 - Use the grid to help with placement
 - Don't place walls too close to balls",
-                        TextWrapping = TextWrapping.Wrap,
-                        Margin = new Thickness(20)
-                    }
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(20)
                 }
             };
+
+            // Create themed help dialog
+            var helpWindow = WindowDecorationHelper.CreateCenteredDialog(
+                title: "Jezzball Help",
+                content: helpContent,
+                width: 500,
+                height: 400
+            );
+
             helpWindow.Show();
         }
     }

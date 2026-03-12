@@ -23,6 +23,7 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new(1, 1, 0); // Incremented for new features
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
+        public PluginCategory Category => PluginCategory.DesktopCustomization;
 
         // --- Observable Properties for UI Binding ---
         [ObservableProperty]

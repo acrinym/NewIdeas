@@ -30,6 +30,25 @@ public interface IPlugin
     bool ForceDefaultTheme { get; }
 
     /// <summary>
+    /// Plugin category for organization and default behavior.
+    /// Defaults to Experimental if not specified.
+    /// </summary>
+    PluginCategory Category => PluginCategory.Experimental;
+
+    /// <summary>
+    /// Whether this plugin should be enabled by default on first launch.
+    /// If not overridden, determined automatically based on Category.
+    /// After first launch, user preferences take precedence.
+    /// </summary>
+    bool EnabledByDefault => PluginDefaults.IsEnabledByDefault(Category);
+
+    /// <summary>
+    /// Whether this is a core plugin that defines the platform experience.
+    /// If not overridden, determined automatically based on Category.
+    /// </summary>
+    bool IsCore => PluginDefaults.IsCore(Category);
+
+    /// <summary>
     /// Called by the host when the plugin should create its UI and begin
     /// processing. Implementations may open windows or attach controls to
     /// the workspace.
