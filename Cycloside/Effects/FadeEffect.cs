@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
@@ -12,6 +13,7 @@ public class FadeEffect : IWindowEffect
     public string Name => "Fade";
     public string Description => "Smooth fade in/out animation for window open/close";
 
+    private readonly HashSet<Window> _animating = new();
     private readonly TimeSpan _fadeInDuration;
     private readonly TimeSpan _fadeOutDuration;
     private readonly IEasing _fadeInEasing;
@@ -39,6 +41,7 @@ public class FadeEffect : IWindowEffect
     {
         window.Closing -= OnClosing;
         window.Opened -= OnOpened;
+        _animating.Remove(window);
     }
 
     public void ApplyEvent(WindowEventType type, object? args) { }
@@ -77,7 +80,9 @@ public class FadeEffect : IWindowEffect
     private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         if (sender is not Window window) return;
+        if (_animating.Contains(window)) return;
         e.Cancel = true;
+        _animating.Add(window);
 
         // Create fade-out animation
         var fadeOutAnimation = new Animation
@@ -101,6 +106,7 @@ public class FadeEffect : IWindowEffect
         
         // Remove event handler to avoid re-entry and close
         window.Closing -= OnClosing;
+        _animating.Remove(window);
         window.Close();
     }
 }

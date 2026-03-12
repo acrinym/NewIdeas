@@ -14,9 +14,9 @@ When making changes, follow these binding rules.
     - The agent must ask permission first before inserting any placeholder.
 
 ## MUST OBEY LAW
-- Never use regex for repo edits, search/replace flows, or code transforms.
-- Prefer exact string matching, explicit parsing, or block-aware edits.
+- For agent-performed repo edits, search/replace flows, or code transforms: prefer exact string matching, explicit parsing, or block-aware edits.
 - If a tool supports fixed-string search, use fixed-string mode.
+- Regex in application code (e.g. syntax highlighting, parsing) is allowed.
 
 - **Output Format**
   - No filler text.

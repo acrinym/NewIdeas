@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
@@ -10,6 +11,7 @@ namespace Cycloside.Effects;
 
 public class ScaleEffect : IWindowEffect
 {
+    private readonly HashSet<Window> _animating = new();
     public string Name => "Scale";
     public string Description => "Scale animation for window open/close with smooth zoom effect";
 
@@ -23,6 +25,7 @@ public class ScaleEffect : IWindowEffect
     {
         window.Closing -= OnClosing;
         window.Opened -= OnOpened;
+        _animating.Remove(window);
     }
 
     public void ApplyEvent(WindowEventType type, object? args) { }
@@ -70,7 +73,9 @@ public class ScaleEffect : IWindowEffect
     private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         if (sender is not Window window) return;
+        if (_animating.Contains(window)) return;
         e.Cancel = true;
+        _animating.Add(window);
 
         // Set transform origin to center
         window.RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
@@ -102,6 +107,7 @@ public class ScaleEffect : IWindowEffect
         
         // Remove event handler to avoid re-entry and close
         window.Closing -= OnClosing;
+        _animating.Remove(window);
         window.Close();
     }
 }

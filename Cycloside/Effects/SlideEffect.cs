@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
@@ -18,6 +19,7 @@ public enum SlideDirection
 
 public class SlideEffect : IWindowEffect
 {
+    private readonly HashSet<Window> _animating = new();
     public string Name => "Slide";
     public string Description => "Slide animation for window open/close from specified direction";
 
@@ -48,6 +50,7 @@ public class SlideEffect : IWindowEffect
     {
         window.Closing -= OnClosing;
         window.Opened -= OnOpened;
+        _animating.Remove(window);
     }
 
     public void ApplyEvent(WindowEventType type, object? args) { }
@@ -92,7 +95,9 @@ public class SlideEffect : IWindowEffect
     private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         if (sender is not Window window) return;
+        if (_animating.Contains(window)) return;
         e.Cancel = true;
+        _animating.Add(window);
 
         // Calculate slide offset based on direction
         var (offsetX, offsetY) = GetSlideOffset(_closeDirection, window);
@@ -120,6 +125,7 @@ public class SlideEffect : IWindowEffect
         
         // Remove event handler to avoid re-entry and close
         window.Closing -= OnClosing;
+        _animating.Remove(window);
         window.Close();
     }
 

@@ -552,7 +552,8 @@ namespace Cycloside.Plugins.BuiltIn.Controls
             
             if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
             {
-                // Shift+Tab: Decrease indentation
+                // Shift+Tab: Decrease indentation (guard: caret at 0 would pass -1 to LastIndexOf)
+                if (caretIndex <= 0) return;
                 var lineStart = text.LastIndexOf('\n', caretIndex - 1) + 1;
                 var lineEnd = text.IndexOf('\n', caretIndex);
                 if (lineEnd == -1) lineEnd = text.Length;

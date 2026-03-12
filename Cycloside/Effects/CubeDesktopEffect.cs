@@ -40,10 +40,10 @@ public class CubeDesktopEffect : IWindowEffect
             
             // Position window on current cube face
             PositionWindowOnCubeFace(window, _currentFace);
-        }
 
-        window.KeyDown += OnKeyDown;
-        window.PointerPressed += OnPointerPressed;
+            window.KeyDown += OnKeyDown;
+            window.PointerPressed += OnPointerPressed;
+        }
     }
 
     public void Detach(Window window)

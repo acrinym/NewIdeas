@@ -30,14 +30,23 @@ public static class AudioService
             using var readerFactory = CreateReader(path);
             var output = new WaveOutEvent();
             var reader = readerFactory.DetachReader();
-            output.Init(reader);
-            output.Play();
-            output.PlaybackStopped += (_, _) =>
+            try
+            {
+                output.Init(reader);
+                output.Play();
+                output.PlaybackStopped += (_, _) =>
+                {
+                    output.Dispose();
+                    reader.Dispose();
+                    System.Threading.Interlocked.Decrement(ref _active);
+                };
+            }
+            catch
             {
                 output.Dispose();
                 reader.Dispose();
-                System.Threading.Interlocked.Decrement(ref _active);
-            };
+                throw;
+            }
         }
         catch (Exception ex)
         {
