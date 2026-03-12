@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Cycloside;
+using Cycloside.Plugins;
 
 namespace Cycloside.Services
 {
@@ -153,14 +154,8 @@ namespace Cycloside.Services
         /// </summary>
         public static async Task SetPluginEnabledAsync(string pluginName, bool enabled)
         {
-            CurrentConfig.Plugins ??= new Dictionary<string, PluginConfig>();
-
-            var plugin = CurrentConfig.Plugins.GetValueOrDefault(pluginName, new PluginConfig
-            {
-                Name = pluginName,
-                Enabled = true,
-                LoadOnStartup = true
-            });
+            var metadata = PluginMetadataResolver.ResolveById(pluginName);
+            var plugin = GetPluginConfigInternal(pluginName, metadata.EnabledByDefault);
 
             if (plugin.Enabled != enabled)
             {
@@ -180,14 +175,8 @@ namespace Cycloside.Services
         /// </summary>
         public static async Task SetPluginStartupPreferenceAsync(string pluginName, bool loadOnStartup)
         {
-            CurrentConfig.Plugins ??= new Dictionary<string, PluginConfig>();
-
-            var plugin = CurrentConfig.Plugins.GetValueOrDefault(pluginName, new PluginConfig
-            {
-                Name = pluginName,
-                Enabled = true,
-                LoadOnStartup = true
-            });
+            var metadata = PluginMetadataResolver.ResolveById(pluginName);
+            var plugin = GetPluginConfigInternal(pluginName, metadata.EnabledByDefault);
 
             if (plugin.LoadOnStartup != loadOnStartup)
             {
@@ -231,13 +220,13 @@ namespace Cycloside.Services
         /// </summary>
         public static PluginConfig GetPluginConfig(string pluginName)
         {
-            return CurrentConfig.Plugins?.GetValueOrDefault(pluginName, new PluginConfig
-            {
-                Name = pluginName,
-                Enabled = true,
-                LoadOnStartup = true,
-                Position = new PluginPosition()
-            }) ?? new PluginConfig();
+            var metadata = PluginMetadataResolver.ResolveById(pluginName);
+            return GetPluginConfigInternal(pluginName, metadata.EnabledByDefault);
+        }
+
+        public static PluginConfig GetPluginConfig(string pluginName, bool enabledByDefault, params string[] aliases)
+        {
+            return GetPluginConfigInternal(pluginName, enabledByDefault, aliases);
         }
 
         /// <summary>
@@ -245,7 +234,14 @@ namespace Cycloside.Services
         /// </summary>
         public static bool ShouldLoadPluginOnStartup(string pluginName)
         {
-            var config = GetPluginConfig(pluginName);
+            var metadata = PluginMetadataResolver.ResolveById(pluginName);
+            var config = GetPluginConfigInternal(pluginName, metadata.EnabledByDefault);
+            return config.Enabled && config.LoadOnStartup;
+        }
+
+        public static bool ShouldLoadPluginOnStartup(string pluginName, bool enabledByDefault, params string[] aliases)
+        {
+            var config = GetPluginConfigInternal(pluginName, enabledByDefault, aliases);
             return config.Enabled && config.LoadOnStartup;
         }
 
@@ -266,6 +262,75 @@ namespace Cycloside.Services
         private static void OnConfigurationChanged(string changeType)
         {
             ConfigurationChanged?.Invoke(null, new ConfigurationChangedEventArgs(changeType, DateTime.Now));
+        }
+
+        private static PluginConfig GetPluginConfigInternal(string pluginName, bool enabledByDefault, params string[] aliases)
+        {
+            CurrentConfig.Plugins ??= new Dictionary<string, PluginConfig>();
+
+            if (TryGetExistingPluginConfig(pluginName, aliases, out var config, out var matchedKey))
+            {
+                if (!string.Equals(matchedKey, pluginName, StringComparison.Ordinal))
+                {
+                    config.Name = pluginName;
+                    CurrentConfig.Plugins[pluginName] = config;
+                }
+
+                return config;
+            }
+
+            return new PluginConfig
+            {
+                Name = pluginName,
+                Enabled = enabledByDefault,
+                LoadOnStartup = enabledByDefault,
+                Position = new PluginPosition()
+            };
+        }
+
+        private static bool TryGetExistingPluginConfig(string pluginName, string[] aliases, out PluginConfig config, out string matchedKey)
+        {
+            matchedKey = string.Empty;
+            config = new PluginConfig();
+
+            if (CurrentConfig.Plugins == null)
+            {
+                return false;
+            }
+
+            foreach (var candidate in EnumeratePluginKeys(pluginName, aliases))
+            {
+                if (!CurrentConfig.Plugins.TryGetValue(candidate, out var existing))
+                {
+                    continue;
+                }
+
+                config = existing;
+                matchedKey = candidate;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<string> EnumeratePluginKeys(string pluginName, string[] aliases)
+        {
+            yield return pluginName;
+
+            foreach (var alias in aliases)
+            {
+                if (string.IsNullOrWhiteSpace(alias))
+                {
+                    continue;
+                }
+
+                if (string.Equals(alias, pluginName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                yield return alias;
+            }
         }
     }
 

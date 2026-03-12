@@ -708,12 +708,13 @@ public partial class App : Application
 
             // Check if plugin should be loaded based on configuration
             bool shouldLoad = false;
+            var metadata = PluginMetadataResolver.Resolve(plugin);
 
             // First check if selective loading is enabled and plugin is configured
             if (_pluginsLoadedSelectively)
             {
-                shouldLoad = ConfigurationManager.ShouldLoadPluginOnStartup(plugin.Name);
-                Logger.Log($"🔌 Plugin {plugin.Name}: {(shouldLoad ? "Enabled" : "Disabled")} by configuration");
+                shouldLoad = ConfigurationManager.ShouldLoadPluginOnStartup(metadata.PluginId, metadata.EnabledByDefault, plugin.Name);
+                Logger.Log($"🔌 Plugin {metadata.PluginId} [{PluginMetadataResolver.GetCategoryDisplayName(metadata.Category)}]: {(shouldLoad ? "Enabled" : "Disabled")} by configuration");
             }
             else
             {
@@ -877,18 +878,35 @@ public partial class App : Application
     private NativeMenu BuildTrayMenu(PluginManager manager, VolatilePluginManager volatileManager, AppSettings settings)
     {
         var pluginsMenu = new NativeMenuItem("Plugins") { Menu = new NativeMenu() };
-        var newPlugins = manager.Plugins.Where(p => manager.GetStatus(p) != PluginChangeStatus.None).ToList();
-        var otherPlugins = manager.Plugins.Except(newPlugins).OrderBy(p => p.Name).ToList();
+        var newPlugins = manager.Plugins.Where(p => manager.GetStatus(p) != PluginChangeStatus.None).OrderBy(p => p.Name, StringComparer.Ordinal).ToList();
+        var otherPlugins = manager.Plugins.Except(newPlugins).ToList();
 
         if (newPlugins.Any())
         {
             var newMenu = new NativeMenuItem("New/Updated") { Menu = new NativeMenu() };
             foreach (var p in newPlugins) newMenu.Menu!.Items.Add(BuildPluginMenuItem(p, manager, settings));
             pluginsMenu.Menu!.Items.Add(newMenu);
-            pluginsMenu.Menu!.Items.Add(new NativeMenuItemSeparator());
         }
 
-        foreach (var p in otherPlugins) pluginsMenu.Menu!.Items.Add(BuildPluginMenuItem(p, manager, settings));
+        foreach (var group in PluginMetadataResolver.GroupByCategory(otherPlugins))
+        {
+            if (pluginsMenu.Menu!.Items.Count > 0)
+            {
+                pluginsMenu.Menu.Items.Add(new NativeMenuItemSeparator());
+            }
+
+            var categoryMenu = new NativeMenuItem(PluginMetadataResolver.GetCategoryDisplayName(group.Key))
+            {
+                Menu = new NativeMenu()
+            };
+
+            foreach (var plugin in group.OrderBy(p => p.Name, StringComparer.Ordinal))
+            {
+                categoryMenu.Menu!.Items.Add(BuildPluginMenuItem(plugin, manager, settings));
+            }
+
+            pluginsMenu.Menu.Items.Add(categoryMenu);
+        }
 
         var volatileMenu = new NativeMenuItem("Volatile") { Menu = new NativeMenu() };
         volatileMenu.Menu!.Items.Add(BuildVolatileScriptMenuItem("Run Lua Script...", new FilePickerFileType("Lua Script") { Patterns = new[] { "*.lua" } }, volatileManager.RunLua));

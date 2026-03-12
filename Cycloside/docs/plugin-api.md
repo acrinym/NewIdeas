@@ -31,6 +31,16 @@ public interface IPlugin
 
 ## Optional interfaces
 
+### `IPluginMetadata`
+
+`Cycloside/SDK/IPluginMetadata.cs`
+
+- `PluginId` lets a plugin override the stable config key used by first-run and other persisted preferences
+- if `PluginId` is not provided, Cycloside falls back to the implementation type name such as `JezzballPlugin`
+- `Category` groups plugins in the tray menu and plugin manager
+- `EnabledByDefault` controls first-run default loading
+- `IsCore` marks shell-defining plugins for future onboarding and profile flows
+
 ### `IPluginExtended`
 
 `Cycloside/SDK/IPluginExtended.cs`

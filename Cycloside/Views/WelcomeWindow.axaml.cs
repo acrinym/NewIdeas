@@ -59,24 +59,29 @@ namespace Cycloside.Views
 
             var availablePlugins = new[]
             {
-                new PluginInfo { Name = "WidgetHostPlugin", DisplayName = "Widget Host", Description = "Dockable desktop gadgets and mini tools", IsEnabled = true, LoadOnStartup = false },
-                new PluginInfo { Name = "NetworkToolsPlugin", DisplayName = "Netwatch", Description = "Keep an eye on network activity from a desktop utility view", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "WallpaperPlugin", DisplayName = "Wallpaper Studio", Description = "Dynamic wallpaper, backdrop, and desktop mood control", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "ManagedVisHostPlugin", DisplayName = "Visual Playground", Description = "Managed audio visualizers, starfields, matrix rain, and more", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "MP3PlayerPlugin", DisplayName = "MP3 Player", Description = "Music playback with widget and visualization hooks", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "JezzballPlugin", DisplayName = "Jezzball", Description = "Retro arcade energy built into the desktop", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "GweledPlugin", DisplayName = "Gweled", Description = "Small jewel-swap puzzle sessions for the retro shell", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "TileWorldPlugin", DisplayName = "Tile World", Description = "Chip's Challenge style puzzle boards for the retro shell", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "QBasicRetroIDEPlugin", DisplayName = "QBasic Retro IDE", Description = "QB-style coding corner for old-school experiments", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "PowerShellTerminalPlugin", DisplayName = "PowerShell Terminal", Description = "Automation shell and system tooling", IsEnabled = true, LoadOnStartup = false },
-                new PluginInfo { Name = "HackerTerminalPlugin", DisplayName = "Classic Command Terminal", Description = "Quick old-school command shell workflow", IsEnabled = true, LoadOnStartup = false },
-                new PluginInfo { Name = "TextEditorPlugin", DisplayName = "Text Editor", Description = "Scratchpad for notes, scripts, and snippets", IsEnabled = false, LoadOnStartup = false },
-                new PluginInfo { Name = "ClipboardManagerPlugin", DisplayName = "Clipboard Manager", Description = "Clipboard history and quick snippet reuse", IsEnabled = false, LoadOnStartup = false }
+                new PluginInfo { Name = "WidgetHostPlugin", DisplayName = "Widget Host", Description = "Dockable desktop gadgets and mini tools" },
+                new PluginInfo { Name = "NetworkToolsPlugin", DisplayName = "Netwatch", Description = "Keep an eye on network activity from a desktop utility view" },
+                new PluginInfo { Name = "WallpaperPlugin", DisplayName = "Wallpaper Studio", Description = "Dynamic wallpaper, backdrop, and desktop mood control" },
+                new PluginInfo { Name = "ManagedVisHostPlugin", DisplayName = "Visual Playground", Description = "Managed audio visualizers, starfields, matrix rain, and more" },
+                new PluginInfo { Name = "MP3PlayerPlugin", DisplayName = "MP3 Player", Description = "Music playback with widget and visualization hooks" },
+                new PluginInfo { Name = "JezzballPlugin", DisplayName = "Jezzball", Description = "Retro arcade energy built into the desktop" },
+                new PluginInfo { Name = "GweledPlugin", DisplayName = "Gweled", Description = "Small jewel-swap puzzle sessions for the retro shell" },
+                new PluginInfo { Name = "TileWorldPlugin", DisplayName = "Tile World", Description = "Chip's Challenge style puzzle boards for the retro shell" },
+                new PluginInfo { Name = "QBasicRetroIDEPlugin", DisplayName = "QBasic Retro IDE", Description = "QB-style coding corner for old-school experiments" },
+                new PluginInfo { Name = "PowerShellTerminalPlugin", DisplayName = "PowerShell Terminal", Description = "Automation shell and system tooling" },
+                new PluginInfo { Name = "HackerTerminalPlugin", DisplayName = "Classic Command Terminal", Description = "Quick old-school command shell workflow" },
+                new PluginInfo { Name = "TextEditorPlugin", DisplayName = "Text Editor", Description = "Scratchpad for notes, scripts, and snippets" },
+                new PluginInfo { Name = "ClipboardManagerPlugin", DisplayName = "Clipboard Manager", Description = "Clipboard history and quick snippet reuse" }
             };
 
             foreach (var plugin in availablePlugins)
             {
-                var config = ConfigurationManager.GetPluginConfig(plugin.Name);
+                var metadata = PluginMetadataResolver.ResolveById(plugin.Name);
+                plugin.Category = metadata.Category;
+                plugin.IsEnabled = metadata.EnabledByDefault;
+                plugin.LoadOnStartup = metadata.EnabledByDefault;
+
+                var config = ConfigurationManager.GetPluginConfig(plugin.Name, metadata.EnabledByDefault, plugin.DisplayName);
                 plugin.IsEnabled = config.Enabled;
                 plugin.LoadOnStartup = config.LoadOnStartup;
             }
@@ -85,8 +90,18 @@ namespace Cycloside.Views
             if (PluginListControl != null)
             {
                 PluginListControl.Items.Clear();
-                foreach (var plugin in availablePlugins)
+                PluginCategory? currentCategory = null;
+
+                foreach (var plugin in availablePlugins
+                    .OrderBy(item => PluginMetadataResolver.GetCategorySortOrder(item.Category))
+                    .ThenBy(item => item.DisplayName, StringComparer.Ordinal))
                 {
+                    if (currentCategory != plugin.Category)
+                    {
+                        PluginListControl.Items.Add(CreateCategoryHeader(plugin.Category));
+                        currentCategory = plugin.Category;
+                    }
+
                     var item = CreatePluginItem(plugin);
                     PluginListControl.Items.Add(item);
                 }
@@ -120,13 +135,27 @@ namespace Cycloside.Views
 
             var mainPanel = new StackPanel();
 
-            // Plugin name and description
+            // Plugin name and category
+            var headerPanel = new DockPanel();
+
             var nameText = new TextBlock
             {
                 Text = string.IsNullOrWhiteSpace(plugin.DisplayName) ? plugin.Name : plugin.DisplayName,
                 FontWeight = FontWeight.SemiBold,
                 FontSize = 14
             };
+
+            var categoryText = new TextBlock
+            {
+                Text = PluginMetadataResolver.GetCategoryDisplayName(plugin.Category),
+                FontSize = 11,
+                Foreground = Brushes.DarkSlateBlue,
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+
+            DockPanel.SetDock(categoryText, Dock.Right);
+            headerPanel.Children.Add(categoryText);
+            headerPanel.Children.Add(nameText);
 
             var descText = new TextBlock
             {
@@ -136,7 +165,7 @@ namespace Cycloside.Views
                 TextWrapping = TextWrapping.Wrap
             };
 
-            mainPanel.Children.Add(nameText);
+            mainPanel.Children.Add(headerPanel);
             mainPanel.Children.Add(descText);
 
             // Controls panel
@@ -172,6 +201,23 @@ namespace Cycloside.Views
 
             container.Child = mainPanel;
             return container;
+        }
+
+        private Control CreateCategoryHeader(PluginCategory category)
+        {
+            return new Border
+            {
+                Background = Brushes.Gainsboro,
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(8, 4),
+                Margin = new Thickness(0, 8, 0, 4),
+                Child = new TextBlock
+                {
+                    Text = PluginMetadataResolver.GetCategoryDisplayName(category),
+                    FontWeight = FontWeight.Bold,
+                    FontSize = 13
+                }
+            };
         }
 
         private async void OnPluginEnabledChanged(object? sender, RoutedEventArgs e)
@@ -274,6 +320,7 @@ namespace Cycloside.Views
         public string Name { get; set; } = "";
         public string DisplayName { get; set; } = "";
         public string Description { get; set; } = "";
+        public PluginCategory Category { get; set; } = PluginCategory.Experimental;
         public bool IsEnabled { get; set; } = true;
         public bool LoadOnStartup { get; set; } = false;
     }

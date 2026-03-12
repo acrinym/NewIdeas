@@ -73,9 +73,21 @@ public partial class PluginSettingsWindow : Window
             panel.Children.Add(new Separator { Margin = new Thickness(0, 4, 0, 4) });
         }
 
-        foreach (var plugin in _manager.Plugins.Except(newPlugins))
+        foreach (var group in PluginMetadataResolver.GroupByCategory(_manager.Plugins.Except(newPlugins)))
         {
-            AddPluginItem(plugin);
+            panel.Children.Add(new TextBlock
+            {
+                Text = PluginMetadataResolver.GetCategoryDisplayName(group.Key),
+                FontWeight = FontWeight.Bold,
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+
+            foreach (var plugin in group.OrderBy(plugin => plugin.Name, StringComparer.Ordinal))
+            {
+                AddPluginItem(plugin);
+            }
+
+            panel.Children.Add(new Separator { Margin = new Thickness(0, 4, 0, 4) });
         }
     }
 
