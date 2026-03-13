@@ -5,25 +5,6 @@ When making changes, follow these binding rules:
 
 ---
 
-## Plan Mode Workflow
-
-**When Plan mode is activated**, invoke the **plan-mode-workflow** skill:
-
-- **Location:** `.cursor/skills/plan-mode-workflow/SKILL.md`
-- **Flow:** Brainstorm → scope questions → doc pre-catalog → pre-conditions → CreatePlan → execute → post-conditions
-- **Pre-conditions:** Git branch/PR/merge, beads check (verify no beads completed during pre-phase)
-- **Post-conditions:** Vulnerability scan, doc updates per pre-catalog
-
-**Persistent context:** See [agentmemory.md](agentmemory.md) for workflow conventions, project-specific context, and doc locations. Do NOT duplicate beads content there.
-
-**Skill invocation:** Read `.cursor/skills/plan-mode-workflow/SKILL.md` at the start of any plan-mode session and follow it.
-
-**Security scan timing:** Do not scan for vulnerabilities until work finishes each session — avoids rescans during active development. This does NOT mean rescans never occur: rescanning completed work catches "I didn't see that the first time" and "I missed that last time because of out-of-order workflow."
-
-**Branch/PR naming:** All commits must be on a branch or PR with a name suited to what the work equates to high-level when completed for a session.
-
----
-
 ## 🔒 Absolute Directives
 - **NO PLACEHOLDERS EVER.**  
   - Do not generate stubs, dummy methods, TODO comments, empty XAML tags, or incomplete scaffolding. 
@@ -165,6 +146,19 @@ bd automatically syncs via Dolt:
 - ❌ Do NOT duplicate tracking systems
 
 For more details, see README.md and docs/QUICKSTART.md.
+
+## Phase Workflow
+
+When executing a development phase (Phase 2, 3, etc.), follow the repeatable sequence in [docs/plans/PHASE-WORKFLOW.md](docs/plans/PHASE-WORKFLOW.md):
+
+1. **Work** — Implement phase tasks
+2. **Docs** — Document what was built (use PHASE-N-DOC-PRECATALOG)
+3. **Vuln test** — Vulnerability testing for changed areas
+4. **Code smell** — LLM/human pattern review (duplication, dead code, magic numbers, naming, etc.). Catalog as Where|What|Why, then fix. See PHASE-WORKFLOW.md. (Roslynator = separate linter.)
+5. **Recheck** — Verify all gates pass
+6. **Git** — New branch + PR for the phase
+
+Phase doc catalog: `docs/plans/` (PHASE1-DOC-PRECATALOG, PHASE2-DOC-PRECATALOG, PHASE3-DOC-PRECATALOG).
 
 ## Landing the Plane (Session Completion)
 

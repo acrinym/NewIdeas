@@ -6,14 +6,6 @@
         <Description>A new object is created but never used; or a method that creates and returns a new string is called and the new string is never used; or a COM or P/Invoke method returns an HRESULT or error code that is never used.</Description>
         <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1806</HelpLink>
       </Diagnostic>
-      <Diagnostic Id="CA1822" Title="Mark members as static" Count="1">
-        <Description>Members that do not access instance data or call instance methods can be marked as static. After you mark the methods as static, the compiler will emit nonvirtual call sites to these members. This can give you a measurable performance gain for performance-sensitive code.</Description>
-        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1822</HelpLink>
-      </Diagnostic>
-      <Diagnostic Id="CA1835" Title="Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'" Count="1">
-        <Description>'Stream' has a 'ReadAsync' overload that takes a 'Memory&lt;Byte&gt;' as the first argument, and a 'WriteAsync' overload that takes a 'ReadOnlyMemory&lt;Byte&gt;' as the first argument. Prefer calling the memory based overloads, which are more efficient.</Description>
-        <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1835</HelpLink>
-      </Diagnostic>
       <Diagnostic Id="CA1861" Title="Avoid constant arrays as arguments" Count="1">
         <Description>Constant arrays passed as arguments are not reused when called repeatedly, which implies a new array is created each time. Consider extracting them to 'static readonly' fields to improve performance if the passed array is not mutated within the called method.</Description>
         <HelpLink>https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1861</HelpLink>
@@ -73,12 +65,6 @@
             <Severity>Info</Severity>
             <Message>Use char overload</Message>
             <FilePath>D:\GitHub\NewIdeas\Rules\RuleEngine.cs</FilePath>
-            <Location Line="60" Character="26" />
-          </Diagnostic>
-          <Diagnostic Id="CA1866">
-            <Severity>Info</Severity>
-            <Message>Use char overload</Message>
-            <FilePath>D:\GitHub\NewIdeas\Rules\RuleEngine.cs</FilePath>
             <Location Line="61" Character="26" />
           </Diagnostic>
           <Diagnostic Id="CA1866">
@@ -91,7 +77,13 @@
             <Severity>Info</Severity>
             <Message>Use char overload</Message>
             <FilePath>D:\GitHub\NewIdeas\Rules\RuleEngine.cs</FilePath>
-            <Location Line="96" Character="25" />
+            <Location Line="63" Character="26" />
+          </Diagnostic>
+          <Diagnostic Id="CA1866">
+            <Severity>Info</Severity>
+            <Message>Use char overload</Message>
+            <FilePath>D:\GitHub\NewIdeas\Rules\RuleEngine.cs</FilePath>
+            <Location Line="97" Character="25" />
           </Diagnostic>
         </Diagnostics>
       </Project>
@@ -130,18 +122,6 @@
             <Message>Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time</Message>
             <FilePath>D:\GitHub\NewIdeas\Utils\ColorPicker.cs</FilePath>
             <Location Line="12" Character="49" />
-          </Diagnostic>
-          <Diagnostic Id="CA1822">
-            <Severity>Info</Severity>
-            <Message>Mark members as static</Message>
-            <FilePath>D:\GitHub\NewIdeas\Utils\PixelRuler.cs</FilePath>
-            <Location Line="8" Character="17" />
-          </Diagnostic>
-          <Diagnostic Id="CA1835">
-            <Severity>Info</Severity>
-            <Message>Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'</Message>
-            <FilePath>D:\GitHub\NewIdeas\Utils\QuickShareServer.cs</FilePath>
-            <Location Line="151" Character="15" />
           </Diagnostic>
         </Diagnostics>
       </Project>

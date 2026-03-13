@@ -20,6 +20,9 @@ namespace Cycloside.Services
         private static readonly string _repositoryUrl = "https://api.github.com/repos/cycloside/plugins/contents/plugins";
         private static readonly string _localPluginsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Cycloside", "Plugins", "Community");
 
+        private static readonly JsonSerializerOptions _jsonReadOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        private static readonly JsonSerializerOptions _jsonWriteIndentedOptions = new JsonSerializerOptions { WriteIndented = true };
+
         public static event EventHandler<PluginDiscoveryEventArgs>? PluginDiscovered;
         public static event EventHandler<PluginInstallEventArgs>? PluginInstalled;
         public static event EventHandler<PluginInstallEventArgs>? PluginInstallFailed;
@@ -98,10 +101,7 @@ namespace Cycloside.Services
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                var repositoryContents = JsonSerializer.Deserialize<List<RepositoryItem>>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var repositoryContents = JsonSerializer.Deserialize<List<RepositoryItem>>(json, _jsonReadOptions);
 
                 if (repositoryContents != null)
                 {
@@ -142,10 +142,7 @@ namespace Cycloside.Services
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                var manifest = JsonSerializer.Deserialize<PluginManifest>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var manifest = JsonSerializer.Deserialize<PluginManifest>(json, _jsonReadOptions);
 
                 return manifest;
             }
@@ -179,10 +176,7 @@ namespace Cycloside.Services
                 {
                     // Save manifest locally
                     var manifestPath = Path.Combine(pluginPath, "manifest.json");
-                    var manifestJson = JsonSerializer.Serialize(plugin, new JsonSerializerOptions
-                    {
-                        WriteIndented = true
-                    });
+                    var manifestJson = JsonSerializer.Serialize(plugin, _jsonWriteIndentedOptions);
                     await File.WriteAllTextAsync(manifestPath, manifestJson);
 
                     Logger.Log($"✅ Plugin installed successfully: {plugin.Name}");
@@ -206,8 +200,9 @@ namespace Cycloside.Services
 
         /// <summary>
         /// Compute SHA-256 hash of content and return lowercase hex string (CYC-2026-030).
+        /// Public for use by checksum generation tool.
         /// </summary>
-        private static string ComputeSha256Hex(byte[] content)
+        public static string ComputeSha256Hex(byte[] content)
         {
             var hash = SHA256.HashData(content);
             var sb = new StringBuilder(hash.Length * 2);
@@ -237,20 +232,18 @@ namespace Cycloside.Services
                     var content = await response.Content.ReadAsByteArrayAsync();
                     var filePath = Path.Combine(pluginPath, file.Path);
 
-                    // CYC-2026-030: Validate integrity before writing to disk
-                    if (!string.IsNullOrWhiteSpace(file.Checksum))
+                    // CYC-2026-030: Require and validate checksum for all downloadable files
+                    if (string.IsNullOrWhiteSpace(file.Checksum))
                     {
-                        var computed = ComputeSha256Hex(content);
-                        var expected = file.Checksum.Trim().ToLowerInvariant();
-                        if (string.Compare(computed, expected, StringComparison.OrdinalIgnoreCase) != 0)
-                        {
-                            Logger.Log($"❌ Integrity check failed for {file.Path}: checksum mismatch (expected {expected}, got {computed})");
-                            return false;
-                        }
+                        Logger.Log($"❌ Manifest must include SHA-256 checksum for each file. Missing checksum for: {file.Path}");
+                        return false;
                     }
-                    else
+                    var computed = ComputeSha256Hex(content);
+                    var expected = file.Checksum.Trim().ToLowerInvariant();
+                    if (string.Compare(computed, expected, StringComparison.OrdinalIgnoreCase) != 0)
                     {
-                        Logger.Log($"⚠️ No checksum in manifest for {file.Path}; install allowed but integrity not verified");
+                        Logger.Log($"❌ Integrity check failed for {file.Path}: checksum mismatch (expected {expected}, got {computed})");
+                        return false;
                     }
 
                     // Ensure directory exists
@@ -297,10 +290,7 @@ namespace Cycloside.Services
                         try
                         {
                             var json = File.ReadAllText(manifestPath);
-                            var manifest = JsonSerializer.Deserialize<PluginManifest>(json, new JsonSerializerOptions
-                            {
-                                PropertyNameCaseInsensitive = true
-                            });
+                            var manifest = JsonSerializer.Deserialize<PluginManifest>(json, _jsonReadOptions);
 
                             if (manifest != null)
                             {

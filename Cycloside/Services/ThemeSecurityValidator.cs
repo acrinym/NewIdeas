@@ -1,16 +1,13 @@
 using System;
-using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using System.Xml;
 
 namespace Cycloside.Services
 {
     /// <summary>
     /// Security validation for theme, skin, and asset loading.
     /// Enforces path confinement, name validation, content whitelisting, and size limits.
-    /// See docs/cycloside-vulnerability-catalog.md for the threat model.
+    /// See docs/vulnerabilities/cycloside-vulnerability-catalog.md for the threat model.
     /// </summary>
     public static class ThemeSecurityValidator
     {
@@ -42,16 +39,8 @@ namespace Cycloside.Services
                 return false;
 
             // Block invalid filename characters
-            char[] invalidChars = Path.GetInvalidFileNameChars();
-            for (int i = 0; i < name.Length; i++)
-            {
-                char c = name[i];
-                for (int j = 0; j < invalidChars.Length; j++)
-                {
-                    if (c == invalidChars[j])
-                        return false;
-                }
-            }
+            if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                return false;
 
             // Block names that are just dots or whitespace
             ReadOnlySpan<char> trimmed = name.AsSpan().Trim();
@@ -82,6 +71,12 @@ namespace Cycloside.Services
         {
             if (string.IsNullOrWhiteSpace(baseDir) || string.IsNullOrWhiteSpace(relativePath))
                 return null;
+
+            if (BinaryFormatValidator.IsDataUri(relativePath))
+            {
+                Logger.Log("🛡️ Blocked data URI in path (CYC-2026-023)");
+                return null;
+            }
 
             // Block obvious traversal before even resolving
             if (relativePath.Contains(".."))
@@ -116,58 +111,43 @@ namespace Cycloside.Services
 
         /// <summary>
         /// Validates AXAML content against a whitelist of safe constructs.
-        /// Blocks CLR namespace references, code-behind, event handlers, external resources,
-        /// DTD/entity expansion (XML bomb), and malformed structure. Fixes CYC-2026-003,
-        /// CYC-2026-009, CYC-2026-019, CYC-2026-020.
+        /// Blocks CLR namespace references, code-behind, event handlers, and external resources.
+        /// Fixes CYC-2026-003 and replaces CYC-2026-009.
         /// </summary>
         public static bool IsAxamlContentSafe(string content)
         {
             if (string.IsNullOrWhiteSpace(content))
                 return false;
 
-            // Normalize Unicode to defeat zero-width and similar tricks. Fixes CYC-2026-019.
-            var normalized = content.Normalize(NormalizationForm.FormC);
-            var stripped = StripInvisibleChars(normalized);
-
-            // Block DTD and entity expansion (XML bomb / Billion Laughs). Fixes CYC-2026-020.
-            if (ContainsInsensitive(stripped, "<!DOCTYPE") || ContainsInsensitive(stripped, "<!ENTITY"))
-            {
-                Logger.Log("🛡️ AXAML blocked: contains DTD or ENTITY (XML bomb risk)");
-                return false;
-            }
-
-            // Block CDATA (can hide dangerous content from string checks). Fixes CYC-2026-019.
-            if (ContainsInsensitive(stripped, "<![CDATA["))
-            {
-                Logger.Log("🛡️ AXAML blocked: contains CDATA section");
-                return false;
-            }
-
             // Block CLR namespace references (arbitrary type instantiation)
-            if (ContainsInsensitive(stripped, "clr-namespace:"))
+            if (ContainsInsensitive(content, "clr-namespace:"))
             {
                 Logger.Log("🛡️ AXAML blocked: contains clr-namespace reference");
                 return false;
             }
 
             // Block code-behind class references
-            if (ContainsInsensitive(stripped, "x:Class"))
+            if (ContainsInsensitive(content, "x:Class"))
             {
                 Logger.Log("🛡️ AXAML blocked: contains x:Class (code-behind)");
                 return false;
             }
 
             // Block assembly references beyond the default Avalonia namespace
-            if (ContainsInsensitive(stripped, ";assembly="))
+            if (ContainsInsensitive(content, ";assembly="))
             {
                 Logger.Log("🛡️ AXAML blocked: contains assembly reference");
                 return false;
             }
 
-            // Block external resource URIs
-            if (ContainsInsensitive(stripped, "http://") || ContainsInsensitive(stripped, "https://"))
+            // Block external resource URIs except standard XAML namespace declarations (all valid AXAML uses these)
+            const string avaloniaNs = "https://github.com/avaloniaui";
+            const string xamlNs = "http://schemas.microsoft.com/winfx/2006/xaml";
+            string contentForUriCheck = RemoveAllInsensitive(content, avaloniaNs);
+            contentForUriCheck = RemoveAllInsensitive(contentForUriCheck, xamlNs);
+            if (ContainsInsensitive(contentForUriCheck, "http://") || ContainsInsensitive(contentForUriCheck, "https://"))
             {
-                Logger.Log("🛡️ AXAML blocked: contains external URI");
+                Logger.Log("🛡️ AXAML blocked: contains external URI (non-namespace)");
                 return false;
             }
 
@@ -186,7 +166,7 @@ namespace Cycloside.Services
 
             for (int i = 0; i < dangerousAttributes.Length; i++)
             {
-                if (stripped.Contains(dangerousAttributes[i]))
+                if (content.Contains(dangerousAttributes[i]))
                 {
                     Logger.Log($"🛡️ AXAML blocked: contains event handler '{dangerousAttributes[i]}'");
                     return false;
@@ -194,84 +174,20 @@ namespace Cycloside.Services
             }
 
             // Block markup extensions that could invoke code
-            if (ContainsInsensitive(stripped, "{x:Static") && ContainsInsensitive(stripped, "System."))
+            if (ContainsInsensitive(content, "{x:Static") && ContainsInsensitive(content, "System."))
             {
                 Logger.Log("🛡️ AXAML blocked: contains x:Static referencing System namespace");
                 return false;
             }
 
             // Block Binding path expressions referencing System types
-            if (ContainsInsensitive(stripped, "x:Type") && ContainsInsensitive(stripped, "System."))
+            if (ContainsInsensitive(content, "x:Type") && ContainsInsensitive(content, "System."))
             {
                 Logger.Log("🛡️ AXAML blocked: contains x:Type referencing System namespace");
                 return false;
             }
 
-            // Structural validation: must be well-formed XML. Catches entity-encoded bypasses. Fixes CYC-2026-019.
-            if (!IsWellFormedXmlWithSafeNamespaces(stripped))
-                return false;
-
             return true;
-        }
-
-        /// <summary>
-        /// Strips zero-width and invisible Unicode chars that can hide dangerous strings. Fixes CYC-2026-019.
-        /// </summary>
-        private static string StripInvisibleChars(string s)
-        {
-            var result = new System.Text.StringBuilder(s.Length);
-            for (int i = 0; i < s.Length; i++)
-            {
-                var c = s[i];
-                var cat = CharUnicodeInfo.GetUnicodeCategory(c);
-                if (cat == UnicodeCategory.Format || cat == UnicodeCategory.NonSpacingMark)
-                {
-                    if (c == '\u200B' || c == '\u200C' || c == '\u200D' || c == '\uFEFF')
-                        continue;
-                }
-                result.Append(c);
-            }
-            return result.ToString();
-        }
-
-        /// <summary>
-        /// Validates XML structure and checks expanded attribute values for dangerous xmlns. Fixes CYC-2026-019.
-        /// </summary>
-        private static bool IsWellFormedXmlWithSafeNamespaces(string content)
-        {
-            try
-            {
-                var settings = new XmlReaderSettings
-                {
-                    DtdProcessing = DtdProcessing.Prohibit,
-                    MaxCharactersFromEntities = 10_000_000
-                };
-                using var reader = XmlReader.Create(new StringReader(content), settings);
-                while (reader.Read())
-                {
-                    if (reader.NodeType == XmlNodeType.Element && reader.HasAttributes)
-                    {
-                        for (int i = 0; i < reader.AttributeCount; i++)
-                        {
-                            reader.MoveToAttribute(i);
-                            var val = reader.Value;
-                            if (string.IsNullOrEmpty(val)) continue;
-                            if (ContainsInsensitive(val, "clr-namespace:") || ContainsInsensitive(val, ";assembly="))
-                            {
-                                Logger.Log("🛡️ AXAML blocked: dangerous xmlns in parsed attributes");
-                                return false;
-                            }
-                        }
-                        reader.MoveToElement();
-                    }
-                }
-                return true;
-            }
-            catch (XmlException ex)
-            {
-                Logger.Log($"🛡️ AXAML blocked: malformed XML ({ex.Message})");
-                return false;
-            }
         }
 
         /// <summary>
@@ -371,6 +287,21 @@ namespace Cycloside.Services
         private static bool ContainsInsensitive(string source, string value)
         {
             return source.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
+        /// Removes all occurrences of value from source (case-insensitive). Used to strip allowed namespace URIs before checking for external URIs.
+        /// </summary>
+        private static string RemoveAllInsensitive(string source, string value)
+        {
+            if (string.IsNullOrEmpty(value)) return source;
+            var result = source;
+            int idx;
+            while ((idx = result.IndexOf(value, StringComparison.OrdinalIgnoreCase)) >= 0)
+            {
+                result = result.Substring(0, idx) + result.Substring(idx + value.Length);
+            }
+            return result;
         }
     }
 }

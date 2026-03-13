@@ -89,7 +89,7 @@ namespace Cycloside.Services
                 // Get file permissions
                 result.Permissions = GetFilePermissions(filePath);
 
-                // Get file hash
+                // Get file hash (MD5/SHA1: forensics/display only; not used for security validation — see docs/security-hash-policy.md)
                 result.Md5Hash = await CalculateFileHashAsync(filePath, "MD5");
                 result.Sha1Hash = await CalculateFileHashAsync(filePath, "SHA1");
                 result.Sha256Hash = await CalculateFileHashAsync(filePath, "SHA256");

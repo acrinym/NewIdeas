@@ -618,6 +618,7 @@ Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}
         {
             try
             {
+                // Forensics/display only; not used for security validation — see docs/security-hash-policy.md
                 var bytes = System.Text.Encoding.UTF8.GetBytes(text);
                 var md5 = System.Security.Cryptography.MD5.Create();
                 var base64 = Convert.ToBase64String(md5.ComputeHash(bytes));

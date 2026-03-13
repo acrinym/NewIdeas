@@ -25,22 +25,21 @@ namespace Cycloside.Services
         /// </summary>
         public void RunScript(string relativePath)
         {
-            var fullPath = Path.Combine(_themeDir, relativePath);
-            if (!File.Exists(fullPath))
-            {
-                Logger.Log($"Theme script not found: {fullPath}");
-                return;
-            }
-
-            var baseDir = Path.GetDirectoryName(fullPath) ?? _themeDir;
-            if (!Path.GetFullPath(baseDir).StartsWith(Path.GetFullPath(_themeDir), StringComparison.OrdinalIgnoreCase))
+            var safePath = ThemeSecurityValidator.ResolveSafePath(_themeDir, relativePath);
+            if (safePath == null)
             {
                 Logger.Log($"Theme script path outside theme directory: {relativePath}");
                 return;
             }
+            if (!File.Exists(safePath))
+            {
+                Logger.Log($"Theme script not found: {safePath}");
+                return;
+            }
 
-            var code = File.ReadAllText(fullPath);
-            RunCode(code, baseDir);
+            var code = ThemeSecurityValidator.SafeReadAllText(safePath, ThemeSecurityValidator.MaxManifestFileSize);
+            if (code == null) return;
+            RunCode(code, Path.GetDirectoryName(safePath) ?? _themeDir);
         }
 
         /// <summary>

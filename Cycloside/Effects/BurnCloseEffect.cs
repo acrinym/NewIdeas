@@ -34,8 +34,6 @@ public class BurnCloseEffect : IWindowEffect
         _handlers.Remove(target);
     }
 
-    public void ApplyEvent(WindowEventType type, object? args) { }
-
     private async void OnClosing(ISceneTarget target, WindowClosingEventArgs e)
     {
         var window = EffectTargetHelper.GetWindow(target);

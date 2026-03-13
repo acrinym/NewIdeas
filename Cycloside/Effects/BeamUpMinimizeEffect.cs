@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Cycloside.Scene;
+using Cycloside.Services;
 
 namespace Cycloside.Effects;
 
@@ -34,8 +35,6 @@ public class BeamUpMinimizeEffect : IWindowEffect
         _windowToTarget.Remove(window);
     }
 
-    public void ApplyEvent(WindowEventType type, object? args) { }
-
     private void Window_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
         if (sender is not Window window) return;
@@ -54,9 +53,9 @@ public class BeamUpMinimizeEffect : IWindowEffect
             window.WindowState = WindowState.Normal;
 
             var startTime = DateTime.UtcNow;
-            var duration = TimeSpan.FromMilliseconds(220);
+            var duration = TimeSpan.FromMilliseconds(EffectConstants.MinimizeEffectDurationMs);
             var startOpacity = target.Opacity;
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(EffectConstants.TickIntervalMs) };
             timer.Tick += (_, _) =>
             {
                 var t = DateTime.UtcNow - startTime;
@@ -64,6 +63,7 @@ public class BeamUpMinimizeEffect : IWindowEffect
                 if (p >= 1.0)
                 {
                     timer.Stop();
+                    (timer as IDisposable)?.Dispose();
                     target.Opacity = startOpacity;
                     target.Position = originalPos;
                     window.WindowState = WindowState.Minimized;
@@ -71,14 +71,15 @@ public class BeamUpMinimizeEffect : IWindowEffect
                     return;
                 }
                 var ease = 1 - Math.Pow(1 - p, 3);
-                var offsetY = (int)(-120 * ease);
+                var offsetY = (int)(-EffectConstants.SlideDistancePx * ease);
                 target.Position = new PixelPoint(originalPos.X, originalPos.Y + offsetY);
                 target.Opacity = 1.0 - ease;
             };
             timer.Start();
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Log($"BeamUpMinimizeEffect: {ex.Message}");
             window.WindowState = WindowState.Minimized;
             _animating.Remove(window);
         }

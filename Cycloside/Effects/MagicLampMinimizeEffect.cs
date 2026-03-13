@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Avalonia.Controls;
+using Cycloside.Services;
 using Avalonia.Threading;
 using Cycloside.Scene;
 
@@ -33,8 +34,6 @@ public class MagicLampMinimizeEffect : IWindowEffect
         _windowToTarget.Remove(window);
     }
 
-    public void ApplyEvent(WindowEventType type, object? args) { }
-
     private void Window_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
         if (sender is not Window window) return;
@@ -53,8 +52,8 @@ public class MagicLampMinimizeEffect : IWindowEffect
             window.WindowState = WindowState.Normal;
 
             var startTime = DateTime.UtcNow;
-            var duration = TimeSpan.FromMilliseconds(220);
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            var duration = TimeSpan.FromMilliseconds(EffectConstants.MinimizeEffectDurationMs);
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(EffectConstants.TickIntervalMs) };
             timer.Tick += (_, _) =>
             {
                 var t = DateTime.UtcNow - startTime;
@@ -63,6 +62,7 @@ public class MagicLampMinimizeEffect : IWindowEffect
                 {
                     target.Opacity = 0.0;
                     timer.Stop();
+                    (timer as IDisposable)?.Dispose();
                     window.WindowState = WindowState.Minimized;
                     window.Height = originalHeight;
                     target.Opacity = 1.0;
@@ -76,8 +76,9 @@ public class MagicLampMinimizeEffect : IWindowEffect
             };
             timer.Start();
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Log($"MagicLampMinimizeEffect: {ex.Message}");
             window.WindowState = WindowState.Minimized;
             _animating.Remove(window);
         }

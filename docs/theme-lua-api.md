@@ -1,62 +1,53 @@
 # Theme Lua API
 
-Theme packs can include Lua scripts that run when the theme is applied. Scripts are sandboxed and have access to a limited API.
+**Date:** 2026-03-14
 
-## Script Location
+Theme scripts run in a sandboxed MoonSharp Lua runtime. See [ThemeLuaRuntime.cs](Cycloside/Services/ThemeLuaRuntime.cs).
 
-List scripts in `theme.json`:
+---
 
-```json
-{
-  "scripts": {
-    "lua": ["init.lua", "apply.lua"]
-  }
-}
-```
+## theme Table
 
-Paths are relative to the theme directory.
+| Member | Type | Description |
+|--------|------|-------------|
+| theme.colors | table | Color overrides (key-value) |
+| theme.settings | table | Theme settings (key-value) |
+| theme.getSetting(key) | function | Get setting value |
+| theme.setSetting(key, val) | function | Set setting value |
+
+---
+
+## system Table (Read-Only)
+
+| Member | Type | Description |
+|--------|------|-------------|
+| system.time | number | Unix timestamp (UTC) |
+| system.platform | string | OS platform |
+| system.user | string | Username |
+
+---
 
 ## Hooks
 
 | Hook | When Called |
 |------|-------------|
-| `OnLoad()` | When theme is first loaded |
-| `OnApply()` | When theme is applied (including re-apply) |
+| OnLoad | When theme is loaded |
+| OnApply | When theme is applied |
+| OnSettingChange | When a setting changes |
 
-Define in Lua:
+Define as global functions in your script:
 
 ```lua
-function OnLoad()
-  -- Initial setup
-end
-
 function OnApply()
-  -- Run when theme is applied
+  theme.setSetting("accent", "#ff0000")
 end
 ```
 
-## API Tables
-
-### theme.*
-
-| Function/Field | Description |
-|----------------|-------------|
-| `theme.dir` | Path to theme directory |
-| `theme.settings` | Key-value map from manifest `settings` |
-
-### system.*
-
-| Function | Description |
-|----------|-------------|
-| `system.log(message)` | Log to Cycloside logger |
+---
 
 ## Sandbox Limits
 
-- No file I/O outside theme directory
-- No network access
-- No process spawning
-- Scripts run in MoonSharp interpreter with restricted globals
-
-## Relation to Volatile Lua
-
-Theme Lua is **sandboxed** and runs only when themes are applied. The "Run Lua Script" feature (Volatile Lua) has full access and is intended for power users. See [volatile-scripting.md](volatile-scripting.md).
+- No `io`, `os.execute`, `loadfile`
+- No `require` outside theme directory
+- Scripts run from theme directory only
+- File reads confined to theme path

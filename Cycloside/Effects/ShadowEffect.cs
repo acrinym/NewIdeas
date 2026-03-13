@@ -31,6 +31,4 @@ public class ShadowEffect : IWindowEffect
         if (window.Effect is DropShadowEffect)
             window.Effect = null;
     }
-
-    public void ApplyEvent(WindowEventType type, object? args) { }
 }

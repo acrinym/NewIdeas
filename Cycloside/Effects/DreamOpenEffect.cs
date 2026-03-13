@@ -33,8 +33,6 @@ public class DreamOpenEffect : IWindowEffect
         _handlers.Remove(target);
     }
 
-    public void ApplyEvent(WindowEventType type, object? args) { }
-
     private void OnOpened(ISceneTarget target)
     {
         var window = EffectTargetHelper.GetWindow(target);
@@ -44,9 +42,9 @@ public class DreamOpenEffect : IWindowEffect
         var blur = new BlurEffect { Radius = 10 };
         window.Effect = blur;
 
-        var duration = TimeSpan.FromMilliseconds(300);
+        var duration = TimeSpan.FromMilliseconds(EffectConstants.DreamOpenDurationMs);
         var startTime = DateTime.UtcNow;
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(EffectConstants.TickIntervalMs) };
         timer.Tick += (_, _) =>
         {
             var t = DateTime.UtcNow - startTime;
@@ -59,6 +57,7 @@ public class DreamOpenEffect : IWindowEffect
                 target.Opacity = 1.0;
                 window.Effect = null;
                 timer.Stop();
+                (timer as IDisposable)?.Dispose();
             }
         };
         timer.Start();

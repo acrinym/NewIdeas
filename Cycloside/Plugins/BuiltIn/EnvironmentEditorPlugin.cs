@@ -33,6 +33,17 @@ namespace Cycloside.Plugins.BuiltIn
         public void Start()
         {
             _window = new EnvironmentEditorWindow();
+            _window.DataContext = new EnvEditorViewModel(_items);
+            _window.Opened += OnWindowOpened;
+            ThemeManager.ApplyForPlugin(_window, this);
+            _window.Show();
+        }
+
+        private void OnWindowOpened(object? sender, EventArgs e)
+        {
+            if (_window == null) return;
+            _window.Opened -= OnWindowOpened;
+
             _grid = _window.FindControl<DataGrid>("Grid");
             _userScope = _window.FindControl<RadioButton>("UserScope");
             _machineScope = _window.FindControl<RadioButton>("MachineScope");
@@ -44,7 +55,6 @@ namespace Cycloside.Plugins.BuiltIn
             if (OperatingSystem.IsWindows())
             {
                 _userScope!.IsChecked = true;
-                // FIXED: Use the modern IsCheckedChanged event instead of the obsolete Checked event.
                 _userScope.IsCheckedChanged += (_, _) => { if (_userScope.IsChecked == true) UpdateScope(EnvironmentVariableTarget.User); };
                 _machineScope!.IsCheckedChanged += (_, _) => { if (_machineScope.IsChecked == true) UpdateScope(EnvironmentVariableTarget.Machine); };
                 _processScope!.IsCheckedChanged += (_, _) => { if (_processScope.IsChecked == true) UpdateScope(EnvironmentVariableTarget.Process); };
@@ -62,14 +72,7 @@ namespace Cycloside.Plugins.BuiltIn
             editButton?.AddHandler(Button.ClickEvent, async (_, _) => await EditVariableAsync());
             deleteButton?.AddHandler(Button.ClickEvent, async (_, _) => await DeleteVariableAsync());
 
-            if (_grid != null)
-            {
-                _grid.ItemsSource = _items;
-            }
-
             LoadVariables();
-            ThemeManager.ApplyForPlugin(_window, this);
-            _window.Show();
         }
 
         private void LoadVariables()
@@ -262,6 +265,12 @@ namespace Cycloside.Plugins.BuiltIn
         {
             public string Key { get; set; } = string.Empty;
             public string Value { get; set; } = string.Empty;
+        }
+
+        private class EnvEditorViewModel
+        {
+            public ObservableCollection<EnvItem> Items { get; }
+            public EnvEditorViewModel(ObservableCollection<EnvItem> items) => Items = items;
         }
 
         private class ConfirmationWindow : Window

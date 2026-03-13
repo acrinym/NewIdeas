@@ -185,22 +185,23 @@ Campfires are **multi-perspective exploratory conversations** where different vi
 
 ---
 
-## Phase 1 Complete (March 2026)
+## Phase 1 Complete (2026-03)
 
-Phase 1 implementation delivered:
+Delivered: Theme Manifest JSON, ThemeManager integration, ThemeLuaRuntime, ThemeAssetCache, ThemeDependencyResolver; CYC-2026-031 Recursive Inclusion, CYC-2026-020 XML Bomb, CYC-2026-019 Parser Confusion; ISceneTarget, WindowSceneAdapter, SceneGraph foundation, Effect migration to ISceneTarget; Manifest wired to Theme UI.
 
-- **Theme Manifest:** theme.json, ThemeManager.CurrentManifest, ThemeLuaRuntime, ThemeAssetCache, ThemeDependencyResolver
-- **Security:** CYC-2026-031 (recursive inclusion), CYC-2026-020 (XML bomb), CYC-2026-019 (parser confusion)
-- **Scene Graph:** ISceneTarget, WindowSceneAdapter, SceneGraph, SceneNode, IRenderTarget, Z-order
-- **Effects:** All 17 effects migrated to ISceneTarget
-- **Theme UI:** Manifest info (author, description, version) in Theme Settings
-- **Docs:** theme-manifest-schema.md, theme-lua-api.md, scene-graph.md, updated examples
+## Phase 2 Complete (2026-03)
+
+Delivered: Checksum enforcement (PluginRepository), ChecksumGenerator tool, Hash policy (SHA-256 for security); BinaryFormatValidator (RIFF/ICO/CUR/WAV), Data URI rejection; UnifiedInputQueue (05-WebTV Phase 1), InputEvent/InputModifiers/InputSource, device-agnostic ring buffer; Marketplace feed format schema; Phase 1 documentation debt (theme-manifest-schema.md, theme-lua-api.md, scene-graph.md, unified-input.md, marketplace-feed-format.md, examples updated).
+
+## Phase 3 (Planned)
+
+Theater Mode Foundation (06-Kodi Phase 1), Marketplace UI (04-Anti-Store Phase 2), GPG signatures (CYC-2026-030 Phase 2), On-screen keyboard (05-WebTV Phase 2). See [2026-03-14-phase3-campfire-plan.md](../../docs/plans/2026-03-14-phase3-campfire-plan.md).
 
 ---
 
 ## Security Work
 
-The security audit documented in [d:\GitHub\NewIdeas\docs\cycloside-vulnerability-catalog.md](../docs/cycloside-vulnerability-catalog.md) found and patched **18 vulnerabilities** before public release.
+The security audit documented in [d:\GitHub\NewIdeas\docs\vulnerabilities\cycloside-vulnerability-catalog.md](../docs/vulnerabilities/cycloside-vulnerability-catalog.md) found and patched **18 vulnerabilities** before public release.
 
 **Additional threat modeling discovered 13 MORE vulnerabilities,** bringing the total to **31:**
 
