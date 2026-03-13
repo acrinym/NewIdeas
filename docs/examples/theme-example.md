@@ -1,10 +1,17 @@
 # Example Theme
 
-This example shows a simple Avalonia theme file that covers the common resources used by Cycloside. Save the file in `Cycloside/Themes/` with a `.axaml` extension and select it from **Settings → Theme Settings**.
+This example shows a simple Avalonia theme file that covers the common resources used by Cycloside.
+
+**Two ways to use themes:**
+
+1. **Single file (global theme)** — Save one `.axaml` file in `Cycloside/Themes/Global/` (e.g. `DarkExample.axaml`). It will appear in **Settings → Theme Settings** under the global theme dropdown. No pack directory or `Tokens.axaml` required.
+2. **Theme pack (directory)** — Create a directory `Cycloside/Themes/MyTheme/` with a **required** `Tokens.axaml` (used for discovery). Add `theme.json` and style files. The pack appears in Theme Settings only if `Tokens.axaml` exists in that directory.
 
 ## Theme Pack with Manifest
 
-For a full theme pack, add `theme.json`:
+For a full theme pack (directory-based), add `Tokens.axaml` and `theme.json`:
+
+**Required:** Create `Tokens.axaml` in the pack directory. Discovery in Theme Settings is gated on this file. Minimal content: a `<Styles>` root with Avalonia/XAML namespaces; see existing themes under `Themes/` for examples.
 
 ```json
 {

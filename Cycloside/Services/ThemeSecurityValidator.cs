@@ -140,10 +140,14 @@ namespace Cycloside.Services
                 return false;
             }
 
-            // Block external resource URIs
-            if (ContainsInsensitive(content, "http://") || ContainsInsensitive(content, "https://"))
+            // Block external resource URIs except standard XAML namespace declarations (all valid AXAML uses these)
+            const string avaloniaNs = "https://github.com/avaloniaui";
+            const string xamlNs = "http://schemas.microsoft.com/winfx/2006/xaml";
+            string contentForUriCheck = RemoveAllInsensitive(content, avaloniaNs);
+            contentForUriCheck = RemoveAllInsensitive(contentForUriCheck, xamlNs);
+            if (ContainsInsensitive(contentForUriCheck, "http://") || ContainsInsensitive(contentForUriCheck, "https://"))
             {
-                Logger.Log("🛡️ AXAML blocked: contains external URI");
+                Logger.Log("🛡️ AXAML blocked: contains external URI (non-namespace)");
                 return false;
             }
 
@@ -283,6 +287,21 @@ namespace Cycloside.Services
         private static bool ContainsInsensitive(string source, string value)
         {
             return source.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
+        /// Removes all occurrences of value from source (case-insensitive). Used to strip allowed namespace URIs before checking for external URIs.
+        /// </summary>
+        private static string RemoveAllInsensitive(string source, string value)
+        {
+            if (string.IsNullOrEmpty(value)) return source;
+            var result = source;
+            int idx;
+            while ((idx = result.IndexOf(value, StringComparison.OrdinalIgnoreCase)) >= 0)
+            {
+                result = result.Substring(0, idx) + result.Substring(idx + value.Length);
+            }
+            return result;
         }
     }
 }

@@ -134,10 +134,23 @@ namespace Cycloside.Services
                 {
                     CurrentManifest = null;
                 }
-                else if (!await LoadSubthemeAsync(themeName))
+                else
                 {
-                    Logger.Log($"Failed to load subtheme pack: {themeName}");
-                    return false;
+                    var globalPath = Path.Combine(AppContext.BaseDirectory, "Themes", "Global", themeName + ".axaml");
+                    if (File.Exists(globalPath))
+                    {
+                        if (!await LoadGlobalSingleFileThemeAsync(globalPath))
+                        {
+                            Logger.Log($"Failed to load global theme file: {themeName}");
+                            return false;
+                        }
+                        CurrentManifest = null;
+                    }
+                    else if (!await LoadSubthemeAsync(themeName))
+                    {
+                        Logger.Log($"Failed to load subtheme pack: {themeName}");
+                        return false;
+                    }
                 }
 
                 // Update current theme state
@@ -370,6 +383,33 @@ namespace Cycloside.Services
             catch (Exception ex)
             {
                 Logger.Log($"Failed to load subtheme '{themeName}': {ex.Message}");
+                return Task.FromResult(false);
+            }
+        }
+
+        /// <summary>
+        /// Loads a single AXAML file from Themes/Global (e.g. DarkExample.axaml).
+        /// Used when user selects a global theme from Theme Settings; avoids requiring a pack directory.
+        /// </summary>
+        private static Task<bool> LoadGlobalSingleFileThemeAsync(string fullPath)
+        {
+            try
+            {
+                ClearSubthemeStyles();
+                if (!ThemeIncludeValidator.ValidateGraph(fullPath))
+                {
+                    Logger.Log($"Theme validation failed for global theme: {fullPath}");
+                    return Task.FromResult(false);
+                }
+                var uri = new Uri($"file:///{fullPath.Replace('\\', '/')}");
+                var styleInclude = new StyleInclude(uri) { Source = uri };
+                if (Application.Current != null)
+                    Application.Current.Styles.Add(styleInclude);
+                return Task.FromResult(true);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to load global theme file '{fullPath}': {ex.Message}");
                 return Task.FromResult(false);
             }
         }
