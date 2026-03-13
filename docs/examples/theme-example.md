@@ -1,6 +1,20 @@
 # Example Theme
 
-This example shows a simple Avalonia theme file that covers the common resources used by Cycloside. Save the file in `Cycloside/Themes/` with a `.axaml` extension and select it from **Settings → Theme Settings**.
+This example shows a simple Avalonia theme pack. Create a directory (e.g. `Cycloside/Themes/MyTheme/`) and add a `theme.json` manifest plus style files. Select from **Settings → Theme Settings**.
+
+## theme.json
+
+```json
+{
+  "name": "My Theme",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "description": "Example theme pack",
+  "styles": ["Styles.axaml"]
+}
+```
+
+## Styles.axaml
 
 ```xml
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -38,4 +52,4 @@ This example shows a simple Avalonia theme file that covers the common resources
 </Styles>
 ```
 
-Save this file as `DarkExample.axaml` and pick it as the global theme. Specific plugins can apply their own skins via `ComponentSkins` in `settings.json`.
+Place `Styles.axaml` in the theme directory. Themes with `Tokens.axaml` are discovered by `ThemeManager.GetAvailableThemes()`. See [theme-manifest-schema.md](../theme-manifest-schema.md) for the full manifest schema.

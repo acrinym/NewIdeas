@@ -1,6 +1,6 @@
 # WindowFX Plugin Example
 
-WindowFX plugins add compositor or physics effects to Cycloside windows. The interface is defined in `Cycloside/Effects/IWindowEffect.cs`. Create a new class library and reference `Cycloside.dll`.
+WindowFX plugins add compositor or physics effects to Cycloside windows. The interface is defined in `Cycloside/Effects/IWindowEffect.cs`. Effects receive `ISceneTarget` (e.g. `WindowSceneAdapter` wrapping a `Window`). Create a new class library and reference `Cycloside.dll`.
 
 ```csharp
 using Avalonia;
@@ -8,6 +8,7 @@ using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Animation.Easings;
 using Cycloside.Effects;
+using Cycloside.Scene;
 using System;
 
 namespace MyEffects;
@@ -17,8 +18,10 @@ public class FadeInEffect : IWindowEffect
     public string Name => "FadeIn";
     public string Description => "Fades the window in when shown";
 
-    public void Attach(Window window)
+    public void Attach(ISceneTarget target)
     {
+        if (target is not WindowSceneAdapter adapter) return;
+        var window = adapter.Window;
         window.Opacity = 0;
         var anim = new Animation
         {
@@ -29,7 +32,7 @@ public class FadeInEffect : IWindowEffect
         anim.RunAsync(window, null);
     }
 
-    public void Detach(Window window) { }
+    public void Detach(ISceneTarget target) { }
 
     public void ApplyEvent(WindowEventType type, object? args) { }
 }
@@ -41,4 +44,4 @@ Compile this into `FadeInEffect.dll` and place it inside the `Cycloside/Effects/
 WindowEffectsManager.EnableEffectFor("*", "FadeIn");
 ```
 
-The effect will apply to every window registered with the manager.
+The effect will apply to every window registered with the manager. `WindowEffectsManager` creates `WindowSceneAdapter` from each `Window` when attaching effects.
