@@ -17,6 +17,8 @@ obj/
 Cycloside/CombinedCode.txt
 Cycloside/export_codebase.ps1
 Cycloside/outsource.txt
+Cycloside/outdirs.txt
+Cycloside/build.log
 
 # Dolt database files (added by bd init)
 .dolt/
