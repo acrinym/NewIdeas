@@ -46,6 +46,7 @@ namespace Cycloside.Services
     {
         private static readonly Dictionary<string, SkinManifest> _manifestCache = new();
         private static readonly Dictionary<string, Dictionary<string, StyleInclude>> _skinCache = new();
+        private static readonly object _cacheLock = new object();
 
         /// <summary>
         /// Current active skin name
@@ -70,6 +71,12 @@ namespace Cycloside.Services
                 return true;
             }
 
+            if (!ThemeSecurityValidator.IsValidPackName(skinName))
+            {
+                Logger.Log($"🛡️ Invalid skin name rejected: {skinName}");
+                return false;
+            }
+
             try
             {
                 var manifest = await LoadSkinManifestAsync(skinName);
@@ -89,6 +96,9 @@ namespace Cycloside.Services
                     ClearApplicationSkins();
                 }
 
+                // Set CurrentSkin BEFORE applying overlays so skinDir resolves correctly
+                CurrentSkin = skinName;
+
                 // Apply global overlays first
                 if (manifest.Overlays.Global.Any())
                 {
@@ -107,7 +117,6 @@ namespace Cycloside.Services
                     await ApplyWindowReplacementsAsync(manifest.ReplaceWindows);
                 }
 
-                CurrentSkin = skinName;
                 SkinChanged?.Invoke(null, new SkinChangedEventArgs(skinName));
 
                 Logger.Log($"Successfully applied skin: {skinName}");
@@ -169,24 +178,32 @@ namespace Cycloside.Services
 
         private static async Task<SkinManifest?> LoadSkinManifestAsync(string skinName)
         {
-            if (_manifestCache.TryGetValue(skinName, out var cached))
-                return cached;
+            lock (_cacheLock)
+            {
+                if (_manifestCache.TryGetValue(skinName, out var cached))
+                    return cached;
+            }
+
+            if (!ThemeSecurityValidator.IsValidPackName(skinName))
+                return null;
 
             try
             {
                 var manifestPath = Path.Combine(SkinDir, skinName, "skin.json");
-                if (!File.Exists(manifestPath))
+                var json = await ThemeSecurityValidator.SafeReadAllTextAsync(manifestPath, ThemeSecurityValidator.MaxManifestFileSize);
+                if (json == null)
                 {
-                    Logger.Log($"Skin manifest not found: {manifestPath}");
+                    Logger.Log($"Skin manifest not found or too large: {manifestPath}");
                     return null;
                 }
-
-                var json = await File.ReadAllTextAsync(manifestPath);
                 var manifest = JsonSerializer.Deserialize<SkinManifest>(json);
 
                 if (manifest != null)
                 {
-                    _manifestCache[skinName] = manifest;
+                    lock (_cacheLock)
+                    {
+                        _manifestCache[skinName] = manifest;
+                    }
                 }
 
                 return manifest;
@@ -204,7 +221,12 @@ namespace Cycloside.Services
 
             foreach (var styleFile in globalStyles)
             {
-                var stylePath = Path.Combine(skinDir, styleFile);
+                var stylePath = ThemeSecurityValidator.ResolveSafePath(skinDir, styleFile);
+                if (stylePath == null)
+                {
+                    Logger.Log($"🛡️ Blocked unsafe style path in skin: {styleFile}");
+                    continue;
+                }
                 if (!File.Exists(stylePath))
                 {
                     Logger.Log($"Global style file not found: {stylePath}");
@@ -223,7 +245,12 @@ namespace Cycloside.Services
             {
                 foreach (var styleFile in selector.Styles)
                 {
-                    var stylePath = Path.Combine(skinDir, styleFile);
+                    var stylePath = ThemeSecurityValidator.ResolveSafePath(skinDir, styleFile);
+                    if (stylePath == null)
+                    {
+                        Logger.Log($"🛡️ Blocked unsafe style path in skin: {styleFile}");
+                        continue;
+                    }
                     if (!File.Exists(stylePath))
                     {
                         Logger.Log($"Selector style file not found: {stylePath}");
@@ -239,6 +266,14 @@ namespace Cycloside.Services
         {
             try
             {
+                // Validate AXAML content before letting Avalonia load it (CYC-2026-003)
+                var content = ThemeSecurityValidator.SafeReadAllText(stylePath, ThemeSecurityValidator.MaxAxamlFileSize);
+                if (content == null || !ThemeSecurityValidator.IsAxamlContentSafe(content))
+                {
+                    Logger.Log($"🛡️ Skin style file failed security validation: {stylePath}");
+                    return Task.CompletedTask;
+                }
+
                 var uri = new Uri($"file:///{stylePath.Replace('\\', '/')}");
                 var styleInclude = new StyleInclude(uri) { Source = uri };
 
@@ -277,7 +312,12 @@ namespace Cycloside.Services
                         if (window.GetType().Name == windowType)
                         {
                             var skinDir = Path.Combine(AppContext.BaseDirectory, "Skins", CurrentSkin);
-                            var replacementPath = Path.Combine(skinDir, replacementFile);
+                            var replacementPath = ThemeSecurityValidator.ResolveSafePath(skinDir, replacementFile);
+                            if (replacementPath == null)
+                            {
+                                Logger.Log($"🛡️ Blocked unsafe window replacement path: {replacementFile}");
+                                continue;
+                            }
 
                             await WindowReplacementManager.ReplaceWindowContentAsync(window, replacementPath);
                         }
@@ -333,16 +373,9 @@ namespace Cycloside.Services
 
         private static bool IsFileATheme(string path)
         {
-            try
-            {
-                var content = File.ReadAllText(path);
-                return content.Contains("ApplicationBackgroundBrush") || content.Contains("ThemeForegroundColor");
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"Error checking if file is a theme: {ex.Message}");
-                return false;
-            }
+            var content = ThemeSecurityValidator.SafeReadAllText(path, ThemeSecurityValidator.MaxAxamlFileSize);
+            if (content == null) return false;
+            return content.Contains("ApplicationBackgroundBrush") || content.Contains("ThemeForegroundColor");
         }
     }
 

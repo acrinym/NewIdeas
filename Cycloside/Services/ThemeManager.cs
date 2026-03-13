@@ -111,6 +111,12 @@ namespace Cycloside.Services
                 return false;
             }
 
+            if (!string.IsNullOrEmpty(themeName) && !ThemeSecurityValidator.IsValidPackName(themeName))
+            {
+                Logger.Log($"🛡️ Invalid theme name rejected: {themeName}");
+                return false;
+            }
+
             try
             {
                 // Load theme variant tokens first
@@ -225,6 +231,14 @@ namespace Cycloside.Services
                             Logger.Log($"Loaded cached variant theme: {variant}");
                             return Task.FromResult(true);
                         }
+                    }
+
+                    // Validate AXAML content before loading (CYC-2026-003, CYC-2026-004)
+                    var axamlContent = ThemeSecurityValidator.SafeReadAllText(variantTheme, ThemeSecurityValidator.MaxAxamlFileSize);
+                    if (axamlContent == null || !ThemeSecurityValidator.IsAxamlContentSafe(axamlContent))
+                    {
+                        Logger.Log($"🛡️ Theme variant file failed security validation: {variantTheme}");
+                        return Task.FromResult(false);
                     }
 
                     // Load and cache new variant
@@ -355,8 +369,9 @@ namespace Cycloside.Services
         {
             try
             {
-                // Apply global theme to window
-                _ = ApplyThemeAsync(CurrentTheme, CurrentVariant, false).ConfigureAwait(false);
+                // NOTE: Do NOT call ApplyThemeAsync here — it calls ApplyToAllWindowsAsync
+                // which calls this method, creating infinite recursion (CYC-2026-015).
+                // Instead, apply plugin-specific theming directly.
 
                 // If this is a plugin window, apply plugin-specific theming  
                 if (window is Plugins.PluginWindowBase pluginWindow && pluginWindow.Plugin != null)
@@ -407,6 +422,9 @@ namespace Cycloside.Services
         /// </summary>
         public static bool LoadGlobalTheme(string themeName)
         {
+            if (!ThemeSecurityValidator.IsValidPackName(themeName))
+                return false;
+
             try
             {
                 ApplyThemeAsync(themeName, ThemeVariant.Default, false).Wait();
@@ -463,24 +481,10 @@ namespace Cycloside.Services
         /// </summary>
         private static bool ValidateThemeFile(string filePath)
         {
-            try
-            {
-                if (!File.Exists(filePath))
-                    return false;
-
-                var content = File.ReadAllText(filePath);
-
-                // Basic XAML validation
-                return content.Contains("<Style") &&
-                       content.Contains("</Style>") ||
-                       content.Contains("<Styles") &&
-                       content.Contains("</Styles>");
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"Error validating theme file: {ex.Message}");
+            var content = ThemeSecurityValidator.SafeReadAllText(filePath, ThemeSecurityValidator.MaxAxamlFileSize);
+            if (content == null)
                 return false;
-            }
+            return ThemeSecurityValidator.IsAxamlContentSafe(content);
         }
 
         /// <summary>
@@ -540,6 +544,14 @@ namespace Cycloside.Services
                 // If cache is up to date, no need to reload
                 if (IsCachedUpToDate(cacheKey, tokensPath))
                     return;
+
+                // Validate AXAML content before caching (CYC-2026-003, CYC-2026-004)
+                var axamlContent = ThemeSecurityValidator.SafeReadAllText(tokensPath, ThemeSecurityValidator.MaxAxamlFileSize);
+                if (axamlContent == null || !ThemeSecurityValidator.IsAxamlContentSafe(axamlContent))
+                {
+                    Logger.Log($"🛡️ Theme tokens file failed security validation: {tokensPath}");
+                    return;
+                }
 
                 var uri = new Uri($"file:///{tokensPath.Replace('\\', '/')}");
                 var styleInclude = new StyleInclude(uri) { Source = uri };
