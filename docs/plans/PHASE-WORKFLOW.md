@@ -53,3 +53,16 @@ Store all phase docs in `docs/plans/` for reuse:
 - Create branch: `phase-N-description` (e.g. `phase-2-integrity-unified-input`)
 - PR when phase work + docs + vuln test + code smell + recheck complete
 - Push to remote before ending session (per AGENTS.md "Landing the Plane")
+
+**🚨 CRITICAL TIMING RULE:**
+- **MERGE PHASE PRS IMMEDIATELY** when complete
+- DO NOT let phase PRs sit open for days/weeks
+- Each day open = higher merge conflict risk
+- If Phase N+1 work starts before Phase N merges → rebase hell
+- **Lesson learned:** Phase 1 merged while Phase 2 PR was open → massive conflicts, wasted hours
+
+**Why this matters:**
+- Phases build sequentially on shared code
+- Main branch moves forward with other work
+- Conflicts compound exponentially with time
+- Immediate merge = clean slate for next phase
