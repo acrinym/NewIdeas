@@ -59,16 +59,17 @@ The system supports three built-in theme variants with automatic token switching
 - **Dark Theme** (`Cycloside/Themes/DarkTheme/Tokens.axaml`)  
 - **High Contrast Theme** (`Cycloside/Themes/HighContrastTheme/Tokens.axaml`)
 
+### Theme Manifest (theme.json)
+
+Theme packs can include a `theme.json` manifest with name, author, description, version, styles, Lua scripts, and dependencies. See [theme-manifest-schema.md](theme-manifest-schema.md). `ThemeManager.CurrentManifest` exposes the current theme's manifest. Theme Settings UI displays manifest info when available.
+
 ### Dynamic Theme Switching
 
 ```csharp
 // Apply theme variant
 await ThemeManager.ApplyVariantAsync(ThemeVariant.Dark);
 
-// Apply subtheme pack
-await ThemeManager.ApplySubthemeAsync("MyCustomTheme");
-
-// Apply both simultaneously
+// Apply theme pack (loads theme.json if present)
 await ThemeManager.ApplyThemeAsync("MyCustomTheme", ThemeVariant.Light);
 
 // Initialize from settings

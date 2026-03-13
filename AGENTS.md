@@ -5,6 +5,25 @@ When making changes, follow these binding rules:
 
 ---
 
+## Plan Mode Workflow
+
+**When Plan mode is activated**, invoke the **plan-mode-workflow** skill:
+
+- **Location:** `.cursor/skills/plan-mode-workflow/SKILL.md`
+- **Flow:** Brainstorm → scope questions → doc pre-catalog → pre-conditions → CreatePlan → execute → post-conditions
+- **Pre-conditions:** Git branch/PR/merge, beads check (verify no beads completed during pre-phase)
+- **Post-conditions:** Vulnerability scan, doc updates per pre-catalog
+
+**Persistent context:** See [agentmemory.md](agentmemory.md) for workflow conventions, project-specific context, and doc locations. Do NOT duplicate beads content there.
+
+**Skill invocation:** Read `.cursor/skills/plan-mode-workflow/SKILL.md` at the start of any plan-mode session and follow it.
+
+**Security scan timing:** Do not scan for vulnerabilities until work finishes each session — avoids rescans during active development. This does NOT mean rescans never occur: rescanning completed work catches "I didn't see that the first time" and "I missed that last time because of out-of-order workflow."
+
+**Branch/PR naming:** All commits must be on a branch or PR with a name suited to what the work equates to high-level when completed for a session.
+
+---
+
 ## 🔒 Absolute Directives
 - **NO PLACEHOLDERS EVER.**  
   - Do not generate stubs, dummy methods, TODO comments, empty XAML tags, or incomplete scaffolding. 

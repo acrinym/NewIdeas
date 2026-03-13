@@ -32,19 +32,95 @@ public partial class ThemeSettingsWindow : Window
     {
         _manager = manager;
 
-        var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
-        _themes = Directory.Exists(themeDir)
-            ? Directory.GetFiles(themeDir, "*.axaml")
+        var globalDir = Path.Combine(AppContext.BaseDirectory, "Themes", "Global");
+        var globalThemes = Directory.Exists(globalDir)
+            ? Directory.GetFiles(globalDir, "*.axaml")
                 .Select(Path.GetFileNameWithoutExtension)
-                .Where(s => s != null)
+                .Where(s => s != null && !s.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
                 .Select(s => s!)
                 .ToArray()
             : Array.Empty<string>();
+        var themePacks = ThemeManager.GetAvailableThemes().ToArray();
+        _themes = themePacks.Length > 0
+            ? themePacks.Union(globalThemes).OrderBy(t => t).ToArray()
+            : globalThemes;
 
         InitializeComponent();
         CursorManager.ApplyFromSettings(this, "Plugins");
         BuildList();
+        RefreshManifestForSelectedTheme();
+        ThemeManager.ThemeChanged += OnThemeChanged;
         WindowEffectsManager.Instance.ApplyConfiguredEffects(this, nameof(ThemeSettingsWindow));
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        ThemeManager.ThemeChanged -= OnThemeChanged;
+        base.OnClosed(e);
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        RefreshManifestForSelectedTheme();
+    }
+
+    private void RefreshManifestDisplay()
+    {
+        var content = this.FindControl<StackPanel>("ManifestContent");
+        var panel = this.FindControl<Border>("ManifestPanel");
+        if (content is null || panel is null) return;
+
+        content.Children.Clear();
+        var manifest = ThemeManager.CurrentManifest;
+        if (manifest == null)
+        {
+            content.Children.Add(new TextBlock { Text = "No theme manifest (legacy theme)", TextWrapping = TextWrapping.Wrap, Foreground = Avalonia.Media.Brushes.Gray });
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(manifest.Name))
+            content.Children.Add(new TextBlock { Text = $"Name: {manifest.Name}", FontWeight = FontWeight.SemiBold });
+        if (!string.IsNullOrEmpty(manifest.Version))
+            content.Children.Add(new TextBlock { Text = $"Version: {manifest.Version}" });
+        if (!string.IsNullOrEmpty(manifest.Author))
+            content.Children.Add(new TextBlock { Text = $"Author: {manifest.Author}" });
+        if (!string.IsNullOrEmpty(manifest.Description))
+        {
+            var desc = new TextBlock { Text = manifest.Description, TextWrapping = TextWrapping.Wrap, MaxWidth = 320 };
+            content.Children.Add(new TextBlock { Text = "Description:", FontWeight = FontWeight.SemiBold });
+            content.Children.Add(desc);
+        }
+        if (manifest.Tags?.Count > 0)
+            content.Children.Add(new TextBlock { Text = $"Tags: {string.Join(", ", manifest.Tags)}", TextWrapping = TextWrapping.Wrap });
+    }
+
+    private void RefreshManifestForSelectedTheme()
+    {
+        var selected = _globalThemeBox?.SelectedItem as string;
+        if (string.IsNullOrEmpty(selected)) return;
+        var themeDir = Path.Combine(AppContext.BaseDirectory, "Themes", selected);
+        var manifest = Directory.Exists(themeDir) ? ThemeManifest.Load(themeDir) : null;
+        var content = this.FindControl<StackPanel>("ManifestContent");
+        if (content is null) return;
+        content.Children.Clear();
+        if (manifest == null)
+        {
+            content.Children.Add(new TextBlock { Text = "No theme manifest (legacy theme)", TextWrapping = TextWrapping.Wrap, Foreground = Avalonia.Media.Brushes.Gray });
+            return;
+        }
+        if (!string.IsNullOrEmpty(manifest.Name))
+            content.Children.Add(new TextBlock { Text = $"Name: {manifest.Name}", FontWeight = FontWeight.SemiBold });
+        if (!string.IsNullOrEmpty(manifest.Version))
+            content.Children.Add(new TextBlock { Text = $"Version: {manifest.Version}" });
+        if (!string.IsNullOrEmpty(manifest.Author))
+            content.Children.Add(new TextBlock { Text = $"Author: {manifest.Author}" });
+        if (!string.IsNullOrEmpty(manifest.Description))
+        {
+            content.Children.Add(new TextBlock { Text = "Description:", FontWeight = FontWeight.SemiBold });
+            content.Children.Add(new TextBlock { Text = manifest.Description, TextWrapping = TextWrapping.Wrap, MaxWidth = 320 });
+        }
+        if (manifest.Tags?.Count > 0)
+            content.Children.Add(new TextBlock { Text = $"Tags: {string.Join(", ", manifest.Tags)}", TextWrapping = TextWrapping.Wrap });
     }
 
     private void InitializeComponent()
@@ -61,6 +137,7 @@ public partial class ThemeSettingsWindow : Window
         // --- Global Theme Setting ---
         panel.Children.Add(new TextBlock { Text = "Global Application Theme", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 0, 4) });
         _globalThemeBox = new ComboBox { ItemsSource = _themes, SelectedItem = SettingsManager.Settings.GlobalTheme };
+        _globalThemeBox.SelectionChanged += (_, _) => RefreshManifestForSelectedTheme();
         panel.Children.Add(_globalThemeBox);
         panel.Children.Add(new Separator { Margin = new Thickness(0, 10) });
 

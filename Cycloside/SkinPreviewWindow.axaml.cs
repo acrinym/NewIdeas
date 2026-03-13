@@ -4,6 +4,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using System;
+using Cycloside.Services;
 
 namespace Cycloside;
 
@@ -24,17 +25,24 @@ public partial class SkinPreviewWindow : Window
 
     /// <summary>
     /// Loads the provided XAML markup and replaces the preview content.
+    /// Validates content before parse to block XML bomb and other attacks (CYC-2026-020).
     /// </summary>
     public void LoadPreview(string xaml)
     {
+        if (_host == null) return;
+        if (!ThemeSecurityValidator.IsAxamlContentSafe(xaml))
+        {
+            _host.Content = new TextBlock { Text = "Content blocked: unsafe AXAML (e.g. DTD/entities)", Foreground = Brushes.Red, TextWrapping = TextWrapping.Wrap };
+            return;
+        }
         try
         {
             var control = AvaloniaRuntimeXamlLoader.Parse(xaml) as Control ?? new TextBlock { Text = "Invalid markup" };
-            if (_host != null) _host.Content = control;
+            _host.Content = control;
         }
         catch (Exception ex)
         {
-            if (_host != null) _host.Content = new TextBlock { Text = ex.Message, Foreground = Brushes.Red };
+            _host.Content = new TextBlock { Text = ex.Message, Foreground = Brushes.Red };
         }
     }
 }
