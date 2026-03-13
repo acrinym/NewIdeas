@@ -7,7 +7,7 @@ namespace Cycloside.Services
     /// <summary>
     /// Security validation for theme, skin, and asset loading.
     /// Enforces path confinement, name validation, content whitelisting, and size limits.
-    /// See docs/cycloside-vulnerability-catalog.md for the threat model.
+    /// See docs/vulnerabilities/cycloside-vulnerability-catalog.md for the threat model.
     /// </summary>
     public static class ThemeSecurityValidator
     {

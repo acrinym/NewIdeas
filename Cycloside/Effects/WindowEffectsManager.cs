@@ -70,7 +70,7 @@ public class WindowEffectsManager
                         RegisterEffect(effect);
                 }
             }
-            catch { }
+            catch (Exception ex) { Logger.Log($"WindowEffectsManager: failed to load effect from {dll}: {ex.Message}"); }
         }
     }
 

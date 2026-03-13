@@ -187,7 +187,7 @@ Campfires are **multi-perspective exploratory conversations** where different vi
 
 ## Security Work
 
-The security audit documented in [d:\GitHub\NewIdeas\docs\cycloside-vulnerability-catalog.md](../docs/cycloside-vulnerability-catalog.md) found and patched **18 vulnerabilities** before public release.
+The security audit documented in [d:\GitHub\NewIdeas\docs\vulnerabilities\cycloside-vulnerability-catalog.md](../docs/vulnerabilities/cycloside-vulnerability-catalog.md) found and patched **18 vulnerabilities** before public release.
 
 **Additional threat modeling discovered 13 MORE vulnerabilities,** bringing the total to **31:**
 

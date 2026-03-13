@@ -51,6 +51,7 @@ public class GlideDownOpenEffect : IWindowEffect
                 target.Position = end;
                 target.Opacity = 1.0;
                 timer.Stop();
+                (timer as IDisposable)?.Dispose();
                 return;
             }
             var ease = 1 - Math.Pow(1 - p, 3);

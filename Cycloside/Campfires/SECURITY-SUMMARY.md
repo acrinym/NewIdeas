@@ -296,7 +296,7 @@ Users installing Cycloside on launch day won't be:
 
 ## Resources
 
-- **Vulnerability Catalog:** [d:\GitHub\NewIdeas\docs\cycloside-vulnerability-catalog.md](../docs/cycloside-vulnerability-catalog.md)
+- **Vulnerability Catalog:** [d:\GitHub\NewIdeas\docs\vulnerabilities\cycloside-vulnerability-catalog.md](../docs/vulnerabilities/cycloside-vulnerability-catalog.md)
 - **Deep-Dive Explanations:** [07-Cycloside-Vulnerability-Explained.md](07-Cycloside-Vulnerability-Explained.md)
 - **Test Files:** `PoC-MalformedTheme.axaml`, `PoC-XmlBomb.axaml`
 - **Anti-Store Manifesto:** [04-Anti-Store-Manifesto.md](04-Anti-Store-Manifesto.md)
