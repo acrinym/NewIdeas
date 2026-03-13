@@ -67,7 +67,8 @@ public partial class ThemeSettingsWindow : Window
         // --- Per-Component Theme Settings ---
         panel.Children.Add(new TextBlock { Text = "Component-Specific Themes (Overrides Global)", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 0, 4) });
         var components = new List<string> { "MainWindow" };
-        components.AddRange(_manager.Plugins.Select(p => p.Name));
+        if (_manager?.Plugins != null)
+            components.AddRange(_manager.Plugins.Select(p => p.Name));
 
         foreach (var comp in components.Distinct().OrderBy(c => c))
         {

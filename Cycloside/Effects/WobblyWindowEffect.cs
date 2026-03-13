@@ -26,7 +26,7 @@ public class WobblyWindowEffect : IWindowEffect
         var posHandler = new EventHandler<PixelPointEventArgs>((s, e) => OnPosChanged(target, e));
         _posHandlers[target] = posHandler;
         window.PositionChanged += posHandler;
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(EffectConstants.TickIntervalMs) };
         timer.Tick += (_, _) => Animate(target);
         _timers[target] = timer;
         timer.Start();
@@ -63,10 +63,9 @@ public class WobblyWindowEffect : IWindowEffect
         if (_timers.TryGetValue(target, out var timer))
         {
             timer.Stop();
+            (timer as IDisposable)?.Dispose();
             _timers.Remove(target);
         }
         _targetPos.Remove(target);
     }
-
-    public void ApplyEvent(WindowEventType type, object? args) { }
 }

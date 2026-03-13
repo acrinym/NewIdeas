@@ -21,20 +21,17 @@ namespace Cycloside.Services
             if (fullPath == null || !File.Exists(fullPath)) return null;
 
             var key = $"{themeId}:img:{path}";
+            var timestamp = File.GetLastWriteTimeUtc(fullPath);
             lock (_lock)
             {
-                if (_cache.TryGetValue(key, out var entry))
-                {
-                    var fi = new FileInfo(fullPath);
-                    if (fi.LastWriteTimeUtc <= entry.Timestamp)
-                        return entry.Asset as Bitmap;
-                }
+                if (_cache.TryGetValue(key, out var entry) && timestamp <= entry.Timestamp)
+                    return entry.Asset as Bitmap;
 
                 try
                 {
                     using var stream = File.OpenRead(fullPath);
                     var bmp = new Bitmap(stream);
-                    _cache[key] = (bmp, File.GetLastWriteTimeUtc(fullPath));
+                    _cache[key] = (bmp, timestamp);
                     return bmp;
                 }
                 catch (Exception ex)

@@ -12,7 +12,7 @@ namespace Cycloside.Services
     /// </summary>
     public static class ThemeIncludeValidator
     {
-        private const int MaxDepth = 10;
+        private const int MaxDepth = ThemeConstants.MaxDependencyDepth;
 
         public static bool ValidateGraph(string rootPath, int maxDepth = MaxDepth)
         {
@@ -117,7 +117,7 @@ namespace Cycloside.Services
                 return null;
 
             if (include.StartsWith("file:///", StringComparison.OrdinalIgnoreCase))
-                include = include.Substring(8).Replace('/', Path.DirectorySeparatorChar);
+                include = include.Substring(ThemeConstants.FileUriPrefixLength).Replace('/', Path.DirectorySeparatorChar);
             else if (include.StartsWith("avares://", StringComparison.OrdinalIgnoreCase))
                 return null;
 

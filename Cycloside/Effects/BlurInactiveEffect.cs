@@ -38,8 +38,6 @@ public class BlurInactiveEffect : IWindowEffect
         _deactivatedHandlers.Remove(target);
     }
 
-    public void ApplyEvent(WindowEventType type, object? args) { }
-
     private void OnActivated(object? sender, EventArgs e)
     {
         if (sender is Window win && win.Effect is BlurEffect)

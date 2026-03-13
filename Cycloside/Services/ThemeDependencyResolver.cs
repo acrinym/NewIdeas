@@ -10,7 +10,7 @@ namespace Cycloside.Services
     /// </summary>
     public static class ThemeDependencyResolver
     {
-        private const int MaxDepth = 10;
+        private const int MaxDepth = ThemeConstants.MaxDependencyDepth;
 
         /// <summary>
         /// Returns theme names in load order (dependencies first). Throws on cycle or max depth.

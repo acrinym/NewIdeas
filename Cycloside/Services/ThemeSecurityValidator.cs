@@ -39,16 +39,8 @@ namespace Cycloside.Services
                 return false;
 
             // Block invalid filename characters
-            char[] invalidChars = Path.GetInvalidFileNameChars();
-            for (int i = 0; i < name.Length; i++)
-            {
-                char c = name[i];
-                for (int j = 0; j < invalidChars.Length; j++)
-                {
-                    if (c == invalidChars[j])
-                        return false;
-                }
-            }
+            if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                return false;
 
             // Block names that are just dots or whitespace
             ReadOnlySpan<char> trimmed = name.AsSpan().Trim();

@@ -30,18 +30,16 @@ public class GlideDownOpenEffect : IWindowEffect
         _handlers.Remove(target);
     }
 
-    public void ApplyEvent(WindowEventType type, object? args) { }
-
     private void OnOpened(ISceneTarget target)
     {
         var end = target.Position;
-        var start = new PixelPoint(end.X, end.Y + 120);
+        var start = new PixelPoint(end.X, end.Y + EffectConstants.SlideDistancePx);
         target.Position = start;
         target.Opacity = 0.0;
 
-        var duration = TimeSpan.FromMilliseconds(280);
+        var duration = TimeSpan.FromMilliseconds(EffectConstants.AnimationDurationMs);
         var startTime = DateTime.UtcNow;
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(EffectConstants.TickIntervalMs) };
         timer.Tick += (_, _) =>
         {
             var t = DateTime.UtcNow - startTime;

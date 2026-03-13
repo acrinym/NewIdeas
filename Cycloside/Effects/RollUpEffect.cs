@@ -55,6 +55,4 @@ public class RollUpEffect : IWindowEffect
         window.PointerPressed -= OnPointerPressed;
         _heights.Remove(window);
     }
-
-    public void ApplyEvent(WindowEventType type, object? args) { }
 }

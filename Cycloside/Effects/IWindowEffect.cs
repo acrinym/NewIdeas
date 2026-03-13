@@ -10,5 +10,4 @@ public interface IWindowEffect
 
     void Attach(ISceneTarget target);
     void Detach(ISceneTarget target);
-    void ApplyEvent(WindowEventType type, object? args);
 }
