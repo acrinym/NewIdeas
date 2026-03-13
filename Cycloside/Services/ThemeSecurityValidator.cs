@@ -72,6 +72,12 @@ namespace Cycloside.Services
             if (string.IsNullOrWhiteSpace(baseDir) || string.IsNullOrWhiteSpace(relativePath))
                 return null;
 
+            if (BinaryFormatValidator.IsDataUri(relativePath))
+            {
+                Logger.Log("🛡️ Blocked data URI in path (CYC-2026-023)");
+                return null;
+            }
+
             // Block obvious traversal before even resolving
             if (relativePath.Contains(".."))
             {

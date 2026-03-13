@@ -11,7 +11,7 @@
             <RadioButton x:Name="MachineScope" Content="System/Machine" GroupName="Scope"/>
             <RadioButton x:Name="ProcessScope" Content="Process" GroupName="Scope"/>
         </StackPanel>
-        <DataGrid Grid.Row="1" x:Name="Grid" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="True" GridLinesVisibility="All">
+        <DataGrid Grid.Row="1" x:Name="Grid" ItemsSource="{Binding Items}" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="True" GridLinesVisibility="All">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Variable" Binding="{Binding Key}" Width="250"/>
                 <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>

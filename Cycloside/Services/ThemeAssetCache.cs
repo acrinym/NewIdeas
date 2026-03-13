@@ -29,6 +29,12 @@ namespace Cycloside.Services
 
                 try
                 {
+                    var ext = Path.GetExtension(path).ToLowerInvariant();
+                    if ((ext == ".ico" || ext == ".cur") && !BinaryFormatValidator.ValidateIcoCurFile(fullPath))
+                    {
+                        Logger.Log($"ThemeAssetCache: invalid ICO/CUR format: {path}");
+                        return null;
+                    }
                     using var stream = File.OpenRead(fullPath);
                     var bmp = new Bitmap(stream);
                     _cache[key] = (bmp, timestamp);
@@ -52,6 +58,12 @@ namespace Cycloside.Services
         {
             if (string.IsNullOrWhiteSpace(themeId) || string.IsNullOrWhiteSpace(path))
                 return ("", null);
+
+            if (BinaryFormatValidator.IsDataUri(path))
+            {
+                Logger.Log("ThemeAssetCache: data URI rejected (CYC-2026-023)");
+                return ("", null);
+            }
 
             if (path.Contains("..", StringComparison.Ordinal))
             {

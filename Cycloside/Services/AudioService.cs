@@ -19,6 +19,11 @@ public static class AudioService
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
         if (!ThemeSecurityValidator.CheckFileSize(path, ThemeSecurityValidator.MaxAudioFileSize))
             return;
+        if (BinaryFormatValidator.IsDataUri(path))
+            return;
+        var ext = Path.GetExtension(path).ToLowerInvariant();
+        if (ext == ".wav" && !BinaryFormatValidator.ValidateWavStructure(path))
+            return;
         try
         {
             // Limit concurrent short sound plays to avoid resource churn.

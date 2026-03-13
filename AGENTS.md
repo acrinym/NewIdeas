@@ -147,6 +147,19 @@ bd automatically syncs via Dolt:
 
 For more details, see README.md and docs/QUICKSTART.md.
 
+## Phase Workflow
+
+When executing a development phase (Phase 2, 3, etc.), follow the repeatable sequence in [docs/plans/PHASE-WORKFLOW.md](docs/plans/PHASE-WORKFLOW.md):
+
+1. **Work** — Implement phase tasks
+2. **Docs** — Document what was built (use PHASE-N-DOC-PRECATALOG)
+3. **Vuln test** — Vulnerability testing for changed areas
+4. **Code smell** — Catalog and fix (Phase 1+2 review runs after Phase 2)
+5. **Recheck** — Verify all gates pass
+6. **Git** — New branch + PR for the phase
+
+Phase doc catalog: `docs/plans/` (PHASE1-DOC-PRECATALOG, PHASE2-DOC-PRECATALOG, PHASE3-DOC-PRECATALOG).
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.

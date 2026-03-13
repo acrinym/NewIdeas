@@ -2,6 +2,35 @@
 
 This example shows a simple Avalonia theme file that covers the common resources used by Cycloside. Save the file in `Cycloside/Themes/` with a `.axaml` extension and select it from **Settings → Theme Settings**.
 
+## Theme Pack with Manifest
+
+For a full theme pack, add `theme.json`:
+
+```json
+{
+  "name": "MyTheme",
+  "version": "1.0.0",
+  "author": "You",
+  "description": "My custom theme",
+  "styles": ["Styles.axaml"],
+  "assets": {
+    "images": ["images/logo.png"],
+    "sounds": ["sounds/click.wav"]
+  },
+  "scripts": {
+    "lua": ["scripts/init.lua"]
+  }
+}
+```
+
+Example `scripts/init.lua`:
+
+```lua
+function OnApply()
+  theme.setSetting("accent", "#ff0000")
+end
+```
+
 ```xml
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Styles.Resources>

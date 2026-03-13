@@ -185,6 +185,16 @@ Campfires are **multi-perspective exploratory conversations** where different vi
 
 ---
 
+## Phase 1 Complete (2026-03)
+
+Delivered: Theme Manifest JSON, ThemeManager integration, ThemeLuaRuntime, ThemeAssetCache, ThemeDependencyResolver; CYC-2026-031 Recursive Inclusion, CYC-2026-020 XML Bomb, CYC-2026-019 Parser Confusion; ISceneTarget, WindowSceneAdapter, SceneGraph foundation, Effect migration to ISceneTarget; Manifest wired to Theme UI.
+
+## Phase 2 (In Progress)
+
+Integrity & Trust (checksum enforcement, tool, hash audit); Format & Parser Hardening (RIFF/ICO/CUR/WAV, data URI rejection); 04-Anti-Store + 05-WebTV (Unified Input, marketplace feed format); Documentation debt.
+
+---
+
 ## Security Work
 
 The security audit documented in [d:\GitHub\NewIdeas\docs\vulnerabilities\cycloside-vulnerability-catalog.md](../docs/vulnerabilities/cycloside-vulnerability-catalog.md) found and patched **18 vulnerabilities** before public release.
