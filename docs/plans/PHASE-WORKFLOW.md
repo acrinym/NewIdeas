@@ -55,14 +55,22 @@ Store all phase docs in `docs/plans/` for reuse:
 - Push to remote before ending session (per AGENTS.md "Landing the Plane")
 
 **🚨 CRITICAL TIMING RULE:**
-- **MERGE PHASE PRS IMMEDIATELY** when complete
-- DO NOT let phase PRs sit open for days/weeks
-- Each day open = higher merge conflict risk
-- If Phase N+1 work starts before Phase N merges → rebase hell
-- **Lesson learned:** Phase 1 merged while Phase 2 PR was open → massive conflicts, wasted hours
 
-**Why this matters:**
-- Phases build sequentially on shared code
-- Main branch moves forward with other work
-- Conflicts compound exponentially with time
-- Immediate merge = clean slate for next phase
+**PRs are required** (for review/CI/tracking), **BUT**:
+- **MERGE IMMEDIATELY** when phase complete (hours, not days)
+- DO NOT let phase PRs sit open waiting for "more work"
+- DO NOT start Phase N+1 until Phase N PR is merged to main
+- Each day a PR sits open = exponentially higher merge conflict risk
+
+**What went wrong (Phase 2):**
+- Phase 2 PR created and left open
+- Phase 1 PR merged to main first
+- Phase 2 had to rebase over Phase 1 changes → merge hell
+- Wasted hours resolving conflicts that wouldn't exist if Phase 2 merged first
+
+**Correct sequence:**
+1. Finish Phase N work (all 5 steps: work, docs, vuln, smell, recheck)
+2. Create PR immediately
+3. Merge PR to main same day
+4. Delete branch
+5. Now Phase N+1 can start fresh from clean main
