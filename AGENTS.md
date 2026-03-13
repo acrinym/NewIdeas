@@ -164,6 +164,11 @@ Phase doc catalog: `docs/plans/` (PHASE1-DOC-PRECATALOG, PHASE2-DOC-PRECATALOG, 
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
 
+**🚨 CRITICAL FOR PHASE WORK:**
+- If a phase PR is complete and ready, **MERGE IT IMMEDIATELY**
+- DO NOT let phase PRs sit open - they WILL conflict with later work
+- Phase PRs are time-sensitive - merge within hours, not days
+
 **MANDATORY WORKFLOW:**
 
 1. **File issues for remaining work** - Create issues for anything that needs follow-up
