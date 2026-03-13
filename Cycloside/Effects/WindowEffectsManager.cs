@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Avalonia.Controls;
-using Cycloside.Services;
 
 namespace Cycloside.Effects;
 
@@ -111,10 +110,6 @@ public class WindowEffectsManager
             foreach (var name in specific)
                 AttachEffect(window, name);
         }
-
-        // Also apply window positioning from startup configuration
-        // This integrates seamlessly - plugins just call this method and get both effects AND positioning
-        WindowPositioningService.Instance.ApplyPosition(window, key);
     }
 
     public void AttachEffect(Window window, string effectName)

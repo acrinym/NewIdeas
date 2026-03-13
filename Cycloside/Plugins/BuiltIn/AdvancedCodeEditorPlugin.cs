@@ -20,7 +20,6 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Professional code editor with syntax highlighting and IntelliSense";
         public Version Version => new(1, 0, 0);
         public bool ForceDefaultTheme => false;
-        public PluginCategory Category => PluginCategory.Development;
 
         public class AdvancedCodeEditorWidget : IWidget
         {

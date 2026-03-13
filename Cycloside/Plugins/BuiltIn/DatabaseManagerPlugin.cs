@@ -22,7 +22,6 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Professional database management and SQL editing toolkit";
         public Version Version => new(1, 0, 0);
         public bool ForceDefaultTheme => false;
-        public PluginCategory Category => PluginCategory.Development;
         public IWidget? Widget => new DatabaseManagerWidget();
 
         public void Start()

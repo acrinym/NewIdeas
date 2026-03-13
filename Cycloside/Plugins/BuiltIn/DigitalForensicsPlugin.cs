@@ -29,7 +29,6 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Comprehensive digital evidence analysis and investigation toolkit";
         public Version Version => new(1, 0, 0);
         public bool ForceDefaultTheme => false;
-        public PluginCategory Category => PluginCategory.Security;
 
         public class DigitalForensicsWidget : IWidget
         {

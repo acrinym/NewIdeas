@@ -23,7 +23,6 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Intelligent code assistance and cybersecurity guidance";
         public Version Version => new(1, 0, 0);
         public bool ForceDefaultTheme => false;
-        public PluginCategory Category => PluginCategory.Development;
 
         public class AiAssistantWidget : IWidget
         {
