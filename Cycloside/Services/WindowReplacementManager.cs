@@ -24,9 +24,9 @@ namespace Cycloside.Services
         {
             try
             {
-                if (!File.Exists(replacementFile))
+                if (!ValidateWindowReplacement(replacementFile))
                 {
-                    Logger.Log($"Window replacement file not found: {replacementFile}");
+                    Logger.Log($"Window replacement file not found or failed security validation: {replacementFile}");
                     return false;
                 }
 
@@ -70,6 +70,12 @@ namespace Cycloside.Services
         {
             try
             {
+                if (!ThemeSecurityValidator.IsValidPackName(skinName))
+                {
+                    Logger.Log($"🛡️ Invalid skin name rejected: {skinName}");
+                    return false;
+                }
+
                 // Check if skin supports window replacement for this window type
                 if (!await SkinManager.SupportsWindowReplacementAsync(skinName, windowType))
                 {
@@ -80,18 +86,22 @@ namespace Cycloside.Services
                 var skinDir = Path.Combine(AppContext.BaseDirectory, "Skins", skinName);
                 var manifestPath = Path.Combine(skinDir, "skin.json");
 
-                if (!File.Exists(manifestPath))
+                var manifestContent = await ThemeSecurityValidator.SafeReadAllTextAsync(manifestPath, ThemeSecurityValidator.MaxManifestFileSize);
+                if (manifestContent == null)
                 {
-                    Logger.Log($"Skin manifest not found for window replacement: {skinName}");
+                    Logger.Log($"Skin manifest not found or too large for window replacement: {skinName}");
                     return false;
                 }
-
-                var manifestContent = await File.ReadAllTextAsync(manifestPath);
                 var manifest = System.Text.Json.JsonSerializer.Deserialize<SkinManifest>(manifestContent);
 
                 if (manifest?.ReplaceWindows?.TryGetValue(windowType, out var replacementFile) == true)
                 {
-                    var replacementPath = Path.Combine(skinDir, replacementFile);
+                    var replacementPath = ThemeSecurityValidator.ResolveSafePath(skinDir, replacementFile);
+                    if (replacementPath == null)
+                    {
+                        Logger.Log($"🛡️ Blocked unsafe replacement path: {replacementFile}");
+                        return false;
+                    }
                     return await ReplaceWindowContentAsync(window, replacementPath);
                 }
 
@@ -111,23 +121,9 @@ namespace Cycloside.Services
         /// <returns>True if valid, false otherwise</returns>
         public static bool ValidateWindowReplacement(string replacementFile)
         {
-            try
-            {
-                if (!File.Exists(replacementFile))
-                    return false;
-
-                var content = File.ReadAllText(replacementFile);
-
-                // Basic XAML validation - check for valid root element
-                return content.Contains("<") &&
-                       content.Contains(">") &&
-                       (content.Contains("Window") || content.Contains("UserControl") || content.Contains("ContentControl"));
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"Error validating window replacement file: {ex.Message}");
-                return false;
-            }
+            var content = ThemeSecurityValidator.SafeReadAllText(replacementFile, ThemeSecurityValidator.MaxAxamlFileSize);
+            if (content == null) return false;
+            return ThemeSecurityValidator.IsAxamlContentSafe(content);
         }
 
         /// <summary>
@@ -144,18 +140,16 @@ namespace Cycloside.Services
                 var skinDir = Path.Combine(AppContext.BaseDirectory, "Skins", skinName);
                 var manifestPath = Path.Combine(skinDir, "skin.json");
 
-                if (!File.Exists(manifestPath))
-                    return replacements;
-
-                var manifestContent = await File.ReadAllTextAsync(manifestPath);
+                var manifestContent = await ThemeSecurityValidator.SafeReadAllTextAsync(manifestPath, ThemeSecurityValidator.MaxManifestFileSize);
+                if (manifestContent == null) return replacements;
                 var manifest = System.Text.Json.JsonSerializer.Deserialize<SkinManifest>(manifestContent);
 
                 if (manifest?.ReplaceWindows != null)
                 {
                     foreach (var kvp in manifest.ReplaceWindows)
                     {
-                        var replacementPath = Path.Combine(skinDir, kvp.Value);
-                        if (File.Exists(replacementPath) && ValidateWindowReplacement(replacementPath))
+                        var replacementPath = ThemeSecurityValidator.ResolveSafePath(skinDir, kvp.Value);
+                        if (replacementPath != null && ValidateWindowReplacement(replacementPath))
                         {
                             replacements[kvp.Key] = replacementPath;
                         }

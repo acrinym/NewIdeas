@@ -1,9 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Cycloside.Models;
 using Cycloside.Plugins;
 using Cycloside.Services;
-using Cycloside.Views;
 
 namespace Cycloside;
 
@@ -41,18 +39,4 @@ public partial class MainWindow : Window
 
     private void OpenControlPanel(object? sender, RoutedEventArgs e) =>
         new ControlPanelWindow(_manager).Show();
-
-    private async void OpenStartupCustomization(object? sender, RoutedEventArgs e)
-    {
-        var window = new StartupConfigurationWindow(_manager, config =>
-        {
-            // Save the new configuration
-            SettingsManager.Settings.StartupConfig = config;
-            SettingsManager.Save();
-
-            Services.Logger.Log("Startup configuration updated by user");
-        });
-
-        await window.ShowDialog(this);
-    }
 }

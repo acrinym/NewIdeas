@@ -25,6 +25,9 @@
     <Content Include="Themes\Global\*.axaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <!-- Exclude Campfires PoC files (intentionally malformed XAML for security testing) -->
+    <Content Remove="Campfires\**\*.axaml" />
+    <AvaloniaResource Remove="Campfires\**\*.axaml" />
   </ItemGroup>
   
   <ItemGroup>

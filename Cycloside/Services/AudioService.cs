@@ -17,6 +17,8 @@ public static class AudioService
     public static void Play(string? path)
     {
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
+        if (!ThemeSecurityValidator.CheckFileSize(path, ThemeSecurityValidator.MaxAudioFileSize))
+            return;
         try
         {
             // Limit concurrent short sound plays to avoid resource churn.
@@ -30,12 +32,28 @@ public static class AudioService
             var output = new WaveOutEvent();
             output.Init(reader);
             output.Play();
-            output.PlaybackStopped += (_, _) =>
+
+            // Timeout safety: if PlaybackStopped never fires (corrupted audio,
+            // NAudio bug), force cleanup after 30 seconds to prevent permanent
+            // resource leak and _active counter exhaustion (CYC-2026-018).
+            bool cleaned = false;
+            var cleanupLock = new object();
+            void Cleanup()
             {
-                output.Dispose();
-                reader.Dispose();
+                lock (cleanupLock)
+                {
+                    if (cleaned) return;
+                    cleaned = true;
+                }
+                try { output.Stop(); } catch { }
+                try { output.Dispose(); } catch { }
+                try { reader.Dispose(); } catch { }
                 System.Threading.Interlocked.Decrement(ref _active);
-            };
+            }
+
+            output.PlaybackStopped += (_, _) => Cleanup();
+
+            System.Threading.Tasks.Task.Delay(30_000).ContinueWith(_ => Cleanup());
         }
         catch (Exception ex)
         {

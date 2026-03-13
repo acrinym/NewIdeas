@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -203,6 +205,18 @@ namespace Cycloside.Services
         }
 
         /// <summary>
+        /// Compute SHA-256 hash of content and return lowercase hex string (CYC-2026-030).
+        /// </summary>
+        private static string ComputeSha256Hex(byte[] content)
+        {
+            var hash = SHA256.HashData(content);
+            var sb = new StringBuilder(hash.Length * 2);
+            foreach (var b in hash)
+                sb.Append(b.ToString("x2"));
+            return sb.ToString();
+        }
+
+        /// <summary>
         /// Download all files for a plugin
         /// </summary>
         private static async Task<bool> DownloadPluginFilesAsync(PluginManifest plugin, string pluginPath)
@@ -222,6 +236,22 @@ namespace Cycloside.Services
 
                     var content = await response.Content.ReadAsByteArrayAsync();
                     var filePath = Path.Combine(pluginPath, file.Path);
+
+                    // CYC-2026-030: Validate integrity before writing to disk
+                    if (!string.IsNullOrWhiteSpace(file.Checksum))
+                    {
+                        var computed = ComputeSha256Hex(content);
+                        var expected = file.Checksum.Trim().ToLowerInvariant();
+                        if (string.Compare(computed, expected, StringComparison.OrdinalIgnoreCase) != 0)
+                        {
+                            Logger.Log($"❌ Integrity check failed for {file.Path}: checksum mismatch (expected {expected}, got {computed})");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Logger.Log($"⚠️ No checksum in manifest for {file.Path}; install allowed but integrity not verified");
+                    }
 
                     // Ensure directory exists
                     var directory = Path.GetDirectoryName(filePath);

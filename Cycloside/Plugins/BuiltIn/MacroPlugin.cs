@@ -52,7 +52,6 @@ public class MacroPlugin : IPlugin
     public Version Version => new(2, 0, 0);
     public Widgets.IWidget? Widget => null;
     public bool ForceDefaultTheme => false;
-        public PluginCategory Category => PluginCategory.TinkererTools;
 
     // FIXED: The internal 'MacroEvent' class has been removed from this file.
     // It now uses the public 'MacroEvent' class defined in MacroManager.cs.

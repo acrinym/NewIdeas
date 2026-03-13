@@ -26,7 +26,6 @@ namespace Cycloside.Plugins.BuiltIn
         public Version Version => new Version(0, 2, 0); // Incremented for improvements
         public Widgets.IWidget? Widget => null;
         public bool ForceDefaultTheme => false;
-        public PluginCategory Category => PluginCategory.DesktopCustomization;
 
         public void Start()
         {

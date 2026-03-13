@@ -43,30 +43,52 @@ public static class WallpaperHelper
                                Environment.GetEnvironmentVariable("DESKTOP_SESSION") ?? string.Empty;
                 var lowered = desktop.ToLowerInvariant();
                 var recognized = true;
-                var safePath = path.Replace("\"", "\\\"").Replace("'", "\\'");
                 try
                 {
                     if (lowered.Contains("kde"))
                     {
-                        var script = $"var Desktops = desktops();for (i=0;i<Desktops.length;i++){{d=Desktops[i];d.wallpaperPlugin='org.kde.image';d.currentConfigGroup=['Wallpaper','org.kde.image','General'];d.writeConfig('Image','file://{safePath}');}}";
-                        Process.Start("qdbus", $"org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \"{script}\"");
+                        var encodedPath = Uri.EscapeDataString(path);
+                        var script = $"var Desktops = desktops();for (i=0;i<Desktops.length;i++){{d=Desktops[i];d.wallpaperPlugin='org.kde.image';d.currentConfigGroup=['Wallpaper','org.kde.image','General'];d.writeConfig('Image','file://{encodedPath}');}}";
+                        var psi = new ProcessStartInfo { FileName = "qdbus" };
+                        psi.ArgumentList.Add("org.kde.plasmashell");
+                        psi.ArgumentList.Add("/PlasmaShell");
+                        psi.ArgumentList.Add("org.kde.PlasmaShell.evaluateScript");
+                        psi.ArgumentList.Add(script);
+                        Process.Start(psi);
                     }
                     else if (lowered.Contains("gnome") || lowered.Contains("unity") || lowered.Contains("cinnamon"))
                     {
-                        Process.Start("gsettings", $"set org.gnome.desktop.background picture-uri \"file://{path}\"");
+                        var psi = new ProcessStartInfo { FileName = "gsettings" };
+                        psi.ArgumentList.Add("set");
+                        psi.ArgumentList.Add("org.gnome.desktop.background");
+                        psi.ArgumentList.Add("picture-uri");
+                        psi.ArgumentList.Add($"file://{path}");
+                        Process.Start(psi);
                     }
                     else if (lowered.Contains("xfce"))
                     {
-                        Process.Start("xfconf-query", $"-c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s \"{path}\"");
+                        var psi = new ProcessStartInfo { FileName = "xfconf-query" };
+                        psi.ArgumentList.Add("-c");
+                        psi.ArgumentList.Add("xfce4-desktop");
+                        psi.ArgumentList.Add("-p");
+                        psi.ArgumentList.Add("/backdrop/screen0/monitor0/image-path");
+                        psi.ArgumentList.Add("-s");
+                        psi.ArgumentList.Add(path);
+                        Process.Start(psi);
                     }
                     else if (lowered.Contains("lxde"))
                     {
-                        Process.Start("pcmanfm", $"--set-wallpaper={path}");
+                        var psi = new ProcessStartInfo { FileName = "pcmanfm" };
+                        psi.ArgumentList.Add($"--set-wallpaper={path}");
+                        Process.Start(psi);
                     }
                     else
                     {
                         recognized = false;
-                        Process.Start("feh", $"--bg-scale {path}");
+                        var psi = new ProcessStartInfo { FileName = "feh" };
+                        psi.ArgumentList.Add("--bg-scale");
+                        psi.ArgumentList.Add(path);
+                        Process.Start(psi);
                     }
                 }
                 catch (Exception ex)

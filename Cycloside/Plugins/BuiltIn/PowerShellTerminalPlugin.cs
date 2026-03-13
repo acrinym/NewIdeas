@@ -25,7 +25,6 @@ namespace Cycloside.Plugins.BuiltIn
         public string Description => "Advanced PowerShell terminal with elevation and auto-detection";
         public Version Version => new(1, 0, 0);
         public bool ForceDefaultTheme => false;
-        public PluginCategory Category => PluginCategory.Development;
 
         public class PowerShellTerminalWidget : IWidget
         {
