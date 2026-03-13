@@ -149,3 +149,24 @@ From Campfire 07 (Michael Dell shipping order):
 | #296 | ⚠️ Review | Check conflicts with Phase 1 theming |
 | #295 | ❌ Close | Shell work is Phase 4+ |
 | Dependabot (#288, #293, #298) | ❌ Close | Avalonia submodule, not runtime |
+
+---
+
+## Actions Taken (2026-03-12)
+
+### ✅ Merged
+- **#299** (Phase 1) - Merged to main
+
+### ✅ Created
+- **#305** (Phase 2) - Created from `phase-2-integrity-unified-input` branch
+  - Includes: Integrity validation, format hardening, unified input, marketplace feed
+  - Supersedes #301
+  - Avalonia-master submodule removed (now separate repo)
+
+### ✅ Closed
+- **#301** (Post-Phase 1) - Closed, superseded by #305
+- **#295** (Full shell/session) - Closed, deferred to Phase 4+
+- **Dependabot PRs (#286-298)** - Closed/merged (Avalonia submodule removed)
+
+### ⚠️ Pending User Decision
+- **#296** (Salvage: cursor/audio/Winamp themes) - Awaiting decision for Phase 2/3 merge or defer
