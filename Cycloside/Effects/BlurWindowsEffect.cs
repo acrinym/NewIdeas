@@ -23,6 +23,4 @@ public class BlurWindowsEffect : IWindowEffect
         if (window.Effect is BlurEffect)
             window.Effect = null;
     }
-
-    public void ApplyEvent(WindowEventType type, object? args) { }
 }

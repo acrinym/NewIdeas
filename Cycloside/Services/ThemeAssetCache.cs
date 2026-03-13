@@ -21,20 +21,23 @@ namespace Cycloside.Services
             if (fullPath == null || !File.Exists(fullPath)) return null;
 
             var key = $"{themeId}:img:{path}";
+            var timestamp = File.GetLastWriteTimeUtc(fullPath);
             lock (_lock)
             {
-                if (_cache.TryGetValue(key, out var entry))
-                {
-                    var fi = new FileInfo(fullPath);
-                    if (fi.LastWriteTimeUtc <= entry.Timestamp)
-                        return entry.Asset as Bitmap;
-                }
+                if (_cache.TryGetValue(key, out var entry) && timestamp <= entry.Timestamp)
+                    return entry.Asset as Bitmap;
 
                 try
                 {
+                    var ext = Path.GetExtension(path).ToLowerInvariant();
+                    if ((ext == ".ico" || ext == ".cur") && !BinaryFormatValidator.ValidateIcoCurFile(fullPath))
+                    {
+                        Logger.Log($"ThemeAssetCache: invalid ICO/CUR format: {path}");
+                        return null;
+                    }
                     using var stream = File.OpenRead(fullPath);
                     var bmp = new Bitmap(stream);
-                    _cache[key] = (bmp, File.GetLastWriteTimeUtc(fullPath));
+                    _cache[key] = (bmp, timestamp);
                     return bmp;
                 }
                 catch (Exception ex)
@@ -55,6 +58,12 @@ namespace Cycloside.Services
         {
             if (string.IsNullOrWhiteSpace(themeId) || string.IsNullOrWhiteSpace(path))
                 return ("", null);
+
+            if (BinaryFormatValidator.IsDataUri(path))
+            {
+                Logger.Log("ThemeAssetCache: data URI rejected (CYC-2026-023)");
+                return ("", null);
+            }
 
             if (path.Contains("..", StringComparison.Ordinal))
             {

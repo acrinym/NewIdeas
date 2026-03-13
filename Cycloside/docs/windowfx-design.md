@@ -15,7 +15,6 @@ public interface IWindowEffect
     string Description { get; }
     void Attach(Avalonia.Controls.Window window);
     void Detach(Avalonia.Controls.Window window);
-    void ApplyEvent(WindowEventType type, object? args);
 }
 ```
 

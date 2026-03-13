@@ -27,7 +27,8 @@ namespace Cycloside.Scene
             return new WindowSceneAdapter(window);
         }
 
-        public PixelRect Bounds => new PixelRect(_window.Position, new PixelSize(Math.Max(1, (int)_window.ClientSize.Width), Math.Max(1, (int)_window.ClientSize.Height)));
+        private const int MinBoundsSize = 1;
+        public PixelRect Bounds => new PixelRect(_window.Position, new PixelSize(Math.Max(MinBoundsSize, (int)_window.ClientSize.Width), Math.Max(MinBoundsSize, (int)_window.ClientSize.Height)));
         public PixelPoint Position { get => _window.Position; set => _window.Position = value; }
         public double Opacity { get => _window.Opacity; set => _window.Opacity = value; }
         public bool IsVisible => _window.IsVisible;

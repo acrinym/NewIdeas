@@ -25,14 +25,19 @@ public partial class SkinPreviewWindow : Window
 
     /// <summary>
     /// Loads the provided XAML markup and replaces the preview content.
-    /// Validates content before parse to block XML bomb and other attacks (CYC-2026-020).
+    /// Validates content before parse (CYC-2026-020, CYC-2026-019).
     /// </summary>
     public void LoadPreview(string xaml)
     {
         if (_host == null) return;
+        if (string.IsNullOrWhiteSpace(xaml))
+        {
+            _host.Content = new TextBlock { Text = "No content to preview" };
+            return;
+        }
         if (!ThemeSecurityValidator.IsAxamlContentSafe(xaml))
         {
-            _host.Content = new TextBlock { Text = "Content blocked: unsafe AXAML (e.g. DTD/entities)", Foreground = Brushes.Red, TextWrapping = TextWrapping.Wrap };
+            _host.Content = new TextBlock { Text = "Content blocked: unsafe AXAML", Foreground = Brushes.Red, TextWrapping = TextWrapping.Wrap };
             return;
         }
         try

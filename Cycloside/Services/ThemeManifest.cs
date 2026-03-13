@@ -58,7 +58,8 @@ namespace Cycloside.Services
 
             try
             {
-                var json = File.ReadAllText(path);
+                var json = ThemeSecurityValidator.SafeReadAllText(path, ThemeSecurityValidator.MaxManifestFileSize);
+                if (json == null) return null;
                 return JsonSerializer.Deserialize<ThemeManifest>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true,

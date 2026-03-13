@@ -20,7 +20,6 @@ namespace Cycloside.Services
     public static class ThemeManager
     {
         private static readonly Dictionary<string, StyleInclude> _themeCache = new();
-        private static readonly Dictionary<string, StyleInclude> _variantCache = new();
         private static readonly Dictionary<string, DateTime> _fileTimestamps = new();
         private static readonly object _cacheLock = new object();
 
@@ -88,7 +87,6 @@ namespace Cycloside.Services
             lock (_cacheLock)
             {
                 _themeCache.Clear();
-                _variantCache.Clear();
                 _fileTimestamps.Clear();
                 Logger.Log("🗑️ Theme cache cleared");
             }
@@ -136,10 +134,23 @@ namespace Cycloside.Services
                 {
                     CurrentManifest = null;
                 }
-                else if (!await LoadSubthemeAsync(themeName))
+                else
                 {
-                    Logger.Log($"Failed to load subtheme pack: {themeName}");
-                    return false;
+                    var globalPath = Path.Combine(AppContext.BaseDirectory, "Themes", "Global", themeName + ".axaml");
+                    if (File.Exists(globalPath))
+                    {
+                        if (!await LoadGlobalSingleFileThemeAsync(globalPath))
+                        {
+                            Logger.Log($"Failed to load global theme file: {themeName}");
+                            return false;
+                        }
+                        CurrentManifest = null;
+                    }
+                    else if (!await LoadSubthemeAsync(themeName))
+                    {
+                        Logger.Log($"Failed to load subtheme pack: {themeName}");
+                        return false;
+                    }
                 }
 
                 // Update current theme state
@@ -376,6 +387,33 @@ namespace Cycloside.Services
             }
         }
 
+        /// <summary>
+        /// Loads a single AXAML file from Themes/Global (e.g. DarkExample.axaml).
+        /// Used when user selects a global theme from Theme Settings; avoids requiring a pack directory.
+        /// </summary>
+        private static Task<bool> LoadGlobalSingleFileThemeAsync(string fullPath)
+        {
+            try
+            {
+                ClearSubthemeStyles();
+                if (!ThemeIncludeValidator.ValidateGraph(fullPath))
+                {
+                    Logger.Log($"Theme validation failed for global theme: {fullPath}");
+                    return Task.FromResult(false);
+                }
+                var uri = new Uri($"file:///{fullPath.Replace('\\', '/')}");
+                var styleInclude = new StyleInclude(uri) { Source = uri };
+                if (Application.Current != null)
+                    Application.Current.Styles.Add(styleInclude);
+                return Task.FromResult(true);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Failed to load global theme file '{fullPath}': {ex.Message}");
+                return Task.FromResult(false);
+            }
+        }
+
         private static void ClearVariantTokens()
         {
             if (Application.Current?.Styles == null) return;
@@ -545,17 +583,6 @@ namespace Cycloside.Services
         }
 
         /// <summary>
-        /// Validates theme file and performs safety checks
-        /// </summary>
-        private static bool ValidateThemeFile(string filePath)
-        {
-            var content = ThemeSecurityValidator.SafeReadAllText(filePath, ThemeSecurityValidator.MaxAxamlFileSize);
-            if (content == null)
-                return false;
-            return ThemeSecurityValidator.IsAxamlContentSafe(content);
-        }
-
-        /// <summary>
         /// Checks if cached resource is up to date based on file timestamp
         /// </summary>
         private static bool IsCachedUpToDate(string cacheKey, string filePath)
@@ -589,9 +616,11 @@ namespace Cycloside.Services
         /// </summary>
         private static void CacheStyleInclude(string cacheKey, StyleInclude styleInclude, string filePath)
         {
+            var clone = CloneStyleInclude(styleInclude);
+            if (clone == null) return;
             lock (_cacheLock)
             {
-                _themeCache[cacheKey] = CloneStyleInclude(styleInclude);
+                _themeCache[cacheKey] = clone;
                 _fileTimestamps[cacheKey] = File.GetLastWriteTime(filePath);
             }
         }
@@ -636,9 +665,11 @@ namespace Cycloside.Services
         /// <summary>
         /// Creates a clone of StyleInclude for caching
         /// </summary>
-        private static StyleInclude CloneStyleInclude(StyleInclude original)
+        private static StyleInclude? CloneStyleInclude(StyleInclude original)
         {
-            return new StyleInclude(original.Source!) { Source = original.Source };
+            var src = original.Source;
+            if (src == null) return null;
+            return new StyleInclude(src) { Source = src };
         }
 
     }

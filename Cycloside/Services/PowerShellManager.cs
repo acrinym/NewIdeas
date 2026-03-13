@@ -124,9 +124,48 @@ namespace Cycloside.Services
             }
             else
             {
-                _powerShellPath = null;
-                _powerShellVersion = null;
+                // Fallback: try powershell.exe from PATH (Windows PowerShell 5.1)
+                var pathExe = FindInPath("powershell.exe");
+                if (!string.IsNullOrEmpty(pathExe))
+                {
+                    var version = await GetPowerShellVersionAsync(pathExe);
+                    if (version != null)
+                    {
+                        _powerShellPath = pathExe;
+                        _powerShellVersion = version;
+                        LogStatus($"💻 PowerShell {_powerShellVersion} (from PATH)");
+                    }
+                }
+                if (string.IsNullOrEmpty(_powerShellPath))
+                {
+                    _powerShellPath = null;
+                    _powerShellVersion = null;
+                }
             }
+        }
+
+        private static string? FindInPath(string fileName)
+        {
+            var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+            var pathExt = Environment.GetEnvironmentVariable("PATHEXT") ?? ".EXE;.COM;.BAT;.CMD";
+            var extensions = pathExt.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var dir in pathEnv.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var dirTrim = dir.Trim();
+                if (string.IsNullOrEmpty(dirTrim)) continue;
+                try
+                {
+                    var fullPath = Path.Combine(dirTrim, fileName);
+                    if (File.Exists(fullPath)) return fullPath;
+                    foreach (var ext in extensions)
+                    {
+                        var withExt = fullPath + ext.Trim();
+                        if (File.Exists(withExt)) return withExt;
+                    }
+                }
+                catch { /* skip invalid paths */ }
+            }
+            return null;
         }
 
         /// <summary>
@@ -139,7 +178,7 @@ namespace Cycloside.Services
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = path,
-                    Arguments = "-NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command \"$PSVersionTable.PSVersion\"",
+                    Arguments = "-NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command \"$PSVersionTable.PSVersion.ToString()\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

@@ -2,6 +2,22 @@
 
 Cycloside now features a **dynamic theming and skinning system** built on Avalonia's FluentTheme with semantic tokens and selector-driven skins.
 
+## Theme Manifest (theme.json)
+
+Themes can include a `theme.json` manifest for metadata, Lua scripts, and asset bundling. See [theme-manifest-schema.md](theme-manifest-schema.md).
+
+## Theme Lua Scripts
+
+Theme scripts run in a sandboxed Lua runtime. See [theme-lua-api.md](theme-lua-api.md) for the `theme` and `system` tables.
+
+## Theme Asset Cache
+
+Load theme assets via `ThemeAssetCache.GetImage(themeId, path)` and `ThemeAssetCache.GetAssetPath(themeId, path)`. Paths are relative to the theme directory.
+
+## Theme Dependencies
+
+`ThemeDependencyResolver.ResolveOrder(manifest)` returns load order; circular dependencies throw.
+
 ## Architecture Overview
 
 The system operates on a hierarchical merge order (bottom to top):
@@ -59,17 +75,16 @@ The system supports three built-in theme variants with automatic token switching
 - **Dark Theme** (`Cycloside/Themes/DarkTheme/Tokens.axaml`)  
 - **High Contrast Theme** (`Cycloside/Themes/HighContrastTheme/Tokens.axaml`)
 
-### Theme Manifest (theme.json)
-
-Theme packs can include a `theme.json` manifest with name, author, description, version, styles, Lua scripts, and dependencies. See [theme-manifest-schema.md](theme-manifest-schema.md). `ThemeManager.CurrentManifest` exposes the current theme's manifest. Theme Settings UI displays manifest info when available.
-
 ### Dynamic Theme Switching
 
 ```csharp
 // Apply theme variant
 await ThemeManager.ApplyVariantAsync(ThemeVariant.Dark);
 
-// Apply theme pack (loads theme.json if present)
+// Apply subtheme pack
+await ThemeManager.ApplySubthemeAsync("MyCustomTheme");
+
+// Apply both simultaneously
 await ThemeManager.ApplyThemeAsync("MyCustomTheme", ThemeVariant.Light);
 
 // Initialize from settings

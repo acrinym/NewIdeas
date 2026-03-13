@@ -41,8 +41,6 @@ public class TransparencyEffect : IWindowEffect
         _blurHandlers.Remove(target);
     }
 
-    public void ApplyEvent(WindowEventType type, object? args) { }
-
     private static void Animate(ISceneTarget target, double value)
     {
         var window = EffectTargetHelper.GetWindow(target);

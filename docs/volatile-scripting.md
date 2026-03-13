@@ -53,17 +53,6 @@ public static class Script
 }
 ```
 
-## Theme Lua vs Volatile Lua
-
-| Feature | Theme Lua | Volatile Lua |
-|---------|-----------|--------------|
-| When runs | On theme apply | On demand (user runs) |
-| Sandbox | Yes (theme dir only) | No (full access) |
-| API | `theme.*`, `system.log` | `PluginBus`, `Logger`, `ThemeManager`, etc. |
-| Location | In theme pack, listed in theme.json | User-selected file |
-
-Theme Lua scripts are defined in `theme.json` and run when a theme is applied. See [theme-lua-api.md](theme-lua-api.md). Volatile Lua has full access for prototyping and testing.
-
 ## Tips
 
 - Scripts share the global `PluginBus` for communication.

@@ -38,8 +38,6 @@ public class DodgeFocusEffect : IWindowEffect
         _focusHandlers.Remove(target);
     }
 
-    public void ApplyEvent(WindowEventType type, object? args) { }
-
     private void OnBlur(ISceneTarget target)
     {
         AnimatePosition(target, offsetX: 16, offsetY: 12, durationMs: 140);
@@ -56,7 +54,7 @@ public class DodgeFocusEffect : IWindowEffect
         var end = new PixelPoint(start.X + offsetX, start.Y + offsetY);
         var duration = TimeSpan.FromMilliseconds(durationMs);
         var startTime = DateTime.UtcNow;
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(EffectConstants.TickIntervalMs) };
         timer.Tick += (_, _) =>
         {
             var t = DateTime.UtcNow - startTime;
@@ -65,6 +63,7 @@ public class DodgeFocusEffect : IWindowEffect
             {
                 target.Position = end;
                 timer.Stop();
+                (timer as IDisposable)?.Dispose();
                 return;
             }
             var ease = 1 - Math.Pow(1 - p, 3);

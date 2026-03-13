@@ -143,11 +143,11 @@ Tips:
             Velocity = velocity;
         }
 
-        public void Update(double dt, Rect bounds)
+        public void Update(double dt, Rect bounds, IReadOnlyList<Wall> completedWalls)
         {
             Position += Velocity * dt;
 
-            // Bounce off walls
+            // Bounce off outer bounds
             if (Position.X - Radius <= bounds.Left || Position.X + Radius >= bounds.Right)
             {
                 Velocity = new Vector(-Velocity.X, Velocity.Y);
@@ -164,6 +164,40 @@ Tips:
                     Position.X,
                     Math.Max(bounds.Top + Radius, Math.Min(bounds.Bottom - Radius, Position.Y))
                 );
+            }
+
+            // Bounce off completed walls
+            foreach (var wall in completedWalls)
+            {
+                if (!wall.Active && wall.Intersects(this))
+                {
+                    BounceOffWall(wall);
+                }
+            }
+        }
+
+        private void BounceOffWall(Wall wall)
+        {
+            JezzballSound.Play(JezzballSoundEvent.BallBounce);
+            var (start, end) = wall.GetEndpoints();
+            var dx = end.X - start.X;
+            var dy = end.Y - start.Y;
+            var len = Math.Sqrt(dx * dx + dy * dy);
+            if (len == 0) return;
+
+            var nx = -dy / len;
+            var ny = dx / len;
+            var dot = Velocity.X * nx + Velocity.Y * ny;
+            Velocity = new Vector(Velocity.X - 2 * dot * nx, Velocity.Y - 2 * dot * ny);
+
+            var closestT = Math.Max(0, Math.Min(1,
+                ((Position.X - start.X) * dx + (Position.Y - start.Y) * dy) / (len * len)));
+            var closest = new Point(start.X + closestT * dx, start.Y + closestT * dy);
+            var dist = Math.Sqrt((Position.X - closest.X) * (Position.X - closest.X) + (Position.Y - closest.Y) * (Position.Y - closest.Y));
+            if (dist > 0)
+            {
+                var push = (Radius + 2 - dist) / dist;
+                Position = new Point(Position.X + (Position.X - closest.X) * push, Position.Y + (Position.Y - closest.Y) * push);
             }
         }
 
@@ -208,7 +242,13 @@ Tips:
         public void Draw(DrawingContext context)
         {
             if (Length <= 0) return;
+            var (start, end) = GetEndpoints();
+            var pen = new Pen(Brushes.Cyan, 4, lineCap: PenLineCap.Round);
+            context.DrawLine(pen, start, end);
+        }
 
+        public (Point start, Point end) GetEndpoints()
+        {
             var start = Origin;
             var end = Direction switch
             {
@@ -218,24 +258,14 @@ Tips:
                 "down" => new Point(Origin.X, Origin.Y + Length),
                 _ => Origin
             };
-
-            var pen = new Pen(Brushes.Cyan, 4, lineCap: PenLineCap.Round);
-            context.DrawLine(pen, start, end);
+            return (start, end);
         }
 
         public bool Intersects(Ball ball)
         {
             if (Length <= 0) return false;
 
-            var start = Origin;
-            var end = Direction switch
-            {
-                "left" => new Point(Origin.X - Length, Origin.Y),
-                "right" => new Point(Origin.X + Length, Origin.Y),
-                "up" => new Point(Origin.X, Origin.Y - Length),
-                "down" => new Point(Origin.X, Origin.Y + Length),
-                _ => Origin
-            };
+            var (start, end) = GetEndpoints();
 
             // Simple line-circle intersection
             var dx = end.X - start.X;
@@ -292,7 +322,7 @@ Tips:
         private readonly List<Wall> _walls = new();
         private readonly List<GridCell> _grid = new();
         private readonly Random _random = new();
-        private readonly Size _gameSize;
+        private Size _gameSize;
         private readonly double _gridSize = 20;
 
         public IReadOnlyList<Ball> Balls => _balls;
@@ -355,11 +385,12 @@ Tips:
         {
             if (IsPaused || RoundState != "running") return;
 
-            // Update balls
+            // Update balls (bounce off outer bounds and completed walls)
             var bounds = new Rect(0, 0, _gameSize.Width, _gameSize.Height);
+            var completedWalls = _walls.Where(w => !w.Active).ToList();
             foreach (var ball in _balls)
             {
-                ball.Update(dt, bounds);
+                ball.Update(dt, bounds, completedWalls);
             }
 
             // Update walls
@@ -539,6 +570,17 @@ Tips:
             AreaCleared = 0;
             StartLevel();
         }
+
+        public void Resize(Size newSize)
+        {
+            if (newSize.Width < 100 || newSize.Height < 100) return;
+            _gameSize = newSize;
+            InitializeGrid();
+            if (RoundState == "running")
+            {
+                StartLevel();
+            }
+        }
     }
 
     internal class JezzballControl : UserControl, IDisposable
@@ -549,6 +591,7 @@ Tips:
         private Point _mousePosition;
         private string _wallDirection = "Horizontal";
         private bool _showGrid = true;
+        private Canvas? _gameCanvas;
 
         private readonly TextBlock _levelText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
         private readonly TextBlock _livesText = new() { Margin = new Thickness(10, 0), Foreground = Brushes.WhiteSmoke };
@@ -565,12 +608,13 @@ Tips:
             };
             _timer.Tick += GameTick;
 
-            var canvas = new Canvas
+            _gameCanvas = new Canvas
             {
-                Background = Brushes.Transparent // Make canvas hit-testable for pointer events
+                Background = Brushes.Transparent,
+                Cursor = new Cursor(StandardCursorType.SizeWestEast)
             };
-            canvas.PointerMoved += OnPointerMoved;
-            canvas.PointerPressed += OnPointerPressed;
+            _gameCanvas.PointerMoved += OnPointerMoved;
+            _gameCanvas.PointerPressed += OnPointerPressed;
 
             var statusBar = new StackPanel
             {
@@ -588,7 +632,7 @@ Tips:
             var mainPanel = new DockPanel();
             DockPanel.SetDock(statusBar, Dock.Top);
             mainPanel.Children.Add(statusBar);
-            mainPanel.Children.Add(canvas);
+            mainPanel.Children.Add(_gameCanvas);
 
             Content = mainPanel;
 
@@ -611,6 +655,14 @@ Tips:
             _mousePosition = e.GetPosition(sender as Control);
         }
 
+        private void UpdateCursor(Canvas? canvas)
+        {
+            if (canvas == null) return;
+            canvas.Cursor = new Cursor(_wallDirection == "Horizontal"
+                ? StandardCursorType.SizeWestEast
+                : StandardCursorType.SizeNorthSouth);
+        }
+
         private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
             if (_gameState.RoundState != "running") return;
@@ -619,8 +671,8 @@ Tips:
 
             if (e.GetCurrentPoint(sender as Control).Properties.IsRightButtonPressed)
             {
-                // Right click changes direction
                 _wallDirection = _wallDirection == "Horizontal" ? "Vertical" : "Horizontal";
+                UpdateCursor(_gameCanvas);
                 JezzballSound.Play(JezzballSoundEvent.Click);
             }
             else
@@ -639,14 +691,32 @@ Tips:
             }
         }
 
+        private Size _lastGameSize = new(800, 600);
+
         private void GameTick(object? sender, EventArgs e)
         {
             var dt = _stopwatch.Elapsed.TotalSeconds;
             _stopwatch.Restart();
 
+            var gameBounds = GetGameBounds();
+            if (Math.Abs(gameBounds.Width - _lastGameSize.Width) > 1 || Math.Abs(gameBounds.Height - _lastGameSize.Height) > 1)
+            {
+                _lastGameSize = new Size(gameBounds.Width, gameBounds.Height);
+                _gameState.Resize(_lastGameSize);
+            }
+
             _gameState.Update(dt);
             UpdateStatusText();
             InvalidateVisual();
+        }
+
+        private const double StatusBarHeight = 35;
+
+        private Rect GetGameBounds()
+        {
+            var w = Bounds.Width;
+            var h = Math.Max(100, Bounds.Height - StatusBarHeight);
+            return new Rect(0, 0, Math.Max(100, w), h);
         }
 
         private void UpdateStatusText()
@@ -659,66 +729,47 @@ Tips:
 
         public override void Render(DrawingContext context)
         {
-            var bounds = new Rect(0, 0, Bounds.Width, Bounds.Height);
-            context.FillRectangle(Brushes.Black, bounds);
+            var fullBounds = new Rect(0, 0, Bounds.Width, Bounds.Height);
+            var gameBounds = GetGameBounds();
+            context.FillRectangle(Brushes.Black, fullBounds);
 
-            // Draw grid
-            if (_showGrid)
+            using (context.PushTransform(Matrix.CreateTranslation(0, StatusBarHeight)))
             {
-                var gridSize = 20.0;
-                var pen = new Pen(Brushes.DarkGray, 1);
-
-                for (double x = 0; x < bounds.Width; x += gridSize)
+                if (_showGrid)
                 {
-                    context.DrawLine(pen, new Point(x, 0), new Point(x, bounds.Height));
+                    var gridSize = 20.0;
+                    var pen = new Pen(Brushes.DarkGray, 1);
+                    for (double x = 0; x < gameBounds.Width; x += gridSize)
+                        context.DrawLine(pen, new Point(x, 0), new Point(x, gameBounds.Height));
+                    for (double y = 0; y < gameBounds.Height; y += gridSize)
+                        context.DrawLine(pen, new Point(0, y), new Point(gameBounds.Width, y));
                 }
 
-                for (double y = 0; y < bounds.Height; y += gridSize)
+                foreach (var cell in _gameState.Grid)
+                    cell.Draw(context);
+                foreach (var wall in _gameState.Walls)
+                    wall.Draw(context);
+                foreach (var ball in _gameState.Balls)
+                    ball.Draw(context);
+
+                if (_gameState.RoundState != "running")
                 {
-                    context.DrawLine(pen, new Point(0, y), new Point(bounds.Width, y));
-                }
-            }
+                    var text = _gameState.RoundState == "won" ? "Level Complete!" : "Game Over!";
+                    var formattedText = new FormattedText(
+                        text,
+                        CultureInfo.CurrentCulture,
+                        FlowDirection.LeftToRight,
+                        Typeface.Default,
+                        48,
+                        Brushes.White);
+                    var textPosition = new Point(
+                        (gameBounds.Width - formattedText.Width) / 2,
+                        (gameBounds.Height - formattedText.Height) / 2);
+                    context.DrawRectangle(new SolidColorBrush(Colors.Black, 0.8), null, new Rect(0, 0, gameBounds.Width, gameBounds.Height));
+                    context.DrawText(formattedText, textPosition);
 
-            // Draw grid cells
-            foreach (var cell in _gameState.Grid)
-            {
-                cell.Draw(context);
-            }
-
-            // Draw walls
-            foreach (var wall in _gameState.Walls)
-            {
-                wall.Draw(context);
-            }
-
-            // Draw balls
-            foreach (var ball in _gameState.Balls)
-            {
-                ball.Draw(context);
-            }
-
-            // Draw game over or level complete message
-            if (_gameState.RoundState != "running")
-            {
-                var text = _gameState.RoundState == "won" ? "Level Complete!" : "Game Over!";
-                var formattedText = new FormattedText(
-                    text,
-                    CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    Typeface.Default,
-                    48,
-                    Brushes.White);
-
-                var textPosition = new Point(
-                    (bounds.Width - formattedText.Width) / 2,
-                    (bounds.Height - formattedText.Height) / 2);
-
-                context.DrawRectangle(new SolidColorBrush(Colors.Black, 0.8), null, bounds);
-                context.DrawText(formattedText, textPosition);
-
-                if (_gameState.RoundState == "won")
-                {
-                    _gameState.NextLevel();
+                    if (_gameState.RoundState == "won")
+                        _gameState.NextLevel();
                 }
             }
         }
