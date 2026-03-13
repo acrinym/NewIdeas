@@ -20,6 +20,7 @@
 | [2026-03-14-phase2-campfire-plan.md](2026-03-14-phase2-campfire-plan.md) | Phase 2 implementation plan (04+05 campfire features) |
 | [PHASE3-DOC-PRECATALOG.md](PHASE3-DOC-PRECATALOG.md) | Docs that change in Phase 3 |
 | [2026-03-14-phase3-campfire-plan.md](2026-03-14-phase3-campfire-plan.md) | Phase 3 implementation plan (Theater Mode + Marketplace UI) |
+| [2026-03-14-phase4-campfire-plan.md](2026-03-14-phase4-campfire-plan.md) | Phase 4 implementation plan (Creator Studio + Shell Foundations) |
 
 ---
 
@@ -30,3 +31,4 @@
 | 1 | 07-Cycloside-as-a-Real-Session | Theme Manifest, Scene Graph, Security (031, 020, 019) | ✅ Complete |
 | 2 | 04-Anti-Store, 05-WebTV, CYC-030 Phase 1 | Integrity, Format hardening, Unified Input, Marketplace feed format | ✅ Complete |
 | 3 | 06-Kodi, 04 Phase 2, 05 Phase 2, CYC-030 Phase 2 | Theater Mode Foundation, Marketplace UI, GPG, On-screen keyboard | 📋 Planned |
+| 4 | 04 Phase 4, 05 Phase 4, 06 Q3-Q4, 07 Steps 1-4 | Creator Studio, In-App Editors, Shell Architecture, Theater Mode Full | 📋 Planned |
