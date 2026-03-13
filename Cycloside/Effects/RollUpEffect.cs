@@ -5,18 +5,21 @@ using Avalonia.Input;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Styling;
+using Cycloside.Scene;
 
 namespace Cycloside.Effects;
 
 public class RollUpEffect : IWindowEffect
 {
+    private readonly Dictionary<Window, double> _heights = new();
+
     public string Name => "RollUp";
     public string Description => "Collapses the window to its titlebar";
 
-    private readonly Dictionary<Window, double> _heights = new();
-
-    public void Attach(Window window)
+    public void Attach(ISceneTarget target)
     {
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null) return;
         window.PointerPressed += OnPointerPressed;
     }
 
@@ -42,11 +45,13 @@ public class RollUpEffect : IWindowEffect
                 }
             }
         };
-        anim.RunAsync(win); // or anim.RunAsync(win, null); if required by your Avalonia version
+        anim.RunAsync(win);
     }
 
-    public void Detach(Window window)
+    public void Detach(ISceneTarget target)
     {
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null) return;
         window.PointerPressed -= OnPointerPressed;
         _heights.Remove(window);
     }

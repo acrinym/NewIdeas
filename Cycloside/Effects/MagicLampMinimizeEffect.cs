@@ -2,27 +2,35 @@ using System;
 using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using Cycloside.Scene;
 
 namespace Cycloside.Effects;
 
 public class MagicLampMinimizeEffect : IWindowEffect
 {
+    private readonly HashSet<Window> _animating = new();
+    private readonly Dictionary<Window, double> _origHeights = new();
+    private readonly Dictionary<Window, ISceneTarget> _windowToTarget = new();
+
     public string Name => "MagicLampMinimize";
     public string Description => "Squash toward titlebar and fade, then minimize.";
 
-    private readonly HashSet<Window> _animating = new();
-    private readonly Dictionary<Window, double> _origHeights = new();
-
-    public void Attach(Window window)
+    public void Attach(ISceneTarget target)
     {
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null) return;
+        _windowToTarget[window] = target;
         window.PropertyChanged += Window_PropertyChanged;
     }
 
-    public void Detach(Window window)
+    public void Detach(ISceneTarget target)
     {
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null) return;
         window.PropertyChanged -= Window_PropertyChanged;
         _animating.Remove(window);
         _origHeights.Remove(window);
+        _windowToTarget.Remove(window);
     }
 
     public void ApplyEvent(WindowEventType type, object? args) { }
@@ -30,6 +38,7 @@ public class MagicLampMinimizeEffect : IWindowEffect
     private void Window_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
         if (sender is not Window window) return;
+        if (!_windowToTarget.TryGetValue(window, out var target)) return;
         if (e.Property != Window.WindowStateProperty) return;
 
         var newState = (WindowState)e.NewValue!;
@@ -52,24 +61,23 @@ public class MagicLampMinimizeEffect : IWindowEffect
                 var p = t.TotalMilliseconds / duration.TotalMilliseconds;
                 if (p >= 1.0)
                 {
-                    window.Opacity = 0.0;
+                    target.Opacity = 0.0;
                     timer.Stop();
                     window.WindowState = WindowState.Minimized;
-                    window.Height = originalHeight; // restore height for when restored
-                    window.Opacity = 1.0; // reset opacity
+                    window.Height = originalHeight;
+                    target.Opacity = 1.0;
                     _animating.Remove(window);
                     return;
                 }
                 var ease = 1 - Math.Pow(1 - p, 3);
                 var targetHeight = Math.Max(30, originalHeight * (1 - 0.85 * ease));
                 window.Height = targetHeight;
-                window.Opacity = 1.0 - ease;
+                target.Opacity = 1.0 - ease;
             };
             timer.Start();
         }
         catch
         {
-            // Fallback: just minimize
             window.WindowState = WindowState.Minimized;
             _animating.Remove(window);
         }

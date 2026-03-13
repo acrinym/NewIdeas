@@ -1,61 +1,71 @@
+using System;
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
-using System;
-using System.Collections.Generic;
+using Cycloside.Scene;
 
 namespace Cycloside.Effects;
 
 public class WobblyWindowEffect : IWindowEffect
 {
+    private readonly Dictionary<Window, ISceneTarget> _windowToTarget = new();
+    private readonly Dictionary<ISceneTarget, PixelPoint> _targetPos = new();
+    private readonly Dictionary<ISceneTarget, DispatcherTimer> _timers = new();
+    private readonly Dictionary<ISceneTarget, EventHandler<PixelPointEventArgs>> _posHandlers = new();
+
     public string Name => "Wobbly";
     public string Description => "Adds a springy wobble when moving the window";
 
-    private readonly Dictionary<Window, PixelPoint> _target = new();
-    private readonly Dictionary<Window, DispatcherTimer> _timers = new();
-
-    public void Attach(Window window)
+    public void Attach(ISceneTarget target)
     {
-        _target[window] = window.Position;
-        window.PositionChanged += OnPosChanged;
-        var timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(16)
-        };
-        timer.Tick += (_, _) => Animate(window);
-        _timers[window] = timer;
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null) return;
+        _windowToTarget[window] = target;
+        _targetPos[target] = target.Position;
+        var posHandler = new EventHandler<PixelPointEventArgs>((s, e) => OnPosChanged(target, e));
+        _posHandlers[target] = posHandler;
+        window.PositionChanged += posHandler;
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        timer.Tick += (_, _) => Animate(target);
+        _timers[target] = timer;
         timer.Start();
     }
 
-    private void OnPosChanged(object? sender, PixelPointEventArgs e)
+    private void OnPosChanged(ISceneTarget target, PixelPointEventArgs e)
     {
-        if (sender is Window win)
-            _target[win] = e.Point;
+        _targetPos[target] = e.Point;
     }
 
-    private void Animate(Window window)
+    private void Animate(ISceneTarget target)
     {
-        if (!_target.TryGetValue(window, out var target))
+        if (!_targetPos.TryGetValue(target, out var targetPoint))
             return;
 
-        var current = window.Position;
-        var dx = (target.X - current.X) * 0.25;
-        var dy = (target.Y - current.Y) * 0.25;
+        var current = target.Position;
+        var dx = (targetPoint.X - current.X) * 0.25;
+        var dy = (targetPoint.Y - current.Y) * 0.25;
         if (Math.Abs(dx) < 1 && Math.Abs(dy) < 1)
             return;
 
-        window.Position = new PixelPoint(current.X + (int)dx, current.Y + (int)dy);
+        target.Position = new PixelPoint(current.X + (int)dx, current.Y + (int)dy);
     }
 
-    public void Detach(Window window)
+    public void Detach(ISceneTarget target)
     {
-        window.PositionChanged -= OnPosChanged;
-        if (_timers.TryGetValue(window, out var timer))
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null) return;
+        if (!_posHandlers.TryGetValue(target, out var posHandler))
+            return;
+        window.PositionChanged -= posHandler;
+        _posHandlers.Remove(target);
+        _windowToTarget.Remove(window);
+        if (_timers.TryGetValue(target, out var timer))
         {
             timer.Stop();
-            _timers.Remove(window);
+            _timers.Remove(target);
         }
-        _target.Remove(window);
+        _targetPos.Remove(target);
     }
 
     public void ApplyEvent(WindowEventType type, object? args) { }

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Cycloside.Scene;
 
 namespace Cycloside.Effects;
 
@@ -7,7 +8,7 @@ public interface IWindowEffect
     string Name { get; }
     string Description { get; }
 
-    void Attach(Window window);
-    void Detach(Window window);
+    void Attach(ISceneTarget target);
+    void Detach(ISceneTarget target);
     void ApplyEvent(WindowEventType type, object? args);
 }

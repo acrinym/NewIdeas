@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Avalonia.Controls;
+using Cycloside.Scene;
 
 namespace Cycloside.Effects;
 
@@ -11,6 +12,7 @@ public class WindowEffectsManager
 {
     private readonly Dictionary<string, IWindowEffect> _registered = new();
     private readonly Dictionary<Window, List<IWindowEffect>> _active = new();
+    private readonly Dictionary<Window, WindowSceneAdapter> _adapters = new();
     private readonly Dictionary<string, List<string>> _config;
 
     public static WindowEffectsManager Instance { get; } = new();
@@ -127,7 +129,10 @@ public class WindowEffectsManager
         if (list.Contains(effect))
             return;
 
-        effect.Attach(window);
+        var adapter = WindowSceneAdapter.CreateFrom(window);
+        if (!_adapters.ContainsKey(window))
+            _adapters[window] = adapter;
+        effect.Attach(adapter);
         list.Add(effect);
     }
 
@@ -136,9 +141,11 @@ public class WindowEffectsManager
         if (!_active.TryGetValue(window, out var list))
             return;
 
+        var adapter = _adapters.TryGetValue(window, out var a) ? a : WindowSceneAdapter.CreateFrom(window);
         foreach (var effect in list)
-            effect.Detach(window);
+            effect.Detach(adapter);
 
         _active.Remove(window);
+        _adapters.Remove(window);
     }
 }

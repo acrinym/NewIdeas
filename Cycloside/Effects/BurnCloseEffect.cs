@@ -1,32 +1,45 @@
 using System;
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Styling;
+using Cycloside.Scene;
 
 namespace Cycloside.Effects;
 
 public class BurnCloseEffect : IWindowEffect
 {
+    private readonly Dictionary<ISceneTarget, EventHandler<WindowClosingEventArgs>> _handlers = new();
+
     public string Name => "BurnClose";
     public string Description => "Close animation: slight shrink and warm fade";
 
-    public void Attach(Window window)
+    public void Attach(ISceneTarget target)
     {
-        window.Closing += OnClosing;
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null) return;
+        var handler = new EventHandler<WindowClosingEventArgs>((s, e) => OnClosing(target, e));
+        _handlers[target] = handler;
+        window.Closing += handler;
     }
 
-    public void Detach(Window window)
+    public void Detach(ISceneTarget target)
     {
-        window.Closing -= OnClosing;
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null || !_handlers.TryGetValue(target, out var handler))
+            return;
+        window.Closing -= handler;
+        _handlers.Remove(target);
     }
 
     public void ApplyEvent(WindowEventType type, object? args) { }
 
-    private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    private async void OnClosing(ISceneTarget target, WindowClosingEventArgs e)
     {
-        if (sender is not Window window) return;
+        var window = EffectTargetHelper.GetWindow(target);
+        if (window == null) return;
         e.Cancel = true;
 
         var w = window.Width;
@@ -47,7 +60,8 @@ public class BurnCloseEffect : IWindowEffect
             }
         };
         await anim.RunAsync(window);
-        window.Closing -= OnClosing; // avoid re-entry
+        if (_handlers.TryGetValue(target, out var closingHandler))
+            window.Closing -= closingHandler;
         window.Close();
     }
 }

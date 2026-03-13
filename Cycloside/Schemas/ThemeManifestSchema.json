@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cycloside Theme Manifest",
+  "description": "Manifest for theme packs (theme.json in theme directory)",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "description": "Theme display name" },
+    "version": { "type": "string", "description": "Semver, e.g. 1.0.0" },
+    "author": { "type": "string", "description": "Author name" },
+    "description": { "type": "string", "description": "Short description" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "screenshots": { "type": "array", "items": { "type": "string" }, "description": "Paths to preview images" },
+    "styles": { "type": "array", "items": { "type": "string" }, "description": "AXAML files to load, relative to theme dir" },
+    "assets": {
+      "type": "object",
+      "properties": {
+        "images": { "type": "array", "items": { "type": "string" } },
+        "cursors": { "type": "array", "items": { "type": "string" } },
+        "icons": { "type": "array", "items": { "type": "string" } },
+        "sounds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "scripts": {
+      "type": "object",
+      "properties": {
+        "lua": { "type": "array", "items": { "type": "string" }, "description": "Lua scripts to run on theme apply" }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "properties": {
+        "requiredThemes": { "type": "array", "items": { "type": "string" } },
+        "requiredPlugins": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Configurable theme parameters"
+    }
+  },
+  "required": ["name"]
+}

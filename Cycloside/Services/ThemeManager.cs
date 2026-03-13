@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Cycloside.Services
@@ -32,6 +33,11 @@ namespace Cycloside.Services
         /// Current ThemeVariant (Light/Dark/HighContrast)
         /// </summary>
         public static ThemeVariant CurrentVariant { get; private set; } = ThemeVariant.Default;
+
+        /// <summary>
+        /// Current theme manifest if theme has theme.json (null for legacy themes)
+        /// </summary>
+        public static ThemeManifest? CurrentManifest { get; private set; }
 
         /// <summary>
         /// Event fired when theme or variant changes
@@ -126,8 +132,11 @@ namespace Cycloside.Services
                     return false;
                 }
 
-                // Load subtheme pack if specified
-                if (!string.IsNullOrEmpty(themeName) && !await LoadSubthemeAsync(themeName))
+                if (string.IsNullOrEmpty(themeName))
+                {
+                    CurrentManifest = null;
+                }
+                else if (!await LoadSubthemeAsync(themeName))
                 {
                     Logger.Log($"Failed to load subtheme pack: {themeName}");
                     return false;
@@ -276,13 +285,55 @@ namespace Cycloside.Services
                 if (!Directory.Exists(themeDir))
                 {
                     Logger.Log($"Subtheme directory not found: {themeDir}");
+                    CurrentManifest = null;
                     return Task.FromResult(false);
                 }
 
-                // Load subtheme styles files
-                var styleFiles = Directory.GetFiles(themeDir, "*.axaml")
-                    .Where(f => !Path.GetFileName(f).Equals("Tokens.axaml", StringComparison.OrdinalIgnoreCase))
-                    .ToArray();
+                var manifest = ThemeManifest.Load(themeDir);
+                CurrentManifest = manifest;
+
+                if (manifest != null && manifest.Dependencies?.RequiredThemes?.Count > 0)
+                {
+                    try
+                    {
+                        ThemeDependencyResolver.ResolveOrder(manifest, themeDir);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Logger.Log($"Theme dependency error: {ex.Message}");
+                        return Task.FromResult(false);
+                    }
+                    foreach (var dep in manifest.Dependencies.RequiredThemes)
+                    {
+                        var depDir = Path.Combine(AppContext.BaseDirectory, "Themes", dep);
+                        if (!Directory.Exists(depDir))
+                            Logger.Log($"Theme dependency not found: {dep}");
+                    }
+                }
+
+                string[] styleFiles;
+                if (manifest?.Styles?.Count > 0)
+                {
+                    styleFiles = manifest.Styles
+                        .Select(s => Path.Combine(themeDir, s))
+                        .Where(File.Exists)
+                        .ToArray();
+                }
+                else
+                {
+                    styleFiles = Directory.GetFiles(themeDir, "*.axaml")
+                        .Where(f => !Path.GetFileName(f).Equals("Tokens.axaml", StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+                }
+
+                foreach (var sf in styleFiles)
+                {
+                    if (!ThemeIncludeValidator.ValidateGraph(sf))
+                    {
+                        Logger.Log($"Theme validation failed (circular or deep includes): {sf}");
+                        return Task.FromResult(false);
+                    }
+                }
 
                 foreach (var styleFile in styleFiles)
                 {
@@ -297,6 +348,23 @@ namespace Cycloside.Services
                     {
                         Logger.Log($"Failed to load subtheme style file '{styleFile}': {ex.Message}");
                     }
+                }
+
+                if (manifest?.Scripts?.Lua?.Count > 0)
+                {
+                    var runtime = new ThemeLuaRuntime(themeDir);
+                    if (manifest.Settings?.Count > 0)
+                    {
+                        var settings = new Dictionary<string, object>();
+                        foreach (var kv in manifest.Settings)
+                            settings[kv.Key] = kv.Value.ValueKind == JsonValueKind.String ? kv.Value.GetString() ?? "" : kv.Value.GetRawText();
+                        runtime.SetInitialSettings(settings);
+                    }
+                    foreach (var scriptPath in manifest.Scripts.Lua)
+                    {
+                        runtime.RunScript(scriptPath);
+                    }
+                    runtime.CallOnApply();
                 }
 
                 return Task.FromResult(true);

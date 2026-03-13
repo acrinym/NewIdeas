@@ -1,0 +1,11 @@
+{
+  "name": "Sample Theme",
+  "version": "1.0.0",
+  "author": "Cycloside",
+  "description": "Example theme pack with manifest",
+  "tags": ["sample", "example"],
+  "styles": ["Styles.axaml"],
+  "settings": {
+    "accent": "#0078D4"
+  }
+}
