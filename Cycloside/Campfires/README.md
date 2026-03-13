@@ -189,9 +189,13 @@ Campfires are **multi-perspective exploratory conversations** where different vi
 
 Delivered: Theme Manifest JSON, ThemeManager integration, ThemeLuaRuntime, ThemeAssetCache, ThemeDependencyResolver; CYC-2026-031 Recursive Inclusion, CYC-2026-020 XML Bomb, CYC-2026-019 Parser Confusion; ISceneTarget, WindowSceneAdapter, SceneGraph foundation, Effect migration to ISceneTarget; Manifest wired to Theme UI.
 
-## Phase 2 (In Progress)
+## Phase 2 Complete (2026-03)
 
-Integrity & Trust (checksum enforcement, tool, hash audit); Format & Parser Hardening (RIFF/ICO/CUR/WAV, data URI rejection); 04-Anti-Store + 05-WebTV (Unified Input, marketplace feed format); Documentation debt.
+Delivered: Checksum enforcement (PluginRepository), ChecksumGenerator tool, Hash policy (SHA-256 for security); BinaryFormatValidator (RIFF/ICO/CUR/WAV), Data URI rejection; UnifiedInputQueue (05-WebTV Phase 1), InputEvent/InputModifiers/InputSource, device-agnostic ring buffer; Marketplace feed format schema; Phase 1 documentation debt (theme-manifest-schema.md, theme-lua-api.md, scene-graph.md, unified-input.md, marketplace-feed-format.md, examples updated).
+
+## Phase 3 (Planned)
+
+Theater Mode Foundation (06-Kodi Phase 1), Marketplace UI (04-Anti-Store Phase 2), GPG signatures (CYC-2026-030 Phase 2), On-screen keyboard (05-WebTV Phase 2). See [2026-03-14-phase3-campfire-plan.md](../../docs/plans/2026-03-14-phase3-campfire-plan.md).
 
 ---
 

@@ -87,7 +87,7 @@ while (running)
             Console.WriteLine($"Picked #{picked.R:X2}{picked.G:X2}{picked.B:X2}");
             break;
         case 'r':
-            ruler.ShowRuler();
+            PixelRuler.ShowRuler();
             break;
         case 'h':
             var md = Path.Combine(AppContext.BaseDirectory, "README.md");

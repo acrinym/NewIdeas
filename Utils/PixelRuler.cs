@@ -5,7 +5,7 @@ namespace Cycloside.Utils;
 
 public sealed class PixelRuler
 {
-    public void ShowRuler()
+    public static void ShowRuler()
     {
         var f = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow, Width = 800, Height = 100, TopMost = true, Text = "Pixel Ruler" };
         f.Paint += (s, e) =>

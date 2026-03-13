@@ -148,7 +148,7 @@ public sealed class QuickShareServer : IDisposable
     {
         var bytes = Encoding.UTF8.GetBytes(html);
         res.ContentType = "text/html; charset=utf-8";
-        await res.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+        await res.OutputStream.WriteAsync(bytes);
         res.Close();
     }
 
