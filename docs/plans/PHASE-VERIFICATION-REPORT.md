@@ -215,7 +215,7 @@ All three phases follow the same template:
 1. Work (implement tasks)
 2. Docs (update doc pre-catalog)
 3. Vuln test (security scan)
-4. Code smell (Roslynator)
+4. Code smell (LLM pattern review; Roslynator = separate linter step)
 5. Recheck (verify fixes)
 6. Git (branch + PR)
 
@@ -237,7 +237,7 @@ All three phases follow the same template:
 - [x] Work done
 - [x] Docs done (Phase 1 debt cleared + new docs)
 - [x] Vuln test (N/A, hardening work)
-- [ ] Code smell (pending)
+- [ ] Code smell (Phase 2 pattern review: Cycloside/docs/phase2-code-smells.md)
 - [ ] Recheck (pending)
 - [ ] Git (branch + PR) (pending)
 
@@ -297,7 +297,7 @@ All three phases follow the same template:
 
 - [ ] YAML frontmatter
 - [ ] Execution order mermaid diagram
-- [ ] Final workflow steps (code smell, Git PR)
+- [ ] Final workflow steps (code smell = LLM pattern review per PHASE-WORKFLOW, then Git PR)
 
 ### Phase 3
 
@@ -314,7 +314,7 @@ All three phases follow the same template:
 
 1. **Immediate (Phase 2 completion):**
    - Run `dotnet build Cycloside/Cycloside.csproj` to verify no build errors
-   - Run Roslynator scan for code smell
+   - Run code smell (LLM pattern review); run Roslynator separately as linter
    - Create branch `phase-2-integrity-and-input` + PR
    - Add YAML frontmatter and mermaid to Phase 2 plan (optional, for consistency)
 

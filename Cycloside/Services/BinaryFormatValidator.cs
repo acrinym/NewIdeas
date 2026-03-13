@@ -9,8 +9,6 @@ namespace Cycloside.Services
     /// </summary>
     public static class BinaryFormatValidator
     {
-        private const int MaxHeaderRead = 64;
-
         /// <summary>
         /// Reject data: URIs in asset paths (CYC-2026-023).
         /// </summary>
@@ -20,14 +18,22 @@ namespace Cycloside.Services
         }
 
         /// <summary>
-        /// Validate ICO file: reserved 0x0000, type 0x0001.
+        /// Validate ICO/CUR header: reserved 0x0000, type must match expected (1=ICO, 2=CUR).
         /// </summary>
-        public static bool ValidateIcoMagic(byte[] header)
+        private static bool ValidateIcoCurHeader(byte[] header, ushort expectedType)
         {
             if (header == null || header.Length < 6) return false;
             if (header[0] != 0 || header[1] != 0) return false;
             ushort type = (ushort)(header[2] | (header[3] << 8));
-            return type == 1;
+            return type == expectedType;
+        }
+
+        /// <summary>
+        /// Validate ICO file: reserved 0x0000, type 0x0001.
+        /// </summary>
+        public static bool ValidateIcoMagic(byte[] header)
+        {
+            return ValidateIcoCurHeader(header, 1);
         }
 
         /// <summary>
@@ -35,10 +41,7 @@ namespace Cycloside.Services
         /// </summary>
         public static bool ValidateCurMagic(byte[] header)
         {
-            if (header == null || header.Length < 6) return false;
-            if (header[0] != 0 || header[1] != 0) return false;
-            ushort type = (ushort)(header[2] | (header[3] << 8));
-            return type == 2;
+            return ValidateIcoCurHeader(header, 2);
         }
 
         /// <summary>
@@ -75,14 +78,16 @@ namespace Cycloside.Services
                 }
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Log($"BinaryFormatValidator.ValidateWavStructure: {ex.Message}");
                 return false;
             }
         }
 
         /// <summary>
         /// Validate ICO/CUR file before loading. Reject RIFF-based or wrong type.
+        /// Uses shared header validation (no duplicated logic).
         /// </summary>
         public static bool ValidateIcoCurFile(string path)
         {
@@ -99,31 +104,15 @@ namespace Cycloside.Services
                 if (header[0] != 0 || header[1] != 0) return false;
                 ushort type = (ushort)(header[2] | (header[3] << 8));
 
-                if (ext == ".ico") return type == 1;
-                if (ext == ".cur") return type == 2;
+                if (ext == ".ico") return ValidateIcoCurHeader(header, 1);
+                if (ext == ".cur") return ValidateIcoCurHeader(header, 2);
                 return type == 1 || type == 2;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Log($"BinaryFormatValidator.ValidateIcoCurFile: {ex.Message}");
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Validate image/cursor path: reject data URIs; validate ICO/CUR if applicable.
-        /// </summary>
-        public static bool ValidateAssetPathForLoad(string path, bool isFile)
-        {
-            if (IsDataUri(path))
-            {
-                Logger.Log("🛡️ Rejected data URI in asset path (CYC-2026-023)");
-                return false;
-            }
-            if (!isFile) return true;
-            var ext = Path.GetExtension(path).ToLowerInvariant();
-            if (ext == ".ico" || ext == ".cur")
-                return ValidateIcoCurFile(path);
-            return true;
         }
     }
 }

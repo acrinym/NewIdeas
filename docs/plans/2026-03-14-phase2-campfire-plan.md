@@ -140,13 +140,14 @@
 
 ## Verification Checklist (Phase 2)
 
-- [ ] PluginRepository validates checksums on download
-- [ ] Manifest checksums required for all plugin files
-- [ ] Binary format validators (ICO, CUR, WAV, RIFF) in place
-- [ ] docs/marketplace-feed-format.md created (04-Anti-Store)
-- [ ] Unified input queue implemented (05-WebTV)
-- [ ] PHASE1-DOC-PRECATALOG docs updated
-- [ ] docs/theme-manifest-schema.md created
-- [ ] docs/theme-lua-api.md created
-- [ ] docs/scene-graph.md created
-- [ ] Campfires README Phase 1 section added
+- [x] PluginRepository validates checksums on download
+- [x] Manifest checksums required for all plugin files
+- [x] Binary format validators (ICO, CUR, WAV, RIFF) in place
+- [x] docs/marketplace-feed-format.md created (04-Anti-Store)
+- [x] Unified input queue implemented (05-WebTV)
+- [x] PHASE1-DOC-PRECATALOG docs updated
+- [x] docs/theme-manifest-schema.md created
+- [x] docs/theme-lua-api.md created
+- [x] docs/scene-graph.md created
+- [x] Campfires README Phase 1 section added
+- [x] Code smell review (phase2-code-smells.md) — all items fixed

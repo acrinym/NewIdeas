@@ -12,6 +12,9 @@ namespace Cycloside.Tools
     /// </summary>
     public static class ChecksumGenerator
     {
+        private static readonly JsonSerializerOptions _jsonReadOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        private static readonly JsonSerializerOptions _jsonWriteOptions = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
         /// <summary>
         /// Read manifest.json, compute SHA-256 for each file in Files, update manifest, write back.
         /// </summary>
@@ -26,7 +29,7 @@ namespace Cycloside.Tools
             }
 
             var json = await File.ReadAllTextAsync(manifestPath);
-            var manifest = JsonSerializer.Deserialize<PluginManifest>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var manifest = JsonSerializer.Deserialize<PluginManifest>(json, _jsonReadOptions);
             if (manifest?.Files == null)
             {
                 return false;
@@ -47,8 +50,7 @@ namespace Cycloside.Tools
                 }
             }
 
-            var options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var output = JsonSerializer.Serialize(manifest, options);
+            var output = JsonSerializer.Serialize(manifest, _jsonWriteOptions);
             await File.WriteAllTextAsync(manifestPath, output);
             return true;
         }

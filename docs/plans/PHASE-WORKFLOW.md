@@ -11,18 +11,24 @@
 1. **Work** — Implement phase tasks (from campfire plan)
 2. **Docs** — Document what was built (use PHASE-N-DOC-PRECATALOG)
 3. **Vuln test** — Vulnerability testing for changed areas
-4. **Code smell** — Catalog and fix (Phase 1+2 combined review runs *after* Phase 2)
+4. **Code smell** — LLM (or human) **pattern review**: look for duplication, dead code, magic numbers, unclear naming, overcomplicated logic, missing validation, improper disposal. Catalog as *Where | What | Why*, then fix. (Static analysis like Roslynator is a separate "linter" step; it does not replace code smell review.)
 5. **Recheck** — Verify all gates pass (build, tests, linter)
 6. **Git** — New branch + PR for the phase
 
 ---
 
-## Code Smell Timing
+## Code Smell (Pattern Review)
+
+**Code smell** = LLM/human review for *design and readability* patterns, not rule-based static analysis.
+
+- **Look for:** Duplication, dead code, magic numbers, unclear names, overcomplicated logic, missing null/validation, improper disposal, swallowed exceptions, stale comments.
+- **Output:** Checklist doc (Where found | What is it | Why smell | Fixed).
+- **Separate step:** Roslynator / analyzers = "linter" or "static analysis"; run as well, but they don’t substitute for code smell review.
 
 | After Phase | Code Smell Scope |
 |-------------|------------------|
 | Phase 1 | Phase 1 areas only ([phase1-code-smells.md](Cycloside/docs/phase1-code-smells.md)) |
-| Phase 2 | Phase 1 + Phase 2 areas combined |
+| Phase 2 | Phase 1 + Phase 2 ([phase2-code-smells.md](Cycloside/docs/phase2-code-smells.md)) |
 | Phase 3 | Phase 1 + 2 + 3 areas combined |
 
 ---

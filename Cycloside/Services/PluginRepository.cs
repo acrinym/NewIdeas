@@ -20,6 +20,9 @@ namespace Cycloside.Services
         private static readonly string _repositoryUrl = "https://api.github.com/repos/cycloside/plugins/contents/plugins";
         private static readonly string _localPluginsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Cycloside", "Plugins", "Community");
 
+        private static readonly JsonSerializerOptions _jsonReadOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        private static readonly JsonSerializerOptions _jsonWriteIndentedOptions = new JsonSerializerOptions { WriteIndented = true };
+
         public static event EventHandler<PluginDiscoveryEventArgs>? PluginDiscovered;
         public static event EventHandler<PluginInstallEventArgs>? PluginInstalled;
         public static event EventHandler<PluginInstallEventArgs>? PluginInstallFailed;
@@ -98,10 +101,7 @@ namespace Cycloside.Services
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                var repositoryContents = JsonSerializer.Deserialize<List<RepositoryItem>>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var repositoryContents = JsonSerializer.Deserialize<List<RepositoryItem>>(json, _jsonReadOptions);
 
                 if (repositoryContents != null)
                 {
@@ -142,10 +142,7 @@ namespace Cycloside.Services
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                var manifest = JsonSerializer.Deserialize<PluginManifest>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var manifest = JsonSerializer.Deserialize<PluginManifest>(json, _jsonReadOptions);
 
                 return manifest;
             }
@@ -179,10 +176,7 @@ namespace Cycloside.Services
                 {
                     // Save manifest locally
                     var manifestPath = Path.Combine(pluginPath, "manifest.json");
-                    var manifestJson = JsonSerializer.Serialize(plugin, new JsonSerializerOptions
-                    {
-                        WriteIndented = true
-                    });
+                    var manifestJson = JsonSerializer.Serialize(plugin, _jsonWriteIndentedOptions);
                     await File.WriteAllTextAsync(manifestPath, manifestJson);
 
                     Logger.Log($"✅ Plugin installed successfully: {plugin.Name}");
@@ -296,10 +290,7 @@ namespace Cycloside.Services
                         try
                         {
                             var json = File.ReadAllText(manifestPath);
-                            var manifest = JsonSerializer.Deserialize<PluginManifest>(json, new JsonSerializerOptions
-                            {
-                                PropertyNameCaseInsensitive = true
-                            });
+                            var manifest = JsonSerializer.Deserialize<PluginManifest>(json, _jsonReadOptions);
 
                             if (manifest != null)
                             {

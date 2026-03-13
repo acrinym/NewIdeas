@@ -154,7 +154,7 @@ When executing a development phase (Phase 2, 3, etc.), follow the repeatable seq
 1. **Work** — Implement phase tasks
 2. **Docs** — Document what was built (use PHASE-N-DOC-PRECATALOG)
 3. **Vuln test** — Vulnerability testing for changed areas
-4. **Code smell** — Catalog and fix (Phase 1+2 review runs after Phase 2)
+4. **Code smell** — LLM/human pattern review (duplication, dead code, magic numbers, naming, etc.). Catalog as Where|What|Why, then fix. See PHASE-WORKFLOW.md. (Roslynator = separate linter.)
 5. **Recheck** — Verify all gates pass
 6. **Git** — New branch + PR for the phase
 
