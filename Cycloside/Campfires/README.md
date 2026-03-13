@@ -197,6 +197,10 @@ Delivered: Checksum enforcement (PluginRepository), ChecksumGenerator tool, Hash
 
 Theater Mode Foundation (06-Kodi Phase 1), Marketplace UI (04-Anti-Store Phase 2), GPG signatures (CYC-2026-030 Phase 2), On-screen keyboard (05-WebTV Phase 2). See [2026-03-14-phase3-campfire-plan.md](../../docs/plans/2026-03-14-phase3-campfire-plan.md).
 
+## Phase 4 (Planned)
+
+Creator Studio (04-Anti-Store Phase 4), In-App Editors (07 Step 4), Shell Architecture Prep (07 Steps 1-3), WebTV Screen Management (05 Phase 4), Theater Mode Full Implementation (06 Q3-Q4). See [2026-03-14-phase4-campfire-plan.md](../../docs/plans/2026-03-14-phase4-campfire-plan.md).
+
 ---
 
 ## Security Work
