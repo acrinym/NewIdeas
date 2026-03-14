@@ -65,6 +65,31 @@ Campfires are **multi-perspective exploratory conversations** where different vi
 
 ---
 
+#### [09 - The Resurrection Pattern](09-The-Resurrection-Pattern.md)
+
+**Topic:** What corporations killed (WebTV, Winamp, shellcity.net, After Dark) and how Cycloside/Phoenix Visualizer are resurrecting it.
+
+**Participants:** Steve Perlman, Justin Frankel, Steve Jobs, Bill Gates, Neil Cicierega
+
+**Covers:**
+- The death list (WebTV, Winamp, shellcity.net, desktop customization culture)
+- The resurrection pattern (6 steps from death to rebirth)
+- Why Cycloside/Phoenix Visualizer are different (not nostalgia, not corporate, not single-purpose)
+- The Reverse Phoenix (Mozilla Phoenix → Firefox, Phoenix Visualizer reclaims the name)
+- Mission statement: "We're not competing with Microsoft. We're reclaiming what they took."
+
+**Key Quotes:**
+> "Cycloside Theater Mode isn't nostalgia—it's finishing what we started."  
+> — Steve Perlman
+
+> "The solution isn't waiting for corporations to care—it's building outside their control."  
+> — Neil Cicierega
+
+> "We made mistakes. We killed things that mattered. Cycloside is what we should've built instead."  
+> — Bill Gates
+
+---
+
 #### [04 - Anti-Store Manifesto](04-Anti-Store-Manifesto.md)
 
 **Topic:** Why Cycloside must avoid becoming a gatekeeper, and how to build a truly open, federated marketplace.
