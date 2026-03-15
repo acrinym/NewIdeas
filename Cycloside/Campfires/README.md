@@ -90,6 +90,35 @@ Campfires are **multi-perspective exploratory conversations** where different vi
 
 ---
 
+#### [10 - First Impressions From The Community](10-First-Impressions-From-The-Community.md)
+
+**Topic:** Community leaders see Cycloside for the first time and provide feedback, concerns, and recommendations.
+
+**Participants:** Cory Doctorow (EFF), Ian Murdock (Debian founder), Alex Chen (shellcity.net maintainer), Mark Shuttleworth (Ubuntu founder)
+
+**Covers:**
+- Licensing and governance (GPL v3, foundation, community charter)
+- Legal threats (DMCA 1201, Microsoft C&D)
+- Community features (screenshot gallery, contests, discovery, social infrastructure)
+- Linux integration (Flatpak, XDG standards, Wayland roadmap)
+- Usability vs. ideology (prove on Windows, earn Linux trust)
+- Action items for making Cycloside community-ready
+
+**Key Quotes:**
+> "Cycloside is right-to-repair for desktops. You're not just building an app—you're fighting for user freedom."  
+> — Cory Doctorow
+
+> "Without governance and copyleft, Cycloside is one acquisition away from death. Build the constitution now."  
+> — Ian Murdock
+
+> "Shellcity.net died because we lost the community. Cycloside's marketplace is infrastructure. Now build the culture."  
+> — Alex Chen
+
+> "Prove it on Windows, earn Linux's trust. Cycloside could be the 'fun' desktop we've been missing."  
+> — Mark Shuttleworth
+
+---
+
 #### [04 - Anti-Store Manifesto](04-Anti-Store-Manifesto.md)
 
 **Topic:** Why Cycloside must avoid becoming a gatekeeper, and how to build a truly open, federated marketplace.
